@@ -20,12 +20,18 @@ jobs:
           URL="https://all.api.radio-browser.info/json/servers"
           mkdir -p data/www
           curl -L -s -o "$TMP_FILE" "$URL"
-          if [ ! -f "$TARGET_FILE" ] || ! cmp -s "$TARGET_FILE" "$TMP_FILE"; then
-            echo "rb_srvrs.json is new or has changed. Updating."
+          if [ ! -f "$TARGET_FILE" ]; then
+            echo "rb_srvrs.json is new. Updating."
             mv "$TMP_FILE" "$TARGET_FILE"
           else
-            echo "rb_srvrs.json is unchanged."
-            rm "$TMP_FILE"
+            # Sort both files and compare the sorted output.
+            if ! diff -q <(jq --sort-keys . "$TARGET_FILE") <(jq --sort-keys . "$TMP_FILE"); then
+              echo "rb_srvrs.json has changed. Updating."
+              mv "$TMP_FILE" "$TARGET_FILE"
+            else
+              echo "rb_srvrs.json is unchanged."
+              rm "$TMP_FILE"
+            fi
           fi
 
       - name: Download and update timezones.json.gz if changed
