@@ -9,24 +9,7 @@ git push origin 2025.07.20 --force
 
 A good theme maker? https://andrasdaradici.itch.io/
 
-DONE:
-
-Graphics on Boot screens updated
-
-DOING:
-
-WebUI Graphics
-
-
-NEXT:
-
-WebUI fixes:
-theme (colors)
-Graphics
-how does it look on mobile?
-
-hardware Display colors, too!
-
+Theme.css / html needs more colors/tags
 Red: #C80C02 (Canada red)
 Red gradient: #A80C02 - #E80C02
 Blue: #003DA5 (Québec blue)
@@ -34,8 +17,47 @@ Blue gradient: #003D85 #003EC5
 Green: #20C040 (Conventional Chaos Green)
 Green gradient: #20A040 #20E040
 
+DONE:
+
+Graphics on Boot screens updated
+hardware Display colors, too! good?
+
+
+DOING:
+
+WebUI Graphics
+ёRadio
+https://github.com/e2002/yoradio/
+
+
+
+REBRANDING:
+...will need to change many references to yo and yoradio in the code (will do later)
+
+
+
+NEXT:
+
+WebUI fixes:
+theme (colors) - more tags, more colors... more than 2 main ones anyways...
+Graphics?
+how does it look on mobile?
+...need to fix the width and percentages so it actually fits...
+
+12 hour doesn't work on color screens?
+
+
+
+BRING OVER FROM YORADIO SINCE FORK:
+
+Mqtt/HA improvements...?
+
+
 
 NEXT BIG ADD:
+
+LittleFS?
+
 
 Add to Radio-Browser click counter:
 
@@ -57,7 +79,6 @@ Add sort by clicks or sort by ABC on search?
 That would be clickcount in the search results json...
 
 OTHERS:
-
 
 Screensaver fixed for OLED (I think it's already in)
 
