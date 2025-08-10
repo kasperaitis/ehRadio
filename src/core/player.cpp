@@ -141,6 +141,10 @@ void Player::loop() {
         pm.on_station_change();
         break;
       }
+      case PR_TOGGLE: {
+        toggle();
+        break;
+      }
       case PR_VOL: {
         config.setVolume(requestP.payload);
         Audio::setVolume(volToI2S(requestP.payload));
@@ -157,8 +161,18 @@ void Player::loop() {
         break;
       }
       #endif
-      case PR_VUTONUS:
+      case PR_VUTONUS: {
         if(config.vuThreshold>10) config.vuThreshold -=10;
+        break;
+      }
+      case PR_BURL: {
+      #ifdef MQTT_ROOT_TOPIC
+        if(strlen(burl)>0){
+          browseUrl();
+        }
+      #endif
+        break;
+      }
       default: break;
     }
   }

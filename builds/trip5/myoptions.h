@@ -1,38 +1,6 @@
 #ifndef myoptions_h
 #define myoptions_h
 
-/* * * * * * * * THIS FILE IS USED BY TRIP5'S GITHUB WORKFLOW & PLATFORMIO * * * * * * * */
-/*                                                                                       */
-/* This file is used to create firmwares for specific builds by Trip5 on his Github. If  */
-/* this file is in your top-level folder, that means you forked Trip5's 'ehradio'
-/* branch.  Consider deleting your fork and instead fork the 'forkable' branch.
-
-/* It is identical to the 'ehradio' branch in every way except that certain files are
-/* kept safely in the ./examples/ folder so you can make PRs back to Trip5's repo.
-
-/* These special files are: platformio.ini, myoptions.h, and mytheme.h.  The contents of
-/* the ./data/data/ folder. should always be ignored.
-
-/* To do so, use a similar workflow and branch structure that Trip5 does on Github.
-/* Duplicate the 'forkable' branch as whatever name you wish and keep the two in sync
-/* with special workflows that preserves your special files.
-
-
-
-/* When working with your own radio build, you need to edit this file or replace it.     */
-/* There are more examples of a myoptions.h file in the ./examples/ folder.              */
-/* Normally, this file should not uploaded to Github so if you are working with a fork   */
-/* of Trip5's ehRadio or e2002's yoRadio, and this file is in the root folder, you       */
-/* should add it to your exceptions.                                                     */
-/*                                                                                       */
-
-/* If you are looking at this notice right now, consider going back and forking Trip5's  */
-/* branch of ehRadio called 'forkthis' instead. It is identical in every way to the      */
-/* 'ehradio' branch but these files are moved to the ./examples/ folder instead.         */
-/*                                                                                       */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-
 /* - - - = = = - - - Choose the Radio (defined by platformio.ini env) - - - = = = - - - */
 /* automatic builds define the board - - - be sure to comment all lines after debugging */
 

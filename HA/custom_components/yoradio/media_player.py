@@ -20,11 +20,11 @@ from homeassistant.components.media_player import (
     RepeatMode,
 )
 
-VERSION = '0.9.410'
+VERSION = '0.9.553'
 
 _LOGGER      = logging.getLogger(__name__)
 
-SUPPORT_EHRADIO = (
+SUPPORT_YORADIO = (
     MediaPlayerEntityFeature.PAUSE
     | MediaPlayerEntityFeature.PLAY
     | MediaPlayerEntityFeature.STOP
@@ -40,12 +40,12 @@ SUPPORT_EHRADIO = (
     | MediaPlayerEntityFeature.PLAY_MEDIA
 )
 
-DEFAULT_NAME = 'ehRadio'
+DEFAULT_NAME = 'yoRadio'
 CONF_MAX_VOLUME = 'max_volume'
 CONF_ROOT_TOPIC = 'root_topic'
 
 MEDIA_PLAYER_PLATFORM_SCHEMA = MEDIA_PLAYER_PLATFORM_SCHEMA.extend({
-  vol.Required(CONF_ROOT_TOPIC, default="ehradio"): cv.string,
+  vol.Required(CONF_ROOT_TOPIC, default="yoradio"): cv.string,
   vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
   vol.Optional(CONF_MAX_VOLUME, default='254'): cv.string
 })
@@ -55,10 +55,10 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
   name = config.get(CONF_NAME)
   max_volume = int(config.get(CONF_MAX_VOLUME, 254))
   playlist = []
-  api = ehradioApi(root_topic, hass, playlist)
-  add_devices([ehradioDevice(name, max_volume, api)], True)
+  api = yoradioApi(root_topic, hass, playlist)
+  add_devices([yoradioDevice(name, max_volume, api)], True)
 
-class ehradioApi():
+class yoradioApi():
   def __init__(self, root_topic, hass, playlist):
     self.hass = hass
     self.mqtt = mqtt
@@ -118,7 +118,7 @@ class ehradioApi():
           self.playlist.append(station)
           counter=counter+1
 
-class ehradioDevice(MediaPlayerEntity):
+class yoradioDevice(MediaPlayerEntity):
   def __init__(self, name, max_volume, api):
     self._name = name
     self.api = api
@@ -137,16 +137,19 @@ class ehradioDevice(MediaPlayerEntity):
     await mqtt.async_subscribe(self.api.hass, self.api.root_topic+'/volume', self.volume_listener, 0, "utf-8")
     
   async def status_listener(self, msg):
-    js = json.loads(msg.payload)
-    self._media_title = js['title']
-    self._track_artist = js['name']
-    if js['on']==1:
-      self._state = MediaPlayerState.PLAYING if js['status']==1 else MediaPlayerState.IDLE
-    else:
-      self._state = MediaPlayerState.PLAYING if js['status']==1 else MediaPlayerState.OFF
-    self._current_source = str(js['station']) + '. ' + js['name']
     try:
-      self.async_schedule_update_ha_state()
+      js = json.loads(msg.payload)
+      self._media_title = js['title']
+      self._track_artist = js['name']
+      if js['on']==1:
+        self._state = MediaPlayerState.PLAYING if js['status']==1 else MediaPlayerState.IDLE
+      else:
+        self._state = MediaPlayerState.PLAYING if js['status']==1 else MediaPlayerState.OFF
+      self._current_source = str(js['station']) + '. ' + js['name']
+      try:
+        self.async_schedule_update_ha_state()
+      except:
+        pass
     except:
       pass
 
@@ -166,7 +169,7 @@ class ehradioDevice(MediaPlayerEntity):
 
   @property
   def supported_features(self):
-    return SUPPORT_EHRADIO
+    return SUPPORT_YORADIO
 
   @property
   def name(self):
@@ -263,4 +266,3 @@ class ehradioDevice(MediaPlayerEntity):
   async def async_turn_on(self, **kwargs):
       await self.api.set_command("turnon")
       self._state = MediaPlayerState.ON
-      

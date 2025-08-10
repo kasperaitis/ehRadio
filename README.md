@@ -15,6 +15,8 @@ Documentation will be slowly improved.
 
 ## ehRadio Version history
 
+
+
 ### 2025.08.11
 
   - new folder `builds/trip5` that contain my `platformio.ini`, `myoptions.h`, `mytheme.h`
@@ -35,6 +37,17 @@ Documentation will be slowly improved.
   - 12-hour mode fixed on color screens (space is now the same width as numbers)
   - add `#define INVERTDISPLAY true` to set the default state of invert display (otherwise false)
   - WebUI colors tweaked (more changes later)
+  - from yoRadio v0.9.574 (latest as of this date)
+    - ST7789_76 2.25" display
+    - MQTT & HA improvements
+    - AsyncTCP & WebSockets
+    - vortigont's PRs (thanks!)
+      - display task - optimize taks delay and message handling
+      - page class migrated from LinkedList to std::list
+    - other bug fixes and optimizations
+    - some fixes ignored due to ongoing restructuring of yoRadio code
+    - probably the last time to update core functionality from yoRadio
+      - display code remains the same so those can be updated easily
 
 ### 2025.08.10
 
@@ -276,6 +289,7 @@ https://aliexpress.com/item/32965676064.html
 - or **ILI9486** (Testing mode) 3.5' 480x320 SPI https://aliexpress.com/item/1005001999296476.html?sku_id=12000018365356568
 - or **SSD1322** 2.8' 256x64 SPI https://aliexpress.com/item/1005003480981568.html
 - or **ST7920** 2.6' 128x64 SPI https://aliexpress.com/item/32699482638.html
+- or **ST7789** 2.25' 284x76 SPI https://aliexpress.ru/item/1005009016973081.html
 
 (see [Wiki](https://github.com/e2002/yoradio/wiki/Available-display-models) for more details)
 

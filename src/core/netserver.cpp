@@ -32,7 +32,12 @@
   #define MIN_MALLOC 24112
 #endif
 #ifndef NSQ_SEND_DELAY
-  #define NSQ_SEND_DELAY       (TickType_t)100  //portMAX_DELAY?
+  //#define NSQ_SEND_DELAY       portMAX_DELAY
+  #define NSQ_SEND_DELAY       pdMS_TO_TICKS(300)
+#endif
+#ifndef NS_QUEUE_TICKS
+  //#define NS_QUEUE_TICKS pdMS_TO_TICKS(2)
+  #define NS_QUEUE_TICKS 0
 #endif
 
 // Global list for radio-browser servers to persist across searches

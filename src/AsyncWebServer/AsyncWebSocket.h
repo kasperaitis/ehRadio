@@ -75,7 +75,7 @@ class AsyncWebSocketMessageBuffer {
   private:
     uint8_t * _data;
     size_t _len;
-    bool _lock; 
+    volatile bool _lock;
     uint32_t _count;  
 
   public:

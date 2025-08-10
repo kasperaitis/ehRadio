@@ -95,7 +95,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
       delay(250);
     #endif
     ESP.restart(); return true; }
-  if (strEquals(command, "submitplaylist"))  { return true; }
+  if (strEquals(command, "submitplaylist"))  { player.sendCommand({PR_STOP, 0}); return true; }
   
 #if IR_PIN!=255
   if (strEquals(command, "irbtn"))  { config.setIrBtn(atoi(value)); return true; }
@@ -111,8 +111,8 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "mdnsname"))  { config.saveValue(config.store.mdnsname, value, MDNS_LENGTH); return true; }
   if (strEquals(command, "rebootmdns")){
     char buf[MDNS_LENGTH*2];
-    if(strlen(config.store.mdnsname)>0) snprintf(buf, MDNS_LENGTH*2, "{\"redirect\": \"http://%s.local\"}", config.store.mdnsname);
-    else snprintf(buf, MDNS_LENGTH*2, "{\"redirect\": \"http://%s/\"}", WiFi.localIP().toString().c_str());
+    if(strlen(config.store.mdnsname)>0) snprintf(buf, sizeof(buf), "{\"redirect\": \"http://%s.local/settings.html\"}", config.store.mdnsname);
+    else snprintf(buf, sizeof(buf), "{\"redirect\": \"http://%s/settings.html\"}", WiFi.localIP().toString().c_str());
     websocket.text(cid, buf); delay(500); ESP.restart();
     return true;
   }

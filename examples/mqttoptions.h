@@ -1,4 +1,4 @@
-#define MQTT_HOST   "192.168.3.100"
+#define MQTT_HOST   "192.168.1.100"
 #define MQTT_PORT   1883
 #define MQTT_USER   ""
 #define MQTT_PASS   ""
