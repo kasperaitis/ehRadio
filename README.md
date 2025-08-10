@@ -17,6 +17,7 @@ Documentation will be slowly improved.
 
 
 
+
 ### 2025.08.11
 
   - new folder `builds/trip5` that contain my `platformio.ini`, `myoptions.h`, `mytheme.h`
@@ -35,8 +36,11 @@ Documentation will be slowly improved.
     - can use `#define AP_SSID ssidname` and `#define AP_PASSWORD password` in `myoptions.h`
     - a bit faster reponse time
   - 12-hour mode fixed on color screens (space is now the same width as numbers)
-  - add `#define INVERTDISPLAY true` to set the default state of invert display (otherwise false)
+  - add `#define INVERTDISPLAY true` to `myoptions.h` to set the default state of invert display (otherwise false)
   - WebUI colors tweaked (more changes later)
+  - ST7796 (480x320) and ILI9488 (480x320) can have a bigger boot logo
+    - add `#define BIGBOOTLOGO` to `myoptions.h` to get a much bigger logo
+      - this takes up a not-small amount f extra flash memory so not recommended for plain ESP32
   - from yoRadio v0.9.574 (latest as of this date)
     - ST7789_76 2.25" display
     - MQTT & HA improvements
