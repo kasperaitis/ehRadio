@@ -24,8 +24,8 @@ jobs:
             echo "rb_srvrs.json is new. Updating."
             mv "$TMP_FILE" "$TARGET_FILE"
           else
-            # Sort both files and compare the sorted output.
-            if ! diff -q <(jq --sort-keys . "$TARGET_FILE") <(jq --sort-keys . "$TMP_FILE"); then
+            # Sort both files by array elements and compare the sorted output.
+            if ! diff -q <(jq 'sort_by(.name)' "$TARGET_FILE") <(jq 'sort_by(.name)' "$TMP_FILE"); then
               echo "rb_srvrs.json has changed. Updating."
               mv "$TMP_FILE" "$TARGET_FILE"
             else
