@@ -90,6 +90,7 @@
 #if defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON)
 #define DSP_MODEL       DSP_ILI9488     /* Big Display */
 #define PRINT_FIX
+#define BIGBOOTLOGO
 #define INVERTDISPLAY true
 #define TFT_DC          10
 #define TFT_CS          9
