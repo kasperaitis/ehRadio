@@ -8,7 +8,7 @@ import os
 
 env_name = env["PIOENV"]
 
-src_font = os.path.join("glcdfont_fix", "glcdfont.c")
+src_font = os.path.join("glcdfont_fix", "glcdfont_EN.c")
 dst_font = os.path.join(".pio", "libdeps", env_name, "Adafruit GFX Library", "glcdfont.c")
 
 if os.path.exists(src_font) and os.path.exists(dst_font):
