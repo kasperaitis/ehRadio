@@ -39,9 +39,9 @@ Documentation will be slowly improved.
   - add `#define INVERTDISPLAY true` to `myoptions.h` to set the default state of invert display (otherwise false)
   - WebUI colors tweaked (more changes later)
   - ST7796 (480x320) and ILI9488 (480x320) can have a bigger boot logo
-    - add `#define BIGBOOTLOGO` to `myoptions.h` to get a much bigger logo
-      - this takes up a not-small amount f extra flash memory so not recommended for plain ESP32
-  - from yoRadio v0.9.574 (latest as of this date)
+    - add `#define BIGBOOTLOGO` to `myoptions.h`
+      - this takes up a not-small amount of flash memory so not recommended for plain ESP32
+  - improvements from yoRadio v0.9.574 (latest as of this date)
     - ST7789_76 2.25" display
     - MQTT & HA improvements
     - AsyncTCP & WebSockets
