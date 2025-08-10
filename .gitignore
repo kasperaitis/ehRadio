@@ -1,6 +1,6 @@
 .pio
 .vscode
 .gitignore
-/data/data/*
 /platformio.ini
 /*.h
+/Notes.txt
