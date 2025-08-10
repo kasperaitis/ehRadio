@@ -20,7 +20,7 @@ STORE YOUR SETTINGS IN THE *** myoptions.h *** FILE.
 #endif
 /*******************************************************
 
-The connection tables are located here https://github.com/e2002/yoradio#connection-tables
+Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/generator.html
    
 ********************************************************/
 
@@ -346,7 +346,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
   #define MAX_AUDIO_SOCKET_TIMEOUT   false     // max audio socket timeout?
 #endif
 #ifndef BITRATE_FULL
-  #define BITRATE_FULL     true   // display bitreta badget
+  #define BITRATE_FULL     true   // display bitrate badge
 #endif
 #ifndef SD_AUTOPLAY
   #define SD_AUTOPLAY      true   // auto play from SD card when inserted
@@ -491,6 +491,23 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 #ifndef USE_OTA
   #define USE_OTA    false
 #endif
+
+#ifndef INVERTDISPLAY
+  #define INVERTDISPLAY false
+#elif (INVERTDISPLAY != true) && (INVERTDISPLAY != false)
+  #undef INVERTDISPLAY
+  #define INVERTDISPLAY false
+#endif
+
+#ifndef AP_SSID
+  #define AP_SSID "ehRadio"
+#endif
+#ifdef AP_PASSWORD
+  #if (AP_PASSWORD)[0] == '\0' // if it's empty, undefine
+    #undef AP_PASSWORD
+  #endif
+#endif
+
 //#define OTA_PASS "myotapassword12345"
 //#define HTTP_USER "user"
 //#define HTTP_PASS "password"
@@ -532,22 +549,22 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 /*        REGION DEFAULTS         */
 /*    Still editable in WebUI     */
 #ifndef TIMEZONE_NAME
-#define TIMEZONE_NAME "Europe/Moscow"
+#define TIMEZONE_NAME "America/Halifax"
 #endif
 #ifndef TIMEZONE_POSIX
-#define TIMEZONE_POSIX "MSK-3"
+#define TIMEZONE_POSIX "AST4ADT,M3.2.0,M11.1.0"
 #endif
 #ifndef SNTP1
-#define SNTP1 "pool.ntp.org"
+#define SNTP1 "ca.pool.ntp.org"
 #endif
 #ifndef SNTP2
-#define SNTP2 "0.ru.pool.ntp.org"
+#define SNTP2 "pool.ntp.org"
 #endif
 #ifndef WEATHERLAT
-#define WEATHERLAT "55.7512"
+#define WEATHERLAT "44.8857"
 #endif
 #ifndef WEATHERLON
-#define WEATHERLON "37.6184"
+#define WEATHERLON "63.1005"
 #endif
 
 #endif // options_h

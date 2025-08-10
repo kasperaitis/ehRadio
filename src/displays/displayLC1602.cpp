@@ -24,10 +24,12 @@ void DspCore::apScreen() {
 #ifdef LCD_2004
   setCursor(0, 2);
   print(utf8Rus(const_lcdApName, false));
-  print(apSsid);
+  print(AP_SSID);
   setCursor(0, 3);
   print(utf8Rus(const_lcdApPass, false));
-  print(apPassword);
+  #ifdef AP_PASSWORD
+    print(AP_PASSWORD);
+  #endif
 #endif
 }
 

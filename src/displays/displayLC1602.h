@@ -59,9 +59,14 @@ const char           rssiFmt[]    PROGMEM = "";
 const MoveConfig    clockMove     PROGMEM = { 0, 0, -1 };
 const MoveConfig   weatherMove    PROGMEM = { 0, 0, -1 };
 const MoveConfig   weatherMoveVU    PROGMEM = { 0, 0, -1 };
-const char  const_lcdApMode[]    PROGMEM = "YORADIO AP MODE";
+const char  const_lcdApMode[]    PROGMEM = "EHRADIO AP MODE";
 const char  const_lcdApName[]    PROGMEM = "AP NAME: ";
-const char  const_lcdApPass[]    PROGMEM = "PASSWORD: ";
+#ifdef AP_PASSWORD
+  const char  const_lcdApPass[]    PROGMEM = "PASSWORD: ";
+#else
+  const char  const_lcdApPass[]    PROGMEM = "NO PASSWORD";
+#endif
+
 
 #ifdef LCD_I2C
   class DspCore: public LiquidCrystal_I2C {

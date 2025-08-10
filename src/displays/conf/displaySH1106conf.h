@@ -1,6 +1,6 @@
 /*************************************************************************************
     SH1106 128x64 displays configuration file.
-    Copy this file to yoRadio/src/displays/conf/displaySH1106conf_custom.h
+    Copy this file to src/displays/conf/displaySH1106conf_custom.h
     and modify it
     More info on https://github.com/e2002/yoradio/wiki/Widgets#widgets-description
 *************************************************************************************/

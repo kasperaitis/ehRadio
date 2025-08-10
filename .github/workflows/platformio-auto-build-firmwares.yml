@@ -1,4 +1,4 @@
-name: Platformio Build Firmwares
+name: Platformio Auto Build Firmwares
 
 on:
   push:
@@ -10,6 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check for contributor config (will abort if builds/owner/platformio.ini does not exist)
+        run: |
+          if [ ! -f "builds/${{ github.repository_owner }}/platformio.ini" ]; then
+            echo "No config found for ${{ github.repository_owner }}. Skipping build."
+            exit 1
+          fi
+
+      - name: Copy contributor config files to project root
+        run: |
+          if [ -d "builds/${{ github.repository_owner }}" ]; then
+            cp -rf builds/${{ github.repository_owner }}/* .
+          fi
 
       - name: Prepare Gzipped Web Assets for Release
         run: |

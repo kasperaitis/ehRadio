@@ -15,6 +15,27 @@ Documentation will be slowly improved.
 
 ## ehRadio Version history
 
+### 2025.08.11
+
+  - new folder `builds/trip5` that contain my `platformio.ini`, `myoptions.h`, `mytheme.h`
+    - these files are used by the workflow that generates the automatic builds
+    - for forks, just make a sub-folder in `builds` using their github name
+      - must contain `platformio.ini` at a minimum or the workflow will abort
+    - automatic builds into Releases are triggered by tags
+      - `git tag 2025.08.11`
+      - `git push origin 2025.08.11`
+    - this way, we can share configuration and platformio.ini working codes
+  - `.gitignore` file now included by default that ignores certain files
+    - you can still use `platformio.ini`, `myoptions.h`, `mytheme.h` in your root locally
+      - but put them in `builds` if you want the automatic builds to work
+  - fixes to hotspot AP mode
+    - default AP is `ehRadio` with no password
+    - can use `#define AP_SSID ssidname` and `#define AP_PASSWORD password` in `myoptions.h`
+    - a bit faster reponse time
+  - 12-hour mode fixed on color screens (space is now the same width as numbers)
+  - add `#define INVERTDISPLAY true` to set the default state of invert display (otherwise false)
+  - WebUI colors tweaked (more changes later)
+
 ### 2025.08.10
 
 - Forked from yoRadio 0.9.533
@@ -23,11 +44,14 @@ Documentation will be slowly improved.
 - Re-branding & Styling
   - logos added to boot screens and WebUI
   - color changes to display and WebUI (not 100% satisfied but good enough for now)
-  - `YO_FIX` no longer needed (er, may never have been... I misunderstood the fonts, which are now included in builds)
+- replacement font with icons added into builds using `platformio.ini`
+  - `#define YO_FIX` removed (maybe never needed?)
 - data files will no longer be compressed in the repository
-  - but they will be available in Releases as .gz files for automatic updating of SPIFFS
+  - but they will be available in `Releases` as .gz files for automatic updating of SPIFFS
     - which means if you really wish to compress them and upload them, you can
       - except `rb_srvrs.json` which is obtained automatically anyways
+- a Github workflow is used to update `timezones.json.gz` and `rb_srvrs.json` automatically
+  - added to the repo automatically whenever a commit is made
 
 ### 0.9.533 Trip5/2025.07.23
 
@@ -332,7 +356,7 @@ Rotation of the display:
 - <span style="color: red; font-weight: bold; font-size: 22px;text-decoration: underline;">ESP32 core version 2.0.0 or higher is [required](https://github.com/espressif/arduino-esp32)!</span>
 
 1. Generate a myoptions.h file for your hardware configuration using [this tool](https://e2002.github.io/docs/myoptions-generator.html).
-2. Put myoptions.h file next to yoRadio.ino.
+2. Put myoptions.h file next to ehRadio.ino.
 3. Replace file Arduino/libraries/Adafruit_GFX_Library/glcdfont.c with file [yoRadio/fonts/glcdfont.c](yoRadio/fonts/glcdfont.c)
 4. Restart Arduino IDE.
 5. In ArduinoIDE - upload sketch data via Tools→ESP32 Sketch Data Upload ([it's here](images/board2.jpg))
@@ -362,7 +386,7 @@ download _http://\<yoradioip\>/data/playlist.csv_ and _http://\<yoradioip\>/data
 
  <img src="images/getspiffs.jpg" width="830" height="208">
 
-4. Go to page _http://\<yoradioip\>/update_ and upload yoRadio.ino.esp32.bin and yoRadio.spiffs.bin in turn, checking the appropriate upload options.
+4. Go to page _http://\<yoradioip\>/update_ and upload ehRadio.ino.esp32.bin and yoRadio.spiffs.bin in turn, checking the appropriate upload options.
 5. Well done!
 
 ---
@@ -520,7 +544,7 @@ or -> **!!! a [full update](#update-over-web-interface) with Sketch data upload 
 - Config - improvements and bug fixes
 - Added stream format display in the web interface **!!! A full update is required, including SPIFFS Data !!!**  
   *(Alternatively, upload the new `style.css.gz` and `script.js.gz` files via the web interface.)*
-- The content of `yoRadio.ino` has been moved to `src/main.cpp`
+- The content of `ehRadio.ino` has been moved to `src/main.cpp`
 - [www|uart|telnet] new command: `reset` - resets settings to default values. [More details](https://github.com/e2002/yoradio/wiki/List-of-available-commands-(UART-telnet-GET-POST))
 - Fixed compilation error: `'ets_printf' was not declared in this scope`
 

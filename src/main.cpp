@@ -5,6 +5,7 @@
 #include "core/player.h"
 #include "core/display.h"
 #include "core/network.h"
+#include <DNSServer.h>
 #include "core/netserver.h"
 #include "core/controls.h"
 #include "core/mqtt.h"
@@ -14,12 +15,12 @@
 SPIClass  SPI2(HOOPSENb);
 #endif
 
-extern __attribute__((weak)) void yoradio_on_setup();
+extern __attribute__((weak)) void ehradio_on_setup();
 
 void setup() {
   Serial.begin(115200);
   if(REAL_LEDBUILTIN!=255) pinMode(REAL_LEDBUILTIN, OUTPUT);
-  if (yoradio_on_setup) yoradio_on_setup();
+  if (ehradio_on_setup) ehradio_on_setup();
   pm.on_setup();
   config.init();
   display.init();
@@ -65,6 +66,10 @@ void loop() {
     //loopControls();
   }
   loopControls();
+  // Process captive portal DNS requests in Soft AP mode
+  if (network.status == SOFT_AP && network.dnsServer) {
+    network.dnsServer->processNextRequest();
+  }
   netserver.loop();
 }
 
@@ -119,7 +124,7 @@ void loop() {
     backlightTicker.attach(Out_Interval, backlightDown);
   }
 
-  void yoradio_on_setup() { brightnessOn(); }      /* Backlight ON for Setup */
+  void ehradio_on_setup() { brightnessOn(); }      /* Backlight ON for Setup */
   void player_on_track_change() { brightnessOn(); } /* Backlight ON for track change */
   void player_on_start_play() { brightnessOn(); }  /* Backlight ON for start play */
   void player_on_stop_play() { brightnessOn(); }   /* Backlight ON for stop play */

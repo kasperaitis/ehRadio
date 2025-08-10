@@ -4,9 +4,8 @@
 #include "time.h"
 #include "WiFi.h"
 #include "rtcsupport.h"
+#include <DNSServer.h>
 
-#define apSsid      "yoRadioAP"
-#define apPassword  "12345987"
 //#define TSYNC_DELAY 10800000    // 1000*60*60*3 = 3 hours
 #define TSYNC_DELAY       3600000     // 1000*60*60   = 1 hour
 #define WEATHER_STRING_L  254
@@ -16,6 +15,7 @@ enum n_Status_e { CONNECTED, SOFT_AP, FAILED, SDREADY };
 class MyNetwork {
   public:
     n_Status_e status;
+// Ensure DNSServer full definition is available
     struct tm timeinfo;
     bool firstRun, forceTimeSync, forceWeather;
     bool lostPlaying = false, beginReconnect = false;
@@ -23,6 +23,7 @@ class MyNetwork {
     Ticker ctimer;
     char *weatherBuf;
     bool trueWeather;
+    DNSServer* dnsServer;
   public:
     MyNetwork() {};
     void begin();

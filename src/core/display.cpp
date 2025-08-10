@@ -192,11 +192,13 @@ void Display::_apScreen() {
     TextWidget *apname = (TextWidget*) &_boot->addWidget(new TextWidget(apNameConf, 30, false, config.theme.title1, config.theme.background));
     apname->setText(apNameTxt);
     TextWidget *apname2 = (TextWidget*) &_boot->addWidget(new TextWidget(apName2Conf, 30, false, config.theme.clock, config.theme.background));
-    apname2->setText(apSsid);
+    apname2->setText(AP_SSID);
     TextWidget *appass = (TextWidget*) &_boot->addWidget(new TextWidget(apPassConf, 30, false, config.theme.title1, config.theme.background));
     appass->setText(apPassTxt);
     TextWidget *appass2 = (TextWidget*) &_boot->addWidget(new TextWidget(apPass2Conf, 30, false, config.theme.clock, config.theme.background));
-    appass2->setText(apPassword);
+    #ifdef AP_PASSWORD
+      appass2->setText(AP_PASSWORD);
+    #endif
     ScrollWidget *bootSett = (ScrollWidget*) &_boot->addWidget(new ScrollWidget("*", apSettConf, config.theme.title2, config.theme.background));
     bootSett->setText(WiFi.softAPIP().toString().c_str(), apSettFmt);
     _pager.addPage(_boot);

@@ -1,3 +1,7 @@
+# This script may be used by platformio to automatically replace a default Adafruit GFX Library font
+# Add this to a platformio.ini env section:
+# extra_scripts = pre:replace_font.py
+
 Import("env")
 import shutil
 import os

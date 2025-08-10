@@ -11,8 +11,8 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
-# yoRadio entity
+# ehRadio entity
 media_player:
-  - platform: yoradio
-    name: YoRadio (kitchen)
-    root_topic: yoradio/100
+  - platform: ehradio
+    name: ehRadio (kitchen)
+    root_topic: ehradio/100

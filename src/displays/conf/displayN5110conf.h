@@ -1,6 +1,6 @@
 /*************************************************************************************
     Nokia 5110 84x48 displays configuration file.
-    Copy this file to yoRadio/src/displays/conf/displayN5110conf_custom.h
+    Copy this file to src/displays/conf/displayN5110conf_custom.h
     and modify it
     More info on https://github.com/e2002/yoradio/wiki/Widgets#widgets-description
 *************************************************************************************/

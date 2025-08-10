@@ -111,7 +111,7 @@ struct config_t // specify defaults here (defaults are NOT saved to Prefs)
   bool      flipscreen = false;
   bool      volumepage = true;
   bool      clock12 = false;
-  bool      invertdisplay = true;
+  bool      invertdisplay = INVERTDISPLAY;
   bool      numplaylist = false;
   bool      fliptouch = false;
   bool      dbgtouch = false;
@@ -309,7 +309,7 @@ class Config {
       // commit ignored (kept for compatibility)
       const configKeyMap* entry = getKeyMapEntryForField(field);
       if (entry) {
-        prefs.begin("yoradio", false);
+        prefs.begin("ehradio", false);
         T oldValue;
         size_t existingLen = prefs.getBytesLength(entry->key);
         size_t bytesRead = prefs.getBytes(entry->key, &oldValue, entry->size);
@@ -327,7 +327,7 @@ class Config {
       const configKeyMap* entry = getKeyMapEntryForField(field);
       if (entry) {
         size_t sz = entry->size;
-        prefs.begin("yoradio", false);
+        prefs.begin("ehradio", false);
         char oldValue[sz];
         memset(oldValue, 0, sz);
         size_t existingLen = prefs.getBytesLength(entry->key);

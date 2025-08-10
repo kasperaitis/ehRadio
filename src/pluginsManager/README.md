@@ -24,11 +24,11 @@ Cleans up resources when the plugin is destroyed.
 
 ### `on_setup()`
 - **Description:** Called at the beginning of the sketch setup process.  
-- **Location:** `setup()`, `yoRadio.ino`.
+- **Location:** `setup()`, `ehRadio.ino`.
 
 ### `on_end_setup()`
 - **Description:** Called at the end of the sketch setup process.  
-- **Location:** `setup()`, `yoRadio.ino`.
+- **Location:** `setup()`, `ehRadio.ino`.
 
 ### `on_connect()`
 - **Description:** Triggered after a successful network connection.  

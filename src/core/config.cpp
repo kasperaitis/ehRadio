@@ -101,7 +101,7 @@ void Config::init() {
 }
 
 void Config::loadPreferences() {
-  prefs.begin("yoradio", false);
+  prefs.begin("ehradio", false);
   // Check config_set first
   uint16_t configSetValue = 0;
   size_t configSetRead = prefs.getBytes("cfgset", &configSetValue, sizeof(configSetValue));
@@ -251,7 +251,7 @@ void Config::initPlaylistMode(){
 void Config::_initHW(){
   loadTheme();
   #if IR_PIN!=255
-  prefs.begin("yoradio", false);
+  prefs.begin("ehradio", false);
   memset(&ircodes, 0, sizeof(ircodes));
   size_t read = prefs.getBytes("ircodes", &ircodes, sizeof(ircodes));
   if (read != sizeof(ircodes) || ircodes.ir_set != 4224) {
@@ -310,7 +310,7 @@ void Config::loadTheme(){
 
 void Config::reset(){
   Serial.print("[Prefs] Reset requested, resetting config...\n");
-  prefs.begin("yoradio", false);
+  prefs.begin("ehradio", false);
   prefs.clear();
   prefs.end();
   setDefaults();
@@ -394,7 +394,7 @@ void Config::resetSystem(const char *val, uint8_t clientId){
     saveValue(&store.audioinfo, false, false);
     saveValue(&store.vumeter, false, false);
     saveValue(&store.softapdelay, (uint8_t)0, false);
-    snprintf(store.mdnsname, MDNS_LENGTH, "yoradio-%x", getChipId());
+    snprintf(store.mdnsname, MDNS_LENGTH, "ehradio-%x", getChipId());
     saveValue(store.mdnsname, store.mdnsname, MDNS_LENGTH, true, true);
     display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
     netserver.requestOnChange(GETSYSTEM, clientId);
@@ -465,7 +465,7 @@ void Config::resetSystem(const char *val, uint8_t clientId){
 void Config::setDefaults() {
   // defaults set byt struct, except one
   Serial.println("[setDefaults] called");
-  snprintf(store.mdnsname, MDNS_LENGTH, "yoradio-%x", getChipId());
+  snprintf(store.mdnsname, MDNS_LENGTH, "ehradio-%x", getChipId());
 }
 
 void Config::setSnuffle(bool sn){
@@ -476,7 +476,7 @@ void Config::setSnuffle(bool sn){
 #if IR_PIN!=255
 void Config::saveIR(){
   ircodes.ir_set = 4224;
-  prefs.begin("yoradio", false);
+  prefs.begin("ehradio", false);
   size_t written = prefs.putBytes("ircodes", &ircodes, sizeof(ircodes));
   prefs.end();
 }
@@ -587,11 +587,7 @@ bool Config::loadStation(uint16_t ls) {
   if (cs == 0) {
     memset(station.url, 0, BUFLEN);
     memset(station.name, 0, BUFLEN);
-    #ifdef YO_FIX
-      strncpy(station.name, "yoRadio", BUFLEN);
-    #else
-      strncpy(station.name, "ehRadio", BUFLEN);
-    #endif
+    strncpy(station.name, "ehRadio", BUFLEN);
     station.ovol = 0;
     return false;
   }

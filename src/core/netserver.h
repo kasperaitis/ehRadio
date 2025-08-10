@@ -9,13 +9,13 @@ enum import_e      : uint8_t  { IMDONE=0, IMPL=1, IMWIFI=2 };
 const char emptyfs_html[] PROGMEM = R"(
 <!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=0.25"><meta charset="UTF-8">
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABABAMAAABYR2ztAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAB5QTFRFyAwCAAAAyAwCyAwCyAwCyAwCyAwCyAwCyAwCyAwCS0TDwgAAAAp0Uk5T/wAM4Cq8mkZ/ZYZ9vz0AAAIWSURBVHichZXBb9MwFMY/YZLC0W5puluddWp2i9YWbbdFSidxC9uoOLYDUe22DoTgloGQdmTAhf8W20ldk9nOu9S1f+p73/eeXdBGJI3vaALfMz/A0js/EOHIDwzQ8QMvEPqBUxDuBZbAxgf0UmDlA/oAzn3AjQA6PqAUQOgC9kT5hQACseY2oH/JGWRwGk1twIC8HVXA6PeVDYgAooD7wvDCAHrYRWYDWGEF+u/1+kafPzdk9sj1VtNSAzuvYojtk/pLqQHtVTSDaDDqLKcaeFpXdZaGECMCslZZ9jXwugLOUkwhhkyEmtShBlRD2WexeqiBDvtjAk8kMJd94VAjAHIoWtQ1U8QsVXprABe4lNXUsaGHs4NKL+hevUk2GiBcuFpUckATLX6ugfijdgyGwalevdkZAkO9JaSKgQ9ABjkn7ghFCpZ6gE4bcCSBwgOs5Mj9bAOG7nPxFMAcxUfxjBq9sEUgf8Hrw7QlhZJJI7cRQaZu1oETOK+unrOKY14BTi+/bS9vcmGvgOvb3bPVObsyrr8tyS3fAqP8i+W8fpLB8q+OGl9+WEgVS4eCqozrWyS+gRIzB/rKN1HBL1lk4jqeLKpesNJ+TuLaarpPJhNLKVNt1PhTnsupIJNFefxDoeG7WboyH1JWBn/Xecy7d9K3RTpl2ZibAI0r47oP6mO81g8p/T+Gm8bGo7/FViBrAea8sfEPiURzVU+EBKkAAAAASUVORK5CYII=">
-<title>ehRadio - WEB Board Uploader</title><style>html, body { margin: 0; padding: 0; height: 100%; } body{background-color:#000;color:#e3d25f;font-size:20px;display:flex;flex-direction:column;}
+<title>ehRadio - WEB Board Uploader</title><style>html, body{margin: 0; padding: 0; height: 100%; background-color:#000;color:#eecccc;font-size:20px;display:flex;flex-direction:column;}
 hr{margin:20px 0;border:0; border-top:#555 1px solid;} p{text-align:center;margin-bottom:10px;} section{max-width:500px; text-align:center;margin:0 auto 30px auto;padding:20px;flex:1;}
-.hidden{display:none;}a { color: var(--accent-color); text-decoration: none; font-weight: bold } a:hover { text-decoration: underline }
-#copy { text-align: center; padding: 14px; font-size: 14px; }
-input[type=file]{color:#ccc;} input[type=file]::file-selector-button, input[type=submit]{border:2px solid #e3d25f;color:#000;padding:6px 16px;border-radius:25px;background-color:#e3d25f;margin:0 6px;cursor:pointer;}
+.hidden{display:none;} a{color: #ccccee; font-size:14px; text-decoration: none; font-weight: bold;} a:hover{text-decoration: underline}
+#copy{text-align: center; padding: 14px; font-size: 14px;}
+input[type=file]{color:#ccc;} input[type=file]::file-selector-button, input[type=submit]{border:2px solid #eecccc;color:#000;padding:6px 16px;border-radius:25px;background-color:#eecccc;margin:0 6px;cursor:pointer;}
 input[type=submit]{font-size:18px;text-transform:uppercase;padding:8px 26px;margin-top:10px;font-family:Times;} span{color:#ccc} .flex{display:flex;justify-content: space-around;margin-top:10px;}
-input[type=text],input[type=password]{width:170px;background:#272727;color:#e3d25f;padding:6px 12px;font-size:20px;border:#2d2d2d 1px solid;margin:4px 0 0 4px;border-radius:4px;outline:none;}
+input[type=text],input[type=password]{width:170px;background:#272727;color:#eecccc;padding:6px 12px;font-size:20px;border:#2d2d2d 1px solid;margin:4px 0 0 4px;border-radius:4px;outline:none;}
 @media screen and (max-width:480px) {section{zoom:0.7;-moz-transform:scale(0.7);}}
 </style>
 <script type="text/javascript" src="/variables.js"></script>
@@ -24,7 +24,7 @@ input[type=text],input[type=password]{width:170px;background:#272727;color:#e3d2
 <div id="uploader">
 <h2>ehRadio - WEB Board Uploader</h2>
 <hr />
-<span>Select <u>ALL</u> files from <i>yoRadio/data/www/</i><br />and upload them using the form below</span>
+<span>Select <u>ALL</u> files from <i>data/www/</i><br />and upload them using the form below</span>
 <hr />
 <form action="/webboard" method="post" enctype="multipart/form-data">
 <p><label for="www">www:</label> <input type="file" name="www" id="www" multiple></p>
@@ -85,7 +85,7 @@ const char index_html[] PROGMEM = R"(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#e3d25f">
+  <meta name="theme-color" content="#eecccc">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABABAMAAABYR2ztAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAB5QTFRFyAwCAAAAyAwCyAwCyAwCyAwCyAwCyAwCyAwCyAwCS0TDwgAAAAp0Uk5T/wAM4Cq8mkZ/ZYZ9vz0AAAIWSURBVHichZXBb9MwFMY/YZLC0W5puluddWp2i9YWbbdFSidxC9uoOLYDUe22DoTgloGQdmTAhf8W20ldk9nOu9S1f+p73/eeXdBGJI3vaALfMz/A0js/EOHIDwzQ8QMvEPqBUxDuBZbAxgf0UmDlA/oAzn3AjQA6PqAUQOgC9kT5hQACseY2oH/JGWRwGk1twIC8HVXA6PeVDYgAooD7wvDCAHrYRWYDWGEF+u/1+kafPzdk9sj1VtNSAzuvYojtk/pLqQHtVTSDaDDqLKcaeFpXdZaGECMCslZZ9jXwugLOUkwhhkyEmtShBlRD2WexeqiBDvtjAk8kMJd94VAjAHIoWtQ1U8QsVXprABe4lNXUsaGHs4NKL+hevUk2GiBcuFpUckATLX6ugfijdgyGwalevdkZAkO9JaSKgQ9ABjkn7ghFCpZ6gE4bcCSBwgOs5Mj9bAOG7nPxFMAcxUfxjBq9sEUgf8Hrw7QlhZJJI7cRQaZu1oETOK+unrOKY14BTi+/bS9vcmGvgOvb3bPVObsyrr8tyS3fAqP8i+W8fpLB8q+OGl9+WEgVS4eCqozrWyS+gRIzB/rKN1HBL1lk4jqeLKpesNJ+TuLaarpPJhNLKVNt1PhTnsupIJNFefxDoeG7WboyH1JWBn/Xecy7d9K3RTpl2ZibAI0r47oP6mO81g8p/T+Gm8bGo7/FViBrAea8sfEPiURzVU+EBKkAAAAASUVORK5CYII=">

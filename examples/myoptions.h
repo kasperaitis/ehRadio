@@ -3,7 +3,7 @@
 
 /*******************************************************
 
-Copy this file in the project root directory (next to the yoRadio.ino file)
+Copy this file in the project root directory (next to the ehRadio.ino file)
 Uncomment the lines you need, to override the default value and set the values according to the connected equipment.
 
 The connection tables are located here https://github.com/e2002/yoradio#connection-tables

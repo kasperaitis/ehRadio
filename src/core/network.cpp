@@ -6,6 +6,7 @@
 #include "netserver.h"
 #include "player.h"
 #include "mqtt.h"
+#include <DNSServer.h>
 
 #ifndef WIFI_ATTEMPTS
   #define WIFI_ATTEMPTS  16
@@ -152,7 +153,7 @@ bool MyNetwork::wifiBegin(bool silent){
   if(strlen(config.store.mdnsname)>0){
     WiFi.setHostname(config.store.mdnsname);
   }else{
-    snprintf(buf, MDNS_LENGTH, "yoradio-%x", config.getChipId());
+    snprintf(buf, MDNS_LENGTH, "ehradio-%x", config.getChipId());
     WiFi.setHostname(buf);
   }
   */
@@ -278,11 +279,21 @@ void rebootTime() {
 
 void MyNetwork::raiseSoftAP() {
   WiFi.mode(WIFI_AP);
-  WiFi.softAP(apSsid, apPassword);
+  #ifdef AP_PASSWORD
+    WiFi.softAP(AP_SSID, AP_PASSWORD);
+  #else
+    WiFi.softAP(AP_SSID);
+  #endif
+  dnsServer = new DNSServer();
+  dnsServer->start(53, "*", WiFi.softAPIP());
   Serial.println("##[BOOT]#");
   BOOTLOG("************************************************");
   BOOTLOG("Running in AP mode");
-  BOOTLOG("Connect to AP %s with password %s", apSsid, apPassword);
+  #ifdef AP_PASSWORD
+    BOOTLOG("Connect to AP %s with password %s", AP_SSID, AP_PASSWORD);
+  #else
+    BOOTLOG("Connect to AP %s with no password", AP_SSID);
+  #endif
   BOOTLOG("and go to http://192.168.4.1/ to configure");
   BOOTLOG("************************************************");
   status = SOFT_AP;

@@ -1,9 +1,9 @@
 {
-    "domain": "yoradio",
-    "name": "ёRadio",
-    "documentation": "https://github.com/e2002/yoradio",
+    "domain": "ehradio",
+    "name": "ehRadio",
+    "documentation": "https://github.com/trip5/ehRadio",
     "dependencies": ["http", "mqtt"],
-    "codeowners": ["@e2002"],
+    "codeowners": ["@trip5"],
     "requirements": [],
-    "version": "0.9.410"
+    "version": "2025.08.10"
   }

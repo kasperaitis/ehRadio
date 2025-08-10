@@ -3,7 +3,7 @@
 #define MQTT_USER   ""
 #define MQTT_PASS   ""
 
-#define MQTT_ROOT_TOPIC  "yoradio/100/"
+#define MQTT_ROOT_TOPIC  "ehradio/100/"
 
 /*
 Topics:

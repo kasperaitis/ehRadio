@@ -34,13 +34,13 @@ public:
 
   /** 
    * Called at the beginning of the sketch setup process.
-   * Location: setup(), yoRadio.ino
+   * Location: setup(), ehRadio.ino
    */
   virtual void on_setup() __attribute__((weak)) {}
 
   /** 
    * Called at the end of the sketch setup process.
-   * Location: setup(), yoRadio.ino
+   * Location: setup(), ehRadio.ino
    */
   virtual void on_end_setup() __attribute__((weak)) {}
 

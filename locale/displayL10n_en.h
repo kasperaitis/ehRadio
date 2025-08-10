@@ -3,7 +3,7 @@
 #include <pgmspace.h>
 /*************************************************************************************
     HOWTO:
-    Copy this file to yoRadio/locale/displayL10n_custom.h
+    Copy this file to locale/displayL10n_custom.h
     and modify it
 *************************************************************************************/
 const char mon[] PROGMEM = "mo";
@@ -68,7 +68,12 @@ const char const_getWeather[]    PROGMEM = "";
 const char  const_waitForSD[]    PROGMEM = "INDEX SD";
 
 const char        apNameTxt[]    PROGMEM = "AP NAME";
-const char        apPassTxt[]    PROGMEM = "PASSWORD";
+#ifdef AP_PASSWORD
+  const char        apPassTxt[]    PROGMEM = "PASSWORD";
+#else
+  const char        apPassTxt[]    PROGMEM = "NO PASSWORD";
+#endif
+
 const char       bootstrFmt[]    PROGMEM = "Wi-fi: %s";
 const char        apSettFmt[]    PROGMEM = "SETTINGS PAGE ON: HTTP://%s/";
 #if EXT_WEATHER

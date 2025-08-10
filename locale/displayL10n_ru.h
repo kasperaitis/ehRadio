@@ -3,7 +3,7 @@
 #include <pgmspace.h>
 /*************************************************************************************
     HOWTO:
-    Copy this file to yoRadio/locale/displayL10n_custom.h
+    Copy this file to locale/displayL10n_custom.h
     and modify it
 *************************************************************************************/
 const char mon[] PROGMEM = "пн";
@@ -68,7 +68,11 @@ const char const_getWeather[]    PROGMEM = "";
 const char  const_waitForSD[]    PROGMEM = "ИНДЕКС SD";
 
 const char        apNameTxt[]    PROGMEM = "ТОЧКА ДОСТУПА";
-const char        apPassTxt[]    PROGMEM = "ПАРОЛЬ";
+#ifdef AP_PASSWORD
+  const char        apPassTxt[]    PROGMEM = "ПАРОЛЬ";
+#else
+  const char        apPassTxt[]    PROGMEM = "НЕТ ПАРОЛЯ";
+#endif
 const char       bootstrFmt[]    PROGMEM = "Соединяюсь с %s";
 const char        apSettFmt[]    PROGMEM = "НАСТРОЙКИ: HTTP://%s/";
 #if EXT_WEATHER
