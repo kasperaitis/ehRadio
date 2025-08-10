@@ -58,5 +58,5 @@ jobs:
             git commit -m "Update JSON automatically from external sources"
             git push
           else
-            echo "No changes to commit for data files."
+            echo "No changes to commit for JSON files."
           fi
