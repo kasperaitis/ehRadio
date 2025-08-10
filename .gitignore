@@ -1,7 +1,6 @@
 .pio
 .vscode
 .gitignore
-/data/data
-/myoptions.h
-/mytheme.h
+/data/data/*
 /platformio.ini
+/*.h
