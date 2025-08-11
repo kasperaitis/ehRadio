@@ -18,7 +18,7 @@ Documentation will be slowly improved.
 
 
 
-### 2025.08.11
+### 2025.08.12
 
   - new folder `builds/trip5` that contain my `platformio.ini`, `myoptions.h`, `mytheme.h`
     - these files are used by the workflow that generates the automatic builds
@@ -26,8 +26,8 @@ Documentation will be slowly improved.
     - for forks, just make a sub-folder in `builds` using their github name
       - must contain `platformio.ini` at a minimum or the workflow will abort
     - automatic builds into Releases are triggered by tags
-      - `git tag 2025.08.11`
-      - `git push origin 2025.08.11`
+      - `git tag 2025.08.12`
+      - `git push origin 2025.08.12`
     - this way, we can share configuration and platformio.ini working codes
   - `.gitignore` file now included by default that ignores certain files
     - you can still use `platformio.ini`, `myoptions.h`, `mytheme.h` in your root locally
@@ -37,10 +37,43 @@ Documentation will be slowly improved.
     - can use `#define AP_SSID ssidname` and `#define AP_PASSWORD password` in `myoptions.h`
     - a bit faster reponse time
   - 12-hour mode fixed on color screens (space is now the same width as numbers)
-  - add `#define INVERTDISPLAY true` to `myoptions.h` to set the default state of invert display (otherwise false)
+  - some more options can have their defaults set by adding defines to `myoptions.h`
+    - `#define SOUND_VOLUME 12` sets the default of the sound volume (0 to 254, otherwise 12)
+    - `#define SOUND_BALANCE true` sets the default of the sound balance (-16 to 16, otherwise 0)
+    - `#define EQ_TREBLE 0` sets the default of the EQ treble (-16 to 16, otherwise 0)
+    - `#define EQ_MIDDLE 0` sets the default of the EQ middle  (-16 to 16, otherwise 0)
+    - `#define EQ_BASS 0` sets the default of EQ bass (-16 to 16, otherwise 0)
+    - `#define SD_SHUFFLE true` sets the default of SD shuffle (otherwise false)
+    - `#define SMART_START true` sets the default of smart start (otherwise false)
+    - `#define SHOW_AUDIO_INFO true` sets the default of audio info (otherwise false)
+    - `#define SHOW_VU_METER true` sets the default of the VU meter (otherwise false)
+    - `#define SOFTAP_REBOOT_DELAY 0` sets the default of the soft AP reboot delay (0 to 20 minutes, otherwise 0)
+    - `#define SCREEN_FLIP true` sets the default of flip screen (otherwise false)
+    - `#define SCREEN_INVERT true` sets the default of invert display (otherwise false)
+    - `#define NUMBERED_PLAYLIST true` sets the default of numbered playlist (otherwise false)
+    - `#define CLOCK_TWELVE true` sets the default of the 12-hour clock (otherwise false)
+    - `#define VOLUME_PAGE true` sets the default of the volume page (otherwise false)
+    - `#define SCREEN_BRIGHTNESS true` sets the default of the screen brightness (otherwise 100)
+    - `#define SCREEN_CONTRAST true` sets the default of screen brightness (otherwise 55)
+      - not yet editable in the UI but it should be soon.
+    - screensaver options (while not playing):
+      - `#define SS_NOTPLAYING true` to set the default state (otherwise false)
+      - `#define SS_NOTPLAYING_BLANK true` sets the default of blank (otherwise false)
+      - `#define SS_NOTPLAYING_TIME 20` sets the default of the timeout (5 to 65520 seconds, otherwise 20)
+    - screensaver options (while playing):
+      - `#define SS_PLAYING true` to set the default state (otherwise false)
+      - `#define SS_PLAYING_BLANK true` sets the default of blank (otherwise false)
+      - `#define SS_PLAYING_TIME 5` sets the default of the timeout (1 to 1080 minutes, otherwise 5)
+    - `#define VOLUME_STEPS 1` sets the default of volume steps (1 to 10, otherwise 1)
+    - `#define TOUCH_FLIP true` sets the default of touchscreen debug (otherwise false)
+    - `#define TOUCH_DEBUG true` sets the default of touchscreen debug (otherwise false)
+    - `#define ROTARY_ACCEL 200` sets the default of the rotary encoder acceleration (1 to 700, otherwise 200)
+    - `#define ONE_CLICK_SWITCH true` sets the default of one-click station switching (otherwise false)
+    - `#define IR_TOLERANCE 35` sets the default of IR tolerance (10 to 80, otherwise 35)
+    - during this process I also deleted many store keys that were leftover from much earlier versions of yoRadio
   - WebUI colors tweaked (more changes later)
-  - ST7796 (480x320) and ILI9488 (480x320) can have a bigger boot logo
-    - add `#define BIGBOOTLOGO` to `myoptions.h`
+  - Displays ST7796 (480x320) and ILI9488 (480x320) can have a bigger boot logo
+    - add `#define BIG_BOOT_LOGO` to `myoptions.h`
       - this takes up a not-small amount of flash memory so not recommended for plain ESP32
   - improvements from yoRadio v0.9.574 (latest as of this date)
     - ST7789_76 2.25" display
@@ -157,10 +190,10 @@ Documentation will be slowly improved.
 - regional defaults now be defined in `myoptions.h` (defaults in quotes):
   - `#define TIMEZONE_NAME "Europe/Moscow"`
   - `#define TIMEZONE_POSIX "MSK-3"`
-  - `#define SNTP1 "pool.ntp.org"`
-  - `#define SNTP2 "0.ru.pool.ntp.org"`
-  - `#define WEATHERLAT "55.7512"`
-  - `#define WEATHERLON "37.6184"`
+  - `#define SNTP_1 "pool.ntp.org"`
+  - `#define SNTP_2 "0.ru.pool.ntp.org"`
+  - `#define WEATHER_LAT "55.7512"`
+  - `#define WEATHER_LON "37.6184"`
   - all can still be edited using WebUI
 - Radio station search via Radio Browser API
   - performs search queries to a https://www.radio-browser.info/ server

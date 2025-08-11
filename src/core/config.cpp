@@ -390,10 +390,10 @@ void Config::setIrBtn(int val){
 #endif
 void Config::resetSystem(const char *val, uint8_t clientId){
   if (strcmp(val, "system") == 0) {
-    saveValue(&store.smartstart, (uint8_t)2, false);
-    saveValue(&store.audioinfo, false, false);
-    saveValue(&store.vumeter, false, false);
-    saveValue(&store.softapdelay, (uint8_t)0, false);
+    saveValue(&store.smartstart, (uint8_t)SMART_START, false);
+    saveValue(&store.audioinfo, SHOW_AUDIO_INFO, false);
+    saveValue(&store.vumeter, SHOW_VU_METER, false);
+    saveValue(&store.softapdelay, (uint8_t)SOFTAP_REBOOT_DELAY, false);
     snprintf(store.mdnsname, MDNS_LENGTH, "ehradio-%x", getChipId());
     saveValue(store.mdnsname, store.mdnsname, MDNS_LENGTH, true, true);
     display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
@@ -401,24 +401,24 @@ void Config::resetSystem(const char *val, uint8_t clientId){
     return;
   }
   if (strcmp(val, "screen") == 0) {
-    saveValue(&store.flipscreen, false, false);
-    saveValue(&store.volumepage, true);
-    saveValue(&store.clock12, false);
+    saveValue(&store.flipscreen, SCREEN_FLIP, false);
+    saveValue(&store.volumepage, VOLUME_PAGE);
+    saveValue(&store.clock12, CLOCK_TWELVE);
     display.flip();
-    saveValue(&store.invertdisplay, false, false);
+    saveValue(&store.invertdisplay, SCREEN_INVERT, false);
     display.invert();
     saveValue(&store.dspon, true, false);
-    store.brightness = 100;
+    store.brightness = SCREEN_BRIGHTNESS;
     setBrightness(false);
-    saveValue(&store.contrast, (uint8_t)55, false);
+    saveValue(&store.contrast, (uint8_t)SCREEN_CONTRAST, false);
     display.setContrast();
-    saveValue(&store.numplaylist, false);
-    saveValue(&store.screensaverEnabled, false);
-    saveValue(&store.screensaverTimeout, (uint16_t)20);
-    saveValue(&store.screensaverBlank, false);
-    saveValue(&store.screensaverPlayingEnabled, false);
-    saveValue(&store.screensaverPlayingTimeout, (uint16_t)5);
-    saveValue(&store.screensaverPlayingBlank, false);
+    saveValue(&store.numplaylist, NUMBERED_PLAYLIST);
+    saveValue(&store.screensaverEnabled, SS_NOTPLAYING);
+    saveValue(&store.screensaverTimeout, (uint16_t)SS_NOTPLAYING_TIME);
+    saveValue(&store.screensaverBlank, SS_NOTPLAYING_BLANK);
+    saveValue(&store.screensaverPlayingEnabled, SS_PLAYING);
+    saveValue(&store.screensaverPlayingTimeout, (uint16_t)SS_PLAYING_TIME);
+    saveValue(&store.screensaverPlayingBlank, SS_PLAYING_BLANK);
     display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
     netserver.requestOnChange(GETSCREEN, clientId);
     return;
@@ -426,8 +426,8 @@ void Config::resetSystem(const char *val, uint8_t clientId){
   if (strcmp(val, "timezone") == 0) {
     saveValue(store.tz_name, TIMEZONE_NAME, sizeof(store.tz_name), false);
     saveValue(store.tzposix, TIMEZONE_POSIX, sizeof(store.tzposix), false);
-    saveValue(store.sntp1, SNTP1, sizeof(store.sntp1), false);
-    saveValue(store.sntp2, SNTP2, sizeof(store.sntp2));
+    saveValue(store.sntp1, SNTP_1, sizeof(store.sntp1), false);
+    saveValue(store.sntp2, SNTP_2, sizeof(store.sntp2));
     network.forceTimeSync = true;
     network.requestTimeSync(true);
     network.forceTimeSync = true;
@@ -436,8 +436,8 @@ void Config::resetSystem(const char *val, uint8_t clientId){
   }
   if (strcmp(val, "weather") == 0) {
     saveValue(&store.showweather, false, false);
-    saveValue(store.weatherlat, WEATHERLAT, sizeof(store.weatherlat), false);
-    saveValue(store.weatherlon, WEATHERLON, sizeof(store.weatherlon), false);
+    saveValue(store.weatherlat, WEATHER_LAT, sizeof(store.weatherlat), false);
+    saveValue(store.weatherlon, WEATHER_LON, sizeof(store.weatherlon), false);
     saveValue(store.weatherkey, "", WEATHERKEY_LENGTH);
     network.trueWeather=false;
     display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
@@ -445,12 +445,12 @@ void Config::resetSystem(const char *val, uint8_t clientId){
     return;
   }
   if (strcmp(val, "controls") == 0) {
-    saveValue(&store.volsteps, (uint8_t)1, false);
-    saveValue(&store.fliptouch, false, false);
-    saveValue(&store.dbgtouch, false, false);
-    saveValue(&store.skipPlaylistUpDown, false);
-    setEncAcceleration(200);
-    setIRTolerance(40);
+    saveValue(&store.volsteps, (uint8_t)VOLUME_STEPS, false);
+    saveValue(&store.fliptouch, TOUCH_FLIP, false);
+    saveValue(&store.dbgtouch, TOUCH_DEBUG, false);
+    saveValue(&store.skipPlaylistUpDown, ONE_CLICK_SWITCH);
+    setEncAcceleration(ROTARY_ACCEL);
+    setIRTolerance(IR_TOLERANCE);
     netserver.requestOnChange(GETCONTROLS, clientId);
     return;
   }
@@ -1329,29 +1329,42 @@ void Config::bootInfo() {
 // Macro expands to 3 fields (offset_of_config_t_store_variable, "key_max_15_char", size_of_store_variable)
 const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(config_set, "cfgset"),
+  CONFIG_KEY_ENTRY(lastStation, "laststa"),
+  CONFIG_KEY_ENTRY(countStation, "countsta"),
+  CONFIG_KEY_ENTRY(lastSSID, "lastssid"),
+  CONFIG_KEY_ENTRY(lastSdStation, "lastsdsta"),
+  CONFIG_KEY_ENTRY(play_mode, "playmode"),
   CONFIG_KEY_ENTRY(volume, "vol"),
   CONFIG_KEY_ENTRY(balance, "bal"),
   CONFIG_KEY_ENTRY(trebble, "treb"),
   CONFIG_KEY_ENTRY(middle, "mid"),
   CONFIG_KEY_ENTRY(bass, "bass"),
-  CONFIG_KEY_ENTRY(lastStation, "laststa"),
-  CONFIG_KEY_ENTRY(countStation, "countsta"),
-  CONFIG_KEY_ENTRY(lastSSID, "lastssid"),
-  CONFIG_KEY_ENTRY(audioinfo, "audioinfo"),
+  CONFIG_KEY_ENTRY(sdsnuffle, "sdshuffle"),
   CONFIG_KEY_ENTRY(smartstart, "smartstart"),
-  CONFIG_KEY_ENTRY(timezoneOffset, "tzoff"),
+  CONFIG_KEY_ENTRY(audioinfo, "audioinfo"),
   CONFIG_KEY_ENTRY(vumeter, "vumeter"),
   CONFIG_KEY_ENTRY(softapdelay, "softapdelay"),
+  CONFIG_KEY_ENTRY(mdnsname, "mdnsname"),
   CONFIG_KEY_ENTRY(flipscreen, "flipscr"),
-  CONFIG_KEY_ENTRY(volumepage, "volpage"),
-  CONFIG_KEY_ENTRY(clock12, "clock12"),
   CONFIG_KEY_ENTRY(invertdisplay, "invdisp"),
-  CONFIG_KEY_ENTRY(numplaylist, "numplaylist"),
-  CONFIG_KEY_ENTRY(fliptouch, "fliptouch"),
-  CONFIG_KEY_ENTRY(dbgtouch, "dbgtouch"),
   CONFIG_KEY_ENTRY(dspon, "dspon"),
+  CONFIG_KEY_ENTRY(numplaylist, "numplaylist"),
+  CONFIG_KEY_ENTRY(clock12, "clock12"),
+  CONFIG_KEY_ENTRY(volumepage, "volpage"),
   CONFIG_KEY_ENTRY(brightness, "bright"),
   CONFIG_KEY_ENTRY(contrast, "contrast"),
+  CONFIG_KEY_ENTRY(screensaverEnabled, "scrnsvren"),
+  CONFIG_KEY_ENTRY(screensaverTimeout, "scrnsvrto"),
+  CONFIG_KEY_ENTRY(screensaverBlank, "scrnsvrbl"),
+  CONFIG_KEY_ENTRY(screensaverPlayingEnabled, "scrnsvrplen"),
+  CONFIG_KEY_ENTRY(screensaverPlayingTimeout, "scrnsvrplto"),
+  CONFIG_KEY_ENTRY(screensaverPlayingBlank, "scrnsvrplbl"),
+  CONFIG_KEY_ENTRY(volsteps, "vsteps"),
+  CONFIG_KEY_ENTRY(fliptouch, "fliptouch"),
+  CONFIG_KEY_ENTRY(dbgtouch, "dbgtouch"),
+  CONFIG_KEY_ENTRY(encacc, "encacc"),
+  CONFIG_KEY_ENTRY(skipPlaylistUpDown, "skipplupdn"),
+  CONFIG_KEY_ENTRY(irtlp, "irtlp"),
   CONFIG_KEY_ENTRY(tz_name, "tzname"),
   CONFIG_KEY_ENTRY(tzposix, "tzposix"),
   CONFIG_KEY_ENTRY(sntp1, "sntp1"),
@@ -1360,37 +1373,11 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(weatherlat, "weatherlat"),
   CONFIG_KEY_ENTRY(weatherlon, "weatherlon"),
   CONFIG_KEY_ENTRY(weatherkey, "weatherkey"),
-  CONFIG_KEY_ENTRY(_reserved, "resv"),
-  CONFIG_KEY_ENTRY(lastSdStation, "lastsdsta"),
-  CONFIG_KEY_ENTRY(sdsnuffle, "sdsnuffle"),
-  CONFIG_KEY_ENTRY(volsteps, "vsteps"),
-  CONFIG_KEY_ENTRY(encacc, "encacc"),
-  CONFIG_KEY_ENTRY(play_mode, "playmode"),
-  CONFIG_KEY_ENTRY(irtlp, "irtlp"),
-  CONFIG_KEY_ENTRY(btnpullup, "btnpullup"),
-  CONFIG_KEY_ENTRY(btnlongpress, "btnlngpress"),
-  CONFIG_KEY_ENTRY(btnclickticks, "btnclkticks"),
-  CONFIG_KEY_ENTRY(btnpressticks, "btnprsticks"),
-  CONFIG_KEY_ENTRY(encpullup, "encpullup"),
-  CONFIG_KEY_ENTRY(enchalf, "enchalf"),
-  CONFIG_KEY_ENTRY(enc2pullup, "enc2pullup"),
-  CONFIG_KEY_ENTRY(enc2half, "enc2half"),
-  CONFIG_KEY_ENTRY(forcemono, "forcemono"),
-  CONFIG_KEY_ENTRY(i2sinternal, "i2sint"),
-  CONFIG_KEY_ENTRY(rotate90, "rotate"),
-  CONFIG_KEY_ENTRY(screensaverEnabled, "scrnsvren"),
-  CONFIG_KEY_ENTRY(screensaverTimeout, "scrnsvrto"),
-  CONFIG_KEY_ENTRY(screensaverBlank, "scrnsvrbl"),
-  CONFIG_KEY_ENTRY(screensaverPlayingEnabled, "scrnsvrplen"),
-  CONFIG_KEY_ENTRY(screensaverPlayingTimeout, "scrnsvrplto"),
-  CONFIG_KEY_ENTRY(screensaverPlayingBlank, "scrnsvrplbl"),
-  CONFIG_KEY_ENTRY(mdnsname, "mdnsname"),
-  CONFIG_KEY_ENTRY(skipPlaylistUpDown, "skipplupdn"),
   {0, nullptr, 0} // Yup, 3 fields - don't delete the last line!
 };
 
 void Config::deleteOldKeys() {
-  // List any old/legacy keys to remove here
+  // List any old/legacy keys to remove here (they will be deleted from prefs if found)
   // prefs.remove("removedkey");
   // prefs.remove("removedkey");
 }

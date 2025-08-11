@@ -36,7 +36,7 @@ void DspCore::initDisplay() {
   plYStart = (height() / 2 - plItemHeight / 2) - plItemHeight * (plTtemsCount - 1) / 2 + playlistConf.widget.textsize*2;
 }
 
-#ifdef BIGBOOTLOGO
+#ifdef BIG_BOOT_LOGO
   #include "fonts/bootlogoX.h"
   void DspCore::drawLogo(uint16_t top) { drawRGBBitmap((width() - 198) / 2, (top - (99/2)), bootlogoX, 198, 128); }
 #else

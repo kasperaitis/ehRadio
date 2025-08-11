@@ -90,8 +90,8 @@
 #if defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON)
 #define DSP_MODEL       DSP_ILI9488     /* Big Display */
 #define PRINT_FIX
-#define BIGBOOTLOGO
-#define INVERTDISPLAY true
+#define BIG_BOOT_LOGO
+#define SCREEN_INVERT true
 #define TFT_DC          10
 #define TFT_CS          9
 #define BRIGHTNESS_PIN  4
@@ -109,7 +109,6 @@
 //#define DTYPE           INITR_144GREENTAB   /* add for 1.44" Green Tab */
 //#define DTYPE           INITR_MINI160x80    /* add for 0.96" Mini 160x80 */
 #define PRINT_FIX
-#define INVERTDISPLAY   false
 #define TFT_DC          10
 #define TFT_CS          9
 #define BRIGHTNESS_PIN  4       /* Red Smaller TFT doesn't have brightness control so leave commented? use unused pin? or 255? */
@@ -147,15 +146,19 @@
 /* --- BUTTONS --- */
 
 #if defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS)
+#define ONE_CLICK_SWITCH true
 #define BTN_UP          17      /* Prev, Move Up */
 #define BTN_DOWN        18      /* Next, Move Down */
 #define BTN_MODE        16      /* MODE switcher  */
 #define WAKE_PIN        16      /* Wake from Deepsleep (actually using existing pins kind of disables sleep) */
 #endif
 #if defined(ESP32_S3_TRIP5_SH1106_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SSD1306X32_PCM_1BUTTON)
+#define ONE_CLICK_SWITCH true
 #define BTN_DOWN        17      /* Next, Move Down */
 #endif
 #if defined(ESP32_S3_TRIP5_SH1106_PCM_REMOTE)
+#define ONE_CLICK_SWITCH true
+#define VOLUME_STEPS 2
 #define BTN_UP          17      /* Prev, Move Up */
 #define BTN_DOWN        16      /* Next, Move Down */
 #define BTN_CENTER      18      /* ENTER, Play/pause  */
@@ -164,6 +167,7 @@
 #define WAKE_PIN        18      /* Wake from Deepsleep (actually using existing pins kind of disables sleep) */
 #endif
 #if defined(ESP32_S3_TRIP5_ST7735_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON)
+#define ONE_CLICK_SWITCH true
 #define BTN_DOWN		42		/* Next, Move Down */
 #endif
 
@@ -216,24 +220,29 @@
 //#define SDSPISPEED      8000000     /* Default speed 20000000 */
 
 
-/* --- REGIONAL DEFAULTS --- */
+/* --- USER DEFAULTS --- */
 
 #if defined (BOARD_ESP32_S3_N16R8) || defined (BOARD_ESP32)
 #define TIMEZONE_NAME   "Europe/Moscow"
 #define TIMEZONE_POSIX  "MSK-3"
-#define SNTP1           "pool.ntp.org"
-#define SNTP2           "0.ru.pool.ntp.org"
-#define WEATHERLAT      "55.7512"       /* latitude */
-#define WEATHERLON      "37.6184"       /* longitude */
+#define SNTP_1          "pool.ntp.org"
+#define SNTP_2          "0.ru.pool.ntp.org"
+#define WEATHER_LAT     "55.7512"       /* latitude */
+#define WEATHER_LON     "37.6184"       /* longitude */
 #elif defined(ESP32_S3_TRIP5_ST7735_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SH1106_PCM_REMOTE) ||\
       defined(ESP32_S3_TRIP5_SH1106_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SSD1306X32_PCM_1BUTTON) ||\
       defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS ) || defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON)
+#define SMART_START true
+#define SD_SHUFFLE true
+#define SHOW_AUDIO_INFO true
+#define SHOW_VU_METER true
+#define SS_PLAYING true
 #define TIMEZONE_NAME   "Asia/Seoul"
 #define TIMEZONE_POSIX  "KST-9"
-#define SNTP1           "kr.pool.ntp.org"
-#define SNTP2           "pool.ntp.org"
-#define WEATHERLAT      "37.5503"       /* latitude */
-#define WEATHERLON      "126.9971"      /* longitude */
+#define SNTP_1          "kr.pool.ntp.org"
+#define SNTP_2          "pool.ntp.org"
+#define WEATHER_LAT     "37.5503"       /* latitude */
+#define WEATHER_LON     "126.9971"      /* longitude */
 #endif
 
 /* --- MORE, UNUSED, UNKNOWN, NOTES --- */

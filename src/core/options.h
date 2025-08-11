@@ -493,13 +493,6 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   #define USE_OTA    false
 #endif
 
-#ifndef INVERTDISPLAY
-  #define INVERTDISPLAY false
-#elif (INVERTDISPLAY != true) && (INVERTDISPLAY != false)
-  #undef INVERTDISPLAY
-  #define INVERTDISPLAY false
-#endif
-
 #ifndef AP_SSID
   #define AP_SSID "ehRadio"
 #endif
@@ -547,25 +540,151 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #define RADIO_BROWSER_SERVERS_URL "https://all.api.radio-browser.info/json/servers"
 #endif
 
-/*        REGION DEFAULTS         */
-/*    Still editable in WebUI     */
+/*         USER DEFAULTS          */
+/*   sets defaults in config.h    */
+/*    still editable in WebUI     */
+
+#ifndef SOUND_VOLUME
+  #define SOUND_VOLUME 12
+#elif (SOUND_VOLUME < 0) || (SOUND_VOLUME > 254)
+  #undef SOUND_VOLUME
+#endif
+#ifndef SOUND_BALANCE
+  #define SOUND_BALANCE 0
+#elif (SOUND_BALANCE < -16) || (SOUND_BALANCE > 16)
+  #undef SOUND_BALANCE
+#endif
+#ifndef EQ_TREBLE
+  #define EQ_TREBLE 0
+#elif (EQ_TREBLE < -16) || (EQ_TREBLE > 16)
+  #undef EQ_TREBLE
+#endif
+#ifndef EQ_MIDDLE
+  #define EQ_MIDDLE 0
+#elif (EQ_MIDDLE < -16) || (EQ_MIDDLE > 16)
+  #undef EQ_MIDDLE
+#endif
+#ifndef EQ_BASS
+  #define EQ_BASS 0
+#elif (EQ_BASS < -16) || (EQ_BASS > 16)
+  #undef EQ_BASS
+#endif
+#ifndef SD_SHUFFLE
+  #define SD_SHUFFLE false
+#endif
+
+#ifndef SMART_START
+  #define SMART_START 2
+#elif (SMART_START == true)
+  #undef SMART_START
+  #define SMART_START 1
+#elif (SMART_START == false)
+  #undef SMART_START
+  #define SMART_START 2
+#endif
+#ifndef SHOW_AUDIO_INFO
+  #define SHOW_AUDIO_INFO false
+#endif
+#ifndef SHOW_VU_METER
+  #define SHOW_VU_METER false
+#endif
+#ifndef SOFTAP_REBOOT_DELAY
+  #define SOFTAP_REBOOT_DELAY 1
+#elif (SOFTAP_REBOOT_DELAY < 0) || (SOFTAP_REBOOT_DELAY > 20)
+  #undef SOFTAP_REBOOT_DELAY
+#endif
+
+#ifndef SCREEN_FLIP
+  #define SCREEN_FLIP false
+#endif
+#ifndef SCREEN_INVERT
+  #define SCREEN_INVERT false
+#endif
+#ifndef NUMBERED_PLAYLIST
+  #define NUMBERED_PLAYLIST false
+#endif
+#ifndef CLOCK_TWELVE
+  #define CLOCK_TWELVE false
+#endif
+#ifndef VOLUME_PAGE
+  #define VOLUME_PAGE false
+#endif
+#ifndef SCREEN_BRIGHTNESS
+  #define SCREEN_BRIGHTNESS 100
+#elif (SCREEN_BRIGHTNESS < 1) || (SCREEN_BRIGHTNESS > 100)
+  #undef SCREEN_BRIGHTNESS
+#endif
+#ifndef SCREEN_CONTRAST
+  #define SCREEN_CONTRAST 55
+#elif (SCREEN_CONTRAST < 1) || (SCREEN_CONTRAST > 100)
+  #undef SCREEN_CONTRAST
+#endif
+
+#ifndef SS_NOTPLAYING
+  #define SS_NOTPLAYING false
+#endif
+#ifndef SS_NOTPLAYING_BLANK
+  #define SS_NOTPLAYING_BLANK false
+#endif
+#ifndef SS_NOTPLAYING_TIME
+  #define SS_NOTPLAYING_TIME 1
+#elif (SS_NOTPLAYING_TIME < 1) || (SS_NOTPLAYING_TIME > 65520)
+  #undef SS_NOTPLAYING_TIME
+#endif
+#ifndef SS_PLAYING
+  #define SS_PLAYING false
+#endif
+#ifndef SS_PLAYING_BLANK
+  #define SS_PLAYING_BLANK false
+#endif
+#ifndef SS_PLAYING_TIME
+  #define SS_PLAYING_TIME 5
+#elif (SS_PLAYING_TIME < 1) || (SS_PLAYING_TIME > 1080)
+  #undef SS_PLAYING_TIME
+#endif
+
+#ifndef VOLUME_STEPS
+  #define VOLUME_STEPS 1
+#elif (VOLUME_STEPS < 1) || (VOLUME_STEPS > 10)
+  #undef VOLUME_STEPS
+#endif
+#ifndef TOUCH_FLIP
+  #define TOUCH_FLIP false
+#endif
+#ifndef TOUCH_DEBUG
+  #define TOUCH_DEBUG false
+#endif
+#ifndef ROTARY_ACCEL
+  #define ROTARY_ACCEL 200
+#elif (ROTARY_ACCEL < 1) || (ROTARY_ACCEL > 700)
+  #undef ROTARY_ACCEL
+#endif
+#ifndef ONE_CLICK_SWITCH
+  #define ONE_CLICK_SWITCH false
+#endif
+#ifndef IR_TOLERANCE
+  #define IR_TOLERANCE 35
+#elif (IR_TOLERANCE < 10) || (IR_TOLERANCE > 80)
+  #undef IR_TOLERANCE
+#endif
+
 #ifndef TIMEZONE_NAME
-#define TIMEZONE_NAME "America/Halifax"
+  #define TIMEZONE_NAME "America/Halifax"
 #endif
 #ifndef TIMEZONE_POSIX
-#define TIMEZONE_POSIX "AST4ADT,M3.2.0,M11.1.0"
+  #define TIMEZONE_POSIX "AST4ADT,M3.2.0,M11.1.0"
 #endif
-#ifndef SNTP1
-#define SNTP1 "ca.pool.ntp.org"
+#ifndef SNTP_1
+  #define SNTP_1 "ca.pool.ntp.org"
 #endif
-#ifndef SNTP2
-#define SNTP2 "pool.ntp.org"
+#ifndef SNTP_2
+  #define SNTP_2 "pool.ntp.org"
 #endif
-#ifndef WEATHERLAT
-#define WEATHERLAT "44.8857"
+#ifndef WEATHER_LAT
+  #define WEATHER_LAT "44.8857"
 #endif
-#ifndef WEATHERLON
-#define WEATHERLON "63.1005"
+#ifndef WEATHER_LON
+  #define WEATHER_LON "63.1005"
 #endif
 
 #endif // options_h
