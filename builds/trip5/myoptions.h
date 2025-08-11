@@ -109,7 +109,7 @@
 //#define DTYPE           INITR_144GREENTAB   /* add for 1.44" Green Tab */
 //#define DTYPE           INITR_MINI160x80    /* add for 0.96" Mini 160x80 */
 #define PRINT_FIX
-#define INVERTDISPLAY   true
+#define INVERTDISPLAY   false
 #define TFT_DC          10
 #define TFT_CS          9
 #define BRIGHTNESS_PIN  4       /* Red Smaller TFT doesn't have brightness control so leave commented? use unused pin? or 255? */

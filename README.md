@@ -22,6 +22,7 @@ Documentation will be slowly improved.
 
   - new folder `builds/trip5` that contain my `platformio.ini`, `myoptions.h`, `mytheme.h`
     - these files are used by the workflow that generates the automatic builds
+    - using VSCode extension, can be automatically synced from root to builds/username (see notes in build folder)
     - for forks, just make a sub-folder in `builds` using their github name
       - must contain `platformio.ini` at a minimum or the workflow will abort
     - automatic builds into Releases are triggered by tags

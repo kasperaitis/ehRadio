@@ -1,0 +1,29 @@
+{
+	"files.associations": {
+		"array": "cpp",
+		"deque": "cpp",
+		"list": "cpp",
+		"string": "cpp",
+		"unordered_map": "cpp",
+		"unordered_set": "cpp",
+		"vector": "cpp",
+		"string_view": "cpp",
+		"initializer_list": "cpp",
+		"regex": "cpp",
+		"fstream": "cpp",
+		"typeinfo": "cpp",
+		"cstddef": "cpp"
+	},
+	"filewatcher.commands": [
+		{
+			"match": "platformio.ini",
+			"cmd": "copy \"${file}\" \"${workspaceRoot}\\builds\\username\\platformio.ini\"", 
+			"event": "onFileChange"
+		},
+		{
+			"match": "\\.h",
+			"cmd": "copy \"${file}\" \"${workspaceRoot}\\builds\\username\\\"",
+			"event": "onFileChange"
+		}
+	]
+}
