@@ -99,9 +99,9 @@ Documentation will be slowly improved.
   - `#define YO_FIX` removed (maybe never needed?)
 - data files will no longer be compressed in the repository
   - but they will be available in `Releases` as .gz files for automatic updating of SPIFFS
-    - which means if you really wish to compress them and upload them, you can
+    - which means if you really wish to compress them and upload them to SPIFFs, you can
       - except `rb_srvrs.json` which is obtained automatically anyways
-- a Github workflow is used to update `timezones.json.gz` and `rb_srvrs.json` automatically
+- a Github workflow is used to automatically update `timezones.json.gz` and `rb_srvrs.json`
   - added to the repo automatically whenever a commit is made
 
 ### 0.9.533 Trip5/2025.07.23
