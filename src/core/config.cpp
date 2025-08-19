@@ -444,6 +444,16 @@ void Config::resetSystem(const char *val, uint8_t clientId){
     netserver.requestOnChange(GETWEATHER, clientId);
     return;
   }
+  if (strcmp(val, "mqtt") == 0) {
+    saveValue(&store.mqttenable, false, false);
+    saveValue(store.mqtthost, MQTT_HOST, sizeof(store.mqtthost), false);
+    saveValue(&store.mqttport, (uint16_t)MQTT_PORT);
+    saveValue(store.mqttuser, MQTT_USER, sizeof(store.mqttuser), false);
+    saveValue(store.mqttpass, MQTT_PASS, sizeof(store.mqttpass), false);
+    saveValue(store.mqtttopic, MQTT_TOPIC, sizeof(store.mqtttopic), false);
+    netserver.requestOnChange(GETMQTT, clientId);
+    return;
+  }
   if (strcmp(val, "controls") == 0) {
     saveValue(&store.volsteps, (uint8_t)VOLUME_STEPS, false);
     saveValue(&store.fliptouch, TOUCH_FLIP, false);
@@ -1313,6 +1323,7 @@ void Config::bootInfo() {
   BOOTLOG("clock12:\t%s", store.clock12?"true":"false");
   BOOTLOG("invertdisplay:\t%s", store.invertdisplay?"true":"false");
   BOOTLOG("showweather:\t%s", store.showweather?"true":"false");
+  BOOTLOG("mqttenable:\t%s", store.mqttenable?"true":"false");
   BOOTLOG("buttons:\tleft=%d, center=%d, right=%d, up=%d, down=%d, mode=%d, pullup=%s", 
           BTN_LEFT, BTN_CENTER, BTN_RIGHT, BTN_UP, BTN_DOWN, BTN_MODE, BTN_INTERNALPULLUP?"true":"false");
   BOOTLOG("encoders:\tl1=%d, b1=%d, r1=%d, pullup=%s, l2=%d, b2=%d, r2=%d, pullup=%s", 
@@ -1373,6 +1384,12 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(weatherlat, "weatherlat"),
   CONFIG_KEY_ENTRY(weatherlon, "weatherlon"),
   CONFIG_KEY_ENTRY(weatherkey, "weatherkey"),
+  CONFIG_KEY_ENTRY(mqttenable, "mqttenable"),
+  CONFIG_KEY_ENTRY(mqtthost, "mqtthost"),
+  CONFIG_KEY_ENTRY(mqttport, "mqttport"),
+  CONFIG_KEY_ENTRY(mqttuser, "mqttuser"),
+  CONFIG_KEY_ENTRY(mqttpass, "mqttpass"),
+  CONFIG_KEY_ENTRY(mqtttopic, "mqtttopic"),
   {0, nullptr, 0} // Yup, 3 fields - don't delete the last line!
 };
 

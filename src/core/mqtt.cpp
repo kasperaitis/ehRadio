@@ -1,8 +1,7 @@
 #include "mqtt.h"
+#ifdef MQTT_ENABLE
 
-#ifdef MQTT_ROOT_TOPIC
 #include "WiFi.h"
-
 #include "telnet.h"
 #include "player.h"
 #include "config.h"
@@ -21,8 +20,8 @@ void mqttInit() {
   mqttClient.onConnect(onMqttConnect);
   mqttClient.onDisconnect(onMqttDisconnect);
   mqttClient.onMessage(onMqttMessage);
-  if(strlen(MQTT_USER)>0) mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
-  mqttClient.setServer(MQTT_HOST, MQTT_PORT);
+  if(strlen(config.store.mqttuser)>0) mqttClient.setCredentials(config.store.mqttuser, config.store.mqttpass);
+  mqttClient.setServer(config.store.mqtthost, config.store.mqttport);
   connectToMqtt();
 }
 
@@ -30,7 +29,7 @@ void zeroBuffer(){ memset(topic, 0, sizeof(topic)); memset(status, 0, sizeof(sta
 
 void onMqttConnect(bool sessionPresent) {
   zeroBuffer();
-  sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "command");
+  sprintf(topic, "%s%s", config.store.mqtttopic, "command");
   mqttClient.subscribe(topic, 2);
   mqttPublishStatus();
   mqttPublishVolume();
@@ -40,7 +39,7 @@ void onMqttConnect(bool sessionPresent) {
 void mqttPublishStatus() {
   if(mqttClient.connected()){
     zeroBuffer();
-    sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "status");
+    sprintf(topic, "%s%s", config.store.mqtttopic, "status");
     char name[BUFLEN/2];
     char title[BUFLEN/2];
     config.escapeQuotes(config.station.name, name, sizeof(name)-10);
@@ -53,7 +52,7 @@ void mqttPublishStatus() {
 void mqttPublishPlaylist() {
   if(mqttClient.connected()){
     zeroBuffer();
-    sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "playlist");
+    sprintf(topic, "%s%s", config.store.mqtttopic, "playlist");
     sprintf(status, "http://%s%s", WiFi.localIP().toString().c_str(), PLAYLIST_PATH);
     mqttClient.publish(topic, 0, true, status);
   }
@@ -64,7 +63,7 @@ void mqttPublishVolume(){
     zeroBuffer();
     char vol[5];
     memset(vol, 0, 5);
-    sprintf(topic, "%s%s", MQTT_ROOT_TOPIC, "volume");
+    sprintf(topic, "%s%s", config.store.mqtttopic, "volume");
     sprintf(vol, "%d", config.store.volume);
     mqttClient.publish(topic, 0, true, vol);
   }
@@ -138,4 +137,4 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
   }*/
 }
 
-#endif // #ifdef MQTT_ROOT_TOPIC
+#endif //  #ifdef MQTT_ENABLE

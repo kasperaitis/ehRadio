@@ -121,8 +121,8 @@ void MyNetwork::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
     display.putRequest(NEWMODE, PLAYER);
     if (network.lostPlaying) player.sendCommand({PR_PLAY, config.lastStation()});
   }
-  #ifdef MQTT_ROOT_TOPIC
-    connectToMqtt();
+  #ifdef MQTT_ENABLE
+    if (config.store.mqttenable) connectToMqtt();
   #endif
 }
 

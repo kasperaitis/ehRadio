@@ -1,5 +1,5 @@
 html, body { margin: 0; padding: 0; height: 100%; }
-body { background-color: var(--main-bg-color); color: var(--main-hl-color); font-family: Times, "Times New Roman", serif; font-size: 16px; }
+body { background: var(--main-bg-color); color: var(--main-hl-color); font-family: Times, "Times New Roman", serif; font-size: 16px; }
 a { color: var(--accent-color); text-decoration: none; }
 a:hover { text-decoration: underline; }
 #content { display: flex; max-width: 580px; margin: 0 auto; flex-direction: column; align-items: center; padding: 30px; height: 100%; box-sizing: border-box; position: relative; padding-top: 2px; padding-bottom: 2px; }
@@ -50,7 +50,7 @@ table.stations .importantmessage { color: var(--accent-color) !important; font-s
 .searchbutton#prevSearchPageBtn, .searchbutton#nextSearchPageBtn { font-size: 26px; line-height: 0.75; padding-bottom: 6px; }
 .searchwrap { overflow-y: auto; width: 100%; flex: 1; display: flex; position: relative; }
 .searchwrap::-webkit-scrollbar { width: 5px; height: 8px; background-color: var(--main-bg-color); }
-.searchwrap { scrollbar-color: var(--odd-bg-color) var(--main-bg-color); scrollbar-width: thin; }
+.searchwrap { scrollbar-color: var(--accent-dark) var(--main-bg-color); scrollbar-width: thin; }
 .searchwrap::-webkit-scrollbar-thumb { background: var(--odd-bg-color); }
 .searchbutton.done { margin-top: 10px; margin-bottom: 10px; margin: 0 auto; }
 #copy { padding-top: 10px; font-size: 14px; }

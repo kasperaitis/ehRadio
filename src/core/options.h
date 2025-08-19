@@ -687,4 +687,20 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   #define WEATHER_LON "63.1005"
 #endif
 
+#ifndef MQTT_HOST
+  #define MQTT_HOST "192.168.1.2"
+#endif
+#ifndef MQTT_PORT
+  #define MQTT_PORT 1883
+#endif
+#ifndef MQTT_USER
+  #define MQTT_USER "mqttuser"
+#endif
+#ifndef MQTT_PASS
+  #define MQTT_PASS ""
+#endif
+#ifndef MQTT_TOPIC
+  #define MQTT_TOPIC "ehradio/myradio/"
+#endif
+
 #endif // options_h

@@ -43,8 +43,8 @@ class Player: public Audio {
     bool lockOutput = true;
     bool resumeAfterUrl = false;
     uint32_t sd_min, sd_max;
-    #ifdef MQTT_ROOT_TOPIC
-    char      burl[MQTT_BURL_SIZE];  /* buffer for browseUrl  */
+    #ifdef MQTT_ENABLE
+      char      burl[MQTT_BURL_SIZE];  /* buffer for browseUrl  */
     #endif
   public:
     Player();
@@ -55,9 +55,10 @@ class Player: public Audio {
     bool hasError() { return strlen(_plError)>0; }
     void sendCommand(playerRequestParams_t request);
     void resetQueue();
-    #ifdef MQTT_ROOT_TOPIC
-    void browseUrl();
+    #ifdef MQTT_ENABLE
+      void browseUrl();
     #endif
+    void playUrl(const char* url);
     bool remoteStationName = false;
     plStatus_e status() { return _status; }
     void prev();
@@ -69,7 +70,7 @@ class Player: public Audio {
     void stopInfo();
     void setOutputPins(bool isPlaying);
     void setResumeFilePos(uint32_t pos) { _resumeFilePos = pos; }
-    void playUrl(const char* url);
+
 };
 
 extern Player player;

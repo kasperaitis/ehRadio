@@ -39,9 +39,9 @@ void Player::init() {
   setOutputPins(false);
   delay(50);
   memset(_plError, 0, PLERR_LN);
-#ifdef MQTT_ROOT_TOPIC
-  memset(burl, 0, MQTT_BURL_SIZE);
-#endif
+  #ifdef MQTT_ENABLE
+    if (config.store.mqttenable) memset(burl, 0, MQTT_BURL_SIZE);
+  #endif
   if(MUTE_PIN!=255) pinMode(MUTE_PIN, OUTPUT);
   #if I2S_DOUT!=255
     #if !I2S_INTERNAL
@@ -166,11 +166,9 @@ void Player::loop() {
         break;
       }
       case PR_BURL: {
-      #ifdef MQTT_ROOT_TOPIC
-        if(strlen(burl)>0){
-          browseUrl();
-        }
-      #endif
+        #ifdef MQTT_ENABLE
+          if ((config.store.mqttenable) && (strlen(burl)>0)) browseUrl();
+        #endif
         break;
       }
       default: break;
@@ -184,11 +182,9 @@ void Player::loop() {
       _volTimer=false;
     }
   }
-#ifdef MQTT_ROOT_TOPIC
-  if(strlen(burl)>0){
-    browseUrl();
-  }
-#endif
+  #ifdef MQTT_ENABLE
+    if ((config.store.mqttenable) && (strlen(burl)>0)) browseUrl();
+  #endif
 }
 
 void Player::setOutputPins(bool isPlaying) {
@@ -255,31 +251,11 @@ void Player::_play(uint16_t stationId) {
   };
 }
 
-#ifdef MQTT_ROOT_TOPIC
-void Player::browseUrl(){
-  setError("");
-  remoteStationName = true;
-  config.setDspOn(1);
-  resumeAfterUrl = _status==PLAYING;
-  display.putRequest(PSTOP);
-//  setDefaults();
-  setOutputPins(false);
-  config.setTitle(const_PlConnect);
-  if (connecttohost(burl)){
-    _status = PLAYING;
-    config.setTitle("");
-    netserver.requestOnChange(MODE, 0);
-    setOutputPins(true);
-    display.putRequest(PSTART);
-    if (player_on_start_play) player_on_start_play();
-    pm.on_start_play();
-  }else{
-    telnet.printf("##ERROR#:\tError connecting to %s\n", burl);
-    SET_PLAY_ERROR("Error connecting to %s", burl);
-    _stop(true);
+#ifdef MQTT_ENABLE
+  void Player::browseUrl(){
+    playUrl(burl);
+    memset(burl, 0, MQTT_BURL_SIZE);
   }
-  memset(burl, 0, MQTT_BURL_SIZE);
-}
 #endif
 
 void Player::playUrl(const char* url) {

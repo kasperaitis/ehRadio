@@ -243,9 +243,14 @@
 #define SNTP_2          "pool.ntp.org"
 #define WEATHER_LAT     "37.5503"       /* latitude */
 #define WEATHER_LON     "126.9971"      /* longitude */
+#define HIDE_WEATHER
+#define MQTT_ENABLE
 #endif
 
 /* --- MORE, UNUSED, UNKNOWN, NOTES --- */
+
+//#define IR_PIN                1
+//#define IR_TIMEOUT            80              /*  see kTimeout description in IRremoteESP8266 example https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/IRrecvDumpV2/IRrecvDumpV2.ino */
 
 //#define ROTATE_90 /* rotates 90 degrees? */
 

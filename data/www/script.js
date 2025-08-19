@@ -445,6 +445,14 @@ function applyTZ(){
   websocket.send("sntp2="+getId("sntp2").value);
   websocket.send("sntp1="+getId("sntp1").value);
 }
+function applyMQTT(){
+  websocket.send("mqttenable="+getId("mqttenable").value);
+  websocket.send("mqtthost="+getId("mqtthost").value);
+  websocket.send("mqttport="+getId("mqttport").value);
+  websocket.send("mqttuser="+getId("mqttuser").value);
+  websocket.send("mqttpass="+getId("mqttpass").value);
+  websocket.send("mqtttopic="+getId("mqtttopic").value);
+}
 function rebootSystem(info){
   getId("settingscontent").innerHTML=`<h2>${info}</h2>`;
   getId("settingsdone").classList.add("hidden");
@@ -560,6 +568,7 @@ function continueLoading(mode){
         websocket.send('getscreen=1');
         websocket.send('gettimezone=1');
         websocket.send('getweather=1');
+        websocket.send('getmqtt=1');
         websocket.send('getcontrols=1');
         getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
         websocket.send('getactive=1');
@@ -638,6 +647,7 @@ function continueLoading(mode){
             }
             break;
           case "applytz": applyTZ(); break;
+          case "applymqtt": applyMQTT(); break;
           case "wifiexport": window.open(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime()); break;
           case "wifiupload": submitWiFi(); break;
           case "reboot": websocket.send("reboot=1"); rebootSystem('Rebooting...'); break;

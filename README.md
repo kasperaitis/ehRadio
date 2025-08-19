@@ -16,7 +16,18 @@ Documentation will be slowly improved.
 ## ehRadio Version history
 
 
-
+### 2025.08.20
+  - WebUI fixed for mobile displays
+  - MQTT added to WebUI options / defaults set by adding defines to `myoptions.h`
+    - `#define MQTT_ENABLE` to enable (will not be available otherwise)
+    - defaults can be set with (Still editable in WebUI):
+      - `#define MQTT_HOST "192.168.1.2"`
+      - `#define MQTT_PORT 1883`
+      - `#define MQTT_USER "mqttuser"`
+      - `#define MQTT_PASS ""`
+      - `#define MQTT_TOPIC "ehradio/myradio/"`
+  - Home Assistant integration fixed
+  - Display On toggle removed from WebUI
 
 ### 2025.08.12
 

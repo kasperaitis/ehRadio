@@ -6,6 +6,7 @@
 #include "controls.h"
 #include "options.h"
 #include "network.h"
+#include "mqtt.h"
 
 CommandHandler cmd;
 
@@ -49,6 +50,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "gettimezone")){ netserver.requestOnChange(GETTIMEZONE, cid); return true; }
   if (strEquals(command, "getcontrols")){ netserver.requestOnChange(GETCONTROLS, cid); return true; }
   if (strEquals(command, "getweather")) { netserver.requestOnChange(GETWEATHER, cid); return true; }
+  if (strEquals(command, "getmqtt"))    { netserver.requestOnChange(GETMQTT, cid); return true; }
   if (strEquals(command, "getactive"))  { netserver.requestOnChange(GETACTIVE, cid); return true; }
   if (strEquals(command, "newmode"))    { config.newConfigMode = atoi(value); netserver.requestOnChange(CHANGEMODE, cid); return true; }
   
@@ -75,13 +77,23 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "sntp1"))  { config.saveValue(config.store.sntp1, value, sizeof(config.store.sntp1), false); network.forceTimeSync = true; network.requestTimeSync(true); return true; }
   
   if (strEquals(command, "volsteps"))         { config.saveValue(&config.store.volsteps, static_cast<uint8_t>(atoi(value))); return true; }
-  if (strEquals(command, "encacc"))  { setEncAcceleration(static_cast<uint16_t>(atoi(value))); return true; }
+  if (strEquals(command, "encacc"))           { setEncAcceleration(static_cast<uint16_t>(atoi(value))); return true; }
   if (strEquals(command, "irtlp"))            { setIRTolerance(static_cast<uint8_t>(atoi(value))); return true; }
   if (strEquals(command, "oneclickswitching")){ config.saveValue(&config.store.skipPlaylistUpDown, static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "showweather"))      { config.setShowweather(static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "lat"))              { config.saveValue(config.store.weatherlat, value, sizeof(config.store.weatherlat), false); return true; }
   if (strEquals(command, "lon"))              { config.saveValue(config.store.weatherlon, value, sizeof(config.store.weatherlon), false); return true; }
   if (strEquals(command, "key"))              { config.setWeatherKey(value); return true; }
+
+  #ifdef MQTT_ENABLE
+    if (strEquals(command, "mqttenable"))       { config.saveValue(&config.store.mqttenable, static_cast<bool>(atoi(value))); mqttInit(); return true; }
+    if (strEquals(command, "mqtthost"))         { config.saveValue(config.store.mqtthost, value, sizeof(config.store.mqtthost), false); return true; }
+    if (strEquals(command, "mqttport"))         { config.saveValue(&config.store.mqttport, static_cast<uint16_t>(atoi(value))); return true; }
+    if (strEquals(command, "mqttuser"))         { config.saveValue(config.store.mqttuser, value, sizeof(config.store.mqttuser), false); return true; }
+    if (strEquals(command, "mqttpass"))         { config.saveValue(config.store.mqttpass, value, sizeof(config.store.mqttpass), false); return true; }
+    if (strEquals(command, "mqtttopic"))        { config.saveValue(config.store.mqtttopic, value, sizeof(config.store.mqtttopic), false); return true; }
+  #endif
+
   //<-----TODO
   if (strEquals(command, "volume"))  { player.setVol(static_cast<uint8_t>(atoi(value))); return true; }
   if (strEquals(command, "sdpos"))   { config.setSDpos(static_cast<uint32_t>(atoi(value))); return true; }

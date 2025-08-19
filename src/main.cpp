@@ -43,8 +43,8 @@ void setup() {
   initControls();
   display.putRequest(DSP_START);
   while(!display.ready()) delay(10);
-  #ifdef MQTT_ROOT_TOPIC
-    mqttInit();
+  #ifdef MQTT_ENABLE
+    if (config.store.mqttenable) mqttInit();
   #endif
   #if LED_INVERT
     if(REAL_LEDBUILTIN!=255) digitalWrite(REAL_LEDBUILTIN, true);

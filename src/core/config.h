@@ -139,9 +139,16 @@ struct config_t // specify defaults here (and macros in options.h) (defaults are
   char      weatherlat[10] = WEATHER_LAT;
   char      weatherlon[10] = WEATHER_LON;
   char      weatherkey[WEATHERKEY_LENGTH] = "";
+  bool      mqttenable = false;
+  char      mqtthost[60] = MQTT_HOST;
+  uint16_t  mqttport = MQTT_PORT;
+  char      mqttuser[30] = MQTT_USER;
+  char      mqttpass[40] = MQTT_PASS;
+  char      mqtttopic[60] = MQTT_TOPIC;
 
   // if adding a variable, you can do it anywhere, just be sure to add it to configKeyMap() in config.cpp
   // if removing a variable and key, add to deleteOldKeys()
+  // note that defaults are mostly built from macros, except a few which are disabled by default
 };
 
 #define CONFIG_KEY_ENTRY(field, keyname) { offsetof(config_t, field), keyname, sizeof(((config_t*)0)->field) }

@@ -8,10 +8,12 @@
       <div class="navitem group group_timezone hidden" data-target="group_timezone">timezone</div>
       <div class="navitem group group_wifi hidden" data-target="group_wifi">wifi</div>
       <div class="navitem group group_weather hidden" data-target="group_weather">weather</div>
+      <div class="navitem group group_mqtt hidden" data-target="group_mqtt">mqtt</div>
       <div class="navitem group group_system hidden" data-target="group_tools">tools</div>
     </div>
     <div id="settingswrap">
-      <div id="settingscontent"><a name="system"></a>
+      <div id="settingscontent">
+        <a name="system"></a>
         <section class="group group_system hidden" id="group_system">
           <div class="title"><span>system</span></div>
           <div class="reset" data-name="system" title="reset"></div>
@@ -39,14 +41,15 @@
             <div class="fb local" data-command="fwupdate">Firmware</div>
             <div class="fb local" data-command="webboard" id="webboard">Board</div>
           </div> 
-        </section><a name="screen"></a>
+        </section>
+        <a name="screen"></a>
         <section class="group group_display group_oled group_nextion hidden" id="group_display">
           <div class="title"><span>screen</span></div>
           <div class="reset" data-name="screen" title="reset"></div>
           <div class="flex-row">
             <div class="checkbox group_tft hidden" id="flip" data-command="flipscreen"><div class="knob"></div>Flip screen</div>
             <div class="checkbox group_tft hidden" id="inv" data-command="invertdisplay"><div class="knob"></div>Invert screen</div>
-            <div class="checkbox group_brightness group_oled hidden" id="dspon" data-command="screenon"><div class="knob"></div>Turn on</div>
+            <!-- <div class="checkbox group_brightness group_oled hidden" id="dspon" data-command="screenon"><div class="knob"></div>Turn on</div> -->
           </div>
           <div class="flex-row group group_tft group_oled group_nextion hidden">
             <div class="checkbox" id="nump" data-command="numplaylist"><div class="knob"></div>Numbered Playlist</div>
@@ -98,7 +101,8 @@
               <input type="number" id="scrpt" data-command="screensaverplayingtimeout" value="" maxlength="3" min="1" max="1080" />
             </div>
           </div>
-        </section><a name="controls"></a>
+        </section>
+        <a name="controls"></a>
         <section class="group group_controls hidden" id="group_controls">
           <div class="title"><span>Controls</span></div>
           <div class="reset" data-name="controls" title="reset"></div>
@@ -135,7 +139,8 @@
           <div class="flex-row group group_ir last hidden">
             <div class="fb local" data-command="setupir">IR Recorder</div>
           </div>
-        </section><a name="timezone"></a>
+        </section>
+        <a name="timezone"></a>
         <section class="group group_timezone hidden" id="group_timezone">
           <div class="title"><span>timezone</span></div>
           <div class="reset" data-name="timezone" title="reset"></div>
@@ -164,7 +169,8 @@
           <div class="flex-row last">
             <div class="fb hl local" data-command="applytz">Apply</div>
           </div>
-        </section><a name="wifi"></a>
+        </section>
+        <a name="wifi"></a>
         <section class="group group_wifi hidden" id="group_wifi">
           <div class="title"><span>Wi-Fi</span></div>
           <div class="flex-row credential">
@@ -222,7 +228,8 @@
             <div class="fb local group group_system hidden" data-command="wifiexport">Export</div>
             <div class="fb hl local" data-command="wifiupload">Save &amp; Reboot</div>
           </div>
-        </section><a name="weather"></a>
+        </section>
+        <a name="weather"></a>
         <section class="group group_weather hidden" id="group_weather">
           <div class="title"><span>Weather</span></div>
           <div class="reset" data-name="weather" title="reset"></div>
@@ -249,6 +256,45 @@
             <div class="fb hl local" data-command="applyweather">Apply</div>
           </div>
         </section>
+
+        <a name="mqtt"></a>
+        <section class="group group_mqtt hidden" id="group_mqtt">
+          <div class="title"><span>MQTT</span></div>
+          <div class="reset" data-name="mqtt" title="reset"></div>
+          <div class="flex-row center">
+            <div class="checkbox" id="mqttenable" data-command="mqttenable"><div class="knob"></div>enable mqtt</div>
+          </div>
+          <div class="flex-row">
+            <div class="inputwrap">
+              <span class="inputtitle">host</span>
+              <input type="text" id="mqtthost" class="textinput" placeholder="192.168.1.2" maxlength="59" autocomplete="off" />
+            </div>
+            <div class="inputwrap">
+              <span class="inputtitle">port</span>
+              <input type="number" id="mqttport" value="" min="1" max="65535" step="1" />
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="inputwrap">
+              <span class="inputtitle">user</span>
+              <input type="text" id="mqttuser" class="textinput" placeholder="mqttuser" maxlength="29" autocomplete="off" />
+            </div>
+            <div class="inputwrap">
+              <span class="inputtitle">password</span>
+              <input type="text" id="mqttpass" class="textinput" name="pass" value="" placeholder="**********" maxlength="39" autocomplete="off" readonly="readonly" data-pass="" onfocus="this.removeAttribute('readonly');" />
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="inputwrap">
+              <span class="inputtitle">root topic</span>
+              <input type="text" id="mqtttopic" class="textinput" placeholder="ehradio/myradio/" maxlength="59" autocomplete="off" />
+            </div>
+          </div>
+          <div class="flex-row last">
+            <div class="fb hl local" data-command="applymqtt">Apply</div>
+          </div>
+        </section>
+
         <a name="tools"></a>
         <section class="group group_system hidden" id="group_tools">
         <div class="title"><span>Tools</span></div>

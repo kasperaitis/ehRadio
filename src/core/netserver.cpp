@@ -65,15 +65,17 @@ void startOnlineUpdate();
 #endif
 
 bool  shouldReboot  = false;
-#ifdef MQTT_ROOT_TOPIC
-Ticker mqttplaylistticker;
-bool  mqttplaylistblock = false;
-void mqttplaylistSend() {
-  mqttplaylistblock = true;
-  mqttplaylistticker.detach();
-  mqttPublishPlaylist();
-  mqttplaylistblock = false;
-}
+#ifdef MQTT_ENABLE
+  Ticker mqttplaylistticker;
+  bool  mqttplaylistblock = false;
+  void mqttplaylistSend() {
+    if (config.store.mqttenable) {
+      mqttplaylistblock = true;
+      mqttplaylistticker.detach();
+      mqttPublishPlaylist();
+      mqttplaylistblock = false;
+    }
+  }
 #endif
 
 char* updateError() {
@@ -318,6 +320,9 @@ void NetServer::processQueue(){
           String act = F("\"group_wifi\",");
           if (network.status == CONNECTED) {
                                                                 act += F("\"group_system\",");
+                                                              #ifdef MQTT_ENABLE
+                                                                act += F("\"group_mqtt\",");
+                                                              #endif
             if (BRIGHTNESS_PIN != 255 || DSP_CAN_FLIPPED || DSP_MODEL == DSP_NOKIA5110 || dbgact)    act += F("\"group_display\",");
           #ifdef USE_NEXTION
                                                                 act += F("\"group_nextion\",");
@@ -397,6 +402,14 @@ void NetServer::processQueue(){
                                   config.store.weatherlon, 
                                   config.store.weatherkey); 
                                   break;
+      case GETMQTT:       sprintf (wsbuf, "{\"mqttenable\":%d,\"mqtthost\":\"%s\",\"mqttport\":\"%d\",\"mqttuser\":\"%s\",\"mqttpass\":\"%s\",\"mqtttopic\":\"%s\"}", 
+                                  config.store.mqttenable,
+                                  config.store.mqtthost,
+                                  config.store.mqttport,
+                                  config.store.mqttuser,
+                                  config.store.mqttpass,
+                                  config.store.mqtttopic); 
+                                  break;
       case GETCONTROLS:   sprintf (wsbuf, "{\"vols\":%d,\"enca\":%d,\"irtl\":%d,\"skipup\":%d}", 
                                   config.store.volsteps, 
                                   config.store.encacc, 
@@ -433,10 +446,12 @@ void NetServer::processQueue(){
     }
     if (strlen(wsbuf) > 0) {
       if (clientId == 0) { websocket.textAll(wsbuf); }else{ websocket.text(clientId, wsbuf); }
-  #ifdef MQTT_ROOT_TOPIC
-      if (clientId == 0 && (request.type == STATION || request.type == ITEM || request.type == TITLE || request.type == MODE)) mqttPublishStatus();
-      if (clientId == 0 && request.type == VOLUME) mqttPublishVolume();
-  #endif
+      #ifdef MQTT_ENABLE
+        if (config.store.mqttenable) {
+          if (clientId == 0 && (request.type == STATION || request.type == ITEM || request.type == TITLE || request.type == MODE)) mqttPublishStatus();
+          if (clientId == 0 && request.type == VOLUME) mqttPublishVolume();
+        }
+      #endif
     }
   }
 }
@@ -496,9 +511,9 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         return;
       }
       if (strcmp(comnd, "submitplaylistdone") == 0) {
-#ifdef MQTT_ROOT_TOPIC
-        mqttplaylistticker.attach(5, mqttplaylistSend);
-#endif
+        #ifdef MQTT_ENABLE
+          if (config.store.mqttenable) mqttplaylistticker.attach(5, mqttplaylistSend);
+        #endif
         if (player.isRunning()) player.sendCommand({PR_PLAY, -config.lastStation()});
         return;
       }
@@ -1085,12 +1100,14 @@ void handleNotFound(AsyncWebServerRequest * request) {
         strcmp(request->url().c_str(), TMP_PATH) == 0 || 
         strcmp(request->url().c_str(), PLAYLIST_SD_PATH) == 0 || 
         strcmp(request->url().c_str(), INDEX_SD_PATH) == 0) {
-#ifdef MQTT_ROOT_TOPIC
-      if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0) while (mqttplaylistblock) vTaskDelay(5);
-#endif
+          #ifdef MQTT_ENABLE
+            if (config.store.mqttenable) {
+              if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0) while (mqttplaylistblock) vTaskDelay(5);
+            }
+          #endif
       if(strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 && config.getMode()==PM_SDCARD){
         netserver.chunkedHtmlPage("application/octet-stream", request, PLAYLIST_SD_PATH);
-      }else{
+      } else {
         netserver.chunkedHtmlPage("application/octet-stream", request, request->url().c_str());
       }
       return;
@@ -1127,11 +1144,11 @@ void handleNotFound(AsyncWebServerRequest * request) {
   if (request->url() == "/variables.js") {
     char varjsbuf[BUFLEN];
     const char* onlineCapable =
-    #ifdef UPDATEURL
-      "true";
-    #else
-      "false";
-    #endif
+      #ifdef UPDATEURL
+        "true";
+      #else
+        "false";
+      #endif
     snprintf(varjsbuf, sizeof(varjsbuf),
       "var yoVersion='%s';\n"
       "var formAction='%s';\n"

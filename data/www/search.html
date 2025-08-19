@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<html>
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -10,6 +12,7 @@
   <link rel="stylesheet" title="base" href="search.css" type="text/css">
   <title>ehRadio - Search</title>
 </head>
+
 <body>
   <div id="content">
     <h2 class="pagetitle">Search</h2>
@@ -49,12 +52,11 @@
         </tr>
       </table>
     </div> <!-- end of quick searches -->
-
     <div id="searches">
       <div id="searchRow1" class="search-row">
         <button class="searchbutton search plus" id="addSearchRowBtn" title="Add search criteria">
           <svg viewBox="0 0 24 24" class="stroke">
-            <path d="M5 12h7m7 0h-7m0 0V5m0 7v7"/>
+            <path d="M5 12h7m7 0h-7m0 0V5m0 7v7" />
           </svg>
         </button>
         <select id="searchType1" class="searchtextinput select">
@@ -70,7 +72,7 @@
       <div id="searchRow2" class="search-row hidden">
         <button class="searchbutton search minus" id="removeSearchRowBtn2" data-row="2" title="Remove search criteria">
           <svg viewBox="0 0 24 24" class="stroke">
-            <path d="M5 12h14"/>
+            <path d="M5 12h14" />
           </svg>
         </button>
         <select id="searchType2" class="searchtextinput select">
@@ -85,12 +87,12 @@
       <div id="searchRow3" class="search-row hidden">
         <button class="searchbutton search minus" id="removeSearchRowBtn3" data-row="3" title="Remove search criteria">
           <svg viewBox="0 0 24 24" class="stroke">
-            <path d="M5 12h14"/>
+            <path d="M5 12h14" />
           </svg>
         </button>
         <select id="searchType3" class="searchtextinput select">
           <option value="name">Name</option>
-          <option value="tag">Tag / Genre</option> 
+          <option value="tag">Tag / Genre</option>
           <option value="country">Country</option>
           <option value="countrycode">Country Code</option>
           <option value="language">Language</option>
@@ -98,7 +100,6 @@
         <input type="text" class="searchtextinput" id="searchInput3" placeholder="Enter search term">
       </div>
     </div> <!-- end of searches -->
-
     <div class="searchwrap"><!--scrollable search results table -->
       <div class="scrollable">
         <table class="stations" id="stationsTable">
@@ -106,7 +107,6 @@
         </table>
       </div>
     </div><!--searchwrap-->
-
     <!-- Page navigation -->
     <div id="pageNav" class="page-navigation">
       <button class="searchbutton hidden" id="prevSearchPageBtn">&larr;</button>
@@ -116,5 +116,7 @@
     <div class="searchbutton" data-name="searchdone" id="searchdone">done</div>
     <div id="copy">search by <a target="_blank" href="https://radio-browser.info/">RadioBrowser</a> &mdash; not working? check the <a target="_blank" href="https://api.radio-browser.info/net">network status</a></div>
   </div>
-  <script src="search.js"></script>
 </body>
+<script src="search.js"></script>
+
+</html>

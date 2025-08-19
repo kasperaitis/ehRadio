@@ -2,7 +2,7 @@
 #define mqtt_h
 #include "options.h"
 
-#ifdef MQTT_ROOT_TOPIC
+#ifdef MQTT_ENABLE
 #include "../async-mqtt-client/AsyncMqttClient.h"
 
 void mqttInit();
@@ -15,7 +15,7 @@ void mqttPublishPlaylist();
 void mqttPublishVolume();
 void zeroBuffer();
 
-#endif // #ifdef MQTT_ROOT_TOPIC
+#endif // #ifdef MQTT_ENABLE
 
 
 #endif
