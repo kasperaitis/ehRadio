@@ -589,7 +589,7 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   #define SHOW_VU_METER false
 #endif
 #ifndef SOFTAP_REBOOT_DELAY
-  #define SOFTAP_REBOOT_DELAY 1
+  #define SOFTAP_REBOOT_DELAY 0
 #elif (SOFTAP_REBOOT_DELAY < 0) || (SOFTAP_REBOOT_DELAY > 20)
   #undef SOFTAP_REBOOT_DELAY
 #endif
