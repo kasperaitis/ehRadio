@@ -1044,8 +1044,7 @@ void launchPlaybackTask(const String& url, const String& name) {
           bool ended = Update.end();
           Serial.printf("[Online Update] Written %u bytes, expected %d, end() returned %s\n", written, contentLength, ended?"true":"false");
           if (written == contentLength && ended) {
-            File markerFile = SPIFFS.open(ONLINEUPDATE_MARKERFILE, "w");
-            if (markerFile) markerFile.close();
+            config.deleteMainDatawwwFile();
             websocket.textAll("{\"onlineupdatestatus\": \"Update successful, rebooting...\"}");
             delay(1000);
             ESP.restart();

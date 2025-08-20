@@ -93,8 +93,8 @@ function onMessage(event) {
         const status = getId('uploadstatus');
         if(status) status.innerHTML = "OTA Update: " + data.onlineupdateprogress +  "%&nbsp;&nbsp;downloaded&nbsp;&nbsp;|&nbsp;&nbsp;please wait...";
         if (data.onlineupdateprogress >= 100) {
-          getId("uploadstatus").innerHTML = "OTA Update Complete. Radio will reboot, update files, and reboot again. Please be patient.";
-          rebootingProgress(80);
+          getId("uploadstatus").innerHTML = "OTA Update Complete. Radio will reboot, update files, and reboot again. This will take 1 or 2 minutes.";
+          rebootingProgress(60);
         }
       }
     }
@@ -744,8 +744,7 @@ function rebootingProgress(waitSeconds) {
     if (elapsed < waitSeconds * 1000) {
       rebootTimer = setTimeout(update, 200);
     } else {
-      location.href = `http://${hostname}/`;
-      window.location.reload(true);
+      window.location.replace(`http://${hostname}/`);
     }
   };
   update();

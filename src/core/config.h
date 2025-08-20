@@ -22,10 +22,6 @@
   #define ESPFILEUPDATER_VERBOSE false
 #endif
 
-#ifdef UPDATEURL
-  #define ONLINEUPDATE_MARKERFILE "/data/otaupdate.meta"
-#endif
-
 #define PLAYLIST_PATH     "/data/playlist.csv"
 #define SSIDS_PATH        "/data/wifi.csv"
 #define TMP_PATH          "/data/tmpfile.txt"
@@ -204,11 +200,6 @@ class Config {
     bool     isScreensaver;
     int      newConfigMode;
   public:
-    Config() {};
-    //void save();
-#if IR_PIN!=255
-    void saveIR();
-#endif
     void init();
     void loadPreferences();
     void deleteOldKeys();
@@ -236,10 +227,10 @@ class Config {
     void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }
     void initPlaylist();
     void indexPlaylist();
-    void updateTZjson(void* param);
-    void getRequiredFiles(void* param);
+    void deleteMainDatawwwFile();
+    void getRequiredFiles();
     void startAsyncServicesButWait();
-    void updateRadioBrowserServersjson();
+    void updateFile(void* param, const char* localFile, const char* onlineFile, const char* updatePeriod, const char* simpleName);
     #ifdef USE_SD
       void initSDPlaylist();
       void changeMode(int newmode=-1);
@@ -269,11 +260,11 @@ class Config {
     void setScreensaverPlayingEnabled(bool val);
     void setScreensaverPlayingTimeout(uint16_t val);
     void setScreensaverPlayingBlank(bool val);
-    void setSntpOne(const char *val);
     void setShowweather(bool val);
     void setWeatherKey(const char *val);
     void setSDpos(uint32_t val);
 #if IR_PIN!=255
+    void saveIR();
     void setIrBtn(int val);
 #endif
     void resetSystem(const char *val, uint8_t clientId);

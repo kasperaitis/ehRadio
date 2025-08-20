@@ -82,13 +82,14 @@ void Config::init() {
   BOOTLOG("SPIFFS mounted");
   emptyFS = _isFSempty();
   if(emptyFS) {
-    #ifndef FILESURL
+    #ifndef UPDATEURL
       BOOTLOG("SPIFFS is empty!");
     #else
-      BOOTLOG("SPIFFS is empty.  Will attempt to get files from online...");
-      File markerFile = SPIFFS.open(ONLINEUPDATE_MARKERFILE, "w");
-      if (markerFile) markerFile.close();
-      display.putRequest(NEWMODE, UPDATING);
+      BOOTLOG("SPIFFS is missing files.  Will attempt to get files from online...");
+      config.deleteMainDatawwwFile();
+      getRequiredFiles();
+      delay(200);
+      ESP.restart();
     #endif
   }
   ssidsCount = 0;
@@ -1169,6 +1170,23 @@ void Config::sleepForAfter(uint16_t sf, uint16_t sa){
   else doSleep();
 }
 
+void Config::deleteMainDatawwwFile() {
+  if (requiredFilesCount > 0) {
+    const char* lastFile = requiredFiles[requiredFilesCount - 1];
+    char mainfile[64];
+    snprintf(mainfile, sizeof(mainfile), "www/%s", lastFile);
+    if (SPIFFS.exists(mainfile)) {
+      SPIFFS.remove(mainfile);
+      Serial.printf("[Config] Deleted main www file: %s\n", mainfile);
+    }
+    snprintf(mainfile, sizeof(mainfile), "www/%s.gz", lastFile);
+    if (SPIFFS.exists(mainfile)) {
+      SPIFFS.remove(mainfile);
+      Serial.printf("[Config] Deleted main www file: %s\n", mainfile);
+    }
+  }
+}
+
 void cleanStaleSearchResults() {
   const char* metaPath = "/data/searchresults.json.meta";
   if (SPIFFS.exists(metaPath)) {
@@ -1206,7 +1224,77 @@ void fixPlaylistFileEnding() {
   playlistfile.close();
 }
 
-void updateFile(void* param, const char* localFile, const char* onlineFile, const char* updatePeriod, const char* simpleName) {
+#ifdef UPDATEURL
+  void Config::getRequiredFiles() {
+    player.sendCommand({PR_STOP, 0});
+    display.putRequest(NEWMODE, UPDATING);
+    char localFileGz[64];
+    char localFile[64];
+    char tryFile[64];
+    char tryUrl[128];
+    for (size_t i = 0; i < requiredFilesCount; i++) {
+      const char* fname = requiredFiles[i];
+      snprintf(localFileGz, sizeof(localFileGz), "/www/%s.gz", fname);
+      snprintf(localFile, sizeof(localFile), "/www/%s", fname);
+      if (SPIFFS.exists(localFileGz)) SPIFFS.remove(localFileGz);
+      if (SPIFFS.exists(localFile)) SPIFFS.remove(localFile);
+      for (size_t j = 0; j < 2; j++) {
+        if (j == 0) { // Try compressed first
+          snprintf(tryFile, sizeof(tryFile), "%s", localFileGz);
+          snprintf(tryUrl, sizeof(tryUrl), "%s%s.gz", UPDATEURL, fname);
+        } else { // Fallback to uncompressed
+          snprintf(tryFile, sizeof(tryFile), "%s", localFile);
+          snprintf(tryUrl, sizeof(tryUrl), "%s%s", UPDATEURL, fname);
+        }
+        Serial.printf("[ESPFileUpdater: %s] Updating required file.\n", tryFile);
+        ESPFileUpdater updater(SPIFFS);
+        updater.setTimeout(5000);
+        ESPFileUpdater::UpdateStatus result = updater.checkAndUpdate(
+            tryFile,
+            tryUrl,
+            "",
+            ESPFILEUPDATER_VERBOSE
+        );
+        if (result == ESPFileUpdater::UPDATED) {
+          Serial.printf("[ESPFileUpdater: %s] Download completed.\n", tryFile);
+          break; // Exit inner loop on success
+        } else {
+          if (j == 0) Serial.printf("[ESPFileUpdater: %s] Download failed. Will retry for uncompressed file.\n", tryFile);
+          if (j == 1) Serial.printf("[ESPFileUpdater: %s] Download failed. Moving onto next file anyways.\n", tryFile);
+        }
+      }
+    }
+    // Delete any files in /www that are not in the requiredFiles list
+    File root = SPIFFS.open("/www");
+    if (root && root.isDirectory()) {
+      File file = root.openNextFile();
+      while (file) {
+        const char* path = file.name();
+        // Extract filename from full path
+        const char* name = path;
+        const char* slash = strrchr(path, '/');
+        if (slash) name = slash + 1;
+        bool found = false;
+        for (size_t j = 0; j < requiredFilesCount; j++) {
+          // Check against both compressed and uncompressed names
+          char requiredNameGz[64];
+          snprintf(requiredNameGz, sizeof(requiredNameGz), "%s.gz", requiredFiles[j]);
+          if (strcmp(name, requiredFiles[j]) == 0 || strcmp(name, requiredNameGz) == 0) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          Serial.printf("[File: /www/%s] Deleting - not in required file list.\n", path);
+          SPIFFS.remove(path);
+        }
+        file = root.openNextFile();
+      }
+    }
+  }
+#endif //#ifdef UPDATEURL
+
+void Config::updateFile(void* param, const char* localFile, const char* onlineFile, const char* updatePeriod, const char* simpleName) {
   char startMsg[128];
   snprintf(startMsg, sizeof(startMsg), "[ESPFileUpdater: %s] Started update.", simpleName);
   Serial.println(startMsg);
@@ -1226,62 +1314,10 @@ void updateFile(void* param, const char* localFile, const char* onlineFile, cons
   }
 }
 
-#ifdef UPDATEURL
-  void getRequiredFiles(void* param) {
-    for (size_t i = 0; i < requiredFilesCount; i++) {
-      player.sendCommand({PR_STOP, 0});
-      display.putRequest(NEWMODE, UPDATING);
-      const char* fname = requiredFiles[i];
-      char localPath[64];
-      char remoteUrl[128];
-      snprintf(localPath, sizeof(localPath), "/www/%s", fname);
-      if (strlen(fname) > 3 && strcmp(fname + strlen(fname) - 3, ".gz") == 0) {
-        snprintf(remoteUrl, sizeof(remoteUrl), "%s%s", UPDATEURL, fname);
-      } else {
-        snprintf(remoteUrl, sizeof(remoteUrl), "%s%s.gz", UPDATEURL, fname);
-      }
-      updateFile(param, localPath, remoteUrl, "", fname);
-    }
-    // Delete any files in /www that are not in the requiredFiles list
-    File root = SPIFFS.open("/www");
-    if (root && root.isDirectory()) {
-      File file = root.openNextFile();
-      while (file) {
-        const char* path = file.name();
-        // Extract filename from full path
-        const char* name = path;
-        const char* slash = strrchr(path, '/');
-        if (slash) name = slash + 1;
-        bool found = false;
-        for (size_t j = 0; j < requiredFilesCount; j++) {
-          if (strcmp(name, requiredFiles[j]) == 0) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          Serial.printf("[File: /www/%s] Deleting - not in required file list.\n", path);
-          SPIFFS.remove(path);
-        }
-        file = root.openNextFile();
-      }
-    }
-  }
-#endif //#ifdef UPDATEURL
-
 void startAsyncServices(void* param){
   fixPlaylistFileEnding();
-  // if the OTA marker file exists, fetch all web assets immediately, clean up, restart
- #ifdef UPDATEURL
-    if (SPIFFS.exists(ONLINEUPDATE_MARKERFILE)) {
-      getRequiredFiles(param);
-      SPIFFS.remove(ONLINEUPDATE_MARKERFILE);
-      delay(200);
-      ESP.restart();
-    }
-  #endif
-  updateFile(param, "/www/timezones.json.gz", TIMEZONES_JSON_URL, "1 week", "Timezones database file");
-  updateFile(param, "/www/rb_srvrs.json", RADIO_BROWSER_SERVERS_URL, "4 weeks", "Radio Browser Servers list");
+  config.updateFile(param, "/www/timezones.json.gz", TIMEZONES_JSON_URL, "1 week", "Timezones database file");
+  config.updateFile(param, "/www/rb_srvrs.json", RADIO_BROWSER_SERVERS_URL, "4 weeks", "Radio Browser Servers list");
   cleanStaleSearchResults();
   vTaskDelete(NULL);
 }
