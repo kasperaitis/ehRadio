@@ -86,10 +86,7 @@ void Config::init() {
       BOOTLOG("SPIFFS is empty!");
     #else
       BOOTLOG("SPIFFS is missing files.  Will attempt to get files from online...");
-      config.deleteMainDatawwwFile();
-      getRequiredFiles();
-      delay(200);
-      ESP.restart();
+      deleteMainDatawwwFile();
     #endif
   }
   ssidsCount = 0;
@@ -1174,12 +1171,12 @@ void Config::deleteMainDatawwwFile() {
   if (requiredFilesCount > 0) {
     const char* lastFile = requiredFiles[requiredFilesCount - 1];
     char mainfile[64];
-    snprintf(mainfile, sizeof(mainfile), "www/%s", lastFile);
+    snprintf(mainfile, sizeof(mainfile), "/www/%s", lastFile);
     if (SPIFFS.exists(mainfile)) {
       SPIFFS.remove(mainfile);
       Serial.printf("[Config] Deleted main www file: %s\n", mainfile);
     }
-    snprintf(mainfile, sizeof(mainfile), "www/%s.gz", lastFile);
+    snprintf(mainfile, sizeof(mainfile), "/www/%s.gz", lastFile);
     if (SPIFFS.exists(mainfile)) {
       SPIFFS.remove(mainfile);
       Serial.printf("[Config] Deleted main www file: %s\n", mainfile);
@@ -1188,7 +1185,7 @@ void Config::deleteMainDatawwwFile() {
 }
 
 void cleanStaleSearchResults() {
-  const char* metaPath = "/data/searchresults.json.meta";
+  const char* metaPath = "/www/searchresults.json.meta";
   if (SPIFFS.exists(metaPath)) {
     File metaFile = SPIFFS.open(metaPath, "r");
     metaFile.readStringUntil('\n'); // 1st line query
@@ -1200,8 +1197,8 @@ void cleanStaleSearchResults() {
       if (now < 100000000 || (now - fileTime) > 86400) {
         Serial.print("Cleaning stale search results.\n");
         SPIFFS.remove(metaPath);
-        SPIFFS.remove("/data/searchresults.json");
-        SPIFFS.remove("/data/search.txt");
+        SPIFFS.remove("/www/searchresults.json");
+        SPIFFS.remove("/www/search.txt");
       }
     }
   }
@@ -1225,14 +1222,14 @@ void fixPlaylistFileEnding() {
 }
 
 #ifdef UPDATEURL
-  void Config::getRequiredFiles() {
+  void getRequiredFiles(void* param) {
     player.sendCommand({PR_STOP, 0});
-    display.putRequest(NEWMODE, UPDATING);
     char localFileGz[64];
     char localFile[64];
     char tryFile[64];
     char tryUrl[128];
     for (size_t i = 0; i < requiredFilesCount; i++) {
+      display.putRequest(NEWMODE, UPDATING);
       const char* fname = requiredFiles[i];
       snprintf(localFileGz, sizeof(localFileGz), "/www/%s.gz", fname);
       snprintf(localFile, sizeof(localFile), "/www/%s", fname);
@@ -1247,9 +1244,8 @@ void fixPlaylistFileEnding() {
           snprintf(tryUrl, sizeof(tryUrl), "%s%s", UPDATEURL, fname);
         }
         Serial.printf("[ESPFileUpdater: %s] Updating required file.\n", tryFile);
-        ESPFileUpdater updater(SPIFFS);
-        updater.setTimeout(5000);
-        ESPFileUpdater::UpdateStatus result = updater.checkAndUpdate(
+        ESPFileUpdater* getfile = (ESPFileUpdater*)param;
+        ESPFileUpdater::UpdateStatus result = getfile->checkAndUpdate(
             tryFile,
             tryUrl,
             "",
@@ -1291,15 +1287,16 @@ void fixPlaylistFileEnding() {
         file = root.openNextFile();
       }
     }
+    delay(200);
+    ESP.restart();
+    vTaskDelete(NULL);
   }
 #endif //#ifdef UPDATEURL
 
 void Config::updateFile(void* param, const char* localFile, const char* onlineFile, const char* updatePeriod, const char* simpleName) {
-  char startMsg[128];
-  snprintf(startMsg, sizeof(startMsg), "[ESPFileUpdater: %s] Started update.", simpleName);
-  Serial.println(startMsg);
-  ESPFileUpdater* updater = (ESPFileUpdater*)param;
-  ESPFileUpdater::UpdateStatus result = updater->checkAndUpdate(
+  Serial.printf("[ESPFileUpdater: %s] Started update.\n", simpleName);
+  ESPFileUpdater* updatefile = (ESPFileUpdater*)param;
+  ESPFileUpdater::UpdateStatus result = updatefile->checkAndUpdate(
       localFile,
       onlineFile,
       updatePeriod,
@@ -1314,7 +1311,7 @@ void Config::updateFile(void* param, const char* localFile, const char* onlineFi
   }
 }
 
-void startAsyncServices(void* param){
+void startAsyncServices(void* param) {
   fixPlaylistFileEnding();
   config.updateFile(param, "/www/timezones.json.gz", TIMEZONES_JSON_URL, "1 week", "Timezones database file");
   config.updateFile(param, "/www/rb_srvrs.json", RADIO_BROWSER_SERVERS_URL, "4 weeks", "Radio Browser Servers list");
@@ -1328,7 +1325,13 @@ void Config::startAsyncServicesButWait() {
   updater = new ESPFileUpdater(SPIFFS);
   updater->setMaxSize(1024);
   updater->setUserAgent(ESPFILEUPDATER_USERAGENT);
-  xTaskCreate(startAsyncServices, "startAsyncServices", 8192, updater, 2, NULL);
+  if (emptyFS) {
+    #ifdef UPDATEURL
+      xTaskCreate(getRequiredFiles, "getRequiredFiles", 8192, updater, 2, NULL);
+    #endif
+  } else {
+    xTaskCreate(startAsyncServices, "startAsyncServices", 8192, updater, 2, NULL);
+  }
 }
 
 void Config::bootInfo() {

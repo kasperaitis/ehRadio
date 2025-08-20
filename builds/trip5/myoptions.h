@@ -254,7 +254,7 @@
 
 //#define ROTATE_90 /* rotates 90 degrees? */
 
-//#define ESPFILEUPDATER_DEBUG
+#define ESPFILEUPDATER_DEBUG
 
 /* Extras: unused in all */
 //#define L10N_LANGUAGE EN

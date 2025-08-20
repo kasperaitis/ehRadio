@@ -17,7 +17,7 @@ Documentation will be slowly improved.
 
 
 ### 2025.08.20
-  - Fixes to Online updater
+  - Major fixes to online updater (if running an older version, need to manually flash)
   - WebUI fixed for mobile displays
   - MQTT added to WebUI options / defaults set by adding defines to `myoptions.h`
     - `#define MQTT_ENABLE` to enable (will not be available otherwise)

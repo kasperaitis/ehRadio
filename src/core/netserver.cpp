@@ -1041,15 +1041,14 @@ void launchPlaybackTask(const String& url, const String& name) {
               websocket.textAll(progMsg);
             }
           }
-          bool ended = Update.end();
-          Serial.printf("[Online Update] Written %u bytes, expected %d, end() returned %s\n", written, contentLength, ended?"true":"false");
-          if (written == contentLength && ended) {
+          if (Update.end(true)) { // end(true) will finish and commit the update
+            Serial.println("[Online Update] Update successful, rebooting...");
             config.deleteMainDatawwwFile();
             websocket.textAll("{\"onlineupdatestatus\": \"Update successful, rebooting...\"}");
             delay(1000);
             ESP.restart();
           } else {
-            websocket.textAll("{\"onlineupdateerror\": \"Update failed or incomplete\"}");
+            websocket.textAll(String("{\"onlineupdateerror\": \"Update failed on end(): ") + String(Update.errorString()) + "\"}");
           }
         } else {
          websocket.textAll("{\"onlineupdateerror\": \"Cannot begin update (reboot then try again)\"}");

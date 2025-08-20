@@ -228,7 +228,6 @@ class Config {
     void initPlaylist();
     void indexPlaylist();
     void deleteMainDatawwwFile();
-    void getRequiredFiles();
     void startAsyncServicesButWait();
     void updateFile(void* param, const char* localFile, const char* onlineFile, const char* updatePeriod, const char* simpleName);
     #ifdef USE_SD

@@ -70,7 +70,7 @@ function onMessage(event) {
       const btn = getId('check_online_update');
       if(btn) {
         if(data.onlineupdateavailable) {
-          btn.value = "Update to v" + data.remoteVersion;
+          btn.value = "Update to " + data.remoteVersion;
           btn.disabled = false;
         } else {
           btn.value = "No Update Available";
