@@ -762,7 +762,7 @@ bool Audio::httpPrint(const char* host) {
     char* extension = NULL; 			// "/mp3" in "skonto.ls.lv:8002/mp3"
 
     if(pos_slash > 1) {
-        hostwoext = (char*)malloc(pos_slash + 1);
+        hostwoext = (char*)malloc(pos_slash + 2);
         memcpy(hostwoext, h_host, pos_slash);
         hostwoext[pos_slash] = '\0';
         extension = urlencode(h_host + pos_slash, true);
@@ -871,7 +871,7 @@ bool Audio::httpRange(const char* host, uint32_t range){
     char* extension = NULL; // "/mp3" in "skonto.ls.lv:8002/mp3"
 
     if(pos_slash > 1) {
-        hostwoext = (char*)malloc(pos_slash + 1);
+        hostwoext = (char*)malloc(pos_slash + 2);
         memcpy(hostwoext, h_host, pos_slash);
         hostwoext[pos_slash] = '\0';
         extension = urlencode(h_host + pos_slash, true);

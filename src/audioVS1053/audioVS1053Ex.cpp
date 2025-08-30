@@ -428,6 +428,7 @@ void Audio::computeVUlevel() {
 uint16_t Audio::get_VUlevel(uint16_t dimension){
   if(!VS_PATCH_ENABLE) return 0;
   if(!_vuInitalized || !config.store.vumeter || config.vuThreshold==0) return 0;
+  computeVUlevel();
   uint8_t L = map(vuLeft, config.vuThreshold, 0, 0, dimension);
   uint8_t R = map(vuRight, config.vuThreshold, 0, 0, dimension);
   return (L << 8) | R;
@@ -4211,7 +4212,7 @@ bool Audio::httpPrint(const char* host) {
     char* extension = NULL;  			// "/mp3" in "skonto.ls.lv:8002/mp3"
 
     if(pos_slash > 1) {
-        hostwoext = (char*)malloc(pos_slash + 1);
+        hostwoext = (char*)malloc(pos_slash + 2);
         memcpy(hostwoext, h_host, pos_slash);
         hostwoext[pos_slash] = '\0';
         extension = urlencode(h_host + pos_slash, true);
@@ -4320,7 +4321,7 @@ bool Audio::httpRange(const char* host, uint32_t range){
     char* extension = NULL; // "/mp3" in "skonto.ls.lv:8002/mp3"
 
     if(pos_slash > 1) {
-        hostwoext = (char*)malloc(pos_slash + 1);
+        hostwoext = (char*)malloc(pos_slash + 2);
         memcpy(hostwoext, h_host, pos_slash);
         hostwoext[pos_slash] = '\0';
         extension = urlencode(h_host + pos_slash, true);

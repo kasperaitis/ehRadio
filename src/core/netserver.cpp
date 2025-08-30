@@ -1,5 +1,10 @@
-#include "netserver.h"
+#include "options.h"
+#include "Arduino.h"
 #include <SPIFFS.h>
+#include <Update.h>
+#include <ESPmDNS.h>
+#include "config.h"
+#include "netserver.h"
 #include <ArduinoJson.h>
 #include "../ESPFileUpdater/ESPFileUpdater.h"
 #include "config.h"
@@ -11,8 +16,15 @@
 #include "mqtt.h"
 #include "controls.h"
 #include "commandhandler.h"
-#include <Update.h>
-#include <ESPmDNS.h>
+#include "../displays/dspcore.h"
+#include "../displays/widgets/widgetsconfig.h" //BitrateFormat
+
+//#include <ESPmDNS.h>
+
+#if DSP_MODEL==DSP_DUMMY
+  #define DUMMYDISPLAY
+#endif
+
 #if USE_OTA
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
 #include <NetworkUdp.h>
@@ -38,6 +50,12 @@
 #ifndef NS_QUEUE_TICKS
   //#define NS_QUEUE_TICKS pdMS_TO_TICKS(2)
   #define NS_QUEUE_TICKS 0
+#endif
+
+#ifdef DEBUG_V
+  #define DBGVB( ... ) { char buf[200]; sprintf( buf, __VA_ARGS__ ) ; Serial.print("[DEBUG]\t"); Serial.println(buf); }
+#else
+  #define DBGVB( ... )
 #endif
 
 // Global list for radio-browser servers to persist across searches
@@ -248,6 +266,9 @@ size_t NetServer::chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t
     requiredfile.close();
     return 0;
   }
+  #ifdef MAX_PL_READ_BYTES
+    if(maxLen>MAX_PL_READ_BYTES) maxLen=MAX_PL_READ_BYTES;
+  #endif
   size_t canread = (needread > maxLen) ? maxLen : needread;
   DBGVB("[%s] seek to %d in %s and read %d bytes with maxLen=%d", __func__, index, netserver.chunkedPathBuffer, canread, maxLen);
   requiredfile.seek(index, SeekSet);

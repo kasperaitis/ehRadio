@@ -314,7 +314,7 @@ const uint8_t DS_DIGI56pt7bBitmaps[] PROGMEM = {
 };
 
 const GFXglyph DS_DIGI56pt7bGlyphs[] PROGMEM = {
-  {     0,   0,   0,  54,    0,    1 },   // 0x20 ' ' // was 0,0,0,24,0,1
+  {     0,   0,   0,  24,    0,    1 },   // 0x20 ' '
   {     0,   0,   0,   0,    0,    0 },   // 0x21 '!'
   {     0,   0,   0,   0,    0,    0 },   // 0x22 '"'
   {     0,   0,   0,   0,    0,    0 },   // 0x23 '#'
@@ -343,7 +343,7 @@ const GFXglyph DS_DIGI56pt7bGlyphs[] PROGMEM = {
   {  3688,   7,  59,  24,    8,  -58 }    // 0x3A ':'
 };
 
-const GFXfont DS_DIGI56pt7b PROGMEM = {
+const GFXfont Clock_GFXfont PROGMEM = {
   (uint8_t  *)DS_DIGI56pt7bBitmaps,   
   (GFXglyph *)DS_DIGI56pt7bGlyphs, 0x20, 0x3A,    110 };
 

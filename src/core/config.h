@@ -1,19 +1,12 @@
 #ifndef config_h
 #define config_h
+#pragma once
 #include "Arduino.h"
 #include <Ticker.h>
 #include <SPI.h>
 #include <SPIFFS.h>
 #include <Preferences.h>
-//#include "SD.h"
-#include "options.h"
-#include "telnet.h"
-#include "rtcsupport.h"
-#include "../pluginsManager/pluginsManager.h"
-
-#ifndef BUFLEN
-  #define BUFLEN            250
-#endif
+#include "../displays/widgets/widgetsconfig.h"
 
 #define ESPFILEUPDATER_USERAGENT "ehradio/" RADIOVERSION "(" GITHUBURL ")"  // used as a user-agent string for downloading with ESPFileUpdater
 #ifdef ESPFILEUPDATER_DEBUG
@@ -27,34 +20,20 @@
 #define TMP_PATH          "/data/tmpfile.txt"
 #define TMP2_PATH         "/data/tmpfile2.txt"
 #define INDEX_PATH        "/data/index.dat"
-
-#define PLAYLIST_SD_PATH     "/data/playlistsd.csv"
-#define INDEX_SD_PATH        "/data/indexsd.dat"
-
-#ifdef DEBUG_V
-#define DBGH()       { Serial.printf("[%s:%s:%d] Heap: %d\n", __PRETTY_FUNCTION__, __FILE__, __LINE__, xPortGetFreeHeapSize()); }
-#define DBGVB( ... ) { char buf[200]; sprintf( buf, __VA_ARGS__ ) ; Serial.print("[DEBUG]\t"); Serial.println(buf); }
-#else
-#define DBGVB( ... )
-#define DBGH()
-#endif
-#define BOOTLOG( ... ) { char buf[120]; sprintf( buf, __VA_ARGS__ ) ; telnet.print("##[BOOT]#\t"); telnet.printf("%s\n",buf); }
-#define EVERY_MS(x)  static uint32_t tmr; bool flag = millis() - tmr >= (x); if (flag) tmr += (x); if (flag)
-#define REAL_PLAYL   getMode()==PM_WEB?PLAYLIST_PATH:PLAYLIST_SD_PATH
-#define REAL_INDEX   getMode()==PM_WEB?INDEX_PATH:INDEX_SD_PATH
+#define PLAYLIST_SD_PATH  "/data/playlistsd.csv"
+#define INDEX_SD_PATH     "/data/indexsd.dat"
+#define REAL_PLAYL   config.getMode()==PM_WEB?PLAYLIST_PATH:PLAYLIST_SD_PATH
+#define REAL_INDEX   config.getMode()==PM_WEB?INDEX_PATH:INDEX_SD_PATH
 
 #define MAX_PLAY_MODE   1
 #define WEATHERKEY_LENGTH 58
 #define MDNS_LENGTH 24
-#if SDC_CS!=255
-  #define USE_SD
-#endif
+
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
   #define ESP_ARDUINO_3 1
 #endif
 
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
-enum BitrateFormat { BF_UNCNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV, BF_VOR, BF_OPU };
 
 void u8fix(char *src);
 
@@ -188,7 +167,7 @@ class Config {
     uint8_t irchck;
     ircodes_t ircodes;
 #endif
-    BitrateFormat configFmt = BF_UNCNOWN;
+    BitrateFormat configFmt = BF_UNKNOWN;
     neworkItem ssids[5];
     uint8_t ssidsCount;
     uint16_t sleepfor;
@@ -199,6 +178,7 @@ class Config {
     uint16_t screensaverPlayingTicks;
     bool     isScreensaver;
     int      newConfigMode;
+    char       ipBuf[16];
   public:
     void init();
     void loadPreferences();
@@ -230,10 +210,8 @@ class Config {
     void deleteMainDatawwwFile();
     void startAsyncServicesButWait();
     void updateFile(void* param, const char* localFile, const char* onlineFile, const char* updatePeriod, const char* simpleName);
-    #ifdef USE_SD
-      void initSDPlaylist();
-      void changeMode(int newmode=-1);
-    #endif
+    void initSDPlaylist();
+    void changeMode(int newmode=-1);
     uint16_t playlistLength();
     uint16_t lastStation(){
       return getMode()==PM_WEB?store.lastStation:store.lastSdStation;
@@ -242,7 +220,6 @@ class Config {
       if(getMode()==PM_WEB) saveValue(&store.lastStation, newstation);
       else saveValue(&store.lastSdStation, newstation);
     }
-    uint8_t fillPlMenu(int from, uint8_t count, bool fromNextion=false);
     char * stationByNum(uint16_t num);
     void setBrightness(bool dosave=false);
     void setDspOn(bool dspon, bool saveval = true);
@@ -267,12 +244,10 @@ class Config {
     void setIrBtn(int val);
 #endif
     void resetSystem(const char *val, uint8_t clientId);
-    
-    bool spiffsCleanup();
     FS* SDPLFS(){ return _SDplaylistFS; }
-    #if RTCSUPPORTED
-      bool isRTCFound(){ return _rtcFound; };
-    #endif
+    bool spiffsCleanup();
+    char * ipToStr(IPAddress ip);
+    bool isRTCFound(){ return _rtcFound; };
     Preferences prefs; // For Preferences, we use a look-up table to maintain compatibility...
     static const configKeyMap keyMap[];
 
@@ -334,9 +309,7 @@ class Config {
     }
   private:
     bool _bootDone;
-    #if RTCSUPPORTED
-      bool _rtcFound;
-    #endif
+    bool _rtcFound;
     FS* _SDplaylistFS;
     void setDefaults();
     Ticker   _sleepTimer;
