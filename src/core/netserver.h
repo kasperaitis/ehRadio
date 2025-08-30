@@ -1,6 +1,5 @@
 #ifndef netserver_h
 #define netserver_h
-#include "Arduino.h"
 
 #include "../AsyncWebServer/ESPAsyncWebServer.h"
 

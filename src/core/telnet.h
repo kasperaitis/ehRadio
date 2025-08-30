@@ -1,10 +1,10 @@
 #ifndef telnet_h
 #define telnet_h
-
 #include <WiFi.h>
 
 #define MAX_TLN_CLIENTS 5
 #define MAX_PRINTF_LEN BUFLEN+50
+#define BOOTLOG( ... ) { char buf[120]; sprintf( buf, __VA_ARGS__ ) ; telnet.printf("##[BOOT]#\t%s\n",buf); }
 
 class Telnet {
   public:

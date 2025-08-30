@@ -1,6 +1,5 @@
 #ifndef player_h
 #define player_h
-#include "options.h"
 
 #if I2S_DOUT!=255 || I2S_INTERNAL
   #include "../audioI2S/AudioEx.h"
@@ -13,7 +12,7 @@
 #endif
 
 #ifndef PLQ_SEND_DELAY
-	#define PLQ_SEND_DELAY portMAX_DELAY
+	#define PLQ_SEND_DELAY pdMS_TO_TICKS(1000) //portMAX_DELAY
 #endif
 
 #define PLERR_LN        64

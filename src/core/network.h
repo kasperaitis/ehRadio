@@ -1,9 +1,7 @@
 #ifndef network_h
 #define network_h
 #include <Ticker.h>
-#include "time.h"
-#include "WiFi.h"
-#include "rtcsupport.h"
+#include <WiFi.h>
 #include <DNSServer.h>
 
 //#define TSYNC_DELAY 10800000    // 1000*60*60*3 = 3 hours

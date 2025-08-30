@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include "core/options.h"
 #include "core/config.h"
+#include "pluginsManager/pluginsManager.h"
 #include "core/telnet.h"
 #include "core/player.h"
 #include "core/display.h"
@@ -10,9 +11,12 @@
 #include "core/controls.h"
 #include "core/mqtt.h"
 #include "core/optionschecker.h"
+#ifdef USE_NEXTION
+#include "displays/nextion.h"
+#endif
 
 #if DSP_HSPI || TS_HSPI || VS_HSPI
-SPIClass  SPI2(HOOPSENb);
+SPIClass SPI2(HSPI);
 #endif
 
 extern __attribute__((weak)) void ehradio_on_setup();
