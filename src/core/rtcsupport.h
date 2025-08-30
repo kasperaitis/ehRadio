@@ -2,7 +2,7 @@
 #define rtcsupport_h
 #include "options.h"
 
-#define RTCSUPPORTED	(RTC_SDA!=255 && RTC_SCL!=255 && (RTC_MODULE==DS3231 || RTC_MODULE==DS1307))
+#define RTCSUPPORTED (RTC_SDA!=255 && RTC_SCL!=255 && (RTC_MODULE==DS3231 || RTC_MODULE==DS1307))
 
 #if RTCSUPPORTED
 #include "RTClib.h"

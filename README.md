@@ -16,6 +16,31 @@ Documentation will be slowly improved.
 ## ehRadio Version history
 
 
+### 2025.08.31
+  - Display fixes and other fixes from yoRadio up to v0.9.693 which should include:
+    - fixed incorrect behavior of the `HIDE_VU` setting
+    - fixed `CORRUPT HEAP` error when playing "invalid links"
+    - optimized code of utfToAscii
+    - fixed artifacts in scrolling text
+    - fixed SD card connection bug in configurations with `SD_SPIPINS` defined
+    - time synchronization setting (maybe?)
+    - fixed bug with redundant epoch time being added to the tag in SD mode (maybe?)
+    - fixed clock display bug when exiting screensaver in playback mode
+    - increased number of SD card initialization attempts when switching mode
+    - fixed bug with incorrect text clipping on scrolling widgets
+    - display performance optimization
+    - to improve rendering smoothness, a framebuffer has been added for TFT SPI displays ST7735, ST7789, ILI9341, GC9106, ST7796, GC9A01A, ILI9488, ILI9486
+      - the framebuffer is applied only to moving elements (scrolling text, VU meter, clock)
+      - the framebuffer works on modules with additional PSRAM
+      - on such modules, the framebuffer is enabled automatically, no extra steps required
+      - to disable the framebuffer, add #define USE_FBUFFER false in myoptions.h
+      - on modules without PSRAM, the framebuffer is disabled by default. It can be forced on by adding `#define SFBUFFER` in `myoptions.h`
+      - but in that case, free memory (as well as HTTPS streams) will be severely limited
+    - fixed compilation error for Nextion displays
+    - code cleanup, optimization, and refactoring (actually with 2 different codebases, it may have been made more spaghettified)
+    - fixed compilation error for certain displays when `#define DSP_INVERT_TITLE false` is set
+    - fixed compilation error for `DSP_DUMMY`
+
 ### 2025.08.20
   - Major fixes to online updater (if running an older version, need to manually flash)
   - WebUI fixed for mobile displays

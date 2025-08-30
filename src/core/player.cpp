@@ -5,6 +5,11 @@
 #include "display.h"
 #include "sdmanager.h"
 #include "netserver.h"
+#include "../displays/tools/l10n.h"
+#include "../pluginsManager/pluginsManager.h"
+#ifdef USE_NEXTION
+  #include "../displays/nextion.h"
+#endif
 
 Player player;
 QueueHandle_t playerQueue;
@@ -95,9 +100,9 @@ void Player::_stop(bool alreadyStopped){
   if(config.getMode()==PM_SDCARD && !alreadyStopped) config.sdResumePos = player.getFilePos();
   _status = STOPPED;
   setOutputPins(false);
-  if(!hasError()) config.setTitle((display.mode()==LOST || display.mode()==UPDATING)?"":const_PlStopped);
+  if(!hasError()) config.setTitle((display.mode()==LOST || display.mode()==UPDATING)?"":LANG::const_PlStopped);
   config.station.bitrate = 0;
-  config.setBitrateFormat(BF_UNCNOWN);
+  config.setBitrateFormat(BF_UNKNOWN);
   #ifdef USE_NEXTION
     nextion.bitrate(config.station.bitrate);
   #endif
@@ -209,9 +214,9 @@ void Player::_play(uint16_t stationId) {
   setOutputPins(false);
   //config.setTitle(config.getMode()==PM_WEB?const_PlConnect:"");
   if(!config.loadStation(stationId)) return;
-  config.setTitle(config.getMode()==PM_WEB?const_PlConnect:"[next track]");
+  config.setTitle(config.getMode()==PM_WEB?LANG::const_PlConnect:"[next track]");
   config.station.bitrate=0;
-  config.setBitrateFormat(BF_UNCNOWN);
+  config.setBitrateFormat(BF_UNKNOWN);
   
   _loadVol(config.store.volume);
   display.putRequest(DBITRATE);
@@ -265,7 +270,7 @@ void Player::playUrl(const char* url) {
   resumeAfterUrl = _status==PLAYING;
   display.putRequest(PSTOP);
   setOutputPins(false);
-  config.setTitle(const_PlConnect);
+  config.setTitle(LANG::const_PlConnect);
   if (connecttohost(url)) {
     _status = PLAYING;
     config.setTitle("");

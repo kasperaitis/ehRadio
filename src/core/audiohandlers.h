@@ -54,7 +54,6 @@ bool printable(const char *info) {
 
 void audio_showstation(const char *info) {
   bool p = printable(info) && (strlen(info) > 0);(void)p;
-  //config.setTitle(p?info:config.station.name);
   if(player.remoteStationName){
     config.setStation(p?info:config.station.name);
     display.putRequest(NEWSTATION);
@@ -63,7 +62,6 @@ void audio_showstation(const char *info) {
 }
 
 void audio_showstreamtitle(const char *info) {
-  DBGH();
   if (strstr(info, "Account already in use") != NULL || strstr(info, "HTTP/1.0 401") != NULL) player.setError(info);
   bool p = printable(info) && (strlen(info) > 0);
   #ifdef DEBUG_TITLES
@@ -74,9 +72,7 @@ void audio_showstreamtitle(const char *info) {
 }
 
 void audio_error(const char *info) {
-  //config.setTitle(info);
   player.setError(info);
-  telnet.printf("##ERROR#:\t%s\n", info);
 }
 
 void audio_id3artist(const char *info){
@@ -91,11 +87,9 @@ void audio_id3album(const char *info){
     if(strlen(config.station.title)==0){
       config.setTitle(info);
     }else{
-      char out[BUFLEN]= {0};
-      strlcat(out, config.station.title, BUFLEN);
-      strlcat(out, " - ", BUFLEN);
-      strlcat(out, info, BUFLEN);
-      config.setTitle(out);
+      char tmp[BUFLEN];
+      snprintf(tmp, BUFLEN, "%s - %s", config.station.title, info);
+      config.setTitle(tmp);
     }
   }
 }

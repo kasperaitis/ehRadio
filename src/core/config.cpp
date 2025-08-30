@@ -1,16 +1,26 @@
+#include "options.h"
 #include "config.h"
 
-//#include <SPIFFS.h>
 #include "display.h"
 #include "player.h"
 #include "network.h"
 #include "netserver.h"
 #include "controls.h"
+#include "telnet.h"
+#include "rtcsupport.h"
+#include "../displays/tools/l10n.h"
 #ifdef USE_SD
-#include "sdmanager.h"
+  #include "sdmanager.h"
+#endif
+#ifdef USE_NEXTION
+  #include "../displays/nextion.h"
 #endif
 #include <cstddef>
 #include "../ESPFileUpdater/ESPFileUpdater.h"
+#if DSP_MODEL==DSP_DUMMY
+  #define DUMMYDISPLAY
+#endif
+
 
 // List of required web asset files
 static const char* requiredFiles[] = {"dragpl.js","ir.css","irrecord.html","ir.js","logo.svg","options.html","script.js",
@@ -124,9 +134,8 @@ void Config::loadPreferences() {
   prefs.end();
 }
 
-#ifdef USE_SD
-
 void Config::changeMode(int newmode){
+#ifdef USE_SD
   bool pir = player.isRunning();
   if(SDC_CS==255) return;
   if(getMode()==PM_SDCARD) {
@@ -175,9 +184,11 @@ void Config::changeMode(int newmode){
   display.resetQueue();
   display.putRequest(NEWMODE, PLAYER);
   display.putRequest(NEWSTATION);
+#endif //#ifdef USE_SD
 }
 
 void Config::initSDPlaylist() {
+#ifdef USE_SD
   //store.countStation = 0;
   bool doIndex = !sdman.exists(INDEX_SD_PATH);
   if(doIndex) sdman.indexSDPlaylist();
@@ -191,9 +202,9 @@ void Config::initSDPlaylist() {
     index.close();
     //saveValue(&store.countStation, store.countStation, true, true);
   }
+#endif //#ifdef USE_SD
 }
 
-#endif //#ifdef USE_SD
 
 bool Config::spiffsCleanup(){
   bool ret = (SPIFFS.exists(PLAYLIST_SD_PATH)) || (SPIFFS.exists(INDEX_SD_PATH)) || (SPIFFS.exists(INDEX_PATH));
@@ -201,6 +212,11 @@ bool Config::spiffsCleanup(){
   if(SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_SD_PATH);
   if(SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(INDEX_PATH);
   return ret;
+}
+
+char * Config::ipToStr(IPAddress ip){
+  snprintf(ipBuf, 16, "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
+  return ipBuf;
 }
 
 void Config::initPlaylistMode(){
@@ -633,52 +649,6 @@ char * Config::stationByNum(uint16_t num){
   strncpy(_stationBuf, playlist.readStringUntil('\t').c_str(), BUFLEN/2);
   playlist.close();
   return _stationBuf;
-}
-
-uint8_t Config::fillPlMenu(int from, uint8_t count, bool fromNextion) {
-  int     ls      = from;
-  uint8_t c       = 0;
-  bool    finded  = false;
-  if (playlistLength() == 0) {
-    return 0;
-  }
-  File playlist = SDPLFS()->open(REAL_PLAYL, "r");
-  File index = SDPLFS()->open(REAL_INDEX, "r");
-  while (true) {
-    if (ls < 1) {
-      ls++;
-      if(!fromNextion) display.printPLitem(c, "");
-  #ifdef USE_NEXTION
-    if(fromNextion) nextion.printPLitem(c, "");
-  #endif
-      c++;
-      continue;
-    }
-    if (!finded) {
-      index.seek((ls - 1) * 4, SeekSet);
-      uint32_t pos;
-      index.readBytes((char *) &pos, 4);
-      finded = true;
-      index.close();
-      playlist.seek(pos, SeekSet);
-    }
-    bool pla = true;
-    while (pla) {
-      pla = playlist.available();
-      String stationName = playlist.readStringUntil('\n');
-      stationName = stationName.substring(0, stationName.indexOf('\t'));
-      if(config.store.numplaylist && stationName.length()>0) stationName = String(from+c)+" "+stationName;
-      if(!fromNextion) display.printPLitem(c, stationName.c_str());
-      #ifdef USE_NEXTION
-        if(fromNextion) nextion.printPLitem(c, stationName.c_str());
-      #endif
-      c++;
-      if (c >= count) break;
-    }
-    break;
-  }
-  playlist.close();
-  return c;
 }
 
 void Config::escapeQuotes(const char* input, char* output, size_t maxLen) {
