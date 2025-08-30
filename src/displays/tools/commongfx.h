@@ -1,7 +1,18 @@
 #ifndef common_gfx_h
 #define common_gfx_h
+#include "Arduino.h"
 #include "../widgets/widgetsconfig.h" // displayXXXDDDDconf.h
 #include "utf8Rus.h"
+
+// Define missing macros for SSD1306x32 if not already defined
+#ifndef CHARWIDTH
+#define CHARWIDTH 6
+#endif
+#if !defined(TFT_FG) && !defined(TFT_BG)
+#define TFT_FG 1
+#define TFT_BG 0
+#endif
+
 #define ADAFRUIT_CLIPPING !defined(DSP_LCD) && DSP_MODEL!=DSP_ILI9225
 
 typedef struct clipArea {
@@ -34,7 +45,7 @@ class DspCore: public yoDisplay {
       #if DSP_MODEL!=DSP_SSD1306x32
         drawBitmap((width()  - LOGO_WIDTH ) / 2, top, logo, LOGO_WIDTH, LOGO_HEIGHT, 1);
       #else
-        setTextSize(1); setCursor((width() - 6*CHARWIDTH) / 2, 0); setTextColor(TFT_FG, TFT_BG); print(utf8Rus("ёRadio", false));
+        setTextSize(1); setCursor((width() - 6*CHARWIDTH) / 2, 0); setTextColor(TFT_FG, TFT_BG); print(utf8Rus("ehRadio", false));
       #endif
       display();
     }
