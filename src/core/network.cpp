@@ -11,6 +11,7 @@
 #include "mqtt.h"
 #include "../pluginsManager/pluginsManager.h"
 #include <DNSServer.h>
+#include "../displays/tools/l10n.h"
 
 #ifndef WIFI_ATTEMPTS
   #define WIFI_ATTEMPTS  16
@@ -132,7 +133,7 @@ void MyNetwork::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
 
 void MyNetwork::WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info){
   if(!network.beginReconnect){
-    Serial.printf("Lost connection, reconnecting to %s...\n", config.ssids[config.store.lastSSID-1].ssid);
+    Serial.printf("WiFiLost: %lu ms, event=%d, SSID=%s, RSSI=%d\n", millis(), (int)event, config.ssids[config.store.lastSSID-1].ssid, WiFi.RSSI());
     if(config.getMode()==PM_SDCARD) {
       network.status=SDREADY;
       display.putRequest(NEWIP, 0);
@@ -351,7 +352,7 @@ bool getWeather(char *wstr) {
     return false;
   }
   char httpget[250] = {0};
-  sprintf(httpget, "GET /data/2.5/weather?lat=%s&lon=%s&units=%s&lang=%s&appid=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, weatherUnits, weatherLang, config.store.weatherkey, host);
+  sprintf(httpget, "GET /data/2.5/weather?lat=%s&lon=%s&units=%s&lang=%s&appid=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, LANG::weatherUnits, LANG::weatherLang, config.store.weatherkey, host);
   client.print(httpget);
   unsigned long timeout = millis();
   while (client.available() == 0) {
@@ -495,12 +496,12 @@ bool getWeather(char *wstr) {
   
   Serial.printf("##WEATHER###: description: %s, temp:%.1f C, pressure:%dmmHg, humidity:%s%%\n", desc, tempf, pressi, hum);
   #ifdef WEATHER_FMT_SHORT
-  sprintf(wstr, weatherFmt, tempf, pressi, hum);
+  sprintf(wstr, LANG::weatherFmt, tempf, pressi, hum);
   #else
     #if EXT_WEATHER
-      sprintf(wstr, weatherFmt, desc, tempf, tempfl, pressi, hum, wind_speed, wind[wind_deg]);
+      sprintf(wstr, LANG::weatherFmt, desc, tempf, tempfl, pressi, hum, wind_speed, LANG::wind[wind_deg]);
     #else
-      sprintf(wstr, weatherFmt, desc, tempf, pressi, hum);
+      sprintf(wstr, LANG::weatherFmt, desc, tempf, pressi, hum);
     #endif
   #endif
   network.requestWeatherSync();

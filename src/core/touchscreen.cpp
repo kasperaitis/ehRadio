@@ -34,6 +34,10 @@
   #include "../GT911_Touchscreen/TAMC_GT911.h"
   TAMC_GT911 ts = TAMC_GT911(TS_SDA, TS_SCL, TS_INT, TS_RST, 0, 0);
   typedef TP_Point TSPoint;
+#elif TS_MODEL==TS_MODEL_FT6336
+  #include "../FT6336_Touchscreen/FT6336.h"
+  FT6336 ts = FT6336(TS_SDA, TS_SCL, TS_INT, TS_RST, 0, 0);
+  typedef FT_Point TSPoint;
 #endif
 
 void TouchScreen::init(uint16_t w, uint16_t h){
@@ -55,9 +59,16 @@ void TouchScreen::init(uint16_t w, uint16_t h){
   ts.begin();
   ts.setRotation(config.store.fliptouch?0:2);
 #endif
+#if TS_MODEL==TS_MODEL_FT6336
+  ts.begin();
+  ts.setRotation(config.store.fliptouch?0:2);
+#endif
   _width  = w;
   _height = h;
 #if TS_MODEL==TS_MODEL_GT911
+  ts.setResolution(_width, _height);
+#endif
+#if TS_MODEL==TS_MODEL_FT6336
   ts.setResolution(_width, _height);
 #endif
 }
@@ -103,6 +114,9 @@ void TouchScreen::loop(){
 #if TS_MODEL==TS_MODEL_GT911
   ts.read();
 #endif
+#if TS_MODEL==TS_MODEL_FT6336
+  ts.read();
+#endif
   bool istouched = _istouched();
   if(istouched){
   #if TS_MODEL==TS_MODEL_XPT2046
@@ -110,6 +124,10 @@ void TouchScreen::loop(){
     touchX = map(p.x, TS_X_MIN, TS_X_MAX, 0, _width);
     touchY = map(p.y, TS_Y_MIN, TS_Y_MAX, 0, _height);
   #elif TS_MODEL==TS_MODEL_GT911
+    TSPoint p = ts.points[0];
+    touchX = p.x;
+    touchY = p.y;
+  #elif TS_MODEL==TS_MODEL_FT6336
     TSPoint p = ts.points[0];
     touchX = p.x;
     touchY = p.y;
@@ -189,6 +207,8 @@ bool TouchScreen::_istouched(){
 #if TS_MODEL==TS_MODEL_XPT2046
   return ts.touched();
 #elif TS_MODEL==TS_MODEL_GT911
+  return ts.isTouched;
+#elif TS_MODEL==TS_MODEL_FT6336
   return ts.isTouched;
 #endif
 }

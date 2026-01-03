@@ -130,6 +130,12 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef I2S_LRC
   #define I2S_LRC       25  // WSEL Left Right Clock
 #endif
+#ifndef I2S_DIN
+  #define I2S_DIN       255  // optional DIN (not wired by default)
+#endif
+#ifndef I2S_MCLK
+  #define I2S_MCLK      255  // optional MCLK (not wired by default)
+#endif
 
 /*             SDCARD             */
 #ifndef SDC_CS
@@ -211,6 +217,7 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #define TS_MODEL_UNDEFINED      0
 #define TS_MODEL_XPT2046        1
 #define TS_MODEL_GT911          2
+#define TS_MODEL_FT6336         3
 
 #ifndef TS_MODEL
   #define TS_MODEL              TS_MODEL_UNDEFINED

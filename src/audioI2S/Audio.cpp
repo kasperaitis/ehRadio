@@ -4986,7 +4986,7 @@ void Audio::printDecodeError(int r) {
     }
 }
 //****************************************************************************************
-bool Audio::setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t MCLK) {
+bool Audio::setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t DIN, int8_t MCLK) {
 
     m_f_psramFound = psramInit();
 
@@ -5021,7 +5021,7 @@ bool Audio::setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t MCLK) {
 #if(ESP_IDF_VERSION_MAJOR == 5)
     i2s_std_gpio_config_t gpio_cfg = {};
     gpio_cfg.bclk = (gpio_num_t)BCLK;
-    gpio_cfg.din = (gpio_num_t)I2S_GPIO_UNUSED;
+    gpio_cfg.din = (gpio_num_t)DIN;
     gpio_cfg.dout = (gpio_num_t)DOUT;
     gpio_cfg.mclk = (gpio_num_t)MCLK;
     gpio_cfg.ws = (gpio_num_t)LRC;
@@ -5032,7 +5032,7 @@ bool Audio::setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t MCLK) {
     m_pin_config.bck_io_num = BCLK;
     m_pin_config.ws_io_num = LRC; //  wclk = lrc
     m_pin_config.data_out_num = DOUT;
-    m_pin_config.data_in_num = I2S_GPIO_UNUSED;
+    m_pin_config.data_in_num = DIN;
     m_pin_config.mck_io_num = MCLK;
     result = i2s_set_pin((i2s_port_t)m_i2s_num, &m_pin_config);
 #endif

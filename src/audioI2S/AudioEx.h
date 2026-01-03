@@ -180,8 +180,8 @@ public:
     bool setFilePos(uint32_t pos);
     bool audioFileSeek(const float speed);
     bool setTimeOffset(int sec);
-//	    bool setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t DIN = I2S_PIN_NO_CHANGE, int8_t MCK = I2S_PIN_NO_CHANGE);
-    bool setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t MCLK = I2S_GPIO_UNUSED);
+    // Support setting DIN (microphone input) and MCLK (master clock)
+    bool setPinout(uint8_t BCLK, uint8_t LRC, uint8_t DOUT, int8_t DIN = I2S_GPIO_UNUSED, int8_t MCLK = I2S_GPIO_UNUSED);
     bool pauseResume();
     bool isRunning() {return m_f_running;}
     void loop();
