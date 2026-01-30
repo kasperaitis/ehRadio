@@ -163,44 +163,47 @@ bool MyNetwork::wifiBegin(bool silent){
   }
   */
   
+#if WIFI_SCAN_BEST_RSSI
   // Scan for networks and find the strongest available configured SSID
   if(!silent) Serial.println("##[BOOT]#\tScanning for best available network...");
   
   int n = WiFi.scanNetworks();
   int32_t bestRSSI = -128;
-  int8_t bestSSIDIndex = -1;
-  uint8_t bestBSSID[6];
+  int8_t bestConfigIndex = -1;  // Index in config.ssids[] array
+  int bestScanIndex = -1;        // Index in WiFi scan results
   
   if(n > 0) {
-    // Check all scanned networks against all configured SSIDs
+    // Iterate through scanned networks and check against configured SSIDs
     for(int i = 0; i < n; i++) {
-      const char* scannedSSID = WiFi.SSID(i).c_str();
-      int32_t rssi = WiFi.RSSI(i);
-      
-      // Check if this scanned network matches any of our configured SSIDs
+      String scannedSSID = WiFi.SSID(i);  // Store as String to keep it alive
+      // Skip hidden SSIDs (empty string)
+      if(scannedSSID.length() == 0) continue;
+      // Check if this scanned network matches any configured SSID
       for(uint8_t j = 0; j < config.ssidsCount; j++) {
-        if(strcmp(scannedSSID, config.ssids[j].ssid) == 0) {
+        if(strcmp(scannedSSID.c_str(), config.ssids[j].ssid) == 0) {
+          int32_t rssi = WiFi.RSSI(i);
           // Found a match - check if it's the strongest so far
           if(rssi > bestRSSI) {
             bestRSSI = rssi;
-            bestSSIDIndex = j;
-            memcpy(bestBSSID, WiFi.BSSID(i), 6);
+            bestConfigIndex = j;
+            bestScanIndex = i;
           }
+          break;  // Found match for this scanned network, check next scan result
         }
       }
     }
     
-    if(bestSSIDIndex >= 0 && !silent) {
+    if(bestConfigIndex >= 0 && !silent) {
       Serial.printf("##[BOOT]#\tBest network: %s (RSSI: %d dBm)\n", 
-                    config.ssids[bestSSIDIndex].ssid, bestRSSI);
+                    config.ssids[bestConfigIndex].ssid, bestRSSI);
     }
   }
-  WiFi.scanDelete();
   
   // If we found a strong network, try it first
-  if(bestSSIDIndex >= 0) {
-    ls = bestSSIDIndex;
+  if(bestConfigIndex >= 0) {
+    ls = bestConfigIndex;
   }
+#endif
   
   while (true) {
     if(!silent){
@@ -209,12 +212,16 @@ bool MyNetwork::wifiBegin(bool silent){
       display.putRequest(BOOTSTRING, ls);
     }
     
-    // If this is the best network we found, use the specific BSSID
-    if(ls == bestSSIDIndex && bestSSIDIndex >= 0) {
-      WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password, 0, bestBSSID);
-    } else {
-      WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
+#if WIFI_SCAN_BEST_RSSI
+    // If we found the best network through scanning, use it first
+    if(bestScanIndex >= 0) {
+      WiFi.scanDelete();  // Free memory before connecting
+      bestScanIndex = -1;  // Mark as used
     }
+    WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
+#else
+    WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
+#endif
     
     while (WiFi.status() != WL_CONNECTED) {
       if(!silent) Serial.print(".");

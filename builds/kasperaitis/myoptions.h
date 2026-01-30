@@ -295,6 +295,12 @@
 //#define SD_HSPI     /* false (not needed when using custom pins) */
 //#define SDSPISPEED      8000000     /* Default speed 20000000 */
 
+/* --- WIFI --- */
+
+#if defined(ESP32_S3_ES3C28P)
+/* WiFi Scanning - enable for multiple APs (slower startup) */
+#define WIFI_SCAN_BEST_RSSI true     /* Scan and connect to strongest RSSI (slower startup, useful with multiple APs) */
+#endif
 
 /* --- USER DEFAULTS --- */
 

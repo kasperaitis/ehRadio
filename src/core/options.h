@@ -505,6 +505,9 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef USE_OTA
   #define USE_OTA    false
 #endif
+#ifndef WIFI_SCAN_BEST_RSSI
+  #define WIFI_SCAN_BEST_RSSI    false   // Scan for strongest SSID (slower startup, useful with multiple APs)
+#endif
 
 #ifndef AP_SSID
   #define AP_SSID "ehRadio"
