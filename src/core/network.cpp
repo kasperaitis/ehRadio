@@ -162,13 +162,60 @@ bool MyNetwork::wifiBegin(bool silent){
     WiFi.setHostname(buf);
   }
   */
+  
+  // Scan for networks and find the strongest available configured SSID
+  if(!silent) Serial.println("##[BOOT]#\tScanning for best available network...");
+  
+  int n = WiFi.scanNetworks();
+  int32_t bestRSSI = -128;
+  int8_t bestSSIDIndex = -1;
+  uint8_t bestBSSID[6];
+  
+  if(n > 0) {
+    // Check all scanned networks against all configured SSIDs
+    for(int i = 0; i < n; i++) {
+      const char* scannedSSID = WiFi.SSID(i).c_str();
+      int32_t rssi = WiFi.RSSI(i);
+      
+      // Check if this scanned network matches any of our configured SSIDs
+      for(uint8_t j = 0; j < config.ssidsCount; j++) {
+        if(strcmp(scannedSSID, config.ssids[j].ssid) == 0) {
+          // Found a match - check if it's the strongest so far
+          if(rssi > bestRSSI) {
+            bestRSSI = rssi;
+            bestSSIDIndex = j;
+            memcpy(bestBSSID, WiFi.BSSID(i), 6);
+          }
+        }
+      }
+    }
+    
+    if(bestSSIDIndex >= 0 && !silent) {
+      Serial.printf("##[BOOT]#\tBest network: %s (RSSI: %d dBm)\n", 
+                    config.ssids[bestSSIDIndex].ssid, bestRSSI);
+    }
+  }
+  WiFi.scanDelete();
+  
+  // If we found a strong network, try it first
+  if(bestSSIDIndex >= 0) {
+    ls = bestSSIDIndex;
+  }
+  
   while (true) {
     if(!silent){
       Serial.printf("##[BOOT]#\tAttempt to connect to %s\n", config.ssids[ls].ssid);
       Serial.print("##[BOOT]#\t");
       display.putRequest(BOOTSTRING, ls);
     }
-    WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
+    
+    // If this is the best network we found, use the specific BSSID
+    if(ls == bestSSIDIndex && bestSSIDIndex >= 0) {
+      WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password, 0, bestBSSID);
+    } else {
+      WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
+    }
+    
     while (WiFi.status() != WL_CONNECTED) {
       if(!silent) Serial.print(".");
       delay(500);
