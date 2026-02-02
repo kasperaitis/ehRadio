@@ -1,6 +1,6 @@
 #include "Arduino.h"
 
-SET_LOOP_TASK_STACK_SIZE(16 * 1024);  // Increase from default 8KB for audio decoding + concurrent tasks
+SET_LOOP_TASK_STACK_SIZE(16 * 1024);  // Increase from default 8KB for audio decoding + concurrent tasks (may have problems on regular ESP32?)
 
 #include "core/options.h"
 #include "core/config.h"
@@ -28,17 +28,12 @@ extern __attribute__((weak)) void ehradio_on_setup();
 void setup() {
   Serial.begin(115200);
   if(REAL_LEDBUILTIN!=255) pinMode(REAL_LEDBUILTIN, OUTPUT);
-
-  // Debug: print compile-time macros for RGB and LED config
-  // Initialize RGB driver
   rgbled_init();
-
   if (ehradio_on_setup) ehradio_on_setup();
   pm.on_setup();
   config.init();
   display.init();
   player.init();
-  // Set RGB to reflect current player state at boot (red when stopped)
   if (rgbled_is_initialized()) {
     if (player.isRunning()) rgbled_playing(); else rgbled_stopped();
   }
@@ -78,11 +73,7 @@ void setup() {
 
 void loop() {
   telnet.loop();
-
   rgbled_loop();
-
-
-
   if (network.status == CONNECTED || network.status==SDREADY) {
     player.loop();
     //loopControls();
@@ -101,6 +92,7 @@ void loop() {
 *   Plugin BacklightDown.
 *   Ver.1.0 (Maleksm) for ёРадио 20.12.2024
 *   Ver.1.1 (Trip5) 2025.07.19
+*   Ver.1.2 (Kasperaitis/Trip5) 2026.02.01
 ***************************************************************************/
 #if (BRIGHTNESS_PIN!=255) && (defined(DOWN_LEVEL) || defined(DOWN_INTERVAL))
 #include <Ticker.h>
@@ -156,35 +148,33 @@ void loop() {
       }
     }
   }
-#endif  /*  #if BRIGHTNESS_PIN!=255 */
+#else  /*  #if BRIGHTNESS_PIN!=255 */
+  void brightnessOn() { } /* No-op stub */
+#endif
 
 // Call rgbled loop from main loop too (no-op if not enabled)
-void rgbled_loop_caller() { rgbled_loop(); }
+void rgbled_loop_caller() {
+  rgbled_loop();
+}
 
-/* Ensure RGB callbacks exist even when BacklightDown plugin is not enabled */
 void ehradio_on_setup() {
   rgbled_init();
-  #if (BRIGHTNESS_PIN!=255) && (defined(DOWN_LEVEL) || defined(DOWN_INTERVAL))
-    brightnessOn();
-  #endif
+  brightnessOn();
 }
+
 void player_on_track_change() {
   rgbled_trackchange();
-  #if (BRIGHTNESS_PIN!=255) && (defined(DOWN_LEVEL) || defined(DOWN_INTERVAL))
-    brightnessOn();
-  #endif
+  brightnessOn();
 }
+
 void player_on_start_play() {
   rgbled_playing();
-  #if (BRIGHTNESS_PIN!=255) && (defined(DOWN_LEVEL) || defined(DOWN_INTERVAL))
-    brightnessOn();
-  #endif
+  brightnessOn();
 }
+
 void player_on_stop_play() {
   rgbled_stopped();
-  #if (BRIGHTNESS_PIN!=255) && (defined(DOWN_LEVEL) || defined(DOWN_INTERVAL))
-    brightnessOn();
-  #endif
+  brightnessOn();
 }
 
 

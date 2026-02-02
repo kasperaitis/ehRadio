@@ -7,7 +7,7 @@
 #include "netserver.h"
 #include "../displays/tools/l10n.h"
 #include "../pluginsManager/pluginsManager.h"
-#if defined(ESP32_S3_ES3C28P)
+#ifdef USE_ES8311
   #include "../ES8311/es8311.h"
 #endif
 #ifdef USE_NEXTION
@@ -60,18 +60,9 @@ void Player::init() {
     if(VS1053_RST>0) ResetChip();
     begin();
   #endif
-
-  /* Initialize ES8311 codec on ES3C28P boards (I2C pins defined in myoptions.h) */
-  #if defined(ESP32_S3_ES3C28P)
-    if (es.begin(I2C_SDA, I2C_SCL, 400000UL)) {
-      log_i("ES8311: init OK");
-      /* Start codec muted (or low) to avoid very loud output before saved volume is applied */
-      es.setVolume(0);
-    } else {
-      log_e("ES8311: init failed");
-    }
+  #ifdef USE_ES8311
+    if (es.begin(I2C_SDA, I2C_SCL, 400000UL)) es.setVolume(0); /* Start codec muted (or low) to avoid very loud output before saved volume is applied */
   #endif
-
   setBalance(config.store.balance);
   setTone(config.store.bass, config.store.middle, config.store.trebble);
   setVolume(0);
@@ -83,11 +74,9 @@ void Player::init() {
     forceMono(true);
   #endif
   _loadVol(config.store.volume);
-  #if defined(ESP32_S3_ES3C28P)
-    /* Also apply stored volume to codec (respecting station ovol via volToI2S) */
-    uint8_t i2sVol_init = volToI2S(config.store.volume);
-    /* Map I2S volume (0..254) to codec volume 0..100 */
-    es.setVolume((uint8_t)map(i2sVol_init, 0, 254, 0, 100));
+  #ifdef USE_ES8311
+    uint8_t i2sVol_init = volToI2S(config.store.volume); /* Also apply stored volume to codec (respecting station ovol via volToI2S) */
+    es.setVolume((uint8_t)map(i2sVol_init, 0, 254, 0, 100)); /* Map I2S volume (0..254) to codec volume 0..100 */
   #endif
   setConnectionTimeout(1700, 3700);
   Serial.println("done");
@@ -175,9 +164,8 @@ void Player::loop() {
         config.setVolume(requestP.payload);
         uint8_t i2sVol = volToI2S(requestP.payload);
         Audio::setVolume(i2sVol);
-        #if defined(ESP32_S3_ES3C28P)
-          /* Map I2S volume (already adjusted for station ovol) 0..254 -> codec 0..100 */
-          es.setVolume((uint8_t)map(i2sVol, 0, 254, 0, 100));
+        #ifdef USE_ES8311
+          es.setVolume((uint8_t)map(i2sVol, 0, 254, 0, 100)); /* Map I2S volume (already adjusted for station ovol) 0..254 -> codec 0..100 */
         #endif
         break;
       }
@@ -356,7 +344,7 @@ void Player::stepVol(bool up) {
 }
 
 uint8_t Player::volToI2S(uint8_t volume) {
-#if defined(ESP32_S3_ES3C28P)
+#ifdef USE_ES8311
   // Apply gamma curve for ES3C28P to make low volumes more audible
   int maxIn = 254 - config.station.ovol * 3;
   if (maxIn < 1) maxIn = 1; // avoid division by zero; treat invalid ovol as no reduction
