@@ -20,10 +20,11 @@
 MyNetwork network;
 
 TaskHandle_t syncTaskHandle;
-//TaskHandle_t reconnectTaskHandle;
+TaskHandle_t streamRetryTaskHandle = NULL;
 
 bool getWeather(char *wstr);
 void doSync(void * pvParameters);
+void retryStreamConnection(void * pvParameters);
 
 void ticks() {
   if(!display.ready()) return; //waiting for SD is ready
@@ -114,6 +115,42 @@ void ticks() {
   }
 }
 
+void retryStreamConnection(void * pvParameters) {
+  const uint8_t maxAttempts = 40;  // 40 attempts * 15 seconds = 10 minutes
+  uint8_t attemptCount = 0;
+  while (attemptCount < maxAttempts) {
+    delay(15000);  // Wait 15 seconds between attempts
+    // Check if we should still be retrying
+    if (network.lostPlaying && WiFi.status() == WL_CONNECTED && !player.isRunning()) {
+      attemptCount++;
+      Serial.printf("Stream reconnect attempt %d/%d\n", attemptCount, maxAttempts);
+      player.sendCommand({PR_PLAY, config.lastStation()});
+      delay(3000);  // Give it a moment to try connecting
+      // Check if it worked
+      if (player.isRunning()) {
+        Serial.println("Stream reconnected successfully!");
+        network.lostPlaying = false;
+        streamRetryTaskHandle = NULL;
+        vTaskDelete(NULL);
+        return;
+      }
+    } else {
+      // Conditions changed (user pressed stop, or already playing, or WiFi lost again)
+      if (!network.lostPlaying || player.isRunning()) {
+        network.lostPlaying = false;
+      }
+      streamRetryTaskHandle = NULL;
+      vTaskDelete(NULL);
+      return;
+    }
+  }
+  // Max attempts reached - give up
+  Serial.println("Stream reconnection failed after 10 minutes. User intervention required.");
+  network.lostPlaying = false;
+  streamRetryTaskHandle = NULL;
+  vTaskDelete(NULL);
+}
+
 void MyNetwork::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
   network.beginReconnect = false;
   player.lockOutput = false;
@@ -124,7 +161,13 @@ void MyNetwork::WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info){
     display.putRequest(NEWIP, 0);
   }else{
     display.putRequest(NEWMODE, PLAYER);
-    if (network.lostPlaying) player.sendCommand({PR_PLAY, config.lastStation()});
+    if (network.lostPlaying) {
+      player.sendCommand({PR_PLAY, config.lastStation()});
+      // Launch retry task if not already running
+      if (streamRetryTaskHandle == NULL) {
+        xTaskCreatePinnedToCore(retryStreamConnection, "streamRetry", 1024 * 4, NULL, 1, &streamRetryTaskHandle, 0);
+      }
+    }
   }
   #ifdef MQTT_ENABLE
     if (config.store.mqttenable) connectToMqtt();
@@ -152,81 +195,114 @@ bool MyNetwork::wifiBegin(bool silent){
   uint8_t startedls = ls;
   uint8_t errcnt = 0;
   WiFi.mode(WIFI_STA);
-  /*
-  char buf[MDNS_LENGTH];
-  WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
-  if(strlen(config.store.mdnsname)>0){
-    WiFi.setHostname(config.store.mdnsname);
-  }else{
-    snprintf(buf, MDNS_LENGTH, "ehradio-%x", config.getChipId());
-    WiFi.setHostname(buf);
-  }
-  */
-  
-#if WIFI_SCAN_BEST_RSSI
-  // Scan for networks and find the strongest available configured SSID
-  if(!silent) Serial.println("##[BOOT]#\tScanning for best available network...");
-  
+  struct MatchedNetwork {
+    uint8_t configIndex;
+    int scanIndex;
+    int32_t rssi;
+    uint8_t channel;
+    uint8_t bssid[6];
+  };
+  MatchedNetwork matches[20];  // Max 20 matches (reasonable limit)
+  int matchCount = 0;
+  if (config.store.wifiscanbest && !silent) BOOTLOG("Scanning for best available network...");
   int n = WiFi.scanNetworks();
-  int32_t bestRSSI = -128;
-  int8_t bestConfigIndex = -1;  // Index in config.ssids[] array
-  int bestScanIndex = -1;        // Index in WiFi scan results
-  
-  if(n > 0) {
-    // Iterate through scanned networks and check against configured SSIDs
-    for(int i = 0; i < n; i++) {
-      String scannedSSID = WiFi.SSID(i);  // Store as String to keep it alive
-      // Skip hidden SSIDs (empty string)
-      if(scannedSSID.length() == 0) continue;
-      // Check if this scanned network matches any configured SSID
-      for(uint8_t j = 0; j < config.ssidsCount; j++) {
-        if(strcmp(scannedSSID.c_str(), config.ssids[j].ssid) == 0) {
-          int32_t rssi = WiFi.RSSI(i);
-          // Found a match - check if it's the strongest so far
-          if(rssi > bestRSSI) {
-            bestRSSI = rssi;
-            bestConfigIndex = j;
-            bestScanIndex = i;
+
+  if (config.store.wifiscanbest) {
+    if (!silent) BOOTLOG("Scan complete: %d networks found", n);
+    if (n > 0) {
+      // Find all matching networks and build sorted list
+      for (int i = 0; i < n; i++) {
+        String scannedSSID = WiFi.SSID(i);
+        if (scannedSSID.length() == 0) continue;
+        for (uint8_t j = 0; j < config.ssidsCount; j++) {
+          if (strcmp(scannedSSID.c_str(), config.ssids[j].ssid) == 0) {
+            // Found a match - add to array if there's space
+            if (matchCount < 20) {
+              matches[matchCount].configIndex = j;
+              matches[matchCount].scanIndex = i;
+              matches[matchCount].rssi = WiFi.RSSI(i);
+              matches[matchCount].channel = WiFi.channel(i);
+              uint8_t* bssid = WiFi.BSSID(i);
+              memcpy(matches[matchCount].bssid, bssid, 6);
+              matchCount++;
+            }
+            break;
           }
-          break;  // Found match for this scanned network, check next scan result
+        }
+      }
+      // Sort matches by RSSI (strongest first) using bubble sort
+      for (int i = 0; i < matchCount - 1; i++) {
+        for (int j = 0; j < matchCount - i - 1; j++) {
+          if (matches[j].rssi < matches[j + 1].rssi) {
+            MatchedNetwork temp = matches[j];
+            matches[j] = matches[j + 1];
+            matches[j + 1] = temp;
+          }
+        }
+      }
+      // Log all matches
+      if (!silent && matchCount > 0) {
+        BOOTLOG("Available networks from your saved list (sorted by strength):");
+        for (int i = 0; i < matchCount; i++) {
+          BOOTLOG("  %d. %s | MAC: %02X:%02X:%02X:%02X:%02X:%02X | RSSI: %d dBm | Ch: %d", 
+                  i+1, config.ssids[matches[i].configIndex].ssid,
+                  matches[i].bssid[0], matches[i].bssid[1], matches[i].bssid[2],
+                  matches[i].bssid[3], matches[i].bssid[4], matches[i].bssid[5],
+                  matches[i].rssi, matches[i].channel);
         }
       }
     }
-    
-    if(bestConfigIndex >= 0 && !silent) {
-      Serial.printf("##[BOOT]#\tBest network: %s (RSSI: %d dBm)\n", 
-                    config.ssids[bestConfigIndex].ssid, bestRSSI);
+    // Try each matched network in RSSI order
+    for (int attempt = 0; attempt < matchCount; attempt++) {
+      uint8_t configIdx = matches[attempt].configIndex;
+      if (!silent) {
+        BOOTLOG("Attempt %d: connecting to %s | MAC: %02X:%02X:%02X:%02X:%02X:%02X (RSSI: %d dBm)", 
+                attempt + 1, config.ssids[configIdx].ssid,
+                matches[attempt].bssid[0], matches[attempt].bssid[1], matches[attempt].bssid[2],
+                matches[attempt].bssid[3], matches[attempt].bssid[4], matches[attempt].bssid[5],
+                matches[attempt].rssi);
+        Serial.print("##[BOOT]#\t");
+        display.putRequest(BOOTSTRING, configIdx);
+      }
+      WiFi.begin(config.ssids[configIdx].ssid, config.ssids[configIdx].password, 
+                 matches[attempt].channel, matches[attempt].bssid); // Connect to specific AP by BSSID
+      errcnt = 0;
+      while (WiFi.status() != WL_CONNECTED) {
+        if (!silent) Serial.print(".");
+        delay(500);
+        if (REAL_LEDBUILTIN!=255 && !silent) digitalWrite(REAL_LEDBUILTIN, !digitalRead(REAL_LEDBUILTIN));
+        errcnt++;
+        if (errcnt > WIFI_ATTEMPTS) {
+          if(!silent) Serial.println();
+          break;  // Failed, try next match
+        }
+      }
+      if (WiFi.status() == WL_CONNECTED) {
+        WiFi.scanDelete();
+        config.setLastSSID(configIdx + 1);
+        return true;
+      }
     }
+
+    // All scanned matches failed, clean up
+    WiFi.scanDelete();
+    if (!silent) BOOTLOG("All scanned networks failed, falling back to sequential try");
+    ls = startedls;
   }
   
-  // If we found a strong network, try it first
-  if(bestConfigIndex >= 0) {
-    ls = bestConfigIndex;
-  }
-#endif
-  
+  // Fallback: try all configured SSIDs sequentially (original behavior)
   while (true) {
-    if(!silent){
-      Serial.printf("##[BOOT]#\tAttempt to connect to %s\n", config.ssids[ls].ssid);
+    if (!silent) {
+      BOOTLOG("Attempt to connect to %s", config.ssids[ls].ssid);
       Serial.print("##[BOOT]#\t");
       display.putRequest(BOOTSTRING, ls);
     }
-    
-#if WIFI_SCAN_BEST_RSSI
-    // If we found the best network through scanning, use it first
-    if(bestScanIndex >= 0) {
-      WiFi.scanDelete();  // Free memory before connecting
-      bestScanIndex = -1;  // Mark as used
-    }
     WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
-#else
-    WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
-#endif
     
     while (WiFi.status() != WL_CONNECTED) {
-      if(!silent) Serial.print(".");
+      if (!silent) Serial.print(".");
       delay(500);
-      if(REAL_LEDBUILTIN!=255 && !silent) digitalWrite(REAL_LEDBUILTIN, !digitalRead(REAL_LEDBUILTIN));
+      if (REAL_LEDBUILTIN!=255 && !silent) digitalWrite(REAL_LEDBUILTIN, !digitalRead(REAL_LEDBUILTIN));
       errcnt++;
       if (errcnt > WIFI_ATTEMPTS) {
         errcnt = 0;

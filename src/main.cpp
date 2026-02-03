@@ -1,8 +1,10 @@
 #include "Arduino.h"
-
-SET_LOOP_TASK_STACK_SIZE(16 * 1024);  // Increase from default 8KB for audio decoding + concurrent tasks (may have problems on regular ESP32?)
+#include "esp_system.h"
 
 #include "core/options.h"
+
+SET_LOOP_TASK_STACK_SIZE(LOOP_TASK_STACK_SIZE * 1024);
+
 #include "core/config.h"
 #include "pluginsManager/pluginsManager.h"
 #include "core/telnet.h"
@@ -27,6 +29,12 @@ extern __attribute__((weak)) void ehradio_on_setup();
 
 void setup() {
   Serial.begin(115200);
+  #if CORE_DEBUG_LEVEL > 0
+    if (esp_reset_reason() == ESP_RST_POWERON || esp_reset_reason() == ESP_RST_EXT) { // checking if this is a poweron boot
+      delay(1000);
+      Serial.println("##[BOOT]#       Delay 1 second after cold boot to ensure serial logs are completely available. Only when CORE_DEBUG_LEVEL > 0.");
+    }
+  #endif
   if(REAL_LEDBUILTIN!=255) pinMode(REAL_LEDBUILTIN, OUTPUT);
   rgbled_init();
   if (ehradio_on_setup) ehradio_on_setup();

@@ -56,7 +56,7 @@
 
 /* --- LED --- */
 
-#if defined(BOARD_ESP32)
+#if defined(BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
   #define USE_BUILTIN_LED     true
 #else
   #define USE_BUILTIN_LED     false    /* usually...! Unless you actually want to use the builtin as defined by the board's .h file */
@@ -169,7 +169,7 @@
   #define VS1053_CS       255     /* set to 255 to disable VS1053 */
 #endif
 #if defined(ESP32_S3_KASPERAITIS_ES3C28P)
-  #define ES8311                  /* a special define for a special decoder */
+  #define USE_ES8311                  /* a special define for a special decoder */
   /* ES3C28P I2S pins (from LCDWiki / user) */
   #define I2S_MCLK        4
   #define I2S_BCLK        5
@@ -184,7 +184,6 @@
      Set MUTE_PIN to enable control (for FM8002/ES8311, etc). */
   #define MUTE_PIN        1
   #define MUTE_VAL        HIGH
-
   /* Maximum I2S value to allow when mapping to ES8311 codec (0..254). */
   #ifndef ES8311_MAX_I2S
     #define ES8311_MAX_I2S 180
@@ -220,7 +219,7 @@
   #define ONE_CLICK_SWITCH true
   #define BTN_DOWN		42		/* Next, Move Down */
 #endif
-#if defined(ESP32_S3_ES3C28P)
+#if defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define ONE_CLICK_SWITCH true
   #define BTN_DOWN        0       /* BOOT button - Next, Move Down */
 #endif
@@ -264,28 +263,24 @@
     defined(ESP32_S3_TRIP5_SH1106_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SSD1306X32_PCM_1BUTTON)
   #define SD_SPIPINS      21, 13, 14      /* SCK, MISO, MOSI */
   #define SDC_CS          47
+  #define SDSPISPEED      40000000       /* Default speed 20000000 */
 #elif defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS ) || defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON)
   #define SD_SPIPINS      21, 2, 1        /* SCK, MISO, MOSI */
   #define SDC_CS          47
-#if defined(ESP32_S3_KASPERAITIS_ES3C28P)
-  // SD card in SPI mode using HSPI bus (separate from display FSPI)
-  #define BUILD_SDSPI 1
-  #define SD_ID HSPI
-  #define SD_HSPI true
+  #define SDSPISPEED      40000000       /* Default speed 20000000 */
+#elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define SD_SPIPINS      38, 39, 40     /* SCK, MISO, MOSI */
   #define SDC_CS          47
-  // Increase SD SPI clock to 40 MHz to reduce read latency and avoid audio clipping.
-  #define SDSPISPEED      40000000
+  #define SDSPISPEED      40000000       /* Default speed 20000000 */
 #endif
 
 /* Extras: unused in all */
 //#define SD_HSPI     /* false (not needed when using custom pins) */
-//#define SDSPISPEED      8000000     /* Default speed 20000000 */
 
 
 /* --- USER DEFAULTS --- */
 
-#if defined (BOARD_ESP32_S3_N16R8) || defined (BOARD_ESP32)
+#if defined (BOARD_ESP32_S3_N16R8) || defined (BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
   #define TIMEZONE_NAME   "Europe/Moscow"
   #define TIMEZONE_POSIX  "MSK-3"
   #define SNTP_1          "pool.ntp.org"
@@ -300,18 +295,20 @@
   #define SHOW_AUDIO_INFO true
   #define SHOW_VU_METER true
   #define SS_PLAYING true
-  #define TIMEZONE_NAME   "America/Halifax"
+  #define WIFI_SCAN_BEST_RSSI true
+  #define TIMEZONE_NAME   "Canada/Atlantic"
   #define TIMEZONE_POSIX  "AST4ADT,M3.2.0,M11.1.0"
   #define SNTP_1          "ca.pool.ntp.org"
   #define SNTP_2          "pool.ntp.org"
-  #define WEATHER_LAT     "37.5503"       /* latitude */
-  #define WEATHER_LON     "126.9971"      /* longitude */
+  #define WEATHER_LAT     "44.6453"       /* latitude */
+  #define WEATHER_LON     "-63.5724"      /* longitude */
   #define HIDE_WEATHER
   #define MQTT_ENABLE
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define SMART_START true
   #define SHOW_AUDIO_INFO true
   #define SS_PLAYING true
+  #define WIFI_SCAN_BEST_RSSI true
   #define TIMEZONE_NAME   "Europe/Vilnius"
   #define TIMEZONE_POSIX  "EET-2EEST,M3.5.0/3,M10.5.0/42"
   #define SNTP_1          "lt.pool.ntp.org"
@@ -320,6 +317,21 @@
   #define WEATHER_LON     "21.117868"      /* longitude */
   #define VOLUME_STEPS    5
 #endif
+
+/* --- SYSTEM OVERRIDES --- */
+
+#if defined (BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
+  #define LOOP_TASK_STACK_SIZE 8  /* Compiler default is 8KB but seems safe on ESP32-S3 to increase to 16KB for audio decoding + concurrent tasks */
+  #define CONFIG_ASYNC_TCP_QUEUE_SIZE 32
+#elif defined (BOARD_ESP32_S3_N16R8) ||\
+      defined(ESP32_S3_TRIP5_ST7735_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SH1106_PCM_REMOTE) ||\
+      defined(ESP32_S3_TRIP5_SH1106_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SSD1306X32_PCM_1BUTTON) ||\
+      defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS ) || defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON) ||\
+      defined(ESP32_S3_KASPERAITIS_ES3C28P)
+  #define LOOP_TASK_STACK_SIZE 16  /* Compiler default is 8KB but seems safe on ESP32-S3 to increase to 16KB for audio decoding + concurrent tasks / 8KB is safe when using a VS1053 decoder */
+  #define CONFIG_ASYNC_TCP_QUEUE_SIZE 64
+#endif
+
 
 /* --- MORE, UNUSED, UNKNOWN, NOTES --- */
 

@@ -15,6 +15,28 @@ Documentation will be slowly improved.
 
 ## ehRadio Version history
 
+### 2026.02.03
+
+  - Thanks to @kasperaitis for #37
+    - adds support for ES8311 + FM8002E I2C decoder and FT6336 touchscreen on the [ES3C28](https://www.aliexpress.com/item/1005010338765126.html)
+    - localization fix: weather now uses `LANG::weatherFmt` and `LANG::wind` instead of hardcoded strings
+    - RGB LED (WS2812) can now do visual feedback for player state:
+      - 🟢 green = playing
+      - 🔴 red = stopped
+      - 🔵 blue flash = track change
+  - added option to scan for and connect to the strongest available RSSI from saved networks
+    - will attempt to connect by BSSID (the AP's MAC address) in order of best signal to worst signal
+    - useful for environments with multiple APs (ie. mesh networks)
+    - adds a non-insignificant time to initial boot
+    - add `#define WIFI_SCAN_BEST_RSSI true` in `myoptions.h` to set the default to true (otherwise false)
+  - added System Overrides that may be used in `myoptions.h`
+    - `#define LOOP_TASK_STACK_SIZE 16` sets the stack size for the FreeRTOS task that runs the main loop
+      - 16KB is OK for ESP32-S3 but maybe 8KB for ESP32?
+      - 8KB is safe when using a VS1053 decoder
+    - `#define CONFIG_ASYNC_TCP_QUEUE_SIZE 64` - maybe 32 for ESP32?
+  - Smart Start option will also ensure that an audio stream is played when wi-fi is connected, even after a disconnect and re-connect
+  - AsyncTCP library updated from https://github.com/ESP32Async/AsyncTCP/
+  - ESPAsyncWebServer library updated from https://github.com/ESP32Async/ESPAsyncWebServer/tree/main
 
 ### 2025.08.31
   - Display fixes and other fixes from yoRadio up to v0.9.693 which should include:

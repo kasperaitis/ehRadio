@@ -12,7 +12,7 @@
 #endif
 
 #ifndef PLQ_SEND_DELAY
-	#define PLQ_SEND_DELAY pdMS_TO_TICKS(1000) //portMAX_DELAY
+	#define PLQ_SEND_DELAY pdMS_TO_TICKS(1000)
 #endif
 
 #define PLERR_LN        64

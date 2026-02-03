@@ -5,6 +5,7 @@
 #include "display.h"
 #include "sdmanager.h"
 #include "netserver.h"
+#include "network.h"
 #include "../displays/tools/l10n.h"
 #include "../pluginsManager/pluginsManager.h"
 #ifdef USE_ES8311
@@ -261,6 +262,7 @@ void Player::_play(uint16_t stationId) {
     setOutputPins(true);
     display.putRequest(NEWMODE, PLAYER);
     display.putRequest(PSTART);
+    network.lostPlaying = false;  // Clear flag - we're playing again!
     if (player_on_start_play) player_on_start_play();
     pm.on_start_play();
   }else{

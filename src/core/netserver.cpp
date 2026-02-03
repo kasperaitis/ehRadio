@@ -385,22 +385,23 @@ void NetServer::processQueue(){
           return; 
           break;
         }
-      case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"softr\":%d,\"vut\":%d,\"mdns\":\"%s\"}", 
-                                  config.store.smartstart != 2, 
-                                  config.store.audioinfo, 
-                                  config.store.vumeter, 
+      case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"wifiscan\":%d,\"softr\":%d,\"vut\":%d,\"mdns\":\"%s\"}", 
+                                  config.store.smartstart != 2,
+                                  config.store.audioinfo,
+                                  config.store.vumeter,
+                                  config.store.wifiscanbest,
                                   config.store.softapdelay,
                                   config.vuThreshold,
-                                  config.store.mdnsname); 
+                                  config.store.mdnsname);
                                   break;
-      case GETSCREEN:     sprintf (wsbuf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d,\"scre\":%d,\"scrt\":%d,\"scrb\":%d,\"scrpe\":%d,\"scrpt\":%d,\"scrpb\":%d,\"volumepage\":%d,\"clock12\":%d}", 
-                                  config.store.flipscreen, 
-                                  config.store.invertdisplay, 
-                                  config.store.numplaylist, 
-                                  config.store.fliptouch, 
-                                  config.store.dbgtouch, 
-                                  config.store.dspon, 
-                                  config.store.brightness, 
+      case GETSCREEN:     sprintf (wsbuf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d,\"scre\":%d,\"scrt\":%d,\"scrb\":%d,\"scrpe\":%d,\"scrpt\":%d,\"scrpb\":%d,\"volumepage\":%d,\"clock12\":%d}",
+                                  config.store.flipscreen,
+                                  config.store.invertdisplay,
+                                  config.store.numplaylist,
+                                  config.store.fliptouch,
+                                  config.store.dbgtouch,
+                                  config.store.dspon,
+                                  config.store.brightness,
                                   config.store.contrast,
                                   config.store.screensaverEnabled,
                                   config.store.screensaverTimeout,
@@ -408,22 +409,22 @@ void NetServer::processQueue(){
                                   config.store.screensaverPlayingEnabled,
                                   config.store.screensaverPlayingTimeout,
                                   config.store.screensaverPlayingBlank,
-                                  config.store.volumepage, 
+                                  config.store.volumepage,
                                   config.store.clock12);
                                   break;
       case GETTIMEZONE:   sprintf (wsbuf, "{\"tz_name\":\"%s\",\"tzposix\":\"%s\",\"sntp1\":\"%s\",\"sntp2\":\"%s\"}",
-                                  config.store.tz_name, 
-                                  config.store.tzposix, 
-                                  config.store.sntp1, 
+                                  config.store.tz_name,
+                                  config.store.tzposix,
+                                  config.store.sntp1,
                                   config.store.sntp2); 
                                   break;
-      case GETWEATHER:    sprintf (wsbuf, "{\"wen\":%d,\"wlat\":\"%s\",\"wlon\":\"%s\",\"wkey\":\"%s\"}", 
-                                  config.store.showweather, 
-                                  config.store.weatherlat, 
-                                  config.store.weatherlon, 
+      case GETWEATHER:    sprintf (wsbuf, "{\"wen\":%d,\"wlat\":\"%s\",\"wlon\":\"%s\",\"wkey\":\"%s\"}",
+                                  config.store.showweather,
+                                  config.store.weatherlat,
+                                  config.store.weatherlon,
                                   config.store.weatherkey); 
                                   break;
-      case GETMQTT:       sprintf (wsbuf, "{\"mqttenable\":%d,\"mqtthost\":\"%s\",\"mqttport\":\"%d\",\"mqttuser\":\"%s\",\"mqttpass\":\"%s\",\"mqtttopic\":\"%s\"}", 
+      case GETMQTT:       sprintf (wsbuf, "{\"mqttenable\":%d,\"mqtthost\":\"%s\",\"mqttport\":\"%d\",\"mqttuser\":\"%s\",\"mqttpass\":\"%s\",\"mqtttopic\":\"%s\"}",
                                   config.store.mqttenable,
                                   config.store.mqtthost,
                                   config.store.mqttport,
@@ -431,9 +432,9 @@ void NetServer::processQueue(){
                                   config.store.mqttpass,
                                   config.store.mqtttopic); 
                                   break;
-      case GETCONTROLS:   sprintf (wsbuf, "{\"vols\":%d,\"enca\":%d,\"irtl\":%d,\"skipup\":%d}", 
-                                  config.store.volsteps, 
-                                  config.store.encacc, 
+      case GETCONTROLS:   sprintf (wsbuf, "{\"vols\":%d,\"enca\":%d,\"irtl\":%d,\"skipup\":%d}",
+                                  config.store.volsteps,
+                                  config.store.encacc,
                                   config.store.irtlp,
                                   config.store.skipPlaylistUpDown); 
                                   break;
@@ -444,10 +445,10 @@ void NetServer::processQueue(){
       case TITLE:         sprintf (wsbuf, "{\"payload\":[{\"id\":\"meta\", \"value\": \"%s\"}]}", config.station.title); telnet.printf("##CLI.META#: %s\n> ", config.station.title); break;
       case VOLUME:        sprintf (wsbuf, "{\"payload\":[{\"id\":\"volume\", \"value\": %d}]}", config.store.volume); telnet.printf("##CLI.VOL#: %d\n", config.store.volume); break;
       case NRSSI:         sprintf (wsbuf, "{\"payload\":[{\"id\":\"rssi\", \"value\": %d}]}", rssi); /*rssi = 255;*/ break;
-      case SDPOS:         sprintf (wsbuf, "{\"sdpos\": %d,\"sdend\": %d,\"sdtpos\": %d,\"sdtend\": %d}", 
-                                  player.getFilePos(), 
-                                  player.getFileSize(), 
-                                  player.getAudioCurrentTime(), 
+      case SDPOS:         sprintf (wsbuf, "{\"sdpos\": %d,\"sdend\": %d,\"sdtpos\": %d,\"sdtend\": %d}",
+                                  player.getFilePos(),
+                                  player.getFileSize(),
+                                  player.getAudioCurrentTime(),
                                   player.getAudioFileDuration()); 
                                   break;
       case SDLEN:         sprintf (wsbuf, "{\"sdmin\": %d,\"sdmax\": %d}", player.sd_min, player.sd_max); break;
@@ -1095,7 +1096,7 @@ void handleNotFound(AsyncWebServerRequest * request) {
       return request->requestAuthentication();
     }
 #endif
-  if(request->url()=="/emergency") { request->send_P(200, "text/html", emergency_form); return; }
+  if(request->url()=="/emergency") { request->send(200, "text/html", emergency_form); return; }
   if(request->method() == HTTP_POST && request->url()=="/webboard" && config.emptyFS) { request->redirect("/"); ESP.restart(); return; }
   if(request->method() == HTTP_GET && request->url() == "/search") { handleSearch(request); return; }
   if (request->method() == HTTP_POST && request->url() == "/search") { handleSearchPost(request); return; }
@@ -1182,11 +1183,11 @@ void handleNotFound(AsyncWebServerRequest * request) {
     return;
   }
   if (strcmp(request->url().c_str(), "/settings.html") == 0 || strcmp(request->url().c_str(), "/update.html") == 0 || strcmp(request->url().c_str(), "/ir.html") == 0){
-    request->send_P(200, "text/html", index_html);
+    request->send(200, "text/html", index_html);
     return;
   }
   if (request->method() == HTTP_GET && request->url() == "/webboard") {
-    request->send_P(200, "text/html", emptyfs_html);
+    request->send(200, "text/html", emptyfs_html);
     return;
   }
   Serial.print("Not Found: ");
@@ -1196,7 +1197,7 @@ void handleNotFound(AsyncWebServerRequest * request) {
 
 void handleIndex(AsyncWebServerRequest * request) {
   if(config.emptyFS){
-    if(request->url()=="/" && request->method() == HTTP_GET ) { request->send_P(200, "text/html", emptyfs_html); return; }
+    if(request->url()=="/" && request->method() == HTTP_GET ) { request->send(200, "text/html", emptyfs_html); return; }
     if(request->url()=="/" && request->method() == HTTP_POST) {
       if(request->arg("ssid")!="" && request->arg("pass")!=""){
         char buf[BUFLEN];
@@ -1222,13 +1223,13 @@ void handleIndex(AsyncWebServerRequest * request) {
     }
 #endif
   if (strcmp(request->url().c_str(), "/") == 0 && request->params() == 0) {
-    if(network.status == CONNECTED) request->send_P(200, "text/html", index_html); else request->redirect("/settings.html");
+    if(network.status == CONNECTED) request->send(200, "text/html", index_html); else request->redirect("/settings.html");
     return;
   }
   if(network.status == CONNECTED){
     int paramsNr = request->params();
     if(paramsNr==1){
-      AsyncWebParameter* p = request->getParam(0);
+      const AsyncWebParameter* p = request->getParam(0);
       if(cmd.exec(p->name().c_str(),p->value().c_str())) {
         if(p->name()=="reset" || p->name()=="clearspiffs") request->redirect("/");
         if(p->name()=="clearspiffs") { delay(100); ESP.restart(); }
