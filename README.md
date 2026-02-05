@@ -15,10 +15,10 @@ Documentation will be slowly improved.
 
 ## ehRadio Version history
 
-### 2026.02.03
+### 2026.02.04
 
   - Thanks to @kasperaitis for #37
-    - adds support for ES8311 + FM8002E I2C decoder and FT6336 touchscreen on the [ES3C28](https://www.aliexpress.com/item/1005010338765126.html)
+    - adds support for ES8311 + FM8002E I2C decoder and FT6336 touchscreen on the [ES3C28](https://www.lcdwiki.com/2.8inch_ESP32-S3_Display) ([Aliexpress](https://www.aliexpress.com/item/1005010338765126.html))
     - localization fix: weather now uses `LANG::weatherFmt` and `LANG::wind` instead of hardcoded strings
     - RGB LED (WS2812) can now do visual feedback for player state:
       - 🟢 green = playing
@@ -29,14 +29,61 @@ Documentation will be slowly improved.
     - useful for environments with multiple APs (ie. mesh networks)
     - adds a non-insignificant time to initial boot
     - add `#define WIFI_SCAN_BEST_RSSI true` in `myoptions.h` to set the default to true (otherwise false)
+    - can be changed in the WebUI
   - added System Overrides that may be used in `myoptions.h`
     - `#define LOOP_TASK_STACK_SIZE 16` sets the stack size for the FreeRTOS task that runs the main loop
       - 16KB is OK for ESP32-S3 but maybe 8KB for ESP32?
       - 8KB is safe when using a VS1053 decoder
     - `#define CONFIG_ASYNC_TCP_QUEUE_SIZE 64` - maybe 32 for ESP32?
-  - Smart Start option will also ensure that an audio stream is played when wi-fi is connected, even after a disconnect and re-connect
-  - AsyncTCP library updated from https://github.com/ESP32Async/AsyncTCP/
-  - ESPAsyncWebServer library updated from https://github.com/ESP32Async/ESPAsyncWebServer/tree/main
+  - Removed outdated local libraries to use PlatformIO libraries
+    - most were fairly easy to incorporate but some minor changes were made to code when needed
+    - AsyncTCP library https://github.com/ESP32Async/AsyncTCP
+      - former source: https://github.com/me-no-dev/AsyncTCP/
+    - ESPAsyncWebServer https://github.com/ESP32Async/ESPAsyncWebServer
+      - former source: https://github.com/me-no-dev/ESPAsyncWebServer
+    - OneButton https://github.com/mathertel/OneButton
+      - same dev, minor version bump
+    - IRRemoteESP8266 https://github.com/crankyoldgit/IRremoteESP8266
+      - untested but dev same, version bump minor, and source code 99.99% similar
+    - AsyncMqttClient https://github.com/marvinroger/async-mqtt-client
+      - this one has some 'deprecated' warnings but still functional
+    - ESPFileUpdater https://github.com/trip5/ESPFileUpdater
+      - mine, created for ehRadio, just involved releasing it to PlatformIO
+    - Adafruit GC9A01A https://github.com/adafruit/Adafruit_GC9A01A
+      - previous internal one was identical to 1.1.0
+    - yoEncoder https://github.com/igorantolic/ai-esp32-rotary-encoder
+      - Ai Esp32 Rotary Encoder appears to be the original (and works well)
+    - GT911 Touchscreen https://github.com/tamctec/gt911-arduino
+      - same dev, minor version bump
+  - These could not be replaced so were moved to `libraries` folder
+    - Adafruit GC9106 https://github.com/prenticedavid/Adafruit_GC9102_kbv
+      - not on Platformio (and not actually an Adafruit library)
+    - Adafruit ST7796S https://github.com/prenticedavid/Adafruit_ST7796S_kbv
+      - not on Platformio (and not actually an Adafruit library)
+    - FT6336_Touchscreen
+      - made by https://github.com/kasperaitis for ehRadio
+    - ILI9225Fix https://github.com/arduinopavlodar/TFT_22_ILI9225
+      - not on Platformio and also highly-modified from an unknown version
+    - ILI9488 https://github.com/ZinggJM/ILI9486_SPI
+      - highly-modified from version 1.0.5?
+    - LiquidCrystalI2C https://github.com/johnrickman/LiquidCrystal_I2C
+      - slightly-modified from version 1.1.3
+    - SSD1322 https://github.com/JamesHagerman/Jamis_SSD1322
+      - slightly-modified from initial commit
+    - ST7920 https://github.com/BornaBiro/ST7920_GFX_Library
+      - very similar or modified (or perhaps share a common source)
+      - may be worth looking at as well: https://github.com/BornaBiro/ST7920_GFX_Library
+  - Audio decoder drivers also moved to `libraries` folder (with some renaming)
+    - ES8311_Audio
+      - made by https://github.com/kasperaitis for ehRadio
+    - I2S_Audio https://github.com/schreibfaul1/ESP32-audioI2S
+      - from Maleksm's yoRadio mod v0.9.512m: https://4pda.to/forum/index.php?showtopic=1010378&st=11240#entry125839228
+      - Maleksm says source from Wolle (schreibfaul1) 3.3.2l on 2025.07.09
+    - VS1053_Audio https://github.com/schreibfaul1/ESP32-vs1053_ext
+      - possibly from https://github.com/nstepanets/ESP32-vs1053_ext
+      - from Maleksm's yoRadio mod v0.9.512m: https://4pda.to/forum/index.php?showtopic=1010378&st=11240#entry125839228
+      - Maleksm says source from Wolle (schreibfaul1) 3.0.13t on 2024.11.16
+  - these notes and more added to `libraries` folder for future upgrading
 
 ### 2025.08.31
   - Display fixes and other fixes from yoRadio up to v0.9.693 which should include:

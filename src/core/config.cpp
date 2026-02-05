@@ -16,7 +16,7 @@
   #include "../displays/nextion.h"
 #endif
 #include <cstddef>
-#include "../ESPFileUpdater/ESPFileUpdater.h"
+#include <ESPFileUpdater.h>
 #if DSP_MODEL==DSP_DUMMY
   #define DUMMYDISPLAY
 #endif

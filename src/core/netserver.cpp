@@ -6,7 +6,7 @@
 #include "config.h"
 #include "netserver.h"
 #include <ArduinoJson.h>
-#include "../ESPFileUpdater/ESPFileUpdater.h"
+#include <ESPFileUpdater.h>
 #include "config.h"
 #include "player.h"
 #include "telnet.h"
@@ -757,7 +757,7 @@ void selectRadioBrowserServer() {
     Serial.println("[Search] [Error] Failed to open /www/rb_srvrs.json - will try to get IP of all.api.radio-browser.info instead.");
     goto useIP;
   } else {
-    DynamicJsonDocument doc(2048);
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, serversFile);
     serversFile.close();
     if (error) {

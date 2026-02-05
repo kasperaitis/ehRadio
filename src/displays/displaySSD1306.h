@@ -12,6 +12,17 @@
 typedef GFXcanvas1 Canvas;
 typedef Adafruit_SSD1306 yoDisplay;
 
+/*
+ * OLED COLORS
+ */
+#define BOOT_PRG_COLOR    WHITE
+#define BOOT_TXT_COLOR    WHITE
+#define PINK              WHITE
+#define SILVER            WHITE
+#define TFT_BG            BLACK
+#define TFT_FG            WHITE
+#define TFT_LOGO          WHITE
+
 #include "tools/commongfx.h"
 
 #if __has_include("conf/displaySSD1306conf_custom.h")
@@ -23,16 +34,5 @@ typedef Adafruit_SSD1306 yoDisplay;
     #include "conf/displaySSD1306x32conf.h"
   #endif
 #endif
-
-/*
- * OLED COLORS
- */
-#define BOOT_PRG_COLOR    WHITE
-#define BOOT_TXT_COLOR    WHITE
-#define PINK              WHITE
-#define SILVER            WHITE
-#define TFT_BG            BLACK
-#define TFT_FG            WHITE
-#define TFT_LOGO          WHITE
 
 #endif

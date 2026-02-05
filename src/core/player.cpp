@@ -9,7 +9,7 @@
 #include "../displays/tools/l10n.h"
 #include "../pluginsManager/pluginsManager.h"
 #ifdef USE_ES8311
-  #include "../ES8311/es8311.h"
+ #include "../libraries/ES8311_Audio/es8311.h"
 #endif
 #ifdef USE_NEXTION
   #include "../displays/nextion.h"

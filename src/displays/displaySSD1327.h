@@ -10,14 +10,6 @@
 typedef GFXcanvas1 Canvas;
 typedef Adafruit_SSD1327 yoDisplay;
 
-#include "tools/commongfx.h"
-
-#if __has_include("conf/displaySSD1327conf_custom.h")
-  #include "conf/displaySSD1327conf_custom.h"
-#else
-  #include "conf/displaySSD1327conf.h"
-#endif
-
       /*
       SSD1327_GRAYTABLE,
       0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
@@ -34,5 +26,13 @@ typedef Adafruit_SSD1327 yoDisplay;
 #define TFT_FG      0x08
 #define TFT_LOGO    0x3f
 #define ORANGE      0x05
+
+#include "tools/commongfx.h"
+
+#if __has_include("conf/displaySSD1327conf_custom.h")
+  #include "conf/displaySSD1327conf_custom.h"
+#else
+  #include "conf/displaySSD1327conf.h"
+#endif
 
 #endif

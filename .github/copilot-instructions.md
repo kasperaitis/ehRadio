@@ -2,7 +2,7 @@
 
 ## ⚠️ Critical Rules
 - **Rule #1**: Always confirm with user BEFORE making more than 10 lines of changes at once.
-- **Rule #2**: NEVER edit `src/core/options.h`. Use `myoptions.h` for all hardware/settings overrides.
+- **Rule #2**: Always confirm with user before editing `src/core/options.h`. Use `myoptions.h` for all hardware/settings overrides.
 - **Rule #3**: ehRadio is for ESP32/ESP32-S3. Assume I2S audio unless VS1053 pins are defined.
 
 ## Project Structure

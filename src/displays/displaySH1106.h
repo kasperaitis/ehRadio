@@ -14,14 +14,6 @@ typedef Adafruit_SH1106G yoDisplay;
 typedef Adafruit_SH1107 yoDisplay;
 #endif
 
-#include "tools/commongfx.h"
-
-#if __has_include("conf/displaySH1106conf_custom.h")
-  #include "conf/displaySH1106conf_custom.h"
-#else
-  #include "conf/displaySH1106conf.h"
-#endif
-
 /*
  * OLED COLORS
  */
@@ -32,5 +24,13 @@ typedef Adafruit_SH1107 yoDisplay;
 #define TFT_BG            SH110X_BLACK
 #define TFT_FG            SH110X_WHITE
 #define TFT_LOGO          SH110X_WHITE
+
+#include "tools/commongfx.h"
+
+#if __has_include("conf/displaySH1106conf_custom.h")
+  #include "conf/displaySH1106conf_custom.h"
+#else
+  #include "conf/displaySH1106conf.h"
+#endif
 
 #endif

@@ -31,11 +31,11 @@
   XPT2046_Touchscreen ts(TS_CS);
   typedef TS_Point TSPoint;
 #elif TS_MODEL==TS_MODEL_GT911
-  #include "../GT911_Touchscreen/TAMC_GT911.h"
+ #include "../libraries/GT911_Touchscreen/TAMC_GT911.h"
   TAMC_GT911 ts = TAMC_GT911(TS_SDA, TS_SCL, TS_INT, TS_RST, 0, 0);
   typedef TP_Point TSPoint;
 #elif TS_MODEL==TS_MODEL_FT6336
-  #include "../FT6336_Touchscreen/FT6336.h"
+  #include "../libraries/FT6336_Touchscreen/FT6336.h"
   FT6336 ts = FT6336(TS_SDA, TS_SCL, TS_INT, TS_RST, 0, 0);
   typedef FT_Point TSPoint;
 #endif

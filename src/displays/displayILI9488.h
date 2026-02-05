@@ -3,7 +3,7 @@
 
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
-#include "../ILI9488/ILI9486_SPI.h"
+#include "../libraries/ILI9488/ILI9486_SPI.h"
 #ifdef BIG_BOOT_LOGO
   #include "fonts/bootlogo198x128.h"
 #else
