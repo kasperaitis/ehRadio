@@ -36,7 +36,6 @@ Nextion nextion;
 #define DSP_QUEUE_TICKS 0
 
 #ifndef DSQ_SEND_DELAY
-  //#define DSQ_SEND_DELAY portMAX_DELAY
   #define DSQ_SEND_DELAY  pdMS_TO_TICKS(200)
 #endif
 

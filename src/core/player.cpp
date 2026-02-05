@@ -5,8 +5,12 @@
 #include "display.h"
 #include "sdmanager.h"
 #include "netserver.h"
+#include "network.h"
 #include "../displays/tools/l10n.h"
 #include "../pluginsManager/pluginsManager.h"
+#ifdef USE_ES8311
+ #include "../libraries/ES8311_Audio/es8311.h"
+#endif
 #ifdef USE_NEXTION
   #include "../displays/nextion.h"
 #endif
@@ -50,12 +54,15 @@ void Player::init() {
   if(MUTE_PIN!=255) pinMode(MUTE_PIN, OUTPUT);
   #if I2S_DOUT!=255
     #if !I2S_INTERNAL
-      setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+      setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT, I2S_DIN, I2S_MCLK);
     #endif
   #else
     SPI.begin();
     if(VS1053_RST>0) ResetChip();
     begin();
+  #endif
+  #ifdef USE_ES8311
+    if (es.begin(I2C_SDA, I2C_SCL, 400000UL)) es.setVolume(0); /* Start codec muted (or low) to avoid very loud output before saved volume is applied */
   #endif
   setBalance(config.store.balance);
   setTone(config.store.bass, config.store.middle, config.store.trebble);
@@ -68,6 +75,10 @@ void Player::init() {
     forceMono(true);
   #endif
   _loadVol(config.store.volume);
+  #ifdef USE_ES8311
+    uint8_t i2sVol_init = volToI2S(config.store.volume); /* Also apply stored volume to codec (respecting station ovol via volToI2S) */
+    es.setVolume((uint8_t)map(i2sVol_init, 0, 254, 0, 100)); /* Map I2S volume (0..254) to codec volume 0..100 */
+  #endif
   setConnectionTimeout(1700, 3700);
   Serial.println("done");
 }
@@ -152,7 +163,11 @@ void Player::loop() {
       }
       case PR_VOL: {
         config.setVolume(requestP.payload);
-        Audio::setVolume(volToI2S(requestP.payload));
+        uint8_t i2sVol = volToI2S(requestP.payload);
+        Audio::setVolume(i2sVol);
+        #ifdef USE_ES8311
+          es.setVolume((uint8_t)map(i2sVol, 0, 254, 0, 100)); /* Map I2S volume (already adjusted for station ovol) 0..254 -> codec 0..100 */
+        #endif
         break;
       }
       #ifdef USE_SD
@@ -247,6 +262,7 @@ void Player::_play(uint16_t stationId) {
     setOutputPins(true);
     display.putRequest(NEWMODE, PLAYER);
     display.putRequest(PSTART);
+    network.lostPlaying = false;  // Clear flag - we're playing again!
     if (player_on_start_play) player_on_start_play();
     pm.on_start_play();
   }else{
@@ -330,10 +346,27 @@ void Player::stepVol(bool up) {
 }
 
 uint8_t Player::volToI2S(uint8_t volume) {
+#ifdef USE_ES8311
+  // Apply gamma curve for ES3C28P to make low volumes more audible
+  int maxIn = 254 - config.station.ovol * 3;
+  if (maxIn < 1) maxIn = 1; // avoid division by zero; treat invalid ovol as no reduction
+  if (volume > (uint8_t)maxIn) volume = (uint8_t)maxIn;
+  float vnorm = (float)volume / (float)maxIn; // 0..1
+  if (vnorm < 0.0f) vnorm = 0.0f;
+  if (vnorm > 1.0f) vnorm = 1.0f;
+  /* Apply gamma curve (sqrt) to make low volumes more audible and top end less aggressive */
+  const float gamma = 0.5f;
+  float vout = powf(vnorm, gamma);
+  int vol = (int)(vout * 254.0f + 0.5f);
+  if (vol > 254) vol = 254;
+  if (vol < 0) vol = 0;
+  return (uint8_t)vol;
+#else
   int vol = map(volume, 0, 254 - config.station.ovol * 3 , 0, 254);
   if (vol > 254) vol = 254;
   if (vol < 0) vol = 0;
   return vol;
+#endif
 }
 
 void Player::_loadVol(uint8_t volume) {

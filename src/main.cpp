@@ -1,5 +1,10 @@
 #include "Arduino.h"
+#include "esp_system.h"
+
 #include "core/options.h"
+
+SET_LOOP_TASK_STACK_SIZE(LOOP_TASK_STACK_SIZE * 1024);
+
 #include "core/config.h"
 #include "pluginsManager/pluginsManager.h"
 #include "core/telnet.h"
@@ -11,6 +16,7 @@
 #include "core/controls.h"
 #include "core/mqtt.h"
 #include "core/optionschecker.h"
+#include "core/rgbled.h"
 #ifdef USE_NEXTION
 #include "displays/nextion.h"
 #endif
@@ -23,12 +29,22 @@ extern __attribute__((weak)) void ehradio_on_setup();
 
 void setup() {
   Serial.begin(115200);
+  #if CORE_DEBUG_LEVEL > 0
+    if (esp_reset_reason() == ESP_RST_POWERON || esp_reset_reason() == ESP_RST_EXT) { // checking if this is a poweron boot
+      delay(1000);
+      Serial.println("##[BOOT]#       Delay 1 second after cold boot to ensure serial logs are completely available. Only when CORE_DEBUG_LEVEL > 0.");
+    }
+  #endif
   if(REAL_LEDBUILTIN!=255) pinMode(REAL_LEDBUILTIN, OUTPUT);
+  rgbled_init();
   if (ehradio_on_setup) ehradio_on_setup();
   pm.on_setup();
   config.init();
   display.init();
   player.init();
+  if (rgbled_is_initialized()) {
+    if (player.isRunning()) rgbled_playing(); else rgbled_stopped();
+  }
   network.begin();
   if (network.status != CONNECTED && network.status!=SDREADY) {
     netserver.begin();
@@ -65,6 +81,7 @@ void setup() {
 
 void loop() {
   telnet.loop();
+  rgbled_loop();
   if (network.status == CONNECTED || network.status==SDREADY) {
     player.loop();
     //loopControls();
@@ -83,6 +100,7 @@ void loop() {
 *   Plugin BacklightDown.
 *   Ver.1.0 (Maleksm) for ёРадио 20.12.2024
 *   Ver.1.1 (Trip5) 2025.07.19
+*   Ver.1.2 (Kasperaitis/Trip5) 2026.02.01
 ***************************************************************************/
 #if (BRIGHTNESS_PIN!=255) && (defined(DOWN_LEVEL) || defined(DOWN_INTERVAL))
 #include <Ticker.h>
@@ -128,10 +146,7 @@ void loop() {
     backlightTicker.attach(Out_Interval, backlightDown);
   }
 
-  void ehradio_on_setup() { brightnessOn(); }      /* Backlight ON for Setup */
-  void player_on_track_change() { brightnessOn(); } /* Backlight ON for track change */
-  void player_on_start_play() { brightnessOn(); }  /* Backlight ON for start play */
-  void player_on_stop_play() { brightnessOn(); }   /* Backlight ON for stop play */
+  /* Backlight callback functions were here; moved below to ensure RGB callbacks are available even when backlight plugin isn't enabled */
   void ctrls_on_loop() {                            /* Backlight ON for reg. operations */
     if (!config.isScreensaver) {
       static uint32_t prevBlPinMillis;
@@ -141,4 +156,33 @@ void loop() {
       }
     }
   }
-#endif  /*  #if BRIGHTNESS_PIN!=255 */
+#else  /*  #if BRIGHTNESS_PIN!=255 */
+  void brightnessOn() { } /* No-op stub */
+#endif
+
+// Call rgbled loop from main loop too (no-op if not enabled)
+void rgbled_loop_caller() {
+  rgbled_loop();
+}
+
+void ehradio_on_setup() {
+  rgbled_init();
+  brightnessOn();
+}
+
+void player_on_track_change() {
+  rgbled_trackchange();
+  brightnessOn();
+}
+
+void player_on_start_play() {
+  rgbled_playing();
+  brightnessOn();
+}
+
+void player_on_stop_play() {
+  rgbled_stopped();
+  brightnessOn();
+}
+
+

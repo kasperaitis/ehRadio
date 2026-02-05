@@ -3,7 +3,7 @@
 #include "../core/options.h"
 //==================================================
 #include "Arduino.h"
-#include "../ILI9225Fix/TFT_22_ILI9225Fix.h"
+#include "../libraries/ILI9225Fix/TFT_22_ILI9225Fix.h"
 #include "fonts/bootlogo99x64.h"
 #include "fonts/dsfont35.h"
 

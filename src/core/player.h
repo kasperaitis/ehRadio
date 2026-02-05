@@ -2,9 +2,9 @@
 #define player_h
 
 #if I2S_DOUT!=255 || I2S_INTERNAL
-  #include "../audioI2S/AudioEx.h"
+ #include "../libraries/I2S_Audio/Audio.h"
 #else
-  #include "../audioVS1053/audioVS1053Ex.h"
+  #include "../libraries/VS1053_Audio/audioVS1053Ex.h"
 #endif
 
 #ifndef MQTT_BURL_SIZE
@@ -12,7 +12,7 @@
 #endif
 
 #ifndef PLQ_SEND_DELAY
-	#define PLQ_SEND_DELAY pdMS_TO_TICKS(1000) //portMAX_DELAY
+	#define PLQ_SEND_DELAY pdMS_TO_TICKS(1000)
 #endif
 
 #define PLERR_LN        64

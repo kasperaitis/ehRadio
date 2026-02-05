@@ -2,7 +2,7 @@
 #define mqtt_h
 
 #ifdef MQTT_ENABLE
-#include "../async-mqtt-client/AsyncMqttClient.h"
+#include <AsyncMqttClient.h>
 
 void mqttInit();
 void connectToMqtt();

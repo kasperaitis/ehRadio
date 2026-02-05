@@ -11,7 +11,7 @@
 
 #if DSP_MODEL==DSP_1602I2C || DSP_MODEL==DSP_2004I2C
   #define LCD_I2C
-  #include "../LiquidCrystalI2C/LiquidCrystalI2CEx.h"
+  #include "../libraries/LiquidCrystalI2C/LiquidCrystalI2CEx.h"
 #else
   #include <LiquidCrystal.h>
 #endif
@@ -28,6 +28,10 @@
   #define DSP_INIT LiquidCrystal(LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7)
 #endif
 
+#define BOOT_PRG_COLOR    0x1
+#define BOOT_TXT_COLOR    0x1
+#define PINK              0x1
+
 #include "tools/commongfx.h"
 
 #ifdef LCD_2004
@@ -43,10 +47,6 @@
     #include "conf/displayLCD1602conf.h"
   #endif
 #endif
-
-#define BOOT_PRG_COLOR    0x1
-#define BOOT_TXT_COLOR    0x1
-#define PINK              0x1
 
 /* not used required */
 #define bootLogoTop     0

@@ -18,8 +18,8 @@ int lpId = -1;
 
 #define ISPUSHBUTTONS BTN_LEFT!=255 || BTN_CENTER!=255 || BTN_RIGHT!=255 || ENC_BTNB!=255 || BTN_UP!=255 || BTN_DOWN!=255 || ENC2_BTNB!=255 || BTN_MODE!=255
 #if ISPUSHBUTTONS
-  #include "../OneButton/OneButton.h"
-  OneButton button[] {{BTN_LEFT, true, BTN_INTERNALPULLUP}, {BTN_CENTER, true, BTN_INTERNALPULLUP}, {BTN_RIGHT, true, BTN_INTERNALPULLUP}, {ENC_BTNB, true, ENC_INTERNALPULLUP}, {BTN_UP, true, BTN_INTERNALPULLUP}, {BTN_DOWN, true, BTN_INTERNALPULLUP}, {ENC2_BTNB, true, ENC2_INTERNALPULLUP}, {BTN_MODE, true, BTN_INTERNALPULLUP}};
+  #include <OneButton.h>
+  OneButton button[] {OneButton(BTN_LEFT, true, BTN_INTERNALPULLUP), OneButton(BTN_CENTER, true, BTN_INTERNALPULLUP), OneButton(BTN_RIGHT, true, BTN_INTERNALPULLUP), OneButton(ENC_BTNB, true, ENC_INTERNALPULLUP), OneButton(BTN_UP, true, BTN_INTERNALPULLUP), OneButton(BTN_DOWN, true, BTN_INTERNALPULLUP), OneButton(ENC2_BTNB, true, ENC2_INTERNALPULLUP), OneButton(BTN_MODE, true, BTN_INTERNALPULLUP)};
   constexpr uint8_t nrOfButtons = sizeof(button) / sizeof(button[0]);
 #endif
 
@@ -39,12 +39,12 @@ int lpId = -1;
 #endif
 
 #if (ENC_BTNL!=255 && ENC_BTNR!=255) || (ENC2_BTNL!=255 && ENC2_BTNR!=255)
-  #include "../yoEncoder/yoEncoder.h"
+  #include <AiEsp32RotaryEncoder.h>
   #if (ENC_BTNL!=255 && ENC_BTNR!=255)
-    yoEncoder encoder = yoEncoder(ENC_BTNL, ENC_BTNR, ENCODER_STEPS, ENC_INTERNALPULLUP);
+    AiEsp32RotaryEncoder encoder = AiEsp32RotaryEncoder(ENC_BTNL, ENC_BTNR, ENCODER_STEPS, ENC_INTERNALPULLUP);
   #endif
   #if (ENC2_BTNL!=255 && ENC2_BTNR!=255)
-    yoEncoder encoder2 = yoEncoder(ENC2_BTNL, ENC2_BTNR, ENCODER2_STEPS, ENC2_INTERNALPULLUP);
+    AiEsp32RotaryEncoder encoder2 = AiEsp32RotaryEncoder(ENC2_BTNL, ENC2_BTNR, ENCODER2_STEPS, ENC2_INTERNALPULLUP);
   #endif
 #endif
 
@@ -56,11 +56,11 @@ int lpId = -1;
 #if IR_PIN!=255
 #include <assert.h>
 
-#include "../IRremoteESP8266/IRrecv.h"
-#include "../IRremoteESP8266/IRremoteESP8266.h"
-#include "../IRremoteESP8266/IRac.h"
-#include "../IRremoteESP8266/IRtext.h"
-#include "../IRremoteESP8266/IRutils.h"
+#include <IRrecv.h>
+#include <IRremoteESP8266.h>
+#include <IRac.h>
+#include <IRtext.h>
+#include <IRutils.h>
 uint8_t irVolRepeat = 0;
 const uint16_t kCaptureBufferSize = 1024;
 const uint8_t kTimeout = IR_TIMEOUT;
@@ -117,8 +117,8 @@ void initControls() {
     button[i].attachLongPressStop([](void* p) {
       onBtnLongPressStop((int)p);
     }, (void*)i);
-    button[i].setClickTicks(BTN_CLICK_TICKS);
-    button[i].setPressTicks(BTN_PRESS_TICKS);
+    button[i].setClickMs(BTN_CLICK_TICKS);
+    button[i].setPressMs(BTN_PRESS_TICKS);
   }
 #endif
 #if (TS_MODEL!=TS_MODEL_UNDEFINED) && (DSP_MODEL!=DSP_DUMMY)
@@ -164,7 +164,7 @@ void loopControls() {
 #endif
 }
 #if ENC_BTNL!=255 || ENC2_BTNL!=255
-void encodersLoop(yoEncoder *enc, bool first){
+void encodersLoop(AiEsp32RotaryEncoder *enc, bool first){
   if (network.status != CONNECTED && network.status!=SDREADY) return;
   if(display.mode()==LOST) return;
   int8_t encoderDelta = enc->encoderChanged();

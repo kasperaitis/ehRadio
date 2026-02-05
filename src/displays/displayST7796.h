@@ -3,7 +3,7 @@
 
 #include "Arduino.h"
 #include <Adafruit_GFX.h>
-#include "../Adafruit_ST7796S/Adafruit_ST7796S_kbv.h"
+#include "../libraries/Adafruit_ST7796S/Adafruit_ST7796S_kbv.h"
 
 #ifdef BIG_BOOT_LOGO
   #include "fonts/bootlogo198x128.h"

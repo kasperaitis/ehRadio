@@ -186,7 +186,7 @@ function onSearchWSMessage(event) {
       const elapsed = (Date.now() - searchStartTime) / 1000;
 	  let errorMsg = 'Search failed. No servers available. Try again later.';
       if (elapsed <= 2) {
-        errorMsg = 'Search failed. Likely reason: SPIFFS does not have enough free space.';
+        errorMsg = 'Search failed. Likely reason: API not responding. Try again later.';
       } else if (elapsed <= 5) {
         errorMsg = 'Search failed. Likely reason: connection refused when getting servers list.';
       }
@@ -435,7 +435,7 @@ function searchStations(isPageNav = false) {
   })
   .catch(error => {
     console.error('Error initiating search:', error);
-    document.getElementById('stationsTable').innerHTML = '<tr><td class="importantmessage" colspan="4">Search failed. Try again?</td></tr>';
+    document.getElementById('stationsTable').innerHTML = '<tr><td class="importantmessage" colspan="4">Search failed. Reload the page and try again?</td></tr>';
     hideSearchPageNav();
     setSearchButtonsDisabled(false); // Re-enable buttons on fetch error
   });
