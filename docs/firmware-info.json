@@ -1,102 +1,48 @@
 {
-  "project": "EspHome-VFD-Clock",
-  "version": "2026.01.25",
-  "build_date": "2026-01-25 22:47:01 UTC",
+  "project": "ehRadio",
+  "version": "2026.02.04",
+  "build_date": "2026-02-06 09:37:13 UTC",
   "variants": [
   {
-    "name": "Chinese - Home Assistant",
-    "manifest": "manifests/Chinese-HA-manifest.json",
-    "description": "English + Chinese firmware"
+    "name": "Trip5 OLED with Remote",
+    "manifest": "manifests/esp32_s3_trip5_sh1106_pcm_remote-manifest.json",
+    "description": "ehRadio - esp32_s3_trip5_sh1106_pcm_remote"
   }
   ,
   {
-    "name": "Chinese",
-    "manifest": "manifests/Chinese-manifest.json",
-    "description": "English + Chinese firmware"
+    "name": "Trip5 OLED with 1-Button",
+    "manifest": "manifests/esp32_s3_trip5_sh1106_pcm_1button-manifest.json",
+    "description": "ehRadio - esp32_s3_trip5_sh1106_pcm_1button"
   }
   ,
   {
-    "name": "French - Home Assistant",
-    "manifest": "manifests/French-HA-manifest.json",
-    "description": "English + French firmware"
+    "name": "Trip5 Tiny OLED with 1-Button",
+    "manifest": "manifests/esp32_s3_trip5_ssd1306x32_pcm_1button-manifest.json",
+    "description": "ehRadio - esp32_s3_trip5_ssd1306x32_pcm_1button"
   }
   ,
   {
-    "name": "French",
-    "manifest": "manifests/French-manifest.json",
-    "description": "English + French firmware"
+    "name": "Trip5 OLED with 3-Buttons",
+    "manifest": "manifests/esp32_s3_trip5_sh1106_vs1053_3buttons-manifest.json",
+    "description": "ehRadio - esp32_s3_trip5_sh1106_vs1053_3buttons"
   }
   ,
   {
-    "name": "Greek - Home Assistant",
-    "manifest": "manifests/Greek-HA-manifest.json",
-    "description": "English + Greek firmware"
+    "name": "Trip5 Color Screen with 1-Button",
+    "manifest": "manifests/esp32_s3_trip5_st7735_pcm_1button-manifest.json",
+    "description": "ehRadio - esp32_s3_trip5_st7735_pcm_1button"
   }
   ,
   {
-    "name": "Greek",
-    "manifest": "manifests/Greek-manifest.json",
-    "description": "English + Greek firmware"
+    "name": "Trip5 Big Color Screen with 1-Button",
+    "manifest": "manifests/esp32_s3_trip5_ili9488_pcm_1button-manifest.json",
+    "description": "ehRadio - esp32_s3_trip5_ili9488_pcm_1button"
   }
   ,
   {
-    "name": "Korean - Home Assistant",
-    "manifest": "manifests/Korean-HA-manifest.json",
-    "description": "English + Korean firmware"
-  }
-  ,
-  {
-    "name": "Korean",
-    "manifest": "manifests/Korean-manifest.json",
-    "description": "English + Korean firmware"
-  }
-  ,
-  {
-    "name": "LGLV16 Chinese - Home Assistant",
-    "manifest": "manifests/LGLV16-Chinese-HA-manifest.json",
-    "description": "English + Chinese firmware"
-  }
-  ,
-  {
-    "name": "LGLV16 Chinese",
-    "manifest": "manifests/LGLV16-Chinese-manifest.json",
-    "description": "English + Chinese firmware"
-  }
-  ,
-  {
-    "name": "LGLV16 French - Home Assistant",
-    "manifest": "manifests/LGLV16-French-HA-manifest.json",
-    "description": "English + French firmware"
-  }
-  ,
-  {
-    "name": "LGLV16 French",
-    "manifest": "manifests/LGLV16-French-manifest.json",
-    "description": "English + French firmware"
-  }
-  ,
-  {
-    "name": "LGLV16 Greek - Home Assistant",
-    "manifest": "manifests/LGLV16-Greek-HA-manifest.json",
-    "description": "English + Greek firmware"
-  }
-  ,
-  {
-    "name": "LGLV16 Greek",
-    "manifest": "manifests/LGLV16-Greek-manifest.json",
-    "description": "English + Greek firmware"
-  }
-  ,
-  {
-    "name": "LGLV16 Korean - Home Assistant",
-    "manifest": "manifests/LGLV16-Korean-HA-manifest.json",
-    "description": "English + Korean firmware"
-  }
-  ,
-  {
-    "name": "LGLV16 Korean",
-    "manifest": "manifests/LGLV16-Korean-manifest.json",
-    "description": "English + Korean firmware"
+    "name": "Kasperaitis ES3C28P",
+    "manifest": "manifests/esp32_s3_kasperaitis_es3c28p-manifest.json",
+    "description": "ehRadio - esp32_s3_kasperaitis_es3c28p"
   }
   ]
 }
