@@ -193,6 +193,18 @@
 #endif
 
 
+/* --- TOUCH --- */
+
+#if defined(ESP32_S3_KASPERAITIS_ES3C28P)
+  // For some ES3C28P boards the touch controller may be D-FT6336G family — set to TS_MODEL_FT6336 if required
+  #define TS_MODEL            TS_MODEL_FT6336
+  #define TS_SDA              16
+  #define TS_SCL              15
+  #define TS_INT              17
+  #define TS_RST              18
+#endif
+
+
 /* --- BUTTONS --- */
 
 #if defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS)
