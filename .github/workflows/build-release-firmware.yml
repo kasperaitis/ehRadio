@@ -23,7 +23,7 @@ jobs:
           if [ ! -f "builds/${{ github.repository_owner }}/releases.md" ]; then
             MISSING_FILES="${MISSING_FILES}releases.md "
           fi
-          if [ ! -f "builds/${{ github.repository_owner }}/firmware_mapping.txt" ]; then
+          if [ ! -f "builds/${{ github.repository_owner }}/firmware.txt" ]; then
             MISSING_FILES="${MISSING_FILES}firmware.txt "
           fi
           
