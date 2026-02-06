@@ -18,6 +18,7 @@
 #if defined(BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
   #undef FIRMWARE
   #define FIRMWARE "board_esp32.bin"
+  #define ARDUINO_ESP32_DEV
   //#undef UPDATEURL /* if an ESP does not have the memory to do online updates from https sources (this will disable it) */
 #elif defined(BOARD_ESP32_S3_N16R8)
   #undef FIRMWARE
