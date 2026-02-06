@@ -1,4 +1,4 @@
-name: Build and Release Firmwares
+name: Build and Release Firmware
 
 on:
   push:
@@ -285,7 +285,7 @@ jobs:
           name: ehRadio ${{ github.ref_name }}
           body: |
             ## Pre-built Firmwares & WebUI Assets
-              You can download the firmware and flash yourself or you can use my [Web Installer](https://trip5.github.io/EspHome-Led-Clock/firmware.html).
+              You can download the firmware and flash yourself or you can use my [Web Installer](https://trip5.github.io/ehRadio/firmware.html).
             ### Notes
               - You can download .bin files and flash to your ESP with `esptool`
               - you will need a firmware file appropriate to your build (see below)
