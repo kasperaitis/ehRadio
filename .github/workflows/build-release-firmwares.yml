@@ -224,13 +224,13 @@ jobs:
 
       - name: Commit manifests to docs folder
         run: |
-          git fetch origin main
-          git checkout main
+          git fetch origin ehradio
+          git checkout ehradio
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/manifests/*.json docs/firmware-info.json
           git commit -m "Update firmware manifests for $(grep -oP '#define RADIOVERSION "\K[^"]+' src/core/options.h) [skip ci]" || echo "No changes to commit"
-          git push origin main || echo "Nothing to push"
+          git push origin ehradio || echo "Nothing to push"
 
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4

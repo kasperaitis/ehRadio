@@ -50,7 +50,7 @@
   #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #undef FIRMWARE
-  #define FIRMWARE "esp32_s3_kasperaitis_esc3c28p.bin"
+  #define FIRMWARE "esp32_s3_kasperaitis_es3c28p.bin"
   #define ARDUINO_ESP32S3_DEV
 #endif
 
