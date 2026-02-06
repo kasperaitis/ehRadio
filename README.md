@@ -1,19 +1,30 @@
 <img src="images/logo-color.svg" width="250">
 
+# ehRadio
+
+***This documentation is the same on the [Github Page](https://trip5.github.io/ehRadio/), which may be easier to read than the [Github Repository](https://github.com/trip5/ehRadio).***
+
 ## Under Heavy Construction
 
-I've recently decided to fork yoRadio from version 0.9.533.  Many changes are coming... many things remain untested.
+This is a fork of yoRadio from version 0.9.533.  Many changes are coming... many things remain untested.
 
-I will absolutely drop support for ESP8266 (mostly already deleted but some elements remain).  Support for low-end versions of ESP32s may get dropped inadvertantly.  I build with ESP32-S3s and various displays.  I can't test all of them.
+The objective of this fork is to create a more pleasant experience to use for all users, including those we builders might want to give to family members.
+
+I will absolutely drop support for ESP8266 (mostly already deleted but some elements remain).  Support for low-end versions of ESP32s may get dropped (PSRAM is already a requirement).  I build with ESP32-S3s and various displays.
+I can't test every piece of hardware this firmware is capable of suporting.
 
 I may drop support for certain components like Nextion.
 
-But for now, check yoRadio documentation.  The hardware implementations should still be 100% compatible.
+If you have issues it may help to also check yoRadio documentation.  The hardware implementations should still be 100% compatible.
 
-Documentation will be slowly improved.
+Documentation will be improved at some point...
 
 
 ## ehRadio Version history
+
+### 2026.02.06
+  - Online Flasher introduced
+  - Improv mode added to firmware so if Wi-fi doesn't connect, use a WebUI to send Wi-fi information
 
 ### 2026.02.04
 

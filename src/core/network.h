@@ -3,6 +3,7 @@
 #include <Ticker.h>
 #include <WiFi.h>
 #include <DNSServer.h>
+#include <ImprovWiFiLibrary.h>
 
 //#define TSYNC_DELAY 10800000    // 1000*60*60*3 = 3 hours
 #define TSYNC_DELAY       3600000     // 1000*60*60   = 1 hour
@@ -22,15 +23,18 @@ class MyNetwork {
     char *weatherBuf;
     bool trueWeather;
     DNSServer* dnsServer;
+    ImprovWiFi *improv;
   public:
-    MyNetwork() {};
+    MyNetwork() : improv(nullptr) {};
     void begin();
     void requestTimeSync(bool withTelnetOutput=false, uint8_t clientId=0);
     void requestWeatherSync();
     void setWifiParams();
     bool wifiBegin(bool silent=false);
+    void loopImprov();
   private:
     Ticker rtimer;
+    unsigned long lastImprovBroadcast = 0;
     void raiseSoftAP();
     static void WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info);
     static void WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info);

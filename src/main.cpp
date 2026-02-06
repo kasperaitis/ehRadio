@@ -80,17 +80,18 @@ void setup() {
 }
 
 void loop() {
-  telnet.loop();
+  if (network.status == SOFT_AP) {
+    network.loopImprov();
+    if (network.dnsServer) network.dnsServer->processNextRequest();
+  } else {
+    telnet.loop();
+  }
+  
   rgbled_loop();
   if (network.status == CONNECTED || network.status==SDREADY) {
     player.loop();
-    //loopControls();
   }
   loopControls();
-  // Process captive portal DNS requests in Soft AP mode
-  if (network.status == SOFT_AP && network.dnsServer) {
-    network.dnsServer->processNextRequest();
-  }
   netserver.loop();
 }
 

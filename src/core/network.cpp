@@ -12,6 +12,7 @@
 #include "../pluginsManager/pluginsManager.h"
 #include <DNSServer.h>
 #include "../displays/tools/l10n.h"
+#include <ImprovWiFiLibrary.h>
 
 #ifndef WIFI_ATTEMPTS
   #define WIFI_ATTEMPTS  16
@@ -25,6 +26,7 @@ TaskHandle_t streamRetryTaskHandle = NULL;
 bool getWeather(char *wstr);
 void doSync(void * pvParameters);
 void retryStreamConnection(void * pvParameters);
+static bool onImprovCustomConnect(const char* ssid, const char* password);
 
 void ticks() {
   if(!display.ready()) return; //waiting for SD is ready
@@ -341,6 +343,23 @@ void searchWiFi(void * pvParameters){
 
 void MyNetwork::begin() {
   BOOTLOG("network.begin");
+  
+  // Initialize Improv early if not already done, so it's always available via Serial
+  if (!improv) {
+    improv = new ImprovWiFi(&Serial);
+#if defined(CONFIG_IDF_TARGET_ESP32S3)
+    ImprovTypes::ChipFamily chip = ImprovTypes::ChipFamily::CF_ESP32_S3;
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    ImprovTypes::ChipFamily chip = ImprovTypes::ChipFamily::CF_ESP32_C3;
+#else
+    ImprovTypes::ChipFamily chip = ImprovTypes::ChipFamily::CF_ESP32;
+#endif
+    char deviceUrl[64];
+    strlcpy(deviceUrl, "http://{LOCAL_IPV4}/", sizeof(deviceUrl));
+    improv->setDeviceInfo(chip, "ehRadio", RADIOVERSION, "ehRadio", deviceUrl);
+    improv->setCustomConnectWiFi(onImprovCustomConnect);
+  }
+
   config.initNetwork();
   ctimer.detach();
   forceTimeSync = forceWeather = true;
@@ -375,6 +394,101 @@ void MyNetwork::begin() {
   ctimer.attach(1, ticks);
   if (network_on_connect) network_on_connect();
   pm.on_connect();
+}
+
+void MyNetwork::loopImprov() {
+  if (!improv) return;
+  improv->handleSerial();
+  
+  unsigned long now = millis();
+  if (now - lastImprovBroadcast > 2000) {
+    lastImprovBroadcast = now;
+    // Send state 0x02 (Authorized/Ready) when in SoftAP
+    uint8_t heartbeat[] = {'I', 'M', 'P', 'R', 'O', 'V', 0x01, 0x01, 0x01, 0x02, 0x00};
+    uint8_t checksum = 0;
+    for (int i = 0; i < 10; i++) checksum += heartbeat[i];
+    heartbeat[10] = checksum;
+    Serial.write(heartbeat, sizeof(heartbeat));
+  }
+}
+
+static Ticker improvRebootTicker;
+
+static void triggerImprovReboot() {
+  ESP.restart();
+}
+
+static bool onImprovCustomConnect(const char* ssid, const char* password) {
+  // Try to connect briefly to verify if credentials work before saving
+  WiFi.begin(ssid, password);
+  unsigned long start = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) {
+    delay(100);
+    network.loopImprov();
+  }
+
+  if (WiFi.status() != WL_CONNECTED) {
+    // Revert to AP if we were in AP mode, or just return false to signal error to browser
+    // This will notify the user in the browser that connection failed
+    return false;
+  }
+
+  // CONNECTION SUCCESSFUL - Proceed with saving logic
+  
+  // Check if this SSID already exists in our list
+  int slot = -1;
+  for (int i = 0; i < config.ssidsCount; i++) {
+    if (strcmp(config.ssids[i].ssid, ssid) == 0) {
+      slot = i;
+      break;
+    }
+  }
+  
+  // If not found, use next available slot
+  if (slot == -1) {
+    slot = (config.ssidsCount < 5) ? config.ssidsCount : 4;
+    if (slot == config.ssidsCount && config.ssidsCount < 5) {
+      config.ssidsCount++;
+    }
+  }
+  
+  strlcpy(config.ssids[slot].ssid, ssid, sizeof(config.ssids[slot].ssid));
+  strlcpy(config.ssids[slot].password, password, sizeof(config.ssids[slot].password));
+  config.setLastSSID(slot + 1);
+
+  // Update the URL immediately before returning success to browser
+  IPAddress ip = WiFi.localIP();
+  char deviceUrl[64];
+  snprintf(deviceUrl, sizeof(deviceUrl), "http://%d.%d.%d.%d/", ip[0], ip[1], ip[2], ip[3]);
+#if defined(CONFIG_IDF_TARGET_ESP32S3)
+  ImprovTypes::ChipFamily chip = ImprovTypes::ChipFamily::CF_ESP32_S3;
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+  ImprovTypes::ChipFamily chip = ImprovTypes::ChipFamily::CF_ESP32_C3;
+#else
+  ImprovTypes::ChipFamily chip = ImprovTypes::ChipFamily::CF_ESP32;
+#endif
+  if (network.improv) network.improv->setDeviceInfo(chip, "ehRadio", RADIOVERSION, "ehRadio", deviceUrl);
+  
+  // Save to SPIFFS temporary file
+  File wifiFile = SPIFFS.open(TMP_PATH, "w");
+  if (wifiFile) {
+    for (int i = 0; i < config.ssidsCount; i++) {
+      if (strlen(config.ssids[i].ssid) > 0) {
+        wifiFile.printf("%s\t%s\n", config.ssids[i].ssid, config.ssids[i].password);
+      }
+    }
+    wifiFile.close();
+    
+    // Finalize the save: Rename TMP to SSIDS_PATH
+    if (SPIFFS.exists(TMP_PATH)) {
+       SPIFFS.remove(SSIDS_PATH);
+       if (SPIFFS.rename(TMP_PATH, SSIDS_PATH)) {
+         improvRebootTicker.once(3, triggerImprovReboot);
+         return true;
+       }
+    }
+  }
+  return false;
 }
 
 void MyNetwork::setWifiParams(){
@@ -430,7 +544,9 @@ void MyNetwork::raiseSoftAP() {
     BOOTLOG("Connect to AP %s with no password", AP_SSID);
   #endif
   BOOTLOG("and go to http://192.168.4.1/ to configure");
+  BOOTLOG("Improv WiFi provisioning available via serial");
   BOOTLOG("************************************************");
+  
   status = SOFT_AP;
   if(config.store.softapdelay>0)
     rtimer.once(config.store.softapdelay*60, rebootTime);
