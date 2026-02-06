@@ -346,6 +346,14 @@
 #endif
 
 
+/* --- URL SOURCE OVERRIDE --- */
+/* Only use this if you've decided to use your own Github as the source of files */
+/* ...or your firmware is not available from Trip5's Github... sorry! */
+/* Read the notes in the ./builds folder for more detailed information */
+
+//#define GITHUBURL "https://github.com/trip5/ehradio" // used by the radio to update firmware and files...
+
+
 /* --- MORE, UNUSED, UNKNOWN, NOTES --- */
 
 //#define IR_PIN                1

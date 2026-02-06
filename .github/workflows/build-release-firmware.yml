@@ -11,14 +11,46 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check for contributor config (will abort if builds/owner/platformio.ini does not exist)
+      - name: Check for required config files
         run: |
+          MISSING_FILES=""
           if [ ! -f "builds/${{ github.repository_owner }}/platformio.ini" ]; then
-            echo "No config found for ${{ github.repository_owner }}. Skipping build."
+            MISSING_FILES="${MISSING_FILES}platformio.ini "
+          fi
+          if [ ! -f "builds/${{ github.repository_owner }}/myoptions.h" ]; then
+            MISSING_FILES="${MISSING_FILES}myoptions.h "
+          fi
+          if [ ! -f "builds/${{ github.repository_owner }}/releases.md" ]; then
+            MISSING_FILES="${MISSING_FILES}releases.md "
+          fi
+          if [ ! -f "builds/${{ github.repository_owner }}/firmware_mapping.txt" ]; then
+            MISSING_FILES="${MISSING_FILES}firmware.txt "
+          fi
+          
+          if [ -n "$MISSING_FILES" ]; then
+            echo "❌ Error: Missing required files in builds/${{ github.repository_owner }}/"
+            echo "Missing: $MISSING_FILES"
+            echo ""
+            echo "Required files:"
+            echo "  - platformio.ini (build configuration)"
+            echo "  - myoptions.h (hardware pin definitions)"
+            echo "  - releases.md (release description)"
+            echo "  - firmware.txt (firmware list)"
             exit 1
           fi
+          echo "✅ All required contributor config files found for ${{ github.repository_owner }}"
 
-      - name: Copy contributor config files to project root
+      - name: Load release body text
+        id: release_body
+        run: |
+          echo "Using release body from builds/${{ github.repository_owner }}/releases.md"
+          # Read the file and set as multiline output
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          cat "builds/${{ github.repository_owner }}/releases.md" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+
+      - name: Copy config files to project root
         run: |
           if [ -d "builds/${{ github.repository_owner }}" ]; then
             cp -rf builds/${{ github.repository_owner }}/* .
@@ -44,9 +76,23 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-          
-      - name: Extract version
-        run: grep '#define RADIOVERSION ' src/core/options.h > version.txt
+
+      - name: Get version tag
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION=$(grep -oP '#define RADIOVERSION "\K[^"]+' src/core/options.h)
+            TAG="${VERSION}"
+            echo "Extracted version from options.h: ${VERSION}"
+          else
+            TAG=${GITHUB_REF#refs/tags/}
+            VERSION=${TAG}
+            echo "Using git tag: ${TAG}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Final version: ${VERSION}"
+          grep '#define RADIOVERSION ' src/core/options.h > version.txt
 
       - name: Install PlatformIO
         run: pip install platformio
@@ -99,29 +145,18 @@ jobs:
 
           done
 
-      - name: Organize firmware for ESP Web Tools manifests
+      - name: Organize firmware for ESP Web Tools
         run: |
-          echo "📦 Organizing firmware for manifests..."
-          mkdir -p firmware docs/manifests
+          echo "📦 Organizing firmware for ESP Web Tools manifests..."
+          mkdir -p firmware
           
-          # Define firmware mapping (board -> firmwares with friendly names)
-          # Format: "board_env|chip_family|firmware_env|friendly_name"
-          cat > firmware_mapping.txt << 'EOF'
-          board_esp32_s3_n16r8|ESP32-S3|esp32_s3_trip5_sh1106_pcm_remote|Trip5 OLED with Remote
-          board_esp32_s3_n16r8|ESP32-S3|esp32_s3_trip5_sh1106_pcm_1button|Trip5 OLED with 1-Button
-          board_esp32_s3_n16r8|ESP32-S3|esp32_s3_trip5_ssd1306x32_pcm_1button|Trip5 Tiny OLED with 1-Button
-          board_esp32_s3_n16r8|ESP32-S3|esp32_s3_trip5_sh1106_vs1053_3buttons|Trip5 OLED with 3-Buttons
-          board_esp32_s3_n16r8|ESP32-S3|esp32_s3_trip5_st7735_pcm_1button|Trip5 Color Screen with 1-Button
-          board_esp32_s3_n16r8|ESP32-S3|esp32_s3_trip5_ili9488_pcm_1button|Trip5 Big Color Screen with 1-Button
-          board_esp32_s3_n16r8|ESP32-S3|esp32_s3_kasperaitis_es3c28p|Kasperaitis ES3C28P
-          EOF
+          # Copy firmware.txt for reference
+          cp "builds/${{ github.repository_owner }}/firmware.txt" firmware.txt
           
-          # Extract unique board environments
-          BOARD_ENVS=$(awk -F'|' '{print $1}' firmware_mapping.txt | sort -u)
-          
-          # Copy board bootloader/partitions (shared files)
+          # Extract unique board environments and copy bootloader/partitions
+          BOARD_ENVS=$(awk -F'|' '{print $1}' firmware.txt | sort -u)
           for board_env in $BOARD_ENVS; do
-            echo "📋 Extracting shared files for $board_env..."
+            echo "📋 Copying shared files for $board_env..."
             mkdir -p "firmware/$board_env"
             cp "binaries/${board_env}_bootloader.bin" "firmware/$board_env/bootloader.bin"
             cp "binaries/${board_env}_partitions.bin" "firmware/$board_env/partitions.bin"
@@ -130,7 +165,7 @@ jobs:
           
           # Copy individual firmware binaries
           while IFS='|' read -r board_env chip_family fw_env friendly_name; do
-            echo "📦 Extracting firmware: $fw_env"
+            echo "📦 Copying firmware: $fw_env"
             mkdir -p "firmware/$fw_env"
             if [ -f "binaries/${fw_env}.bin" ]; then
               cp "binaries/${fw_env}.bin" "firmware/$fw_env/firmware.bin"
@@ -138,13 +173,17 @@ jobs:
             else
               echo "❌ Warning: firmware.bin not found for $fw_env"
             fi
-          done < firmware_mapping.txt
+          done < firmware.txt
           
           echo "📦 Firmware organization complete"
 
       - name: Generate ESP Web Tools manifests
         run: |
           echo "📝 Generating ESP Web Tools manifests..."
+          mkdir -p "builds/${{ github.repository_owner }}/web_assets/manifests"
+          
+          # Copy firmware.txt for reference
+          cp "builds/${{ github.repository_owner }}/firmware.txt" firmware.txt
           
           # Generate manifest for each firmware
           while IFS='|' read -r board_env chip_family fw_env friendly_name; do
@@ -156,10 +195,10 @@ jobs:
               BL_OFFSET=0
             fi
 
-            manifest_file="docs/manifests/${fw_env}-manifest.json"
+            manifest_file="builds/${{ github.repository_owner }}/web_assets/manifests/${fw_env}-manifest.json"
             echo '{' > "$manifest_file"
             echo "  \"name\": \"ehRadio - ${friendly_name}\"," >> "$manifest_file"
-            echo '  "version": "$(grep -oP '"'"'#define RADIOVERSION "\K[^"]+'"'"' src/core/options.h)",' >> "$manifest_file"
+            echo '  "version": "${{ steps.get_version.outputs.version }}",' >> "$manifest_file"
             # To enable "Add to Home Assistant" button, uncomment the line below. 
             # Note: The integration currently requires manual configuration and MQTT.
             # echo '  "home_assistant_domain": "ehradio",' >> "$manifest_file"
@@ -185,7 +224,7 @@ jobs:
             echo '  ]' >> "$manifest_file"
             echo '}' >> "$manifest_file"
             echo "✅ Created $manifest_file"
-          done < firmware_mapping.txt
+          done < firmware.txt
           
           echo "📝 Manifests generated"
 
@@ -193,53 +232,51 @@ jobs:
         run: |
           echo "📝 Creating firmware-info.json..."
           BUILD_DATE=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
-          VERSION=$(grep -oP '#define RADIOVERSION "\K[^"]+' src/core/options.h)
           
-          echo '{' > docs/firmware-info.json
-          echo '  "project": "ehRadio",' >> docs/firmware-info.json
-          echo "  \"version\": \"${VERSION}\"," >> docs/firmware-info.json
-          echo "  \"build_date\": \"${BUILD_DATE}\"," >> docs/firmware-info.json
-          echo '  "variants": [' >> docs/firmware-info.json
+          echo '{' > "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          echo '  "project": "ehRadio",' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          echo '  "version": "${{ steps.get_version.outputs.version }}",' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          echo "  \"build_date\": \"${BUILD_DATE}\"," >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          echo '  "variants": [' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
           
           # Add firmware variants
           FIRST=true
           while IFS='|' read -r board_env chip_family fw_env friendly_name; do
             if [ "$FIRST" = "false" ]; then
-              echo "  ," >> docs/firmware-info.json
+              echo "  ," >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
             fi
             FIRST=false
             
-            echo '  {' >> docs/firmware-info.json
-            echo "    \"name\": \"${friendly_name}\"," >> docs/firmware-info.json
-            echo "    \"manifest\": \"manifests/${fw_env}-manifest.json\"," >> docs/firmware-info.json
-            echo "    \"description\": \"ehRadio - ${fw_env}\"" >> docs/firmware-info.json
-            echo '  }' >> docs/firmware-info.json
-          done < firmware_mapping.txt
+            echo '  {' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+            echo "    \"name\": \"${friendly_name}\"," >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+            echo "    \"manifest\": \"manifests/${fw_env}-manifest.json\"," >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+            echo "    \"description\": \"ehRadio - ${fw_env}\"" >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+            echo '  }' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          done < firmware.txt
           
-          echo '  ]' >> docs/firmware-info.json
-          echo '}' >> docs/firmware-info.json
+          echo '  ]' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          echo '}' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
           
           echo "✅ firmware-info.json created"
-          cat docs/firmware-info.json
+          cat "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
 
-      - name: Commit manifests to docs folder
+      - name: Commit web assets to repository
         run: |
-          git fetch origin ehradio
-          git checkout ehradio
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/manifests/*.json docs/firmware-info.json
-          git commit -m "Update firmware manifests for $(grep -oP '#define RADIOVERSION "\K[^"]+' src/core/options.h) [skip ci]" || echo "No changes to commit"
-          git push origin ehradio || echo "Nothing to push"
+          git add "builds/${{ github.repository_owner }}/web_assets/"
+          git commit -m "Update web assets for ${{ steps.get_version.outputs.version }} [skip ci]" || echo "No changes to web assets"
+          git push || echo "Nothing to push"
 
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4
         with:
           name: firmware-binaries
           path: |
+            binaries/*.bin
             firmware/**/*.bin
-            docs/firmware-info.json
-            docs/manifests/*.json
+            www_release/*
+            builds/${{ github.repository_owner }}/web_assets/**
           retention-days: 90
 
 # Here we also make some OTA-TEST builds (to be deleted later)
@@ -281,48 +318,12 @@ jobs:
       - name: Create ehRadio Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ehRadio ${{ github.ref_name }}
-          body: |
-            ## Pre-built Firmwares & WebUI Assets
-              You can download the firmware and flash yourself or you can use my [Web Installer](https://trip5.github.io/ehRadio/firmware.html).
-            ### Notes
-              - You can download .bin files and flash to your ESP with `esptool`
-              - you will need a firmware file appropriate to your build (see below)
-              - depending on your board, choose the appropriate `board_*_bootloader.bin` and `board_*_partitions.bin`
-              - for most ESP32s, use:
-                - `esptool --chip esp32 --port com14 --baud 460800 write_flash -z 0x1000 board_esp32_bootloader.bin 0x8000 board_esp32_partitions.bin 0x10000 board_esp32.bin`
-                - to include spiffs, add this to the above command: `0x390000 board_esp32_spiffs.bin`
-              - for ESP32-S3s (like the ESP32-S3-N16R8) use:
-                - `esptool --chip esp32s3 --port com14 --baud 460800 write_flash -z 0x0000 board_esp32_s3_n16r8_bootloader.bin 0x8000 board_esp32_s3_n16r8_partitions.bin 0x10000 board_esp32_s3_n16r8.bin`
-                - to include spiffs, add this to the above command: `0x670000 board_esp32_s3_n16r8_spiffs.bin`
-            ## Boards
-              - each of the pre-built board binaries have pre-set hardware configurations, they cannot be changed
-              - to view pin usage, click the link and scroll down then click preview
-            ### Bare board firmwares (no peripherals, may be used for testing)
-              - `board_esp32.bin`
-              - `board_esp32_s3_n16r8.bin`
-            ### Board Shared Binaries (Bootloader/Partitions)
-              - `board_esp32_bootloader.bin` / `board_esp32_partitions.bin` / `board_esp32_spiffs.bin`
-              - `board_esp32_s3_n16r8_bootloader.bin` / `board_esp32_s3_n16r8_partitions.bin` / `board_esp32_s3_n16r8_spiffs.bin`
-            ### Trip5 Firmwares (all ESP32-S3-N16R8 builds - click for board config)
-              - [`esp32_s3_trip5_sh1106_pcm_remote.bin`](https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,7,15,43,49,51,52,53,54,75,66&i=5,6,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47,40&v=42,41,12,11,10,7,18,15,17,16,255,40,39,38,47,21,13,14,8)
-              - [`esp32_s3_trip5_sh1106_pcm_1button.bin`](https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,15,43,49,51,52,53,54,75&i=5,6,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=42,41,12,11,10,255,255,255,255,17,255,7,15,16,47,21,13,14)
-              - [`esp32_s3_trip5_ssd1306x32_pcm_1button.bin`](https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,17,43,49,51,52,53,54,75&i=5,6,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=42,41,12,11,10,255,255,255,255,17,255,7,15,16,47,21,13,14)
-              - [`esp32_s3_trip5_sh1106_vs1053_3buttons.bin`](https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,15,44,48,49,51,52,53,54,75&i=5,6,18,19,20,21,22,23,24,25,26,27,28,29,30,39,45,46,47&v=42,41,9,14,10,-1,255,255,255,17,18,16,40,39,38,47,21,2,1)
-              - [`esp32_s3_trip5_st7735_pcm_1button.bin`](https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,11,36,43,49,51,52,53,54,75&i=1,2,3,4,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=10,9,-1,4,15,7,6,255,255,255,255,42,255,40,39,38,47,21,13,14)
-              - [`esp32_s3_trip5_ili9488_pcm_1button.bin`](https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,31,43,49,51,52,53,54,75&i=1,2,3,4,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=10,9,-1,4,15,7,6,255,255,255,255,42,255,40,39,38,47,21,2,1)
-            ### Kasperaitis Firmware
-              - [`esp32_s3_kasperaitis_es3c28p.bin`](https://www.lcdwiki.com/2.8inch_ESP32-S3_Display) (ES3C28P is a ESP32-S3-N16R8 with 2.8inch Display)
-            ### Add Yours
-              - you can either fork my `ehradio` repo and edit these files or request a build be added
-                - use [the generator](https://trip5.github.io/ehRadio_myoptions/generator.html) and copy the link and include it in your request
-            ### Web Assets
-              - all other files are needed for the WebUI functionality
-              - they are available here to allow automatic downloading to SPIFFS
-              - it is NOT necessary to download them (or the SPIFFS bin)
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          name: "${{ steps.get_version.outputs.tag }}"
+          body: ${{ steps.release_body.outputs.body }}
           files: |
             binaries/*.bin
+            firmware/**/*.bin
             www_release/*
             version.txt
           fail_on_unmatched_files: false
