@@ -67,22 +67,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download firmware artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: firmware-binaries
-          path: ./artifacts
-        continue-on-error: true
-
-      - name: Copy organized firmware structure
-        run: |
-          if [ -d "artifacts/firmware" ]; then
-            echo "✅ Copying organized firmware structure for ESP Web Tools..."
-            cp -r artifacts/firmware docs/
-          else
-            echo "⚠️ No organized firmware structure found in artifacts"
-          fi
-
       - name: Debug - Show docs structure before build
         run: |
           echo "📂 Docs folder structure:"
