@@ -7,15 +7,15 @@
       "chipFamily": "ESP32-S3",
       "parts": [
         {
-          "path": "../firmware/board_esp32_s3_n16r8/bootloader.bin",
+          "path": "../firmware/board_esp32_s3_n16r8_bootloader.bin",
           "offset": 0
         },
         {
-          "path": "../firmware/board_esp32_s3_n16r8/partitions.bin",
+          "path": "../firmware/board_esp32_s3_n16r8_partitions.bin",
           "offset": 32768
         },
         {
-          "path": "../firmware/esp32_s3_trip5_sh1106_pcm_remote/firmware.bin",
+          "path": "../firmware/esp32_s3_trip5_sh1106_pcm_remote.bin",
           "offset": 65536
         }
       ]
