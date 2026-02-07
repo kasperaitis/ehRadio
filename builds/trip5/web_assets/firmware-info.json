@@ -1,7 +1,7 @@
 {
   "project": "ehRadio",
-  "version": "2026.02.04",
-  "build_date": "2026-02-06 09:37:13 UTC",
+  "version": "2026.02.06",
+  "build_date": "2026-02-07 03:20:01 UTC",
   "variants": [
   {
     "name": "Trip5 OLED with Remote",
