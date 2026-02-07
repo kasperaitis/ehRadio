@@ -264,9 +264,21 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Checkout the actual branch (not detached HEAD from tag)
+          BRANCH=$(git ls-remote --heads origin | grep -o 'refs/heads/[^[:space:]]*' | head -1 | sed 's|refs/heads/||')
+          echo "Checking out branch: $BRANCH"
+          git fetch origin $BRANCH
+          git checkout $BRANCH
+          
           git add "builds/${{ github.repository_owner }}/web_assets/"
-          git commit -m "Update web assets for ${{ steps.get_version.outputs.version }} [skip ci]" || echo "No changes to web assets"
-          git push || echo "Nothing to push"
+          if git diff --cached --quiet; then
+            echo "No changes to web assets"
+          else
+            git commit -m "Update web assets for ${{ steps.get_version.outputs.version }} [skip ci]"
+            git push origin $BRANCH
+            echo "✅ Web assets committed and pushed"
+          fi
 
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4
