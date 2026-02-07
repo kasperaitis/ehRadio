@@ -323,7 +323,6 @@ jobs:
           body: ${{ steps.release_body.outputs.body }}
           files: |
             binaries/*.bin
-            firmware/**/*.bin
             www_release/*
             version.txt
           fail_on_unmatched_files: false
