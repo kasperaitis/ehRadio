@@ -614,13 +614,7 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #endif
 
 #ifndef SMART_START
-  #define SMART_START 2
-#elif (SMART_START == true)
-  #undef SMART_START
-  #define SMART_START 1
-#elif (SMART_START == false)
-  #undef SMART_START
-  #define SMART_START 2
+  #define SMART_START false
 #endif
 #ifndef SHOW_AUDIO_INFO
   #define SHOW_AUDIO_INFO false

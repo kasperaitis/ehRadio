@@ -240,13 +240,13 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       return;
     }
     if (strcmp(str, "cli.smartstart") == 0 || strcmp(str, "smartstart") == 0) {
-      printf(clientId, "##CLI.SMARTSTART#: %d\n> ", config.store.smartstart);
+      printf(clientId, "##CLI.SMARTSTART#: %s\n> ", config.store.smartstart ? "true" : "false");
       return;
     }
     int sstart;
     if (sscanf(str, "smartstart(%d)", &sstart) == 1 || sscanf(str, "cli.smartstart(\"%d\")", &sstart) == 1 || sscanf(str, "smartstart %d", &sstart) == 1) {
-      config.saveValue(&config.store.smartstart, static_cast<uint8_t>(sstart));
-      printf(clientId, "new smartstart value is: %d\n> ", config.store.smartstart);
+      config.saveValue(&config.store.smartstart, (bool)(sstart != 0));
+      printf(clientId, "new smartstart value is: %s\n> ", config.store.smartstart ? "true" : "false");
       return;
     }
     if (strcmp(str, "cli.list") == 0 || strcmp(str, "list") == 0) {

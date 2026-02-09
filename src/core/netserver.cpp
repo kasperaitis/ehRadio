@@ -384,7 +384,7 @@ void NetServer::processQueue(){
           break;
         }
       case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"wifiscan\":%d,\"softr\":%d,\"vut\":%d,\"mdns\":\"%s\"}", 
-                                  config.store.smartstart != 2,
+                                  config.store.smartstart,
                                   config.store.audioinfo,
                                   config.store.vumeter,
                                   config.store.wifiscanbest,
@@ -534,7 +534,19 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         #ifdef MQTT_ENABLE
           if (config.store.mqttenable) mqttplaylistticker.attach(5, mqttplaylistSend);
         #endif
-        if (player.isRunning()) player.sendCommand({PR_PLAY, -config.lastStation()});
+        // Check if the currently playing station still exists in the updated playlist
+        uint16_t lastStn = config.lastStation();
+        uint16_t newLength = config.playlistLength();
+        if (lastStn > newLength) {
+          // Station number exceeds new playlist length, stop and reset to station 1
+          config.setLastStation(newLength > 0 ? 1 : 0);
+          config.loadStation(newLength > 0 ? 1 : 0);
+        } else if (lastStn == 0 && newLength > 0) {
+          // No station selected, set to station 1
+          config.setLastStation(1);
+          config.loadStation(1);
+        }
+        // Otherwise, player continues with current station
         return;
       }
       
@@ -730,7 +742,10 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
     }
     if (final) {
       request->_tempFile.close();
-      if(filename=="playlist.csv") config.indexPlaylist();
+      if(filename=="playlist.csv") {
+        config.indexPlaylist();
+        netserver.requestOnChange(PLAYLISTSAVED, 0);
+      }
     }
   }
 }

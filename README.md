@@ -23,6 +23,8 @@ Documentation will be improved at some point...
 ## ehRadio Version history
 
 ### 2026.02.08...?
+  - Broken playlist editor fixed (sorry!) with some improvements as well
+  - Smart start now always resumes last-played station (even if not playing when powered-off)
   - Broken search fixed to work with `https` radio-browser servers (using names instead of IPs)
     - fallback to `https://all.api.radio-browser.info` added
     - as part of this, ESPFileUpdater was updated to handle chunked transfers

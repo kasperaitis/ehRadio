@@ -93,7 +93,6 @@ void Player::resetQueue(){
 }
 
 void Player::stopInfo() {
-  config.setSmartStart(0);
   //telnet.info();
   netserver.requestOnChange(MODE, 0);
 }
@@ -239,8 +238,6 @@ void Player::_play(uint16_t stationId) {
   netserver.requestOnChange(STATION, 0);
   netserver.loop();
   netserver.loop();
-  if(config.store.smartstart!=2)
-    config.setSmartStart(0);
   bool isConnected = false;
   if(config.getMode()==PM_SDCARD && SDC_CS!=255){
     isConnected=connecttoFS(sdman,config.station.url,config.sdResumePos==0?_resumeFilePos:config.sdResumePos-player.sd_min);
@@ -256,8 +253,6 @@ void Player::_play(uint16_t stationId) {
       config.saveValue(&config.store.lastSdStation, stationId);
     }
     //config.setTitle("");
-    if(config.store.smartstart!=2)
-      config.setSmartStart(1);
     netserver.requestOnChange(MODE, 0);
     setOutputPins(true);
     display.putRequest(NEWMODE, PLAYER);

@@ -115,7 +115,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
 #endif
   if (strEquals(command, "reset"))  { config.resetSystem(value, cid); return true; }
   
-  if (strEquals(command, "smartstart")){ uint8_t ss = atoi(value) == 1 ? 1 : 2; if (!player.isRunning() && ss == 1) ss = 0; config.setSmartStart(ss); return true; }
+  if (strEquals(command, "smartstart")){ bool ss = (atoi(value) != 0); config.setSmartStart(ss); return true; }
   if (strEquals(command, "audioinfo")) { config.saveValue(&config.store.audioinfo, static_cast<bool>(atoi(value))); display.putRequest(AUDIOINFO); return true; }
   if (strEquals(command, "vumeter"))   { config.saveValue(&config.store.vumeter, static_cast<bool>(atoi(value))); display.putRequest(SHOWVUMETER); return true; }
   if (strEquals(command, "wifiscan"))  { config.saveValue(&config.store.wifiscanbest, static_cast<bool>(atoi(value))); return true; }

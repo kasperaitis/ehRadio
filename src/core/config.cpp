@@ -17,6 +17,7 @@
 #endif
 #include <cstddef>
 #include <ESPFileUpdater.h>
+#include <nvs_flash.h>
 #if DSP_MODEL==DSP_DUMMY
   #define DUMMYDISPLAY
 #endif
@@ -277,8 +278,13 @@ void Config::initPlaylistMode(){
   #endif
   if(getMode()==PM_WEB && _wwwFilesExist()) initPlaylist();
   log_i("%d" ,_lastStation);
-  if (_lastStation == 0 && cs > 0) {
-    _lastStation = getMode()==PM_WEB?1:_randomStation();
+  // Validate station number is within range
+  if (cs == 0) {
+    _lastStation = 0;  // No playlist, no valid station
+  } else if (_lastStation > cs) {
+    _lastStation = 1;  // Station out of range, reset to first
+  } else if (_lastStation == 0) {
+    _lastStation = getMode()==PM_WEB?1:_randomStation();  // No station selected, pick first
   }
   lastStation(_lastStation);
   saveValue(&store.play_mode, store.play_mode, true, true);
@@ -348,9 +354,11 @@ void Config::loadTheme(){
 
 void Config::reset(){
   Serial.print("[Prefs] Reset requested, resetting config...\n");
-  prefs.begin("ehradio", false);
-  prefs.clear();
-  prefs.end();
+  nvs_flash_erase();
+  nvs_flash_init();
+  //prefs.begin("ehradio", false);
+  //prefs.clear();
+  //prefs.end();
   setDefaults();
   delay(500);
   ESP.restart();
@@ -428,7 +436,7 @@ void Config::setIrBtn(int val){
 #endif
 void Config::resetSystem(const char *val, uint8_t clientId){
   if (strcmp(val, "system") == 0) {
-    saveValue(&store.smartstart, (uint8_t)SMART_START, false);
+    saveValue(&store.smartstart, SMART_START, false);
     saveValue(&store.audioinfo, SHOW_AUDIO_INFO, false);
     saveValue(&store.vumeter, SHOW_VU_METER, false);
     saveValue(&store.wifiscanbest, WIFI_SCAN_BEST_RSSI, false);
@@ -550,7 +558,7 @@ void Config::setTone(int8_t bass, int8_t middle, int8_t trebble) {
   netserver.requestOnChange(EQUALIZER, 0);
 }
 
-void Config::setSmartStart(uint8_t ss) {
+void Config::setSmartStart(bool ss) {
   saveValue(&store.smartstart, ss);
 }
 
@@ -1416,7 +1424,7 @@ void Config::bootInfo() {
     BOOTLOG("audio:\t\t%s (%d, %d, %d, %d, %s)", "VS1053", VS1053_CS, VS1053_DCS, VS1053_DREQ, VS1053_RST, VS_HSPI?"true":"false");
   }
   BOOTLOG("audioinfo:\t%s", store.audioinfo?"true":"false");
-  BOOTLOG("smartstart:\t%d", store.smartstart);
+  BOOTLOG("smartstart:\t%s", store.smartstart ? "true" : "false");
   BOOTLOG("vumeter:\t%s", store.vumeter?"true":"false");
   BOOTLOG("softapdelay:\t%d", store.softapdelay);
   BOOTLOG("flipscreen:\t%s", store.flipscreen?"true":"false");
@@ -1453,7 +1461,7 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(middle, "mid"),
   CONFIG_KEY_ENTRY(bass, "bass"),
   CONFIG_KEY_ENTRY(sdsnuffle, "sdshuffle"),
-  CONFIG_KEY_ENTRY(smartstart, "smartstart"),
+  CONFIG_KEY_ENTRY(smartstart, "smartstartx"),
   CONFIG_KEY_ENTRY(audioinfo, "audioinfo"),
   CONFIG_KEY_ENTRY(vumeter, "vumeter"),
   CONFIG_KEY_ENTRY(wifiscanbest, "wifiscan"),
@@ -1498,6 +1506,6 @@ const configKeyMap Config::keyMap[] = {
 
 void Config::deleteOldKeys() {
   // List any old/legacy keys to remove here (they will be deleted from prefs if found)
-  // prefs.remove("removedkey");
-  // prefs.remove("removedkey");
+  prefs.remove("smartstart"); // previous smartstart was numeric 0, 1, 2
+  // prefs.remove("removedkey"); // note
 }

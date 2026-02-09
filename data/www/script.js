@@ -339,6 +339,13 @@ function plAdd(){
     behavior: 'smooth'
   });
 }
+function selectAll(checkbox){
+  let items=getId('pleditorcontent').getElementsByTagName('li');
+  for (let i = 0; i < items.length; i++) {
+    let cb = items[i].getElementsByTagName('span')[1].getElementsByTagName('input')[0];
+    cb.checked = checkbox.checked;
+  }
+}
 function plRemove(){
   let items=getId('pleditorcontent').getElementsByTagName('li');
   let pass=[];
@@ -369,10 +376,9 @@ function submitPlaylist(){
     let ovol = inputs[3].value;
     if(ovol < -30) ovol = -30;
     if(ovol > 30) ovol = 30;
-    output+=inputs[1].value+"\t"+inputs[2].value+"\t"+inputs[3].value+"\n";
-    // output+=inputs[1].value+"\t"+inputs[2].value+"\t"+ovol+"\n";
+    output+=inputs[1].value+"\t"+inputs[2].value+"\t"+ovol+"\n";
   }
-  let file = new File([output], "tempplaylist.csv",{type:"text/plain;charset=utf-8", lastModified:new Date().getTime()});
+  let file = new File([output], "playlist.csv",{type:"text/plain;charset=utf-8", lastModified:new Date().getTime()});
   let container = new DataTransfer();
   container.items.add(file);
   let fileuploadinput=getId("file-upload");
@@ -382,14 +388,19 @@ function submitPlaylist(){
   toggleTarget(0, 'pleditorwrap');
 }
 function doPlUpload(finput) {
-  websocket.send("submitplaylist=1");
   var formData = new FormData();
   formData.append("plfile", finput.files[0]);
   // Add mode parameter (merge or replace)
   const importMode = window.importMode || 'replace'; // Default to replace for safety
   formData.append("mode", importMode);
   var xhr = new XMLHttpRequest();
-  xhr.open("POST",`http://${hostname}/upload`,true);
+  xhr.open("POST",`http://${hostname}/webboard`,true);
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      // Notify server that playlist save is complete - triggers refresh
+      websocket.send('submitplaylistdone=1');
+    }
+  };
   xhr.send(formData);
   finput.value = '';
   delete window.importMode; // Clean up

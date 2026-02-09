@@ -81,7 +81,7 @@ struct config_t // specify defaults here (and macros in options.h) (defaults are
   int8_t    middle = EQ_MIDDLE;
   int8_t    bass = EQ_BASS;
   bool      sdsnuffle = SD_SHUFFLE;
-  uint8_t   smartstart = SMART_START;
+  bool      smartstart = SMART_START;
   bool      audioinfo = SHOW_AUDIO_INFO;
   bool      vumeter = SHOW_VU_METER;
   bool      wifiscanbest = WIFI_SCAN_BEST_RSSI;
@@ -204,7 +204,7 @@ class Config {
     bool initNetwork();
     bool saveWifi();
     bool saveWifiFromNextion(const char* post);
-    void setSmartStart(uint8_t ss);
+    void setSmartStart(bool ss);
     void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }
     void initPlaylist();
     void indexPlaylist();
