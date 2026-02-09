@@ -23,13 +23,12 @@ Documentation will be improved at some point...
 ## ehRadio Version history
 
 ### 2026.02.08...?
-  - Playlist Editor fixed
-    - Two import options: Merge and Replace
   - Broken search fixed to work with `https` radio-browser servers (using names instead of IPs)
     - fallback to `https://all.api.radio-browser.info` added
     - as part of this, ESPFileUpdater was updated to handle chunked transfers
   - SPIFFS clean-up added (after update, unwanted files are purged)
     - added because online flasher does not erase SPIFFS
+  - Minor improvements to CSV importer (can handle files that exceed the usual fields)
   - Minor improvements to code (vars set to default value in `.h` file instead of in `.cpp`)
 
 ### 2026.02.06
