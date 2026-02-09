@@ -370,12 +370,14 @@ function submitPlaylist(){
     if(ovol < -30) ovol = -30;
     if(ovol > 30) ovol = 30;
     output+=inputs[1].value+"\t"+inputs[2].value+"\t"+inputs[3].value+"\n";
+    // output+=inputs[1].value+"\t"+inputs[2].value+"\t"+ovol+"\n";
   }
   let file = new File([output], "tempplaylist.csv",{type:"text/plain;charset=utf-8", lastModified:new Date().getTime()});
   let container = new DataTransfer();
   container.items.add(file);
   let fileuploadinput=getId("file-upload");
   fileuploadinput.files = container.files;
+  window.importMode = 'replace'; // Save always replaces entire playlist
   doPlUpload(fileuploadinput);
   toggleTarget(0, 'pleditorwrap');
 }
@@ -383,10 +385,18 @@ function doPlUpload(finput) {
   websocket.send("submitplaylist=1");
   var formData = new FormData();
   formData.append("plfile", finput.files[0]);
+  // Add mode parameter (merge or replace)
+  const importMode = window.importMode || 'replace'; // Default to replace for safety
+  formData.append("mode", importMode);
   var xhr = new XMLHttpRequest();
   xhr.open("POST",`http://${hostname}/upload`,true);
   xhr.send(formData);
   finput.value = '';
+  delete window.importMode; // Clean up
+}
+function triggerImport(mode) {
+  window.importMode = mode;
+  getId('file-upload').click();
 }
 /***--- eof playlist ---***/
 function toggleTarget(el, id){
@@ -395,6 +405,19 @@ function toggleTarget(el, id){
     audiopreview.pause();
     audiopreview.src='';
     getId('previewinfo').innerHTML='';
+    // If opening editor (not closing), refresh playlist first to ensure fresh data
+    if(target && target.classList.contains('hidden')) {
+      // Don't toggle visibility yet, wait for fresh data
+      generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
+      // generatePlaylist will call handlePlaylistData, which will call initPLEditor
+      // Then we toggle visibility after a brief delay to let data load
+      setTimeout(() => {
+        target.classList.toggle("hidden");
+        getId(target.dataset.target).classList.toggle("active");
+      }, 200);
+      return; // Exit early, don't run the normal toggle below
+    }
+    // If closing editor, do it immediately (normal flow below)
   }
   if(target){
     if(id=='pleditorwrap' && modesd) {

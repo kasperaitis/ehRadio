@@ -164,22 +164,22 @@ class Config {
     station_t station;
     theme_t   theme;
 #if IR_PIN!=255
-    int irindex;
-    uint8_t irchck;
+    int irindex = -1;
+    uint8_t irchck = 0;
     ircodes_t ircodes;
 #endif
     BitrateFormat configFmt = BF_UNKNOWN;
     neworkItem ssids[5];
-    uint8_t ssidsCount;
-    uint16_t sleepfor;
-    uint32_t sdResumePos;
-    bool     emptyFS;
-    uint16_t vuThreshold;
-    uint16_t screensaverTicks;
-    uint16_t screensaverPlayingTicks;
-    bool     isScreensaver;
-    int      newConfigMode;
-    char       ipBuf[16];
+    uint8_t ssidsCount = 0;
+    uint16_t sleepfor = 0;
+    uint32_t sdResumePos = 0;
+    bool     wwwFilesExist = false;
+    uint16_t vuThreshold = 0;
+    uint16_t screensaverTicks = 0;
+    uint16_t screensaverPlayingTicks = 0;
+    bool     isScreensaver = false;
+    int      newConfigMode = 0;
+    char       ipBuf[16] = {0};
   public:
     void init();
     void loadPreferences();
@@ -208,7 +208,8 @@ class Config {
     void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }
     void initPlaylist();
     void indexPlaylist();
-    void deleteMainDatawwwFile();
+    void purgeUnwantedFiles();
+    void deleteMainwwwFile();
     void startAsyncServicesButWait();
     void updateFile(void* param, const char* localFile, const char* onlineFile, const char* updatePeriod, const char* simpleName);
     void initSDPlaylist();
@@ -309,15 +310,15 @@ class Config {
       return chipId;
     }
   private:
-    bool _bootDone;
-    bool _rtcFound;
-    FS* _SDplaylistFS;
+    bool _bootDone = false;
+    bool _rtcFound = false;
+    FS* _SDplaylistFS = nullptr;
     void setDefaults();
     Ticker   _sleepTimer;
     static void doSleep();
     uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
     void _initHW();
-    bool _isFSempty();
+    bool _wwwFilesExist();
     uint16_t _randomStation(){
       randomSeed(esp_random() ^ millis());
       uint16_t station = random(1, store.countStation);

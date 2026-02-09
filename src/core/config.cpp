@@ -23,10 +23,14 @@
 
 
 // List of required web asset files
-static const char* requiredFiles[] = {"dragpl.js","ir.css","irrecord.html","ir.js","logo.svg","options.html","script.js",
-                                     "timezones.json","search.html","search.js","search.css", //"rb_srvrs.json" is optional
-                                     "style.css","updform.html","theme.css","player.html"}; // keep main page at end
-static const size_t requiredFilesCount = sizeof(requiredFiles) / sizeof(requiredFiles[0]);
+static const char* wwwFiles[] = {"dragpl.js","ir.css","irrecord.html","ir.js","logo.svg","options.html","script.js",
+                                "timezones.json","search.html","search.js","search.css", "rb_srvrs.json",
+                                "style.css","updform.html","theme.css","player.html"}; // keep main page at end
+static const size_t wwwFilesCount = sizeof(wwwFiles) / sizeof(wwwFiles[0]);
+
+// List of required data files
+static const char* dataFiles[] = {"playlist.csv", "wifi.csv"};
+static const size_t dataFilesCount = sizeof(dataFiles) / sizeof(dataFiles[0]);
 
 Config config;
 
@@ -37,29 +41,23 @@ void u8fix(char *src){
   if ((uint8_t)last >= 0xC2) src[strlen(src)-1]='\0';
 }
 
-bool Config::_isFSempty() {
-  // Use global requiredFiles and requiredFilesCount
-  char fullpath[32];
-  for (size_t i = 0; i < requiredFilesCount; i++) {
-    sprintf(fullpath, "/www/%s", requiredFiles[i]);
-    if(!SPIFFS.exists(fullpath) && !SPIFFS.exists(String(fullpath) + ".gz")) {
-      Serial.println(fullpath);
-      return true;
-    }
+bool Config::_wwwFilesExist() {
+  char fullpath[64];
+  for (size_t i = 0; i < wwwFilesCount; i++) {
+    sprintf(fullpath, "/www/%s", wwwFiles[i]);
+    String gzPath = String(fullpath) + ".gz";
+    bool plainExists = SPIFFS.exists(fullpath);
+    bool gzExists = SPIFFS.exists(gzPath);
+    if (gzExists && plainExists) SPIFFS.remove(fullpath);
+    if (!plainExists && !gzExists) return false;
   }
-  return false;
+  return true;
 }
 
 void Config::init() {
   loadPreferences();
-  sdResumePos = 0;
-  screensaverTicks = 0;
-  screensaverPlayingTicks = 0;
-  newConfigMode = 0;
-  isScreensaver = false;
   bootInfo();
 #if RTCSUPPORTED
-  _rtcFound = false;
   BOOTLOG("RTC begin(SDA=%d,SCL=%d)", RTC_SDA, RTC_SCL);
   if(rtc.init()){
     BOOTLOG("done");
@@ -67,10 +65,6 @@ void Config::init() {
   }else{
     BOOTLOG("[ERROR] - Couldn't find RTC");
   }
-#endif
-  emptyFS = true;
-#if IR_PIN!=255
-    irindex=-1;
 #endif
 #if defined(SD_SPIPINS) || SD_HSPI
   #if !defined(SD_SPIPINS)
@@ -90,22 +84,52 @@ void Config::init() {
     return;
   }
   BOOTLOG("SPIFFS mounted");
-  emptyFS = _isFSempty();
-  if(emptyFS) {
+  
+  // Check version file and determine if files need updating
+  const char* versionPath = "/data/ehradio.ver";
+  String storedVersion = "";
+  if (SPIFFS.exists(versionPath)) {
+    File verFile = SPIFFS.open(versionPath, "r");
+    if (verFile) {
+      storedVersion = verFile.readStringUntil('\n');
+      storedVersion.trim();
+      verFile.close();
+    }
+  }
+  // if version is correct or file doesn't exist (which may indiciate SPIFFS files installed via flash), check files
+  if (storedVersion == String(RADIOVERSION)) {
+    wwwFilesExist = _wwwFilesExist();
+  } else if (!SPIFFS.exists(versionPath)) {
+    BOOTLOG("New install detected.");
+    wwwFilesExist = _wwwFilesExist();
+  } else {
+    BOOTLOG("Version mismatch detected (stored: %s, current: %s)", storedVersion.c_str(), RADIOVERSION);
+    wwwFilesExist =  false;
+  }
+  // if version is incorrect or version file doesn't exist, need to clean SPIFFS and make the version file
+  if (!wwwFilesExist || !SPIFFS.exists(versionPath)) {
+    purgeUnwantedFiles();
+    File verFile = SPIFFS.open(versionPath, "w");
+    if (verFile) {
+        verFile.println(RADIOVERSION);
+        verFile.close();
+        BOOTLOG("Version file updated to %s", RADIOVERSION);
+    }
+  }
+  if (!wwwFilesExist) {
+    deleteMainwwwFile(); // Forces update process or (kind of) makes SPIFFS unusable
     #ifndef UPDATEURL
-      BOOTLOG("SPIFFS is empty!");
+      BOOTLOG("SPIFFS is missing files!");
     #else
       BOOTLOG("SPIFFS is missing files.  Will attempt to get files from online...");
-      deleteMainDatawwwFile();
     #endif
   }
-  ssidsCount = 0;
+
   #ifdef USE_SD
   _SDplaylistFS = getMode()==PM_SDCARD?&sdman:(true?&SPIFFS:_SDplaylistFS);
   #else
   _SDplaylistFS = &SPIFFS;
   #endif
-  _bootDone=false;
 }
 
 void Config::loadPreferences() {
@@ -251,7 +275,7 @@ void Config::initPlaylistMode(){
     store.play_mode=PM_WEB;
     _lastStation = store.lastStation;
   #endif
-  if(getMode()==PM_WEB && !emptyFS) initPlaylist();
+  if(getMode()==PM_WEB && _wwwFilesExist()) initPlaylist();
   log_i("%d" ,_lastStation);
   if (_lastStation == 0 && cs > 0) {
     _lastStation = getMode()==PM_WEB?1:_randomStation();
@@ -758,15 +782,17 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
       ovol = 0;
       return true;
     } else if (t == 3) {
-      // 3 fields: one is URL, one is name, one is ovol (ovol must be integer 0-255)
+      // 3 fields: one is URL, one is name, one is ovol (ovol must be integer -64 to +64)
       int urlIdx = -1, nameIdx = -1, ovolIdx = -1;
       for (int i = 0; i < 3; ++i) {
         if (strstr(tokens[i], ".") && (strstr(tokens[i], "/") || strstr(tokens[i], "://"))) urlIdx = i;
         else {
           char* endptr = nullptr;
           long val = strtol(tokens[i], &endptr, 10);
-          if (endptr && *endptr == '\0' && val >= 0 && val <= 255) {
+          if (endptr && *endptr == '\0' && val >= -64 && val <= 64) {
             ovolIdx = i;
+            if (val < -30) val = -30;
+            if (val > 30) val = 30;
             ovol = (int)val;
           } else {
             nameIdx = i;
@@ -805,13 +831,15 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
   }
   if (urlIdx == -1) return false; // URL is required
 
-  // Check for ovol at the end (name url ovol)
+  // Check for ovol at the end (name url ovol), clamp to -30/+30
   int ovolIdx = -1;
   if (t == urlIdx + 2) {
     char* endptr = nullptr;
     long val = strtol(tokens[t-1], &endptr, 10);
-    if (endptr && *endptr == '\0' && val >= 0 && val <= 255) {
+    if (endptr && *endptr == '\0' && val >= -64 && val <= 64) {
       ovolIdx = t-1;
+      if (val < -30) val = -30;
+      if (val > 30) val = 30;
       ovol = (int)val;
     }
   }
@@ -986,10 +1014,12 @@ bool Config::parseJSON(const char* line, char* name, char* url, int &ovol) {
     return false;
   }
 
-  // 3. Try ovol, default to 0 if not found
+  // 3. Try ovol, default to 0 if not found, clamp to -30/+30
   char ovolbuf[16] = {0};
   if (extract(obj, "\"ovol\"", ovolbuf, sizeof(ovolbuf))) {
     ovol = atoi(ovolbuf);
+    if (ovol < -30) ovol = -30;
+    if (ovol > 30) ovol = 30;
   } else {
     ovol = 0;
   }
@@ -1138,9 +1168,48 @@ void Config::sleepForAfter(uint16_t sf, uint16_t sa){
   else doSleep();
 }
 
-void Config::deleteMainDatawwwFile() {
-  if (requiredFilesCount > 0) {
-    const char* lastFile = requiredFiles[requiredFilesCount - 1];
+void Config::purgeUnwantedFiles() {
+  BOOTLOG("Scanning SPIFFS for unwanted files...");
+  File root = SPIFFS.open("/");
+  if (!root || !root.isDirectory()) return;
+
+  File file = root.openNextFile();
+  while (file) {
+    if (file.isDirectory()) {
+      file = root.openNextFile();
+      continue;
+    }
+    String path = file.path();
+    bool keep = false;
+    if (path.startsWith("/www/")) {
+      String name = path.substring(5);
+      for (size_t i = 0; i < wwwFilesCount; i++) {
+        if (name == String(wwwFiles[i]) || name == String(wwwFiles[i]) + ".gz") {
+          keep = true;
+          break;
+        }
+      }
+    } else if (path.startsWith("/data/")) {
+      String name = path.substring(6);
+      for (size_t i = 0; i < dataFilesCount; i++) {
+        if (name == String(dataFiles[i])) {
+          keep = true;
+          break;
+        }
+      }
+    }
+    if (!keep) {
+      SPIFFS.remove(path);
+      BOOTLOG("Removed: %s", path.c_str());
+    }
+    file = root.openNextFile();
+  }
+  BOOTLOG("Purge complete.");
+}
+
+void Config::deleteMainwwwFile() {
+  if (wwwFilesCount > 0) {
+    const char* lastFile = wwwFiles[wwwFilesCount - 1];
     char mainfile[64];
     snprintf(mainfile, sizeof(mainfile), "/www/%s", lastFile);
     if (SPIFFS.exists(mainfile)) {
@@ -1199,9 +1268,9 @@ void fixPlaylistFileEnding() {
     char localFile[64];
     char tryFile[64];
     char tryUrl[128];
-    for (size_t i = 0; i < requiredFilesCount; i++) {
+    for (size_t i = 0; i < wwwFilesCount; i++) {
       display.putRequest(NEWMODE, UPDATING);
-      const char* fname = requiredFiles[i];
+      const char* fname = wwwFiles[i];
       snprintf(localFileGz, sizeof(localFileGz), "/www/%s.gz", fname);
       snprintf(localFile, sizeof(localFile), "/www/%s", fname);
       if (SPIFFS.exists(localFileGz)) SPIFFS.remove(localFileGz);
@@ -1231,7 +1300,7 @@ void fixPlaylistFileEnding() {
         }
       }
     }
-    // Delete any files in /www that are not in the requiredFiles list
+    // Delete any files in /www that are not in the wwwFiles list
     File root = SPIFFS.open("/www");
     if (root && root.isDirectory()) {
       File file = root.openNextFile();
@@ -1242,11 +1311,11 @@ void fixPlaylistFileEnding() {
         const char* slash = strrchr(path, '/');
         if (slash) name = slash + 1;
         bool found = false;
-        for (size_t j = 0; j < requiredFilesCount; j++) {
+        for (size_t j = 0; j < wwwFilesCount; j++) {
           // Check against both compressed and uncompressed names
           char requiredNameGz[64];
-          snprintf(requiredNameGz, sizeof(requiredNameGz), "%s.gz", requiredFiles[j]);
-          if (strcmp(name, requiredFiles[j]) == 0 || strcmp(name, requiredNameGz) == 0) {
+          snprintf(requiredNameGz, sizeof(requiredNameGz), "%s.gz", wwwFiles[j]);
+          if (strcmp(name, wwwFiles[j]) == 0 || strcmp(name, requiredNameGz) == 0) {
             found = true;
             break;
           }
@@ -1285,7 +1354,7 @@ void Config::updateFile(void* param, const char* localFile, const char* onlineFi
 void startAsyncServices(void* param) {
   fixPlaylistFileEnding();
   config.updateFile(param, "/www/timezones.json.gz", TIMEZONES_JSON_URL, "1 week", "Timezones database file");
-  config.updateFile(param, "/www/rb_srvrs.json", RADIO_BROWSER_SERVERS_URL, "4 weeks", "Radio Browser Servers list");
+  config.updateFile(param, "/www/rb_srvrs.json", RADIO_BROWSER_SERVERS_URL, "1 day", "Radio Browser Servers list");
   cleanStaleSearchResults();
   vTaskDelete(NULL);
 }
@@ -1296,7 +1365,7 @@ void Config::startAsyncServicesButWait() {
   updater = new ESPFileUpdater(SPIFFS);
   updater->setMaxSize(1024);
   updater->setUserAgent(ESPFILEUPDATER_USERAGENT);
-  if (emptyFS) {
+  if (!wwwFilesExist) {
     #ifdef UPDATEURL
       xTaskCreate(getRequiredFiles, "getRequiredFiles", 8192, updater, 2, NULL);
     #endif

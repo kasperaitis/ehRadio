@@ -59,7 +59,7 @@
 #endif
 
 // Global list for radio-browser servers to persist across searches
-String g_ipv4_servers[20];
+String rb_servers[20];
 // For the search task
 TaskHandle_t g_searchTaskHandle = NULL;
 #define FS_REQUIRED_FREE_SPACE 150 // in KB - must be minimum x1.5 of the limit_per_page in search.js (100)
@@ -191,8 +191,6 @@ void handleSearchPost(AsyncWebServerRequest *request) {
 bool NetServer::begin(bool quiet) {
   if(network.status==SDREADY) return true;
   if(!quiet) Serial.print("##[BOOT]#\tnetserver.begin\t");
-  importRequest = IMDONE;
-  irRecordEnable = false;
   nsQueue = xQueueCreate( 20, sizeof( nsRequestParams_t ) );
   while(nsQueue==NULL){;}
 
@@ -750,12 +748,12 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 
 // Helper to select and randomize radio-browser servers
 void selectRadioBrowserServer() {
-  size_t arr_size = sizeof(g_ipv4_servers) / sizeof(g_ipv4_servers[0]);
-  for (size_t i = 0; i < arr_size; ++i) g_ipv4_servers[i] = "";
+  size_t arr_size = sizeof(rb_servers) / sizeof(rb_servers[0]);
+  for (size_t i = 0; i < arr_size; ++i) rb_servers[i] = "";
   File serversFile = SPIFFS.open("/www/rb_srvrs.json", "r");
   if (!serversFile) {
-    Serial.println("[Search] [Error] Failed to open /www/rb_srvrs.json - will try to get IP of all.api.radio-browser.info instead.");
-    goto useIP;
+    Serial.println("[Search] [Error] Failed to open /www/rb_srvrs.json.");
+    goto useHostname;
   } else {
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, serversFile);
@@ -763,51 +761,44 @@ void selectRadioBrowserServer() {
     if (error) {
       Serial.print(F("[Search] [Error] deserializeJson() failed: "));
       Serial.println(error.c_str());
-      goto useIP; // get out of the else
+      goto useHostname; // get out of the else
     }
     JsonArray servers = doc.as<JsonArray>();
     if (servers.isNull() || servers.size() == 0) {
       Serial.println("[Search] [Error] JSON is not a valid or is an empty array.");
-      goto useIP; //get out of the else
+      goto useHostname; //get out of the else
     }
     // Collect unique IPv4 server names
     size_t count = 0;
     for (JsonObject server_obj : servers) {
-      const char* ip = server_obj["ip"];
-      if (ip && strchr(ip, '.')) { // It's an IPv4
-        bool duplicate = false;
-        for (size_t j = 0; j < count; ++j) {
-          if (g_ipv4_servers[j] == ip) {
-            duplicate = true;
-            break;
-          }
+      const char* srvr_name = server_obj["name"];
+      bool duplicate = false;
+      for (size_t j = 0; j < count; ++j) {
+        if (rb_servers[j] == srvr_name) {
+          duplicate = true;
+          break;
         }
-        if (!duplicate && count < arr_size) {
-          g_ipv4_servers[count++] = ip;
-        }
+      }
+      if (!duplicate && count < arr_size) {
+        rb_servers[count++] = srvr_name;
       }
     }
     // Shuffle
     for (size_t i = count - 1; i > 0; --i) {
       size_t j = random(i + 1);
-      String temp = g_ipv4_servers[i];
-      g_ipv4_servers[i] = g_ipv4_servers[j];
-      g_ipv4_servers[j] = temp;
+      String temp = rb_servers[i];
+      rb_servers[i] = rb_servers[j];
+      rb_servers[j] = temp;
     }
 
-    IPAddress serverIP;
-    if (WiFi.hostByName("all.api.radio-browser.info", serverIP)) {
-      Serial.printf("Resolved IP: %s\n", serverIP.toString().c_str());
-      g_ipv4_servers[0] = serverIP.toString();
-    }
+    // Add fallback as last option after shuffled servers
+    rb_servers[count] = "all.api.radio-browser.info";
   }
   return;
-useIP:
-  IPAddress serverIP;
-  if (WiFi.hostByName("all.api.radio-browser.info", serverIP)) {
-    Serial.printf("Resolved IP: %s\n", serverIP.toString().c_str());
-    g_ipv4_servers[0] = serverIP.toString();
-  }
+useHostname:
+  // Use hostname instead of IP to ensure proper Host header and HTTPS support
+  Serial.println("[Search] Using fallback: all.api.radio-browser.info.");
+  rb_servers[0] = "all.api.radio-browser.info";
 }
 
 void vTaskSearchRadioBrowser(void *pvParameters) {
@@ -825,10 +816,10 @@ void vTaskSearchRadioBrowser(void *pvParameters) {
     return;
   }
   // Count non-empty servers from our global persistent list
-  size_t arr_size = sizeof(g_ipv4_servers) / sizeof(g_ipv4_servers[0]);
+  size_t arr_size = sizeof(rb_servers) / sizeof(rb_servers[0]);
   int server_count = 0;
   for (size_t i = 0; i < arr_size; ++i) {
-    if (g_ipv4_servers[i].length() > 0) server_count++;
+    if (rb_servers[i].length() > 0) server_count++;
   }
   // If the list is empty, it's the first run or all servers failed previously. Let's (re)populate it.
   if (server_count == 0) {
@@ -837,12 +828,12 @@ void vTaskSearchRadioBrowser(void *pvParameters) {
     // Recount after filling
     server_count = 0;
     for (size_t i = 0; i < arr_size; ++i) {
-      if (g_ipv4_servers[i].length() > 0) server_count++;
+      if (rb_servers[i].length() > 0) server_count++;
     }
   }
   // If still no servers, then the API source is likely down or unreachable.
   if (server_count == 0) {
-    Serial.println("[Search] [Error] No IPv4 servers available after attempting to select.");
+    Serial.println("[Search] [Error] No servers available after attempting to select.");
     netserver.requestOnChange(SEARCH_FAILED, 0);
     delete[] search_str;
     g_searchTaskHandle = NULL;
@@ -851,20 +842,22 @@ void vTaskSearchRadioBrowser(void *pvParameters) {
   }
   ESPFileUpdater searchResultsFetch(SPIFFS);
   searchResultsFetch.setUserAgent(ESPFILEUPDATER_USERAGENT);
+  searchResultsFetch.setBuffer(SEARCHRESULTS_BUFFER);
+  searchResultsFetch.setYieldInterval(SEARCHRESULTS_YIELDINTERVAL);
   const char* localPath = "/www/searchresults.json";
   bool success = false;
   bool server_retried = false;
   bool json_valid = false;
   for (size_t i = 0; i < arr_size; ++i) {
-    if (g_ipv4_servers[i].length() == 0) continue;
-    String server = g_ipv4_servers[i];
+    if (rb_servers[i].length() == 0) continue;
+    String server = rb_servers[i];
     // Compose the URL using the full search string
-    String url = "http://" + server + "/json/stations/search?" + String(search_str);
+    String url = "https://" + server + "/json/stations/search?" + String(search_str);
     Serial.printf("[Search] Attempting to download from: %s\n", url.c_str());
     auto status = searchResultsFetch.checkAndUpdate(localPath, url, ESPFILEUPDATER_VERBOSE);
     if (status == ESPFileUpdater::UPDATED) {
       Serial.printf("[Search] Successfully downloaded from %s\n", server.c_str());
-      // Check if the downloaded file ends with ']'
+      // Check if the downloaded file ends with ']' (an incomplete .json will not)
       File jsonFile = SPIFFS.open(localPath, "r");
       if (jsonFile) {
         int fileSize = jsonFile.size();
@@ -882,12 +875,14 @@ void vTaskSearchRadioBrowser(void *pvParameters) {
         jsonFile.close();
         if (lastChar != ']') {
           if (server_retried == true) {
-            Serial.printf("[Search] [Warning] searchresults.json is incomplete. Not retrying.\n");
+            Serial.printf("[Search] [Warning] JSON validation failed. Not retrying.\n");
             server_retried = false;
+            SPIFFS.remove(localPath); // Clean up bad file
           } else {
-            Serial.printf("[Search] [Warning] searchresults.json is incomplete. Retrying same server.\n");
+            Serial.printf("[Search] [Warning] JSON validation failed. Retrying same server.\n");
             server_retried = true;
             --i;
+            SPIFFS.remove(localPath); // Clean up bad file
           }
           continue;
         } else {
@@ -917,12 +912,12 @@ void vTaskSearchRadioBrowser(void *pvParameters) {
         break;
       } else {
         Serial.printf("[Search] [Error] Invalid JSON from %s. Removing from list.\n", server.c_str());
-        g_ipv4_servers[i] = "";
+        rb_servers[i] = "";
         server_retried = false;
       }
     } else {
       Serial.printf("[Search] [Error] Failed to download from %s. Removing from persistent list.\n", server.c_str());
-      g_ipv4_servers[i] = "";
+      rb_servers[i] = "";
       server_retried = false;
     }
   }
@@ -930,6 +925,7 @@ void vTaskSearchRadioBrowser(void *pvParameters) {
     netserver.requestOnChange(SEARCH_DONE, 0);
   } else {
     Serial.println("[Search] [Error] Failed to download from all available servers.");
+    SPIFFS.remove(localPath); // Clean up any incomplete file
     netserver.requestOnChange(SEARCH_FAILED, 0);
   }
   delete[] search_str;
@@ -1065,7 +1061,7 @@ void launchPlaybackTask(const String& url, const String& name) {
           }
           if (Update.end(true)) { // end(true) will finish and commit the update
             Serial.println("[Online Update] Update successful, rebooting...");
-            config.deleteMainDatawwwFile();
+            config.deleteMainwwwFile();
             websocket.textAll("{\"onlineupdatestatus\": \"Update successful, rebooting...\"}");
             delay(1000);
             ESP.restart();
@@ -1097,7 +1093,7 @@ void handleNotFound(AsyncWebServerRequest * request) {
     }
 #endif
   if(request->url()=="/emergency") { request->send(200, "text/html", emergency_form); return; }
-  if(request->method() == HTTP_POST && request->url()=="/webboard" && config.emptyFS) { request->redirect("/"); ESP.restart(); return; }
+  if(request->method() == HTTP_POST && request->url()=="/webboard" && !config.wwwFilesExist) { request->redirect("/"); ESP.restart(); return; }
   if(request->method() == HTTP_GET && request->url() == "/search") { handleSearch(request); return; }
   if (request->method() == HTTP_POST && request->url() == "/search") { handleSearchPost(request); return; }
 
@@ -1175,7 +1171,7 @@ void handleNotFound(AsyncWebServerRequest * request) {
       "var playMode='%s';\n"
       "var onlineupdatecapable=%s;\n",
       RADIOVERSION,
-      (network.status == CONNECTED && !config.emptyFS) ? "webboard" : "",
+      (network.status == CONNECTED && config.wwwFilesExist) ? "webboard" : "",
       (network.status == CONNECTED) ? "player" : "ap",
       onlineCapable
     );
@@ -1196,7 +1192,7 @@ void handleNotFound(AsyncWebServerRequest * request) {
 }
 
 void handleIndex(AsyncWebServerRequest * request) {
-  if(config.emptyFS){
+  if(!config.wwwFilesExist){
     if(request->url()=="/" && request->method() == HTTP_GET ) { request->send(200, "text/html", emptyfs_html); return; }
     if(request->url()=="/" && request->method() == HTTP_POST) {
       if(request->arg("ssid")!="" && request->arg("pass")!=""){
@@ -1215,7 +1211,7 @@ void handleIndex(AsyncWebServerRequest * request) {
     Serial.println(request->url());
     request->send(404, "text/plain", "Not found");
     return;
-  } // end if(config.emptyFS)
+  } // end if(!config.wwwFilesExist)
 #if defined(HTTP_USER) && defined(HTTP_PASS)
   if(network.status == CONNECTED)
     if (!request->authenticate(HTTP_USER, HTTP_PASS)) {

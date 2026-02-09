@@ -3,7 +3,7 @@
 
 class SDManager : public SDFS {
   public:
-    bool ready;
+    bool ready = false;
   public:
     SDManager(FSImplPtr impl) : SDFS(impl) {}
     bool start();
@@ -12,7 +12,7 @@ class SDManager : public SDFS {
     void listSD(File &plSDfile, File &plSDindex, const char * dirname, uint8_t levels);
     void indexSDPlaylist();
   private:
-    uint32_t _sdFCount;
+    uint32_t _sdFCount = 0;
   private:
     bool _checkNoMedia(const char* path);
     bool _endsWith (const char* base, const char* str);

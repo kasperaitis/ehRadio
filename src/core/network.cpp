@@ -362,7 +362,6 @@ void MyNetwork::begin() {
 
   config.initNetwork();
   ctimer.detach();
-  forceTimeSync = forceWeather = true;
   if (config.ssidsCount == 0 || DBGAP) {
     raiseSoftAP();
     return;

@@ -13,26 +13,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download and update rb_srvrs.json if changed
-        run: |
-          TARGET_FILE="data/www/rb_srvrs.json"
-          TMP_FILE="${TARGET_FILE}.tmp"
-          URL="https://all.api.radio-browser.info/json/servers"
-          mkdir -p data/www
-          curl -L -s -o "$TMP_FILE" "$URL"
-          if [ ! -f "$TARGET_FILE" ]; then
-            echo "rb_srvrs.json is new. Updating."
-            mv "$TMP_FILE" "$TARGET_FILE"
-          else
-            # Sort both files by array elements and compare the sorted output.
-            if ! diff -q <(jq 'sort_by(.name)' "$TARGET_FILE") <(jq 'sort_by(.name)' "$TMP_FILE"); then
-              echo "rb_srvrs.json has changed. Updating."
-              mv "$TMP_FILE" "$TARGET_FILE"
-            else
-              echo "rb_srvrs.json is unchanged."
-              rm "$TMP_FILE"
-            fi
-          fi
+# Trying to keep rb_srvrs.json seems to be a waste of time - I'd rather package it with a safe default in Releases... and it can update itself on-device if needed
+
+#      - name: Download and update rb_srvrs.json if changed
+#        run: |
+#          TARGET_FILE="data/www/rb_srvrs.json"
+#          TMP_FILE="${TARGET_FILE}.tmp"
+#          URL="https://all.api.radio-browser.info/json/servers"
+#          mkdir -p data/www
+#          curl -L -s -o "$TMP_FILE" "$URL"
+#          if [ ! -f "$TARGET_FILE" ]; then
+#            echo "rb_srvrs.json is new. Updating."
+#            mv "$TMP_FILE" "$TARGET_FILE"
+#          else
+#            # Sort both files by array elements and compare the sorted output.
+#            if ! diff -q <(jq 'sort_by(.name)' "$TARGET_FILE") <(jq 'sort_by(.name)' "$TMP_FILE"); then
+#              echo "rb_srvrs.json has changed. Updating."
+#              mv "$TMP_FILE" "$TARGET_FILE"
+#            else
+#              echo "rb_srvrs.json is unchanged."
+#              rm "$TMP_FILE"
+#            fi
+#          fi
 
       - name: Download and update timezones.json.gz if changed
         run: |
@@ -53,10 +55,12 @@ jobs:
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          git add data/www/rb_srvrs.json data/www/timezones.json.gz
+          git add data/www/timezones.json.gz
           if ! git diff --cached --quiet; then
             git commit -m "Update JSON automatically from external sources"
             git push
           else
             echo "No changes to commit for JSON files."
           fi
+
+# git add data/www/rb_srvrs.json data/www/timezones.json.gz

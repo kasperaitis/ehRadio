@@ -117,9 +117,9 @@ void launchPlaybackTask(const String& url, const String& name);
 
 class NetServer {
   public:
-    import_e importRequest;
-    bool resumePlay;
-    char chunkedPathBuffer[40];
+    import_e importRequest = IMDONE;
+    bool resumePlay = false;
+    char chunkedPathBuffer[40] = {0};
   public:
     NetServer() {};
     bool begin(bool quiet=false);
@@ -129,16 +129,16 @@ class NetServer {
     int  getRSSI()        { return rssi; };
     void chunkedHtmlPage(const String& contentType, AsyncWebServerRequest *request, const char * path);
     void onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t clientId);
-    bool irRecordEnable;
+    bool irRecordEnable = false;
 #if IR_PIN!=255
     void irToWs(const char* protocol, uint64_t irvalue);
     void irValsToWs(); 
 #endif
 		void resetQueue();
   private:
-    requestType_e request;
+    requestType_e request = PLAYLIST;
     QueueHandle_t nsQueue;
-    int rssi;
+    int rssi = 0;
     void getPlaylist(uint8_t clientId);
     bool importPlaylist();
     static size_t chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t index);

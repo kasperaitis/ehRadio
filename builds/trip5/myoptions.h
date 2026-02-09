@@ -343,7 +343,11 @@
       defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define LOOP_TASK_STACK_SIZE 16  /* Compiler default is 8KB but seems safe on ESP32-S3 to increase to 16KB for audio decoding + concurrent tasks / 8KB is safe when using a VS1053 decoder */
   #define CONFIG_ASYNC_TCP_QUEUE_SIZE 64
+  #define SEARCHRESULTS_BUFFER 1024*32 // 32KB matches chunk sizes from radio-browser.info but likely only good for ESP32-S3
+  #define SEARCHRESULTS_YIELDINTERVAL 0 // With a large buffer, skipping is almost eliminated with 0
 #endif
+
+//#define ESPFILEUPDATER_DEBUG
 
 
 /* --- URL SOURCE OVERRIDE --- */
@@ -351,7 +355,7 @@
 /* ...or your firmware is not available from Trip5's Github... sorry! */
 /* Read the notes in the ./builds folder for more detailed information */
 
-//#define GITHUBURL "https://github.com/trip5/ehradio" // used by the radio to update firmware and files...
+//#define GITHUBURL "https://github.com/kasperaitis/ehradio" // used by the radio to update firmware and files...
 
 
 /* --- MORE, UNUSED, UNKNOWN, NOTES --- */
@@ -360,8 +364,6 @@
 //#define IR_TIMEOUT            80              /*  see kTimeout description in IRremoteESP8266 example https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/IRrecvDumpV2/IRrecvDumpV2.ino */
 
 //#define ROTATE_90 /* rotates 90 degrees? */
-
-//#define ESPFILEUPDATER_DEBUG
 
 /* Extras: unused in all */
 //#define L10N_LANGUAGE EN

@@ -321,6 +321,12 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef CONFIG_ASYNC_TCP_QUEUE_SIZE
   #define CONFIG_ASYNC_TCP_QUEUE_SIZE 64 // maybe 32 for ESP32?
 #endif
+#ifndef SEARCHRESULTS_BUFFER
+  #define SEARCHRESULTS_BUFFER 1024*4 // 32KB matches chunk sizes from radio-browser.info but likely only good for ESP32-S3
+#endif
+#ifndef SEARCHRESULTS_YIELDINTERVAL
+  #define SEARCHRESULTS_YIELDINTERVAL 0 // With a large buffer, skipping is almost eliminated with 0
+#endif
 
 /*        Other settings. You can overwrite them in the myoptions.h file        */
 #ifndef MUTE_PIN

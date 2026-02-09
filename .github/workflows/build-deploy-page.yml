@@ -1,4 +1,3 @@
-
 name: Build and Deploy GitHub Page
 
 on:
@@ -34,6 +33,15 @@ jobs:
         run: |
           cp README.md docs/index.md
           cp -r images docs/
+
+      - name: Update GitHub link in documentation index
+        run: |
+          # Replace only the first occurrence of 'Github Page' with 'Github Repository'
+          sed -i '0,/Github Page/s|Github Page|Github Repository|' docs/index.md
+          # Replace only the first occurrence of the link after that phrase with the correct repo link
+          sed -i "0,/(https:\/\/[^)]*)/s|(https://[^)]*)|(https://github.com/${{ github.repository }})|" docs/index.md
+          # Replace only the first occurrence of 'easier to read' with 'easier to explore'
+          sed -i '0,/easier to read/s|easier to read|easier to explore|' docs/index.md
 
       - name: Copy web assets (manifests and firmware-info.json)
         run: |

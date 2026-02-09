@@ -22,9 +22,9 @@ class TextWidget;
     
 class Display {
   public:
-    uint16_t currentPlItem;
-    uint16_t numOfNextStation;
-    displayMode_e _mode;
+    uint16_t currentPlItem = 0;
+    uint16_t numOfNextStation = 0;
+    displayMode_e _mode = PLAYER;
   public:
     Display() {};
     ~Display();
@@ -60,7 +60,7 @@ class Display {
     TextWidget *_bootstring, *_volip, *_voltxt, *_rssi, *_bitrate;
     Ticker _returnTicker;
     bool _locked = false;
-    uint8_t _bootStep;
+    uint8_t _bootStep = 0;
     void _time(bool redraw = false);
     void _apScreen();
     void _swichMode(displayMode_e newmode);

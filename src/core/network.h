@@ -13,17 +13,17 @@ enum n_Status_e { CONNECTED, SOFT_AP, FAILED, SDREADY };
 
 class MyNetwork {
   public:
-    n_Status_e status;
+    n_Status_e status = FAILED;
 // Ensure DNSServer full definition is available
-    struct tm timeinfo;
-    bool firstRun, forceTimeSync, forceWeather;
+    struct tm timeinfo = {0};
+    bool firstRun = true, forceTimeSync = true, forceWeather = true;
     bool lostPlaying = false, beginReconnect = false;
     //uint8_t tsFailCnt, wsFailCnt;
     Ticker ctimer;
-    char *weatherBuf;
-    bool trueWeather;
-    DNSServer* dnsServer;
-    ImprovWiFi *improv;
+    char *weatherBuf = nullptr;
+    bool trueWeather = false;
+    DNSServer* dnsServer = nullptr;
+    ImprovWiFi *improv = nullptr;
   public:
     MyNetwork() : improv(nullptr) {};
     void begin();

@@ -43,7 +43,7 @@ QueueHandle_t playerQueue;
 void Player::init() {
   Serial.print("##[BOOT]#\tplayer.init\t");
   playerQueue=NULL;
-  _resumeFilePos = 0;
+  //_resumeFilePos = 0;
   playerQueue = xQueueCreate( 5, sizeof( playerRequestParams_t ) );
   setOutputPins(false);
   delay(50);
@@ -67,10 +67,10 @@ void Player::init() {
   setBalance(config.store.balance);
   setTone(config.store.bass, config.store.middle, config.store.trebble);
   setVolume(0);
-  _status = STOPPED;
-  //setOutputPins(false);
-  _volTimer=false;
-  //randomSeed(analogRead(0));
+  //_status = STOPPED;
+  ////setOutputPins(false);
+  //_volTimer=false;
+  ////randomSeed(analogRead(0));
   #if PLAYER_FORCE_MONO
     forceMono(true);
   #endif

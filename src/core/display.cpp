@@ -102,7 +102,6 @@ void Display::init() {
 #if LIGHT_SENSOR!=255
   analogSetAttenuation(ADC_0db);
 #endif
-  _bootStep = 0;
   dsp.initDisplay();
   displayQueue=NULL;
   displayQueue = xQueueCreate( 5, sizeof( requestParams_t ) );

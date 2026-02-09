@@ -29,10 +29,10 @@ enum plStatus_e : uint8_t{ PLAYING = 1, STOPPED = 2 };
 
 class Player: public Audio {
   private:
-    uint32_t    _volTicks;   /* delayed volume save  */
-    bool        _volTimer;   /* delayed volume save  */
-    uint32_t    _resumeFilePos;
-    plStatus_e  _status;
+    uint32_t    _volTicks = 0;       /* delayed volume save  */
+    bool        _volTimer = false;   /* delayed volume save  */
+    uint32_t    _resumeFilePos = 0;
+    plStatus_e  _status = STOPPED;
     char        _plError[PLERR_LN];
   private:
     void _stop(bool alreadyStopped = false);

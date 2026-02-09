@@ -65,7 +65,8 @@ jobs:
               echo "Copying $filename without compression (already gzipped)."
               cp "$file" "www_release/"
             elif [[ "$filename" == "rb_srvrs.json" ]]; then
-              echo "Skipping $filename from release assets."
+              cp "$file" "www_release/"
+              echo "Adding $filename without compression."
             else
               echo "Compressing $filename."
               gzip -c -9 "$file" > "www_release/$filename.gz"
