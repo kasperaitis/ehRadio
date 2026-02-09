@@ -781,25 +781,34 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
       }
       ovol = 0;
       return true;
-    } else if (t == 3) {
-      // 3 fields: one is URL, one is name, one is ovol (ovol must be integer -64 to +64)
-      int urlIdx = -1, nameIdx = -1, ovolIdx = -1;
-      for (int i = 0; i < 3; ++i) {
-        if (strstr(tokens[i], ".") && (strstr(tokens[i], "/") || strstr(tokens[i], "://"))) urlIdx = i;
-        else {
-          char* endptr = nullptr;
-          long val = strtol(tokens[i], &endptr, 10);
-          if (endptr && *endptr == '\0' && val >= -64 && val <= 64) {
-            ovolIdx = i;
-            if (val < -30) val = -30;
-            if (val > 30) val = 30;
-            ovol = (int)val;
-          } else {
-            nameIdx = i;
-          }
+    } else if (t >= 3) {
+      // 3+ fields: Find URL (required), ovol (optional), and name from remaining fields
+      int urlIdx = -1;
+      for (int i = 0; i < t; ++i) {
+        if (strstr(tokens[i], ".") && (strstr(tokens[i], "/") || strstr(tokens[i], "://"))) {
+          urlIdx = i;
+          break;
         }
       }
-      if (urlIdx == -1 || nameIdx == -1) return false;
+      if (urlIdx == -1) return false; // No URL found
+      
+      // Find ovol (optional) - numeric value between -64 and 64
+      int ovolIdx = -1;
+      for (int i = 0; i < t; ++i) {
+        if (i == urlIdx) continue; // Skip URL field
+        char* endptr = nullptr;
+        long val = strtol(tokens[i], &endptr, 10);
+        if (endptr && *endptr == '\0' && val >= -64 && val <= 64) {
+          ovolIdx = i;
+          // Clamp to -30 to 30
+          if (val < -30) val = -30;
+          if (val > 30) val = 30;
+          ovol = (int)val;
+          break; // Use the first matching ovol
+        }
+      }
+      
+      // Extract URL
       if (url) {
         if (strncmp(tokens[urlIdx], "http://", 7) != 0 && strncmp(tokens[urlIdx], "https://", 8) != 0) {
           snprintf(url, BUFLEN, "http://%s", tokens[urlIdx]);
@@ -807,16 +816,29 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
           strlcpy(url, tokens[urlIdx], BUFLEN);
         }
       }
+      
+      // Build name from all remaining fields (not URL, not ovol)
       if (name) {
-        strlcpy(name, tokens[nameIdx], BUFLEN);
-        // Sanitize '/' to ' '
-        for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
+        name[0] = 0;
+        for (int i = 0; i < t; ++i) {
+          if (i == urlIdx || i == ovolIdx) continue; // Skip URL and ovol
+          if (strlen(name) > 0) strlcat(name, " ", BUFLEN);
+          strlcat(name, tokens[i], BUFLEN);
+        }
+        
+        // If name is empty, use URL (minus protocol) as name
+        if (strlen(name) == 0) {
+          const char* u = url;
+          if (strncmp(u, "http://", 7) == 0) u += 7;
+          else if (strncmp(u, "https://", 8) == 0) u += 8;
+          strlcpy(name, u, BUFLEN);
+          // Sanitize '/' to ' '
+          for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
+        }
       }
+      
       if (ovolIdx == -1) ovol = 0;
       return true;
-    } else {
-      // More than 3 fields: invalid for tab-delimited
-      return false;
     }
   }
 
