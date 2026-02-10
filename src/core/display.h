@@ -57,7 +57,7 @@ class Display {
     NumWidget *_nums;
     ClockWidget *_clock;
     Page *_boot;
-    TextWidget *_bootstring, *_volip, *_voltxt, *_rssi, *_bitrate;
+    TextWidget *_bootstring, *_volip, *_voltxt, *_battery, *_rssi, *_bitrate;
     Ticker _returnTicker;
     bool _locked = false;
     uint8_t _bootStep = 0;
@@ -76,6 +76,9 @@ class Display {
     void _setReturnTicker(uint8_t time_s);
     void _layoutChange(bool played);
     void _setRSSI(int rssi);
+    #if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
+      void _updateBattery();
+    #endif
 };
 
 #else

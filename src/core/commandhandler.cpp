@@ -8,7 +8,7 @@
 #include "controls.h"
 #include "network.h"
 #include "mqtt.h"
-
+#include "core/battery.h"
 #if DSP_MODEL==DSP_DUMMY
 #define DUMMYDISPLAY
 #endif
@@ -57,6 +57,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "getweather")) { netserver.requestOnChange(GETWEATHER, cid); return true; }
   if (strEquals(command, "getmqtt"))    { netserver.requestOnChange(GETMQTT, cid); return true; }
   if (strEquals(command, "getactive"))  { netserver.requestOnChange(GETACTIVE, cid); return true; }
+  if (strEquals(command, "getbattery"))  { netserver.requestOnChange(GETBATTERY, cid); return true; }
   if (strEquals(command, "newmode"))    { config.newConfigMode = atoi(value); netserver.requestOnChange(CHANGEMODE, cid); return true; }
   
   if (strEquals(command, "invertdisplay")){ config.saveValue(&config.store.invertdisplay, static_cast<bool>(atoi(value))); display.invert(); return true; }
@@ -126,6 +127,37 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
     if(strlen(config.store.mdnsname)>0) snprintf(buf, sizeof(buf), "{\"redirect\": \"http://%s.local/settings.html\"}", config.store.mdnsname);
     else snprintf(buf, sizeof(buf), "{\"redirect\": \"http://%s/settings.html\"}", WiFi.localIP().toString().c_str());
     websocket.text(cid, buf); delay(500); ESP.restart();
+    return true;
+  }
+  /* Battery calibration: compute ADC reference from measured voltage (like telnet calbatt) */
+  if (strEquals(command, "battref")) { 
+    int meas_mv = atoi(value);
+    // Validate measured voltage is in valid Li-Po range
+    if (meas_mv >= 2500 && meas_mv <= 4500) {
+      BatteryStatus b = battery_get_status();
+      if (b.valid && b.voltage_mv > 0) {
+        // Calculate ratio and suggested ADC ref (linear scaling)
+        double ratio = ((double)meas_mv) / ((double)b.voltage_mv);
+        // Sanity check for unreasonable ratio (should be close to 1.0)
+        if (ratio >= 0.5 && ratio <= 2.0) {
+          uint32_t curr_ref = (uint32_t)(config.store.battery_adc_ref_mv ? config.store.battery_adc_ref_mv : BATTERY_ADC_REF_MV);
+          uint32_t suggested_ref = (uint32_t)((double)curr_ref * ratio + 0.5);
+          // Validate computed reference is in valid range
+          if (suggested_ref >= 2000 && suggested_ref <= 4000) {
+            uint16_t newref = (uint16_t)suggested_ref;
+            config.saveValue(&config.store.battery_adc_ref_mv, newref);
+            // Recalculate immediately and notify client
+            battery_recalc_now();
+            netserver.requestOnChange(GETBATTERY, cid);
+          }
+        }
+      }
+    }
+    return true; 
+  }
+  if (strEquals(command, "battrecalc")) {
+    battery_recalc_now();
+    netserver.requestOnChange(GETBATTERY, cid);
     return true;
   }
   

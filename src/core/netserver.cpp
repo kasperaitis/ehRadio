@@ -12,6 +12,7 @@
 #include "telnet.h"
 #include "display.h"
 #include "options.h"
+#include "core/battery.h"
 #include "network.h"
 #include "mqtt.h"
 #include "controls.h"
@@ -211,6 +212,8 @@ bool NetServer::begin(bool quiet) {
 
   websocket.onEvent(onWsEvent);
   webserver.addHandler(&websocket);
+  /* Ensure any connected web clients receive the current battery status immediately */
+  requestOnChange(GETBATTERY, 0);
 #if USE_OTA
   if(strlen(config.store.mdnsname)>0)
     ArduinoOTA.setHostname(config.store.mdnsname);
@@ -220,10 +223,10 @@ bool NetServer::begin(bool quiet) {
   ArduinoOTA
     .onStart([]() {
       display.putRequest(NEWMODE, UPDATING);
-      telnet.printf("Start OTA updating %s\n", ArduinoOTA.getCommand() == U_FLASH?"firmware":"filesystem");
+      telnet.printf("Start OTA updating %s\r\n", ArduinoOTA.getCommand() == U_FLASH?"firmware":"filesystem");
     })
     .onEnd([]() {
-      telnet.printf("\nEnd OTA update, Rebooting...\n");
+      telnet.printf("End OTA update, Rebooting...\r\n");
     })
     .onProgress([](unsigned int progress, unsigned int total) {
       telnet.printf("Progress OTA: %u%%\r", (progress / (total / 100)));
@@ -231,11 +234,11 @@ bool NetServer::begin(bool quiet) {
     .onError([](ota_error_t error) {
       telnet.printf("Error[%u]: ", error);
       if (error == OTA_AUTH_ERROR) {
-        telnet.printf("Auth Failed\n");
+        telnet.printf("Auth Failed\r\n");
       } else if (error == OTA_BEGIN_ERROR) {
-        telnet.printf("Begin Failed\n");
+        telnet.printf("Begin Failed\r\n");
       } else if (error == OTA_CONNECT_ERROR) {
-        telnet.printf("Connect Failed\n");
+        telnet.printf("Connect Failed\r\n");
       } else if (error == OTA_RECEIVE_ERROR) {
         telnet.printf("Receive Failed\n");
       } else if (error == OTA_END_ERROR) {
@@ -339,6 +342,7 @@ void NetServer::processQueue(){
           String act = F("\"group_wifi\",");
           if (network.status == CONNECTED) {
                                                                 act += F("\"group_system\",");
+            if (battery_is_initialized() || dbgact)             act += F("\"group_battery\",");
                                                               #ifdef MQTT_ENABLE
                                                                 act += F("\"group_mqtt\",");
                                                               #endif
@@ -378,7 +382,8 @@ void NetServer::processQueue(){
           requestOnChange(BITRATE, clientId); 
           requestOnChange(MODE, clientId); 
           requestOnChange(SDINIT, clientId);
-          requestOnChange(GETPLAYERMODE, clientId); 
+          requestOnChange(GETPLAYERMODE, clientId);
+          requestOnChange(GETBATTERY, clientId); 
           if (config.getMode()==PM_SDCARD) { requestOnChange(SDPOS, clientId); requestOnChange(SDLEN, clientId); requestOnChange(SDSNUFFLE, clientId); } 
           return; 
           break;
@@ -440,8 +445,8 @@ void NetServer::processQueue(){
       case STATION:       requestOnChange(STATIONNAME, clientId); requestOnChange(ITEM, clientId); break;
       case STATIONNAME:   sprintf (wsbuf, "{\"payload\":[{\"id\":\"nameset\", \"value\": \"%s\"}]}", config.station.name); break;
       case ITEM:          sprintf (wsbuf, "{\"current\": %d}", config.lastStation()); break;
-      case TITLE:         sprintf (wsbuf, "{\"payload\":[{\"id\":\"meta\", \"value\": \"%s\"}]}", config.station.title); telnet.printf("##CLI.META#: %s\n> ", config.station.title); break;
-      case VOLUME:        sprintf (wsbuf, "{\"payload\":[{\"id\":\"volume\", \"value\": %d}]}", config.store.volume); telnet.printf("##CLI.VOL#: %d\n", config.store.volume); break;
+      case TITLE:         sprintf (wsbuf, "{\"payload\":[{\"id\":\"meta\", \"value\": \"%s\"}]}", config.station.title); telnet.printf("##CLI.META#: %s\r\n> ", config.station.title); break;
+      case VOLUME:        sprintf (wsbuf, "{\"payload\":[{\"id\":\"volume\", \"value\": %d}]}", config.store.volume); telnet.printf("##CLI.VOL#: %d\r\n", config.store.volume); break;
       case NRSSI:         sprintf (wsbuf, "{\"payload\":[{\"id\":\"rssi\", \"value\": %d}]}", rssi); /*rssi = 255;*/ break;
       case SDPOS:         sprintf (wsbuf, "{\"sdpos\": %d,\"sdend\": %d,\"sdtpos\": %d,\"sdtend\": %d}",
                                   player.getFilePos(),
@@ -452,6 +457,24 @@ void NetServer::processQueue(){
       case SDLEN:         sprintf (wsbuf, "{\"sdmin\": %d,\"sdmax\": %d}", player.sd_min, player.sd_max); break;
       case SDSNUFFLE:     sprintf (wsbuf, "{\"snuffle\": %d}", config.store.sdsnuffle); break;
       case BITRATE:       sprintf (wsbuf, "{\"payload\":[{\"id\":\"bitrate\", \"value\": %d}, {\"id\":\"fmt\", \"value\": \"%s\"}]}", config.station.bitrate, getFormat(config.configFmt)); break;
+      case GETBATTERY: {
+        BatteryStatus bat = battery_get_status();
+        if (!bat.valid && !battery_is_initialized()) {
+          /* Still send battref even if battery not detected so UI shows calibration value */
+          uint32_t battref = config.store.battery_adc_ref_mv ? config.store.battery_adc_ref_mv : (uint32_t)BATTERY_ADC_REF_MV;
+          snprintf(wsbuf, sizeof(wsbuf), "{\"payload\":[{\"id\":\"battery\", \"value\": \"\"}, {\"id\":\"battref\", \"value\": %u}]}", battref);
+        } else {
+          /* formatted with labels: "volt: 4049mV, percentage: 92%, status: Idle" */
+          const char *statusstr = "Idle";
+          if (bat.charging) statusstr = "Charging";
+          else if (bat.discharging_inferred) statusstr = "Discharging";
+          char valbuf[96];
+          snprintf(valbuf, sizeof(valbuf), "volt: %dmV, percentage: %d%%, status: %s", bat.voltage_mv, bat.percentage, statusstr);
+          uint32_t battref = config.store.battery_adc_ref_mv ? config.store.battery_adc_ref_mv : (uint32_t)BATTERY_ADC_REF_MV;
+          snprintf(wsbuf, sizeof(wsbuf), "{\"payload\":[{\"id\":\"battery\", \"value\": \"%s\"}, {\"id\":\"battref\", \"value\": %u}]}", valbuf, battref);
+        }
+        break;
+      }
       case MODE:          sprintf (wsbuf, "{\"payload\":[{\"id\":\"playerwrap\", \"value\": \"%s\"}]}", player.status() == PLAYING ? "playing" : "stopped"); telnet.info(); break;
       case EQUALIZER:     sprintf (wsbuf, "{\"payload\":[{\"id\":\"bass\", \"value\": %d}, {\"id\": \"middle\", \"value\": %d}, {\"id\": \"trebble\", \"value\": %d}]}", config.store.bass, config.store.middle, config.store.trebble); break;
       case BALANCE:       sprintf (wsbuf, "{\"payload\":[{\"id\": \"balance\", \"value\": %d}]}", config.store.balance); break;
@@ -558,7 +581,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
 }
 
 void NetServer::getPlaylist(uint8_t clientId) {
-  char buf[160] = {0};
+  char buf[200] = {0};  // Increased buffer for IPv6 or longer paths
   sprintf(buf, "{\"file\": \"http://%s%s\"}", WiFi.localIP().toString().c_str(), PLAYLIST_PATH);
   if (clientId == 0) { websocket.textAll(buf); } else { websocket.text(clientId, buf); }
 }
@@ -752,7 +775,11 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
   switch (type) {
-    case WS_EVT_CONNECT: /*netserver.requestOnChange(STARTUP, client->id()); */if (config.store.audioinfo) Serial.printf("[WEBSOCKET] client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str()); break;
+    case WS_EVT_CONNECT: /*netserver.requestOnChange(STARTUP, client->id()); */
+        if (config.store.audioinfo) Serial.printf("[WEBSOCKET] client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+        /* Send current battery status to the newly connected client immediately */
+        netserver.requestOnChange(GETBATTERY, client->id());
+        break;
     case WS_EVT_DISCONNECT: if (config.store.audioinfo) Serial.printf("[WEBSOCKET] client #%u disconnected\n", client->id()); break;
     case WS_EVT_DATA: netserver.onWsMessage(arg, data, len, client->id()); break;
     case WS_EVT_PONG:
@@ -1020,7 +1047,7 @@ void launchPlaybackTask(const String& url, const String& name) {
         websocket.textAll("{\"onlineupdateerror\": \"Remote RADIOVERSION not found\"}");
         return;
       }
-      char msgBuf[128];
+      char msgBuf[256];  // Increased buffer for longer version strings
       if (remoteVer != String(RADIOVERSION)) {
         snprintf(msgBuf, sizeof(msgBuf), "{\"onlineupdateavailable\":true,\"remoteVersion\":\"%s\"}", remoteVer.c_str());
       } else {

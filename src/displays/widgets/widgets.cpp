@@ -60,7 +60,14 @@ void TextWidget::init(WidgetConfig wconf, uint16_t buffsize, bool uppercase, uin
 
 void TextWidget::setText(const char* txt) {
   strlcpy(_text, utf8Rus(txt, _uppercase), _buffsize);
-  _textwidth = strlen(_text) * _charWidth;
+  /* Compute width accounting for special in-text pixel spacer (0x1E) which counts as 2 pixels
+     and otherwise each character occupies _charWidth pixels. */
+  uint16_t w = 0;
+  for (const char *p = _text; *p; ++p) {
+    if ((unsigned char)*p == 0x1E) w += 2; /* 2-pixel spacer */
+    else w += _charWidth;
+  }
+  _textwidth = w;
   if (strcmp(_oldtext, _text) == 0) return;
   if (_active) dsp.fillRect(_oldleft == 0 ? _realLeft() : min(_oldleft, _realLeft()),  _config.top, max(_oldtextwidth, _textwidth), _textheight, _bgcolor);
   _oldtextwidth = _textwidth;
@@ -92,10 +99,24 @@ uint16_t TextWidget::_realLeft(bool w_fb) {
 void TextWidget::_draw() {
   if(!_active) return;
   dsp.setTextColor(_fgcolor, _bgcolor);
-  dsp.setCursor(_realLeft(), _config.top);
   dsp.setFont();
   dsp.setTextSize(_config.textsize);
-  dsp.print(_text);
+
+  /* Render characters one-by-one so we can honor special in-text pixel spacers (0x1E = 2px). */
+  uint16_t x = _realLeft();
+  dsp.setCursor(x, _config.top);
+  for (const char *p = _text; *p; ++p) {
+    unsigned char ch = (unsigned char)*p;
+    if (ch == 0x1E) { /* 2-pixel spacer */
+      x += 2;
+      dsp.setCursor(x, _config.top);
+      continue;
+    }
+    dsp.setCursor(x, _config.top);
+    dsp.write(ch);
+    x += _charWidth;
+  }
+
   strlcpy(_oldtext, _text, _buffsize);
 }
 

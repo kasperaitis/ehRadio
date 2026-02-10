@@ -252,9 +252,19 @@ function setupElement(id,value){
     }
     if(element.classList.contains("text")){
       element.innerText=value;
+      // Auto-show/hide battery info row when battery text is set/cleared
+      if (element.id === 'battery') {
+        const wrap = getId('batteryinfo');
+        if (wrap) {
+          if (value === "" || value === null) wrap.classList.add('hidden'); else wrap.classList.remove('hidden');
+        }
+      }
     }
     if(element.type==='text' || element.type==='number' || element.type==='password'){
-      element.value=value;
+      // Skip battref - it's now a calibration input for measured voltage, not ADC reference
+      if (element.id !== 'battref') {
+        element.value=value;
+      }
     }
     if(element.type==='range'){
       element.value=value;
@@ -604,6 +614,7 @@ function continueLoading(mode){
         websocket.send('getweather=1');
         websocket.send('getmqtt=1');
         websocket.send('getcontrols=1');
+        websocket.send('getbattery=1');
         getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
         websocket.send('getactive=1');
         classEach("reset", function(el){ el.innerHTML='<svg viewBox="0 0 16 16" class="fill"><path d="M8 3v5a36.973 36.973 0 0 1-2.324-1.166A44.09 44.09 0 0 1 3.417 5.5a52.149 52.149 0 0 1 2.26-1.32A43.18 43.18 0 0 1 8 3z"/><path d="M7 5v1h4.5C12.894 6 14 7.106 14 8.5S12.894 11 11.5 11H1v1h10.5c1.93 0 3.5-1.57 3.5-3.5S13.43 5 11.5 5h-4z"/></svg>'; });
@@ -689,6 +700,7 @@ function continueLoading(mode){
           case "reset":  websocket.send("reset=1");  rebootSystem('Reset settings. Rebooting...'); break;
           case "snuffle": toggleSnuffle(); break;
           case "rebootmdns": websocket.send(`mdnsname=${getId('mdns').value}`); websocket.send("rebootmdns=1"); break;
+          case "savebattref": websocket.send(`battref=${getId('battref').value}`); break;
           default: break;
         }
       }else{

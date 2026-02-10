@@ -105,6 +105,8 @@ struct config_t // specify defaults here (and macros in options.h) (defaults are
   bool      fliptouch = TOUCH_FLIP;
   bool      dbgtouch = TOUCH_DEBUG;
   uint16_t  encacc = ROTARY_ACCEL;
+  // Battery ADC calibration reference (in mV). Set via 'calbatt <mV>' (saves immediately) or override in myoptions.h
+  uint16_t  battery_adc_ref_mv = BATTERY_ADC_REF_MV;
   bool      skipPlaylistUpDown = ONE_CLICK_SWITCH;
   uint8_t   irtlp = IR_TOLERANCE;
   char      tz_name[70] = TIMEZONE_NAME;

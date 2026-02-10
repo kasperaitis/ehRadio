@@ -7,7 +7,7 @@
 
 void audio_info(const char *info) {
   if(player.lockOutput) return;
-  if(config.store.audioinfo) telnet.printf("##AUDIO.INFO#: %s\n", info);
+  if(config.store.audioinfo) telnet.printf("##AUDIO.INFO#: %s\r\n", info);
   #ifdef USE_NEXTION
     nextion.audioinfo(info);
   #endif
@@ -23,16 +23,16 @@ void audio_info(const char *info) {
     player.setError(info);
     
   }
-  char* ici; char b[20]={0};
+  char* ici; char b[64]={0};  // Increased buffer to safely hold bitrate string
   if ((ici = strstr(info, "BitRate: ")) != NULL) {
-    strlcpy(b, ici + 9, 50);
+    strlcpy(b, ici + 9, sizeof(b));
     audio_bitrate(b);
   }
 }
 
 void audio_bitrate(const char *info)
 {
-  if(config.store.audioinfo) telnet.printf("%s %s\n", "##AUDIO.BITRATE#:", info);
+  if(config.store.audioinfo) telnet.printf("%s %s\r\n", "##AUDIO.BITRATE#:", info);
   config.station.bitrate = atoi(info) / 1000;
   display.putRequest(DBITRATE);
   #ifdef USE_NEXTION
@@ -88,8 +88,16 @@ void audio_id3album(const char *info){
       config.setTitle(info);
     }else{
       char tmp[BUFLEN];
-      snprintf(tmp, BUFLEN, "%s - %s", config.station.title, info);
-      config.setTitle(tmp);
+      // Prevent buffer overflow: reserve space for " - " and null terminator
+      size_t title_len = strlen(config.station.title);
+      size_t info_len = strlen(info);
+      if (title_len + 3 + info_len + 1 <= BUFLEN) {
+        snprintf(tmp, BUFLEN, "%s - %s", config.station.title, info);
+        config.setTitle(tmp);
+      } else {
+        // Title + album would overflow, just use album
+        config.setTitle(info);
+      }
     }
   }
 }
@@ -104,7 +112,7 @@ void audio_beginSDread(){
 
 void audio_id3data(const char *info){  //id3 metadata
     if(player.lockOutput) return;
-    telnet.printf("##AUDIO.ID3#: %s\n", info);
+    telnet.printf("##AUDIO.ID3#: %s\r\n", info);
 }
 
 void audio_eof_mp3(const char *info){  //end of file

@@ -515,9 +515,9 @@ void MyNetwork::requestTimeSync(bool withTelnetOutput, uint8_t clientId) {
       configTzTime(config.store.tzposix, config.store.sntp1);
     char timeStringBuff[50];
     strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S", &timeinfo);
-    telnet.printf(clientId, "##SYS.DATE#: %s (%s)\n> ", timeStringBuff, config.store.tzposix);
-    telnet.printf(clientId, "##SYS.TZNAME#: %s \n> ", config.store.tz_name);
-    telnet.printf(clientId, "##SYS.TZPOSIX#: %s \n> ", config.store.tzposix);
+    telnet.printf(clientId, "##SYS.DATE#: %s (%s)\r\n> ", timeStringBuff, config.store.tzposix);
+    telnet.printf(clientId, "##SYS.TZNAME#: %s\r\n> ", config.store.tz_name);
+    telnet.printf(clientId, "##SYS.TZPOSIX#: %s\r\n> ", config.store.tzposix);
   }
 }
 

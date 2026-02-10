@@ -17,6 +17,8 @@ SET_LOOP_TASK_STACK_SIZE(LOOP_TASK_STACK_SIZE * 1024);
 #include "core/mqtt.h"
 #include "core/optionschecker.h"
 #include "core/rgbled.h"
+#include "core/battery.h"
+#include "esp_sleep.h"
 #ifdef USE_NEXTION
 #include "displays/nextion.h"
 #endif
@@ -27,6 +29,20 @@ SPIClass SPI2(HSPI);
 
 extern __attribute__((weak)) void ehradio_on_setup();
 
+/* Prototype for battery-driven dimming handler */
+void battery_dim_loop();
+
+/* Shared state for battery-driven dim/critical handling.
+   These variables are accessed from both loop() and battery_loop() which run in
+   the same thread but at different times. Volatile prevents compiler optimizations
+   that could reorder reads/writes, ensuring consistent state across function calls.
+   battery_loop() updates the battery status, then loop() reads it to apply dim/sleep policy. */
+static volatile bool battery_low_handled = false;
+static volatile bool battery_critical_handled = false;
+static volatile bool battery_critical_skipped = false; /* true while charging and critical to avoid repeated logs */
+static uint8_t battery_saved_brightness = 0;
+static bool battery_saved_valid = false;
+
 void setup() {
   Serial.begin(115200);
   #if CORE_DEBUG_LEVEL > 0
@@ -35,13 +51,18 @@ void setup() {
       Serial.println("##[BOOT]#       Delay 1 second after cold boot to ensure serial logs are completely available. Only when CORE_DEBUG_LEVEL > 0.");
     }
   #endif
+
   if(REAL_LEDBUILTIN!=255) pinMode(REAL_LEDBUILTIN, OUTPUT);
   rgbled_init();
+  // Initialize battery monitoring
+  battery_init();
+
   if (ehradio_on_setup) ehradio_on_setup();
   pm.on_setup();
   config.init();
   display.init();
   player.init();
+  battery_boot_status();
   if (rgbled_is_initialized()) {
     if (player.isRunning()) rgbled_playing(); else rgbled_stopped();
   }
@@ -91,6 +112,12 @@ void loop() {
   }
   
   rgbled_loop();
+  battery_loop();
+  /* Check battery status and apply dimming/deepsleep policy if needed */
+  #if BRIGHTNESS_PIN!=255
+    battery_dim_loop();
+  #endif
+
   if (network.status == CONNECTED || network.status==SDREADY) {
     player.loop();
   }
@@ -150,6 +177,8 @@ void loop() {
     backlightTicker.attach(Out_Interval, backlightDown);
   }
 
+  /* battery_dim_loop() unified below */
+
   /* Backlight callback functions were here; moved below to ensure RGB callbacks are available even when backlight plugin isn't enabled */
   void ctrls_on_loop() {                            /* Backlight ON for reg. operations */
     if (!config.isScreensaver) {
@@ -162,6 +191,94 @@ void loop() {
   }
 #else  /*  #if BRIGHTNESS_PIN!=255 */
   void brightnessOn() { } /* No-op stub */
+#endif
+
+/* Unified battery dim/critical handler (works both with BacklightDown plugin or without).
+   When plugin is available (DOWN_LEVEL/DOWN_INTERVAL) we call brightnessOn(); otherwise use config.setBrightness(false). */
+#if BRIGHTNESS_PIN!=255
+void battery_dim_loop() {
+  BatteryStatus bat = battery_get_status();
+
+  /* Critical battery: stop playback, blank display and go to deep sleep (once)
+     If a charger (TP4054) is present and the battery is charging, skip deep sleep
+     while charging and notify once. Deep-sleep will occur once charging stops.
+     Grace period: wait 30 seconds after boot before allowing deep sleep. */
+  if (bat.critical_battery && !battery_critical_handled && millis() > 30000) {
+    if (bat.charging) {
+      if (!battery_critical_skipped) {
+        battery_critical_skipped = true;
+        Serial.printf("##[BATTERY]#: CRITICAL battery (%d%%) but charging - skipping deep sleep\r\n", bat.percentage);
+      }
+    } else {
+      battery_critical_skipped = false;
+      battery_critical_handled = true;
+      Serial.printf("##[BATTERY]#: CRITICAL battery (%d%%) - entering deep sleep\r\n", bat.percentage);
+      player.sendCommand({PR_STOP, 0});
+      display.putRequest(NEWMODE, SCREENBLANK);
+      delay(200);
+      display.deepsleep();
+      // Re-check battery status immediately before sleep to avoid race condition
+      // (charging may have started during shutdown sequence)
+      BatteryStatus final_check = battery_get_status();
+      if (final_check.charging) {
+        Serial.println("##[BATTERY]#: Charging detected before sleep - aborting deep sleep");
+        battery_critical_handled = false;
+        return;
+      }
+      #if defined(WAKE_PIN) && (WAKE_PIN!=255)
+        esp_sleep_enable_ext0_wakeup((gpio_num_t)WAKE_PIN, LOW);
+      #endif
+      esp_deep_sleep_start();
+    }
+  }
+
+  // Low battery: force fixed brightness percentage
+  if (bat.low_battery && !battery_low_handled) {
+    battery_low_handled = true;
+    if (!battery_saved_valid) { battery_saved_brightness = config.store.brightness; battery_saved_valid = true; }
+    uint8_t target_pct = (uint8_t)BATTERY_DIM_BRIGHTNESS;
+    if (target_pct > 100) target_pct = 100;
+    Serial.printf("##[BATTERY]#: LOW battery (%d%%) - forcing brightness to %d%%\r\n", bat.percentage, target_pct);
+    config.store.brightness = target_pct;
+    #if defined(DOWN_LEVEL) || defined(DOWN_INTERVAL)
+      brightnessOn();
+    #else
+      config.setBrightness(false);
+    #endif
+  }
+
+  // Restore when battery OK (with hysteresis) or charging
+  {
+    int recover = (int)BATTERY_LOW_THRESHOLD + (int)BATTERY_RECOVER_HYSTERESIS_PCT;
+    if (recover > 100) recover = 100;
+    uint8_t recover_pct = (uint8_t)recover;
+    bool recovered_by_pct = (bat.percentage >= recover_pct) && !bat.critical_battery;
+
+    if ((battery_low_handled && recovered_by_pct) || (battery_critical_handled && !bat.critical_battery) || bat.charging) {
+      if (battery_low_handled) {
+        battery_low_handled = false;
+        if (battery_saved_valid) {
+          config.store.brightness = battery_saved_brightness;
+          battery_saved_valid = false;
+          Serial.printf("##[BATTERY]#: Battery recovered - restoring brightness to %d%%\r\n", config.store.brightness);
+        }
+        #if defined(DOWN_LEVEL) || defined(DOWN_INTERVAL)
+          brightnessOn();
+        #else
+          config.setBrightness(false);
+        #endif
+      }
+      if (battery_critical_handled && !bat.critical_battery) {
+        battery_critical_handled = false;
+        #if defined(DOWN_LEVEL) || defined(DOWN_INTERVAL)
+          brightnessOn();
+        #else
+          config.setBrightness(false);
+        #endif
+      }
+    }
+  }
+}
 #endif
 
 // Call rgbled loop from main loop too (no-op if not enabled)

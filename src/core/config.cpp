@@ -1475,6 +1475,8 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(volumepage, "volpage"),
   CONFIG_KEY_ENTRY(brightness, "bright"),
   CONFIG_KEY_ENTRY(contrast, "contrast"),
+  // Persisted battery ADC reference in millivolts
+  CONFIG_KEY_ENTRY(battery_adc_ref_mv, "battref"),
   CONFIG_KEY_ENTRY(screensaverEnabled, "scrnsvren"),
   CONFIG_KEY_ENTRY(screensaverTimeout, "scrnsvrto"),
   CONFIG_KEY_ENTRY(screensaverBlank, "scrnsvrbl"),

@@ -127,6 +127,8 @@
 
 /* --- ROTARY ENCODER(S) --- */
 
+
+
 /* Extras: unused in all */
 //#define ENC_INTERNALPULLUP  true
 //#define ENC_HALFQUARD       false
@@ -152,6 +154,30 @@
 //#define SD_HSPI     /* false (not needed when using custom pins) */
 
 
+/* --- Battery --- */
+
+#if defined(ESP32_S3_KASPERAITIS_ES3C28P)
+  /* Battery monitoring on ES3C28P board */
+  #define BATTERY_PIN     9       /* GPIO9: ADC pin for battery voltage */
+  //#define BATTERY_CHARGE_PIN 255  /* No charging status GPIO exposed (TP4054 CHRG pin not connected on ES3C28P) */
+
+  #define BATTERY_DIVIDER_RATIO 2.0   /* 100k + 100k voltage divider = 1:2 ratio */
+  #define BATTERY_ADC_REF_MV 3438     /* ESP32-S3 ADC reference voltage (calibrated EL103565 3000mAh 11.1Wh) */
+  #define BATTERY_UPDATE_INTERVAL 60000 /* Update every 60 seconds */
+  #define BATTERY_DEBUG               /* Uncomment to enable debug output */
+
+  #define BATTERY_CHARGE_INFER_HOLD_SAMPLES 3 /* number of measurements (samples) to hold (e.g., 3 readings at BATTERY_UPDATE_INTERVAL) */
+  #define BATTERY_IMMEDIATE_PERCENT_THRESHOLD 20 /* percent */
+  #define BATTERY_CANDIDATE_PERCENT_DELTA 1 /* percent */
+  #define BATTERY_SUSTAINED_PERCENT_WINDOW_THRESHOLD 0 /* percent over hold window */
+
+  /* --- Plugin BacklightDown --- */
+
+  //#define DOWN_INTERVAL 60   // seconds before auto-dim
+  //#define DOWN_LEVEL    50   // optional: target PWM level (0..255). 64 ≈ 25% brightness
+#endif
+
+
 /* --- USER DEFAULTS --- */
 
 #if defined (BOARD_ESP32_S3_N16R8) || defined (BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
@@ -172,9 +198,10 @@
   #define SNTP_2          "pool.ntp.org"
   #define WEATHER_LAT     "55.721924"       /* latitude */
   #define WEATHER_LON     "21.117868"      /* longitude */
+  #define SCREEN_FLIP     true
+  #define SHOW_VU_METER   true
   #define VOLUME_STEPS    5
 #endif
-
 
 /* --- SYSTEM OVERRIDES --- */
 
@@ -185,16 +212,6 @@
       defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define LOOP_TASK_STACK_SIZE 16  /* Compiler default is 8KB but seems safe on ESP32-S3 to increase to 16KB for audio decoding + concurrent tasks / 8KB is safe when using a VS1053 decoder */
   #define CONFIG_ASYNC_TCP_QUEUE_SIZE 64
-  #define SEARCHRESULTS_BUFFER 1024*32 // 32KB matches chunk sizes from radio-browser.info but likely only good for ESP32-S3
-  #define SEARCHRESULTS_YIELDINTERVAL 0 // With a large buffer, skipping is almost eliminated with 0
 #endif
-
-
-/* --- URL SOURCE OVERRIDE --- */
-/* Only use this if you've decided to use your own Github as the source of files */
-/* ...or your firmware is not available from Trip5's Github... sorry! */
-/* Read the notes in the ./builds folder for more detailed information */
-
-//#define GITHUBURL "https://github.com/kasperaitis/ehradio" // used by the radio to update firmware and files...
 
 #endif // myoptions_h
