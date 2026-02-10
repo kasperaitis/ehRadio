@@ -503,7 +503,7 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     printf(clientId, "##WIFI.STATION#\n> ");
     return;
   }
-  char newssid[30], newpass[40];
+  char newssid[sizeof(config.ssids[1].ssid)], newpass[sizeof(config.ssids[1].password)];
   if (sscanf(str, "wifi.con(\"%[^\"]\",\"%[^\"]\")", newssid, newpass) == 2 || sscanf(str, "wifi.con(%[^,],%[^)])", newssid, newpass) == 2 || sscanf(str, "wifi.con(%[^ ] %[^)])", newssid, newpass) == 2 || sscanf(str, "wifi %[^ ] %s", newssid, newpass) == 2) {
     char buf[BUFLEN];
     snprintf(buf, BUFLEN, "New SSID: \"%s\" with PASS: \"%s\" for next boot\n> ", newssid, newpass);
@@ -511,7 +511,7 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     printf(clientId, "...REBOOTING...\n> ");
     memset(buf, 0, BUFLEN);
     snprintf(buf, BUFLEN, "%s\t%s", newssid, newpass);
-    config.saveWifiFromNextion(buf);
+    config.saveWifi(buf);
     return;
   }
   if (strcmp(str, "wifi.status") == 0 || strcmp(str, "status") == 0) {

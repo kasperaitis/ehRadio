@@ -1077,27 +1077,63 @@ bool Config::parseSsid(const char* line, char* ssid, char* pass) {
   tmpe = strstr(line, "\t");
   if (tmpe == NULL) return false;
   uint16_t pos = tmpe - line;
-  if (pos > 29 || strlen(line) > 71) return false;
-  memset(ssid, 0, 30);
+  if (pos >= sizeof(ssids[0].ssid)) return false;
+  if (strlen(line + pos + 1) >= sizeof(ssids[0].password)) return false;
+  memset(ssid, 0, sizeof(ssids[0].ssid));
   strlcpy(ssid, line, pos + 1);
-  memset(pass, 0, 40);
-  strlcpy(pass, line + pos + 1, strlen(line) - pos);
+  memset(pass, 0, sizeof(ssids[0].password));
+  strlcpy(pass, line + pos + 1, sizeof(ssids[0].password));
   return true;
 }
 
-bool Config::saveWifiFromNextion(const char* post){
-  File file = SPIFFS.open(SSIDS_PATH, "w");
-  if (!file) {
-    return false;
-  } else {
-    file.print(post);
-    file.close();
-    ESP.restart();
-    return true;
+bool Config::saveWifi(const char* post){
+  char ssidval[sizeof(ssids[0].ssid)], passval[sizeof(ssids[0].password)];
+  if (parseSsid(post, ssidval, passval)) {
+    if (addSsid(ssidval, passval)) {
+      ESP.restart();
+      return true;
+    }
   }
+  return false;
 }
 
-bool Config::saveWifi() {
+bool Config::addSsid(const char* ssid, const char* password) {
+  int slot = -1;
+  for (int i = 0; i < ssidsCount; i++) {
+    if (strcmp(ssids[i].ssid, ssid) == 0) {
+      slot = i;
+      break;
+    }
+  }
+  
+  if (slot == -1) {
+    slot = (ssidsCount < 5) ? ssidsCount : 4;
+    if (slot == ssidsCount && ssidsCount < 5) {
+      ssidsCount++;
+    }
+  }
+  
+  strlcpy(ssids[slot].ssid, ssid, sizeof(ssids[0].ssid));
+  strlcpy(ssids[slot].password, password, sizeof(ssids[0].password));
+  setLastSSID(slot + 1);
+
+  File file = SPIFFS.open(TMP_PATH, "w");
+  if (!file) return false;
+  for (int i = 0; i < ssidsCount; i++) {
+    if (strlen(ssids[i].ssid) > 0) {
+      file.printf("%s\t%s\n", ssids[i].ssid, ssids[i].password);
+    }
+  }
+  file.close();
+  
+  if (SPIFFS.exists(TMP_PATH)) {
+    SPIFFS.remove(SSIDS_PATH);
+    return SPIFFS.rename(TMP_PATH, SSIDS_PATH);
+  }
+  return false;
+}
+
+bool Config::importWifi() {
   if (!SPIFFS.exists(TMP_PATH)) return false;
   SPIFFS.remove(SSIDS_PATH);
   SPIFFS.rename(TMP_PATH, SSIDS_PATH);
@@ -1110,14 +1146,13 @@ bool Config::initNetwork() {
   if (!file || file.isDirectory()) {
     return false;
   }
-  char ssidval[30], passval[40];
-  uint8_t c = 0;
-  while (file.available()) {
+  ssidsCount = 0;
+  char ssidval[sizeof(ssids[0].ssid)], passval[sizeof(ssids[0].password)];
+  while (file.available() && ssidsCount < 5) {
     if (parseSsid(file.readStringUntil('\n').c_str(), ssidval, passval)) {
-      strlcpy(ssids[c].ssid, ssidval, 30);
-      strlcpy(ssids[c].password, passval, 40);
+      strlcpy(ssids[ssidsCount].ssid, ssidval, sizeof(ssids[0].ssid));
+      strlcpy(ssids[ssidsCount].password, passval, sizeof(ssids[0].password));
       ssidsCount++;
-      c++;
     }
   }
   file.close();

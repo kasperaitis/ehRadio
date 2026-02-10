@@ -299,11 +299,12 @@ bool MyNetwork::wifiBegin(bool silent){
       Serial.print("##[BOOT]#\t");
       display.putRequest(BOOTSTRING, ls);
     }
-    WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
+        WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
     
     while (WiFi.status() != WL_CONNECTED) {
       if (!silent) Serial.print(".");
       delay(500);
+      network.loopImprov();
       if (REAL_LEDBUILTIN!=255 && !silent) digitalWrite(REAL_LEDBUILTIN, !digitalRead(REAL_LEDBUILTIN));
       errcnt++;
       if (errcnt > WIFI_ATTEMPTS) {
@@ -402,8 +403,15 @@ void MyNetwork::loopImprov() {
   unsigned long now = millis();
   if (now - lastImprovBroadcast > 2000) {
     lastImprovBroadcast = now;
-    // Send state 0x02 (Authorized/Ready) when in SoftAP
-    uint8_t heartbeat[] = {'I', 'M', 'P', 'R', 'O', 'V', 0x01, 0x01, 0x01, 0x02, 0x00};
+    // Determine state: 0x02=Authorized/Ready, 0x03=Provisioning/Busy, 0x04=Provisioned/Connected
+    uint8_t state = 0x02;
+    if (WiFi.status() == WL_CONNECTED) {
+      state = 0x04;
+    } else if (status != SOFT_AP && config.ssidsCount > 0) {
+      state = 0x03;
+    }
+    
+    uint8_t heartbeat[] = {'I', 'M', 'P', 'R', 'O', 'V', 0x01, 0x01, 0x01, state, 0x00};
     uint8_t checksum = 0;
     for (int i = 0; i < 10; i++) checksum += heartbeat[i];
     heartbeat[10] = checksum;
@@ -422,7 +430,7 @@ static bool onImprovCustomConnect(const char* ssid, const char* password) {
   WiFi.begin(ssid, password);
   unsigned long start = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) {
-    delay(100);
+    delay(500);
     network.loopImprov();
   }
 
@@ -433,59 +441,22 @@ static bool onImprovCustomConnect(const char* ssid, const char* password) {
   }
 
   // CONNECTION SUCCESSFUL - Proceed with saving logic
-  
-  // Check if this SSID already exists in our list
-  int slot = -1;
-  for (int i = 0; i < config.ssidsCount; i++) {
-    if (strcmp(config.ssids[i].ssid, ssid) == 0) {
-      slot = i;
-      break;
-    }
-  }
-  
-  // If not found, use next available slot
-  if (slot == -1) {
-    slot = (config.ssidsCount < 5) ? config.ssidsCount : 4;
-    if (slot == config.ssidsCount && config.ssidsCount < 5) {
-      config.ssidsCount++;
-    }
-  }
-  
-  strlcpy(config.ssids[slot].ssid, ssid, sizeof(config.ssids[slot].ssid));
-  strlcpy(config.ssids[slot].password, password, sizeof(config.ssids[slot].password));
-  config.setLastSSID(slot + 1);
+  if (config.addSsid(ssid, password)) {
+    // Update the URL immediately before returning success to browser
+    IPAddress ip = WiFi.localIP();
+    char deviceUrl[64];
+    snprintf(deviceUrl, sizeof(deviceUrl), "http://%d.%d.%d.%d/", ip[0], ip[1], ip[2], ip[3]);
+  #if defined(CONFIG_IDF_TARGET_ESP32S3)
+    ImprovTypes::ChipFamily chip = ImprovTypes::ChipFamily::CF_ESP32_S3;
+  #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    ImprovTypes::ChipFamily chip = ImprovTypes::ChipFamily::CF_ESP32_C3;
+  #else
+    ImprovTypes::ChipFamily chip = ImprovTypes::ChipFamily::CF_ESP32;
+  #endif
+    if (network.improv) network.improv->setDeviceInfo(chip, "ehRadio", RADIOVERSION, "ehRadio", deviceUrl);
 
-  // Update the URL immediately before returning success to browser
-  IPAddress ip = WiFi.localIP();
-  char deviceUrl[64];
-  snprintf(deviceUrl, sizeof(deviceUrl), "http://%d.%d.%d.%d/", ip[0], ip[1], ip[2], ip[3]);
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
-  ImprovTypes::ChipFamily chip = ImprovTypes::ChipFamily::CF_ESP32_S3;
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
-  ImprovTypes::ChipFamily chip = ImprovTypes::ChipFamily::CF_ESP32_C3;
-#else
-  ImprovTypes::ChipFamily chip = ImprovTypes::ChipFamily::CF_ESP32;
-#endif
-  if (network.improv) network.improv->setDeviceInfo(chip, "ehRadio", RADIOVERSION, "ehRadio", deviceUrl);
-  
-  // Save to SPIFFS temporary file
-  File wifiFile = SPIFFS.open(TMP_PATH, "w");
-  if (wifiFile) {
-    for (int i = 0; i < config.ssidsCount; i++) {
-      if (strlen(config.ssids[i].ssid) > 0) {
-        wifiFile.printf("%s\t%s\n", config.ssids[i].ssid, config.ssids[i].password);
-      }
-    }
-    wifiFile.close();
-    
-    // Finalize the save: Rename TMP to SSIDS_PATH
-    if (SPIFFS.exists(TMP_PATH)) {
-       SPIFFS.remove(SSIDS_PATH);
-       if (SPIFFS.rename(TMP_PATH, SSIDS_PATH)) {
-         improvRebootTicker.once(3, triggerImprovReboot);
-         return true;
-       }
-    }
+    improvRebootTicker.once(3, triggerImprovReboot);
+    return true;
   }
   return false;
 }

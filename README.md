@@ -26,13 +26,14 @@ Documentation will be improved at some point...
   - Broken playlist editor fixed (sorry!) with major improvements
     - can now import 2 ways: replace or merge
     - importing of json and csv is done in-browser
+    - undo button can undo any changes
   - Smart start now always resumes last-played station (even if not playing when powered-off)
   - Broken search fixed to work with `https` radio-browser servers (using names instead of IPs)
     - fallback to `https://all.api.radio-browser.info` added
     - as part of this, ESPFileUpdater was updated to handle chunked transfers
   - SPIFFS clean-up added (after update, unwanted files are purged)
     - added because online flasher does not erase SPIFFS
-  - Minor improvements to CSV importer (can handle files that exceed the usual fields)
+  - Minor improvements to CSV importers (can handle files that exceed the usual fields)
   - Minor improvements to code (vars set to default value in `.h` file instead of in `.cpp`)
 
 ### 2026.02.06

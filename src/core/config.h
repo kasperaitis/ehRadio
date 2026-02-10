@@ -201,10 +201,11 @@ class Config {
     bool parseWsCommand(const char* line, char* cmd, char* val, uint8_t cSize);
     bool parseSsid(const char* line, char* ssid, char* pass);
     void urlToName(const char* url, char* name, size_t maxLen);
+    bool addSsid(const char* ssid, const char* password);
     bool loadStation(uint16_t station);
     bool initNetwork();
-    bool saveWifi();
-    bool saveWifiFromNextion(const char* post);
+    bool importWifi();
+    bool saveWifi(const char* post);
     void setSmartStart(bool ss);
     void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }
     void initPlaylist();

@@ -486,7 +486,7 @@ void NetServer::loop() {
   websocket.cleanupClients();
   switch (importRequest) {
     case IMPL:    importPlaylist();  importRequest = IMDONE; break;
-    case IMWIFI:  config.saveWifi(); importRequest = IMDONE; break;
+    case IMWIFI:  config.importWifi(); importRequest = IMDONE; break;
     default:      break;
   }
   processQueue();
@@ -1215,7 +1215,7 @@ void handleIndex(AsyncWebServerRequest * request) {
         memset(buf, 0, BUFLEN);
         snprintf(buf, BUFLEN, "%s\t%s", request->arg("ssid").c_str(), request->arg("pass").c_str());
         request->redirect("/");
-        config.saveWifiFromNextion(buf);
+        config.saveWifi(buf);
         return;
       }
       request->redirect("/"); 

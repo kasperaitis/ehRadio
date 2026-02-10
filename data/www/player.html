@@ -102,7 +102,7 @@
           <input type="range" id="bass" data-command="bass" data-slaveid="eqbassinfo" min="-16" max="16" value="0">
         </li>
         <li class="formbuttons">
-          <div class="fb local" data-command="toggle" data-target="equalizerbg">Acceptable...</div>
+          <div class="fb local" data-command="toggle" data-target="equalizerbg">OK</div>
         </li>
       </ul>
     </div>
@@ -148,7 +148,7 @@
     </h2>
     <audio controls src="" id="audiopreview"></audio>
     <div id="previewinfo"></div>
-    <div id="pleheader"><span class="grabbable">&#8693;</span><span class="space"><input type="checkbox" onclick="selectAll(this)" /></span><span class="plename">Name</span><span class="pleurl">URL</span><span class="pleovol">Ovol</span></div>
+    <div id="pleheader"><span class="grabbable">&#8693;</span><span class="space"><input type="checkbox" id="selectAllCheckbox" onclick="selectAll(this)" /></span><span class="plename">Name</span><span class="pleurl">URL</span><span class="pleovol">Ovol</span></div>
     <ol id="pleditorcontent">
     </ol><!--pleditorcontent-->
     <div class="formbuttons">
@@ -159,6 +159,7 @@
       <input id="file-upload" type="file" accept=".txt, .csv, .json" onchange="doPlImport(this)" hidden/>
       <div class="fb local" data-command="plexport">Export</div>
       <div class="fb local" data-command="plsubmit">Save</div>
+      <div class="fb local" data-command="plundo">Undo</div>
     </div>
   </div><!--pleditor-->
 </div><!--pleditorwrap-->

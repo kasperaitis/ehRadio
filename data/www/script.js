@@ -320,6 +320,10 @@ function generatePlaylist(path){
   xhr.open("GET", path);
   xhr.send(null);
 }
+function uncheckSelectAll(){
+  const checkbox = getId('selectAllCheckbox');
+  if(checkbox) checkbox.checked = false;
+}
 function plAdd(){
   let ple=getId('pleditorcontent');
   let plitem = document.createElement('li');
@@ -338,6 +342,7 @@ function plAdd(){
     left: 0,
     behavior: 'smooth'
   });
+  uncheckSelectAll();
 }
 function selectAll(checkbox){
   let items=getId('pleditorcontent').getElementsByTagName('li');
@@ -351,6 +356,10 @@ function selectAll(checkbox){
       cb.checked = false;
     }
   }
+}
+function undoPlaylistChanges(){
+  generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
+  uncheckSelectAll();
 }
 function plRemove(){
   let items=getId('pleditorcontent').getElementsByTagName('li');
@@ -372,6 +381,7 @@ function plRemove(){
   for (let i = 0; i <= items.length-1; i++) {
     items[i].getElementsByTagName('span')[0].innerText=("00"+(i+1)).slice(-3);
   }
+  uncheckSelectAll();
 }
 function submitPlaylist(){
   var items=getId("pleditorcontent").getElementsByTagName("li");
@@ -430,6 +440,7 @@ function doPlImport(finput) {
     
     finput.value = '';
     delete window.importMode;
+    uncheckSelectAll();
   };
   
   reader.readAsText(file);
@@ -690,6 +701,40 @@ function triggerImport(mode) {
   window.importMode = mode;
   getId('file-upload').click();
 }
+function exportCurrentPlaylist() {
+  const items = getId('pleditorcontent').getElementsByTagName('li');
+  if (items.length === 0) {
+    alert('Playlist is empty, nothing to export.');
+    return;
+  }
+  
+  let csvContent = '';
+  for (let i = 0; i < items.length; i++) {
+    const inputs = items[i].getElementsByTagName('input');
+    const name = inputs[1].value; // plename
+    const url = inputs[2].value;   // pleurl
+    const ovol = inputs[3].value;  // pleovol
+    
+    if (name === '' || url === '') {
+      alert(`Station ${i+1} is missing name or URL. Please fill in all fields before exporting.`);
+      return;
+    }
+    
+    csvContent += `${name}\t${url}\t${ovol}\n`;
+  }
+  
+  // Create blob and trigger download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+  link.href = URL.createObjectURL(blob);
+  link.download = `playlist_${timestamp}.csv`;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+}
 /***--- eof playlist ---***/
 function toggleTarget(el, id){
   const target = getId(id);
@@ -945,10 +990,11 @@ function continueLoading(mode){
           case "toggle": toggleTarget(target, target.dataset.target); break;
           case "settings": window.location.href=`http://${hostname}/settings.html`; break;
           case "plimport": break;
-          case "plexport": window.open(`http://${hostname}/data/playlist.csv`); break;
+          case "plexport": exportCurrentPlaylist(); uncheckSelectAll(); break;
           case "pladd": plAdd(); break;
           case "pldel": plRemove(); break;
           case "plsubmit": submitPlaylist(); break;
+          case "plundo": undoPlaylistChanges(); break;
           case "fwupdate": window.location.href=`http://${hostname}/update.html`; break;
           case "webboard": window.location.href=`http://${hostname}/webboard`; break;
           case "setupir": window.location.href=`http://${hostname}/ir.html`; break;

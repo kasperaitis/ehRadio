@@ -279,7 +279,7 @@ void Nextion::loop() {
           wifisettings+=(String(scanBuf)+"\n");
         }
         if (sscanf(rxbuf, "wifidone=%d", &scanDigit) == 1){
-          config.saveWifiFromNextion(wifisettings.c_str());
+          config.saveWifi(wifisettings.c_str());
         }
       }
     }
