@@ -755,12 +755,7 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
           }
         }
         if (name) {
-          const char* u = url;
-          if (strncmp(u, "http://", 7) == 0) u += 7;
-          else if (strncmp(u, "https://", 8) == 0) u += 8;
-          strlcpy(name, u, BUFLEN);
-          // Sanitize '/' to ' '
-          for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
+          urlToName(url, name, BUFLEN);
         }
         ovol = 0;
         return true;
@@ -784,8 +779,6 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
       }
       if (name) {
         strlcpy(name, tokens[nameIdx], BUFLEN);
-        // Sanitize '/' to ' '
-        for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
       }
       ovol = 0;
       return true;
@@ -825,23 +818,20 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
         }
       }
       
-      // Build name from all remaining fields (not URL, not ovol)
+      // Name is FIRST field only (not all non-URL fields)
       if (name) {
         name[0] = 0;
-        for (int i = 0; i < t; ++i) {
-          if (i == urlIdx || i == ovolIdx) continue; // Skip URL and ovol
-          if (strlen(name) > 0) strlcat(name, " ", BUFLEN);
-          strlcat(name, tokens[i], BUFLEN);
-        }
-        
-        // If name is empty, use URL (minus protocol) as name
-        if (strlen(name) == 0) {
-          const char* u = url;
-          if (strncmp(u, "http://", 7) == 0) u += 7;
-          else if (strncmp(u, "https://", 8) == 0) u += 8;
-          strlcpy(name, u, BUFLEN);
-          // Sanitize '/' to ' '
-          for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
+        if (urlIdx > 0) {
+          // URL not first, so name is first token
+          strlcpy(name, tokens[0], BUFLEN);
+        } else if (urlIdx == 0 && t > 1) {
+          // URL is first, name is second token (if not ovol)
+          if (ovolIdx == 1 && t == 2) {
+            // No name, only url and ovol
+            name[0] = 0;
+          } else {
+            strlcpy(name, tokens[1], BUFLEN);
+          }
         }
       }
       
@@ -861,31 +851,34 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
   }
   if (urlIdx == -1) return false; // URL is required
 
-  // Check for ovol at the end (name url ovol), clamp to -30/+30
-  int ovolIdx = -1;
-  if (t == urlIdx + 2) {
-    char* endptr = nullptr;
-    long val = strtol(tokens[t-1], &endptr, 10);
-    if (endptr && *endptr == '\0' && val >= -64 && val <= 64) {
-      ovolIdx = t-1;
-      if (val < -30) val = -30;
-      if (val > 30) val = 30;
-      ovol = (int)val;
-    }
-  }
-
-  // If URL is at the end
-  if (urlIdx == t-1 || (ovolIdx != -1 && urlIdx == t-2)) {
-    // name is everything before URL (or before URL and ovol)
-    if (name) name[0] = 0;
-    int nameEnd = (ovolIdx != -1) ? urlIdx : t-1;
-    for (int i = 0; i < nameEnd; ++i) {
-      if (name && tokens[i][0]) {
+  // Name is FIRST field only
+  if (name) {
+    name[0] = 0;
+    if (urlIdx > 0) {
+      // URL not first, so name is first token
+      strlcpy(name, tokens[0], BUFLEN);
+      // Check if LAST token is ovol (must be at end)
+      const char* lastToken = tokens[t-1];
+      char* endptr = nullptr;
+      long val = strtol(lastToken, &endptr, 10);
+      if (endptr && *endptr == '\0' && val >= -64 && val <= 64 && t >= 2) {
+        if (val < -30) val = -30;
+        if (val > 30) val = 30;
+        ovol = (int)val;
+      } else {
+        ovol = 0;
+      }
+    } else {
+      // URL is first: everything after URL is the name (no ovol)
+      for (int i = urlIdx + 1; i < t; ++i) {
         if (strlen(name) > 0) strlcat(name, " ", BUFLEN);
         strlcat(name, tokens[i], BUFLEN);
       }
+      ovol = 0;
     }
-    // URL
+  }
+
+  // Extract URL
     if (url) {
       if (strncmp(tokens[urlIdx], "http://", 7) != 0 && strncmp(tokens[urlIdx], "https://", 8) != 0) {
         snprintf(url, BUFLEN, "http://%s", tokens[urlIdx]);
@@ -893,66 +886,17 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
         strlcpy(url, tokens[urlIdx], BUFLEN);
       }
     }
-    if (ovolIdx == -1) ovol = 0;
-    // If name is missing or empty, use url (minus protocol) as name
-    if ((name == nullptr || strlen(name) == 0) && url && strlen(url) > 0) {
-      const char* u = url;
-      if (strncmp(u, "http://", 7) == 0) u += 7;
-      else if (strncmp(u, "https://", 8) == 0) u += 8;
-      if (name) {
-        strlcpy(name, u, BUFLEN);
-        // Sanitize '/' to ' '
-        for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
-      }
-    }
-    if (!url || strlen(url) == 0) return false;
-    return true;
+  
+  // If name is missing or empty, generate from URL
+  if ((name == nullptr || strlen(name) == 0) && url && strlen(url) > 0) {
+    urlToName(url, name, BUFLEN);
   }
-  // If URL is at the beginning
-  if (urlIdx == 0) {
-    // name is everything after URL (and before ovol if present)
-    if (name) name[0] = 0;
-    int nameStart = 1;
-    int nameEnd = (ovolIdx != -1) ? ovolIdx : t;
-    for (int i = nameStart; i < nameEnd; ++i) {
-      if (name && tokens[i][0]) {
-        if (strlen(name) > 0) strlcat(name, " ", BUFLEN);
-        strlcat(name, tokens[i], BUFLEN);
-      }
-    }
-    // URL
-    if (url) {
-      if (strncmp(tokens[0], "http://", 7) != 0 && strncmp(tokens[0], "https://", 8) != 0) {
-        snprintf(url, BUFLEN, "http://%s", tokens[0]);
-      } else {
-        strlcpy(url, tokens[0], BUFLEN);
-      }
-    }
-    if (ovolIdx == -1) ovol = 0;
-    // If name is missing or empty, use url (minus protocol) as name
-    if ((name == nullptr || strlen(name) == 0) && url && strlen(url) > 0) {
-      const char* u = url;
-      if (strncmp(u, "http://", 7) == 0) u += 7;
-      else if (strncmp(u, "https://", 8) == 0) u += 8;
-      if (name) {
-        strlcpy(name, u, BUFLEN);
-        // Sanitize '/' to ' '
-        for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
-      }
-    }
-    if (!url || strlen(url) == 0) return false;
-    return true;
-  }
-  // Otherwise, invalid for space-delimited
-  return false;
+  
+  if (!url || strlen(url) == 0) return false;
+  return true;
 }
 
 bool Config::parseJSON(const char* line, char* name, char* url, int &ovol) {
-  // Reset outputs
-  if (name) name[0] = 0;
-  if (url) url[0] = 0;
-  ovol = 0;
-
   // Helper lambda to extract a value by key (key must be quoted, e.g. "name")
   // Handles both string and numeric values
   auto extract = [](const char* src, const char* key, char* out, size_t outlen) -> bool {
@@ -1006,12 +950,20 @@ bool Config::parseJSON(const char* line, char* name, char* url, int &ovol) {
     strncpy(objbuf, start, len);
     objbuf[len] = 0;
     obj = objbuf;
+  } else if (line[0] == '{') {
+    // Single JSON object (JSONL/NDJSON format) - use as-is
+    obj = line;
+  } else {
+    // Try to parse as simple key-value format
+    return false;
   }
 
   char buf[256];
-  // 1. Extract name
+  // 1. Extract name (optional)
   if (!extract(obj, "\"name\"", name, BUFLEN)) {
-    return false;
+    if (!extract(obj, "\"title\"", name, BUFLEN)) {
+      if (name) name[0] = 0; // Name is optional
+    }
   }
 
   // 2. Try url_resolved, then url, then host+file+port
@@ -1023,19 +975,32 @@ bool Config::parseJSON(const char* line, char* name, char* url, int &ovol) {
     strncpy(url, buf, BUFLEN);
     gotUrl = true;
   } else {
-    char host[246] = {0}, file[254] = {0}, port[16] = {0};
+    char host[246] = {0}, file[254] = {0}, portStr[16] = {0};
     bool gotHost = extract(obj, "\"host\"", host, sizeof(host));
     bool gotFile = extract(obj, "\"file\"", file, sizeof(file));
-    bool gotPort = extract(obj, "\"port\"", port, sizeof(port));
-    if (gotHost && gotFile) {
-      if (strstr(host, "http://") == NULL && strstr(host, "https://") == NULL) {
-        snprintf(buf, sizeof(buf), "http://%s", host);
-        strlcpy(host, buf, sizeof(host));
-      }
-      if (gotPort && strlen(port) > 0) {
-        snprintf(url, BUFLEN, "%s:%s%s", host, port, file);
+    bool gotPort = extract(obj, "\"port\"", portStr, sizeof(portStr));
+    int port = gotPort ? atoi(portStr) : 80;
+    
+    if (gotHost) {
+      // Determine protocol based on port
+      const char* protocol = (port == 443) ? "https://" : "http://";
+      
+      // Only add port if non-default for the protocol
+      bool addPort = (strcmp(protocol, "http://") == 0 && port != 80) || 
+                     (strcmp(protocol, "https://") == 0 && port != 443);
+      
+      if (gotFile && strlen(file) > 0) {
+        if (addPort) {
+          snprintf(url, BUFLEN, "%s%s:%d%s", protocol, host, port, file[0] == '/' ? file : "/");
+        } else {
+          snprintf(url, BUFLEN, "%s%s%s", protocol, host, file[0] == '/' ? file : "/");
+        }
       } else {
-        snprintf(url, BUFLEN, "%s%s", host, file);
+        if (addPort) {
+          snprintf(url, BUFLEN, "%s%s:%d", protocol, host, port);
+        } else {
+          snprintf(url, BUFLEN, "%s%s", protocol, host);
+        }
       }
       gotUrl = true;
     }
@@ -1053,7 +1018,46 @@ bool Config::parseJSON(const char* line, char* name, char* url, int &ovol) {
   } else {
     ovol = 0;
   }
+  
+  // 4. If name is missing or empty, generate from URL
+  if ((name == nullptr || strlen(name) == 0) && url && strlen(url) > 0) {
+    urlToName(url, name, BUFLEN);
+  }
+  
   return true;
+}
+
+
+void Config::urlToName(const char* url, char* name, size_t maxLen) {
+  // Convert URL to readable name: drop protocol, port, convert special chars to hyphens
+  const char* start = url;
+  // Skip protocol
+  if (strncmp(start, "http://", 7) == 0) start += 7;
+  else if (strncmp(start, "https://", 8) == 0) start += 8;
+  
+  size_t j = 0;
+  for (size_t i = 0; start[i] != '\0' && j < maxLen - 1; ++i) {
+    char c = start[i];
+    // Skip port numbers (":1234")
+    if (c == ':' && start[i+1] >= '0' && start[i+1] <= '9') {
+      // Skip until end of port number or next path segment
+      while (start[i] != '\0' && start[i] != '/') i++;
+      if (start[i] == '\0') break;
+      c = start[i];
+    }
+    // Convert special chars to hyphens
+    if (c == '/' || c == '=' || c == '&' || c == '?') {
+      // Don't add hyphen if previous char was already a hyphen
+      if (j > 0 && name[j-1] != '-') {
+        name[j++] = '-';
+      }
+    } else {
+      name[j++] = c;
+    }
+  }
+  // Trim trailing hyphens
+  while (j > 0 && name[j-1] == '-') j--;
+  name[j] = '\0';
 }
 
 bool Config::parseWsCommand(const char* line, char* cmd, char* val, uint8_t cSize) {

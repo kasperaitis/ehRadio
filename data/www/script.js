@@ -282,7 +282,7 @@ function initPLEditor(){
       <input class="pleinput plename" type="text" value="${quoteattr(item.dataset.name)}" maxlength="140" />
       <input class="pleinput pleurl" type="text" value="${item.dataset.url}" maxlength="140" />
       <span class="pleinput pleplay" data-command="preview">&#9658;</span>
-      <input class="pleinput pleovol" type="number" min="-64" max="64" step="1" value="${item.dataset.ovol}" />
+      <input class="pleinput pleovol" type="number" min="-30" max="30" step="1" value="${item.dataset.ovol}" />
       </li>`;
   });
   ple.innerHTML=html;
@@ -343,7 +343,13 @@ function selectAll(checkbox){
   let items=getId('pleditorcontent').getElementsByTagName('li');
   for (let i = 0; i < items.length; i++) {
     let cb = items[i].getElementsByTagName('span')[1].getElementsByTagName('input')[0];
-    cb.checked = checkbox.checked;
+    if (checkbox.checked) {
+      // Invert selection
+      cb.checked = !cb.checked;
+    } else {
+      // Uncheck all
+      cb.checked = false;
+    }
   }
 }
 function plRemove(){
@@ -383,28 +389,303 @@ function submitPlaylist(){
   container.items.add(file);
   let fileuploadinput=getId("file-upload");
   fileuploadinput.files = container.files;
-  window.importMode = 'replace'; // Save always replaces entire playlist
   doPlUpload(fileuploadinput);
   toggleTarget(0, 'pleditorwrap');
 }
 function doPlUpload(finput) {
+  if (!finput.files || !finput.files[0]) return;
   var formData = new FormData();
-  formData.append("plfile", finput.files[0]);
-  // Add mode parameter (merge or replace)
-  const importMode = window.importMode || 'replace'; // Default to replace for safety
-  formData.append("mode", importMode);
+  formData.append("data", finput.files[0], "playlist.csv");
   var xhr = new XMLHttpRequest();
-  xhr.open("POST",`http://${hostname}/webboard`,true);
   xhr.onload = function() {
     if (xhr.status === 200) {
-      // Notify server that playlist save is complete - triggers refresh
-      websocket.send('submitplaylistdone=1');
+      // Server will send PLAYLISTSAVED event via WebSocket
+      console.log('Playlist saved successfully');
     }
   };
+  xhr.open("POST", `http://${hostname}/webboard`, true);
   xhr.send(formData);
   finput.value = '';
-  delete window.importMode; // Clean up
 }
+function doPlImport(finput) {
+  if (!finput.files || !finput.files[0]) return;
+  const file = finput.files[0];
+  const mode = window.importMode || 'replace';
+  const reader = new FileReader();
+  
+  reader.onload = function(e) {
+    const content = e.target.result;
+    const isJSON = file.name.endsWith('.json');
+    
+    if (mode === 'replace') {
+      // Clear existing playlist
+      getId('pleditorcontent').innerHTML = '';
+    }
+    
+    if (isJSON) {
+      parseAndAddJSON(content, addStationToEditor, mode);
+    } else {
+      parseAndAddCSV(content, addStationToEditor, mode);
+    }
+    
+    finput.value = '';
+    delete window.importMode;
+  };
+  
+  reader.readAsText(file);
+}
+
+function parseAndAddJSON(content, targetCallback, mode = 'replace') {
+  try {
+    // Handle JSONL/NDJSON (missing opening/closing brackets and commas)
+    content = content.trim();
+    if (!content.startsWith('[')) {
+      // JSONL format: multiple objects on separate lines, need commas between them
+      const lines = content.split('\n').filter(line => line.trim());
+      content = '[\n' + lines.join(',\n') + '\n]';
+    }
+    
+    let data = JSON.parse(content);
+    if (!Array.isArray(data)) data = [data];
+    
+    const existingURLs = mode === 'merge' ? getExistingURLs() : new Set();
+    let addedCount = 0;
+    let duplicateCount = 0;
+    
+    data.forEach(item => {
+      // Extract name (try name first, then title)
+      const name = item.name || item.title || '';
+      
+      // Extract URL with fallback chain: url_resolved -> url -> host+file+port
+      let url = '';
+      if (item.url_resolved) {
+        url = item.url_resolved;
+      } else if (item.url) {
+        url = item.url;
+      } else if (item.host) {
+        // Build URL from host + file + port
+        const host = item.host || '';
+        const file = item.file || '';
+        const port = item.port || 80;
+        
+        if (host) {
+          const protocol = (port === 443) ? 'https://' : 'http://';
+          url = protocol + host;
+          // Only add port if non-default for the protocol
+          if ((protocol === 'http://' && port !== 80) || (protocol === 'https://' && port !== 443)) {
+            url += ':' + port;
+          }
+          if (file) {
+            url += (file.startsWith('/') ? '' : '/') + file;
+          }
+        }
+      }
+      
+      // Extract and clamp ovol
+      const ovol = Math.max(-30, Math.min(30, parseInt(item.ovol || 0)));
+      
+      // If no name, generate from URL
+      const finalName = name || (url ? urlToName(url) : '');
+      
+      // Check for duplicates
+      if (url) {
+        if (existingURLs.has(url)) {
+          duplicateCount++;
+        } else {
+          targetCallback(finalName, url, ovol);
+          existingURLs.add(url);
+          addedCount++;
+        }
+      }
+    });
+    
+    if (mode === 'replace') {
+      alert(`Import complete: ${addedCount} stations loaded.`);
+    } else if (duplicateCount > 0) {
+      alert(`Import complete: ${addedCount} stations added, ${duplicateCount} duplicates skipped.`);
+    }
+  } catch(e) {
+    alert('Invalid JSON format: ' + e.message);
+  }
+}
+
+function urlToName(url) {
+  // Convert URL to readable name: drop protocol, port, convert special chars to hyphens
+  let name = url.replace(/^https?:\/\//, ''); // Drop protocol
+  name = name.replace(/:\d+/, ''); // Drop port number
+  name = name.replace(/[=&?]/g, '-'); // Convert query chars to hyphens
+  name = name.replace(/\/+/g, '-'); // Convert slashes to hyphens
+  name = name.replace(/--+/g, '-'); // Collapse multiple hyphens
+  name = name.replace(/^-|-$/g, ''); // Trim leading/trailing hyphens
+  return name;
+}
+
+function parseAndAddCSV(content, targetCallback, mode = 'replace') {
+  const lines = content.split('\n');
+  const existingURLs = mode === 'merge' ? getExistingURLs() : new Set();
+  let addedCount = 0;
+  let duplicateCount = 0;
+  
+  lines.forEach(line => {
+    line = line.trim();
+    if (!line) return;
+    
+    let name = '', url = '', ovol = 0;
+    
+    // Try tab-delimited first
+    if (line.includes('\t')) {
+      const parts = line.split('\t').map(p => p.trim());
+      
+      if (parts.length === 1) {
+        // 1 field: URL only
+        if (parts[0].includes('.') && (parts[0].includes('/') || parts[0].includes('://'))) {
+          url = parts[0];
+          name = ''; // Will be generated from URL later
+          ovol = 0;
+        }
+      } else if (parts.length === 2) {
+        // 2 fields: one is URL, one is name (order does not matter)
+        let urlIdx = -1, nameIdx = -1;
+        for (let i = 0; i < 2; i++) {
+          if (parts[i].includes('.') && (parts[i].includes('/') || parts[i].includes('://'))) {
+            urlIdx = i;
+          } else {
+            nameIdx = i;
+          }
+        }
+        if (urlIdx !== -1 && nameIdx !== -1) {
+          url = parts[urlIdx];
+          name = parts[nameIdx];
+          ovol = 0;
+        }
+      } else if (parts.length >= 3) {
+        // 3+ fields: Find URL (required), ovol (optional), and name from remaining fields
+        let urlIdx = -1;
+        for (let i = 0; i < parts.length; i++) {
+          if (parts[i].includes('.') && (parts[i].includes('/') || parts[i].includes('://'))) {
+            urlIdx = i;
+            break;
+          }
+        }
+        
+        if (urlIdx !== -1) {
+          url = parts[urlIdx];
+          
+          // Find ovol (optional) - numeric value between -64 and 64
+          let ovolIdx = -1;
+          for (let i = 0; i < parts.length; i++) {
+            if (i === urlIdx) continue; // Skip URL field
+            const val = parseInt(parts[i]);
+            if (!isNaN(val) && parts[i] === val.toString() && val >= -64 && val <= 64) {
+              ovolIdx = i;
+              ovol = Math.max(-30, Math.min(30, val));
+              break; // Use the first matching ovol
+            }
+          }
+          
+          // Name is FIRST field that's not URL or ovol
+          for (let i = 0; i < parts.length; i++) {
+            if (i !== urlIdx && i !== ovolIdx && parts[i]) {
+              name = parts[i];
+              break;
+            }
+          }
+          
+          if (ovolIdx === -1) ovol = 0;
+        }
+      }
+    } else {
+      // Space-delimited: find URL (contains . and / or ://)
+      const tokens = line.split(/\s+/);
+      let urlIdx = -1;
+      
+      for (let i = 0; i < tokens.length; i++) {
+        if (tokens[i].includes('.') && (tokens[i].includes('/') || tokens[i].includes('://'))) {
+          urlIdx = i;
+          break;
+        }
+      }
+      
+      if (urlIdx !== -1) {
+        url = tokens[urlIdx];
+        
+        // Name is FIRST field only
+        if (urlIdx > 0) {
+          // URL not first, so name is first token
+          name = tokens[0];
+          // Check if LAST token is ovol (must be at end)
+          const lastToken = tokens[tokens.length - 1];
+          const lastNum = parseInt(lastToken);
+          if (!isNaN(lastNum) && lastNum >= -64 && lastNum <= 64 && tokens.length >= 2) {
+            ovol = Math.max(-30, Math.min(30, lastNum));
+          }
+        } else {
+          // URL is first: everything after URL is the name (no ovol)
+          const nameTokens = [];
+          for (let i = urlIdx + 1; i < tokens.length; i++) {
+            nameTokens.push(tokens[i]);
+          }
+          name = nameTokens.join(' ');
+          ovol = 0;
+        }
+      }
+    }
+    
+    // Add http:// if missing
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'http://' + url;
+    }
+    
+    // If no name, generate from URL
+    if (!name && url) {
+      name = urlToName(url);
+    }
+    
+    // Check for duplicates
+    if (url) {
+      if (existingURLs.has(url)) {
+        duplicateCount++;
+      } else {
+        targetCallback(name, url, ovol);
+        existingURLs.add(url);
+        addedCount++;
+      }
+    }
+  });
+  
+  if (mode === 'replace') {
+    alert(`Import complete: ${addedCount} stations loaded.`);
+  } else if (duplicateCount > 0) {
+    alert(`Import complete: ${addedCount} stations added, ${duplicateCount} duplicates skipped.`);
+  }
+}
+
+function getExistingURLs() {
+  const urls = new Set();
+  const items = document.getElementById('pleditorcontent').getElementsByTagName('li');
+  for (let i = 0; i < items.length; i++) {
+    const inputs = items[i].getElementsByTagName('input');
+    const url = inputs[2].value; // URL is third input (after checkbox and name)
+    if (url) urls.add(url);
+  }
+  return urls;
+}
+
+function addStationToEditor(name, url, ovol) {
+  const ple = getId('pleditorcontent');
+  const cnt = ple.getElementsByTagName('li').length;
+  const plitem = document.createElement('li');
+  plitem.className = 'pleitem';
+  plitem.id = 'plitem' + cnt;
+  plitem.innerHTML = `<span class="grabbable" draggable="true">${("00"+(cnt+1)).slice(-3)}</span>
+    <span class="pleinput plecheck"><input type="checkbox" class="plcb" /></span>
+    <input class="pleinput plename" type="text" value="${name.replace(/"/g, '&quot;')}" maxlength="140" />
+    <input class="pleinput pleurl" type="text" value="${url}" maxlength="140" />
+    <span class="pleinput pleplay" data-command="preview">&#9658;</span>
+    <input class="pleinput pleovol" type="number" min="-30" max="30" step="1" value="${ovol}" />`;
+  ple.appendChild(plitem);
+}
+
 function triggerImport(mode) {
   window.importMode = mode;
   getId('file-upload').click();

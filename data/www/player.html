@@ -152,10 +152,12 @@
     <ol id="pleditorcontent">
     </ol><!--pleditorcontent-->
     <div class="formbuttons">
-      <label for="file-upload" class="fb" data-name="plimport">Import</label><input id="file-upload" type="file" accept=".txt, .csv, .json" onchange="doPlUpload(this)" hidden/>
-      <div class="fb local" data-command="plexport">Export</div>
       <div class="fb local" data-command="pladd">Add</div>
       <div class="fb local" data-command="pldel">Remove</div>
+      <label class="fb" data-name="plreplace" onclick="triggerImport('replace')">Replace</label>
+      <label class="fb" data-name="plmerge" onclick="triggerImport('merge')">Merge</label>
+      <input id="file-upload" type="file" accept=".txt, .csv, .json" onchange="doPlImport(this)" hidden/>
+      <div class="fb local" data-command="plexport">Export</div>
       <div class="fb local" data-command="plsubmit">Save</div>
     </div>
   </div><!--pleditor-->
