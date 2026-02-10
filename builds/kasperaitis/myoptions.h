@@ -127,8 +127,6 @@
 
 /* --- ROTARY ENCODER(S) --- */
 
-
-
 /* Extras: unused in all */
 //#define ENC_INTERNALPULLUP  true
 //#define ENC_HALFQUARD       false
@@ -203,6 +201,7 @@
   #define VOLUME_STEPS    5
 #endif
 
+
 /* --- SYSTEM OVERRIDES --- */
 
 #if defined (BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
@@ -212,6 +211,16 @@
       defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define LOOP_TASK_STACK_SIZE 16  /* Compiler default is 8KB but seems safe on ESP32-S3 to increase to 16KB for audio decoding + concurrent tasks / 8KB is safe when using a VS1053 decoder */
   #define CONFIG_ASYNC_TCP_QUEUE_SIZE 64
+  #define SEARCHRESULTS_BUFFER 1024*32 // 32KB matches chunk sizes from radio-browser.info but likely only good for ESP32-S3
+  #define SEARCHRESULTS_YIELDINTERVAL 0 // With a large buffer, skipping is almost eliminated with 0
 #endif
+
+
+/* --- URL SOURCE OVERRIDE --- */
+/* Only use this if you've decided to use your own Github as the source of files */
+/* ...or your firmware is not available from Trip5's Github... sorry! */
+/* Read the notes in the ./builds folder for more detailed information */
+
+//#define GITHUBURL "https://github.com/kasperaitis/ehradio" // used by the radio to update firmware and files...
 
 #endif // myoptions_h
