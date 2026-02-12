@@ -10,13 +10,13 @@ class Telnet {
   public:
     Telnet() {};
     bool begin(bool quiet=false);
-    void loop();
     void stop();
-    void print(uint8_t id, const char *buf);
-    void print(const char *buf);
-    void printf(uint8_t id, const char *format, ...);
-    void printf(const char *format, ...);
     void cleanupClients();
+    void loop();
+    void print(const char *buf);
+    void print(uint8_t id, const char *buf);
+    void printf(const char *format, ...);
+    void printf(uint8_t id, const char *format, ...);
     void info();
   protected:
     WiFiServer server = WiFiServer(23);

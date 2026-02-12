@@ -23,6 +23,7 @@ Documentation will be improved at some point...
 ## ehRadio Version history
 
 ### 2026.02.08...?
+  - WebUI greatly improved for mobile and tablet devices
   - Broken playlist editor fixed (sorry!) with major improvements
     - can now import 2 ways: replace or merge
     - importing of json and csv is done in-browser
@@ -35,6 +36,7 @@ Documentation will be improved at some point...
     - added because online flasher does not erase SPIFFS
   - Minor improvements to CSV importers (can handle files that exceed the usual fields)
   - Minor improvements to code (vars set to default value in `.h` file instead of in `.cpp`)
+  - Optimized declarations in src files
 
 ### 2026.02.06
   - Online Flasher introduced
@@ -283,7 +285,7 @@ Documentation will be improved at some point...
   - the online file that the current version can compare it's version against:
     - `#define CHECKUPDATEURL "https://raw.githubusercontent.com/trip5/yoradio/refs/heads/trip5/yoRadio/src/core/options.h"`
   - the above file must contain a line that is defined by this setting:
-    - `#define VERSIONSTRING "#define YOVERSION"` (followed by a version string)
+    - `#define VERSIONSTRING "#define RADIOVERSION"` (followed by a version string)
   - which `.bin` file to be used for online OTA updates can be specified as:
     - `#define FIRMWARE "firmware_sh1106_pcm_remote.bin"`
   - all of these can be automatically defined by `platformio.ini` amd `myoptions.h`

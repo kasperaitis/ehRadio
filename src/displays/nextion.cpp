@@ -166,7 +166,7 @@ void Nextion::loop() {
           if(strcmp(scanBuf, "player") == 0) display.putRequest(NEWMODE, PLAYER);
           if(strcmp(scanBuf, "playlist") == 0) display.putRequest(NEWMODE, STATIONS);
           if(strcmp(scanBuf, "info") == 0) {
-            putcmd("yoversion.txt", YOVERSION);
+            putcmd("radiover.txt", RADIOVERSION);
             putcmd("espcore.txt", _espcoreversion);
             putcmd("ipaddr.txt", WiFi.localIP().toString().c_str());
             putcmd("ssid.txt", WiFi.SSID().c_str());
@@ -175,8 +175,8 @@ void Nextion::loop() {
           if(strcmp(scanBuf, "eq") == 0) {
             putcmd("t4.txt", config.store.balance, true);
             putcmd("h0.val", config.store.balance+16);
-            putcmd("t5.txt", config.store.trebble, true);
-            putcmd("h1.val", config.store.trebble+16);
+            putcmd("t5.txt", config.store.treble, true);
+            putcmd("h1.val", config.store.treble+16);
             putcmd("t6.txt", config.store.middle, true);
             putcmd("h2.val", config.store.middle+16);
             putcmd("t7.txt", config.store.bass, true);
@@ -243,10 +243,10 @@ void Nextion::loop() {
           config.setTone(config.store.bass, config.store.middle, scanDigit);
         }
         if (sscanf(rxbuf, "middle=%d", &scanDigit) == 1){
-          config.setTone(config.store.bass, scanDigit, config.store.trebble);
+          config.setTone(config.store.bass, scanDigit, config.store.treble);
         }
         if (sscanf(rxbuf, "bass=%d", &scanDigit) == 1){
-          config.setTone(scanDigit, config.store.middle, config.store.trebble);
+          config.setTone(scanDigit, config.store.middle, config.store.treble);
         }
         if (sscanf(rxbuf, "tzhour=%d", &scanDigit) == 1){
           config.setTimezone((int8_t)scanDigit, config.store.tzMin);

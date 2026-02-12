@@ -65,7 +65,7 @@ void Player::init() {
     if (es.begin(I2C_SDA, I2C_SCL, 400000UL)) es.setVolume(0); /* Start codec muted (or low) to avoid very loud output before saved volume is applied */
   #endif
   setBalance(config.store.balance);
-  setTone(config.store.bass, config.store.middle, config.store.trebble);
+  setTone(config.store.bass, config.store.middle, config.store.treble);
   setVolume(0);
   //_status = STOPPED;
   ////setOutputPins(false);
@@ -300,7 +300,7 @@ void Player::playUrl(const char* url) {
 void Player::prev() {
   
   uint16_t lastStation = config.lastStation();
-  if(config.getMode()==PM_WEB || !config.store.sdsnuffle){
+  if(config.getMode()==PM_WEB || !config.store.sdshuffle){
     if (lastStation == 1) config.lastStation(config.playlistLength()); else config.lastStation(lastStation-1);
   }
   sendCommand({PR_PLAY, config.lastStation()});
@@ -308,7 +308,7 @@ void Player::prev() {
 
 void Player::next() {
   uint16_t lastStation = config.lastStation();
-  if(config.getMode()==PM_WEB || !config.store.sdsnuffle){
+  if(config.getMode()==PM_WEB || !config.store.sdshuffle){
     if (lastStation == config.playlistLength()) config.lastStation(1); else config.lastStation(lastStation+1);
   }else{
     config.lastStation(random(1, config.playlistLength()));

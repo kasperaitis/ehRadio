@@ -525,9 +525,9 @@ void Config::setDefaults() {
   snprintf(store.mdnsname, MDNS_LENGTH, "ehradio-%x", getChipId());
 }
 
-void Config::setSnuffle(bool sn){
-  saveValue(&store.sdsnuffle, sn);
-  if(store.sdsnuffle) player.next();
+void Config::setShuffle(bool sn){
+  saveValue(&store.sdshuffle, sn);
+  if(store.sdshuffle) player.next();
 }
 
 #if IR_PIN!=255
@@ -550,11 +550,11 @@ uint8_t Config::setVolume(uint8_t val) {
   return store.volume;
 }
 
-void Config::setTone(int8_t bass, int8_t middle, int8_t trebble) {
+void Config::setTone(int8_t bass, int8_t middle, int8_t treble) {
   saveValue(&store.bass, bass, false);
   saveValue(&store.middle, middle, false);
-  saveValue(&store.trebble, trebble);
-  player.setTone(store.bass, store.middle, store.trebble);
+  saveValue(&store.treble, treble);
+  player.setTone(store.bass, store.middle, store.treble);
   netserver.requestOnChange(EQUALIZER, 0);
 }
 
@@ -1496,10 +1496,10 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(play_mode, "playmode"),
   CONFIG_KEY_ENTRY(volume, "vol"),
   CONFIG_KEY_ENTRY(balance, "bal"),
-  CONFIG_KEY_ENTRY(trebble, "treb"),
+  CONFIG_KEY_ENTRY(treble, "treb"),
   CONFIG_KEY_ENTRY(middle, "mid"),
   CONFIG_KEY_ENTRY(bass, "bass"),
-  CONFIG_KEY_ENTRY(sdsnuffle, "sdshuffle"),
+  CONFIG_KEY_ENTRY(sdshuffle, "sdshuffle"),
   CONFIG_KEY_ENTRY(smartstart, "smartstartx"),
   CONFIG_KEY_ENTRY(audioinfo, "audioinfo"),
   CONFIG_KEY_ENTRY(vumeter, "vumeter"),

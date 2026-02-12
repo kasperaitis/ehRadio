@@ -71,17 +71,6 @@ NetServer netserver;
 AsyncWebServer webserver(80);
 AsyncWebSocket websocket("/ws");
 
-void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
-void handleIndex(AsyncWebServerRequest * request);
-void handleNotFound(AsyncWebServerRequest * request);
-void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
-void vTaskSearchRadioBrowser(void *pvParameters);
-void handleSearchPost(AsyncWebServerRequest *request);
-#ifdef UPDATEURL
-void checkForOnlineUpdate();
-void startOnlineUpdate();
-#endif
-
 bool  shouldReboot  = false;
 #ifdef MQTT_ENABLE
   Ticker mqttplaylistticker;
@@ -379,7 +368,7 @@ void NetServer::processQueue(){
           requestOnChange(MODE, clientId); 
           requestOnChange(SDINIT, clientId);
           requestOnChange(GETPLAYERMODE, clientId); 
-          if (config.getMode()==PM_SDCARD) { requestOnChange(SDPOS, clientId); requestOnChange(SDLEN, clientId); requestOnChange(SDSNUFFLE, clientId); } 
+          if (config.getMode()==PM_SDCARD) { requestOnChange(SDPOS, clientId); requestOnChange(SDLEN, clientId); requestOnChange(SDSHUFFLE, clientId); } 
           return; 
           break;
         }
@@ -450,10 +439,10 @@ void NetServer::processQueue(){
                                   player.getAudioFileDuration()); 
                                   break;
       case SDLEN:         sprintf (wsbuf, "{\"sdmin\": %d,\"sdmax\": %d}", player.sd_min, player.sd_max); break;
-      case SDSNUFFLE:     sprintf (wsbuf, "{\"snuffle\": %d}", config.store.sdsnuffle); break;
+      case SDSHUFFLE:     sprintf (wsbuf, "{\"shuffle\": %d}", config.store.sdshuffle); break;
       case BITRATE:       sprintf (wsbuf, "{\"payload\":[{\"id\":\"bitrate\", \"value\": %d}, {\"id\":\"fmt\", \"value\": \"%s\"}]}", config.station.bitrate, getFormat(config.configFmt)); break;
       case MODE:          sprintf (wsbuf, "{\"payload\":[{\"id\":\"playerwrap\", \"value\": \"%s\"}]}", player.status() == PLAYING ? "playing" : "stopped"); telnet.info(); break;
-      case EQUALIZER:     sprintf (wsbuf, "{\"payload\":[{\"id\":\"bass\", \"value\": %d}, {\"id\": \"middle\", \"value\": %d}, {\"id\": \"trebble\", \"value\": %d}]}", config.store.bass, config.store.middle, config.store.trebble); break;
+      case EQUALIZER:     sprintf (wsbuf, "{\"payload\":[{\"id\":\"bass\", \"value\": %d}, {\"id\": \"middle\", \"value\": %d}, {\"id\": \"treble\", \"value\": %d}]}", config.store.bass, config.store.middle, config.store.treble); break;
       case BALANCE:       sprintf (wsbuf, "{\"payload\":[{\"id\": \"balance\", \"value\": %d}]}", config.store.balance); break;
       case SDINIT:        sprintf (wsbuf, "{\"sdinit\": %d}", SDC_CS!=255); break;
       case GETPLAYERMODE: sprintf (wsbuf, "{\"playermode\": \"%s\"}", config.getMode()==PM_SDCARD?"modesd":"modeweb"); break;
@@ -515,19 +504,19 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
     data[len] = 0;
     char comnd[65], val[65];
     if (config.parseWsCommand((const char*)data, comnd, val, 65)) {
-      if (strcmp(comnd, "trebble") == 0) {
+      if (strcmp(comnd, "treble") == 0) {
         int8_t valb = atoi(val);
         config.setTone(config.store.bass, config.store.middle, valb);
         return;
       }
       if (strcmp(comnd, "middle") == 0) {
         int8_t valb = atoi(val);
-        config.setTone(config.store.bass, valb, config.store.trebble);
+        config.setTone(config.store.bass, valb, config.store.treble);
         return;
       }
       if (strcmp(comnd, "bass") == 0) {
         int8_t valb = atoi(val);
-        config.setTone(valb, config.store.middle, config.store.trebble);
+        config.setTone(valb, config.store.middle, config.store.treble);
         return;
       }
       if (strcmp(comnd, "submitplaylistdone") == 0) {
@@ -983,8 +972,8 @@ void launchPlaybackTask(const String& url, const String& name) {
   }
 }
 
-#ifdef UPDATEURL
-  void checkForOnlineUpdate() {
+void checkForOnlineUpdate() {
+  #ifdef UPDATEURL
     const char* versionUrl = CHECKUPDATEURL;
     WiFiClientSecure client;
     client.setInsecure(); // skip server cert validation
@@ -1031,9 +1020,11 @@ void launchPlaybackTask(const String& url, const String& name) {
       websocket.textAll(String("{\"onlineupdateerror\": \"HTTP code ") + httpCode + "\"}");
       http.end();
     }
-  }
+  #endif //#ifdef UPDATEURL
+}
 
-  void startOnlineUpdate() {
+void startOnlineUpdate() {
+  #ifdef UPDATEURL
     String updateUrl = String(UPDATEURL) + String(FIRMWARE);
     Serial.printf("[Online Update] Online Update download URL: %s\n", updateUrl.c_str());
     WiFiClientSecure client;
@@ -1093,8 +1084,8 @@ void launchPlaybackTask(const String& url, const String& name) {
       websocket.textAll("{\"onlineupdateerror\": \"Failed to download firmware\"}");
     }
     http.end();
-  }
-#endif //#ifdef UPDATEURL
+  #endif //#ifdef UPDATEURL
+}
 
 void handleNotFound(AsyncWebServerRequest * request) {
 #if defined(HTTP_USER) && defined(HTTP_PASS)
@@ -1181,7 +1172,7 @@ void handleNotFound(AsyncWebServerRequest * request) {
         "false";
       #endif
     snprintf(varjsbuf, sizeof(varjsbuf),
-      "var yoVersion='%s';\n"
+      "var radioVersion='%s';\n"
       "var formAction='%s';\n"
       "var playMode='%s';\n"
       "var onlineupdatecapable=%s;\n",
@@ -1248,8 +1239,8 @@ void handleIndex(AsyncWebServerRequest * request) {
         return;
       }
     }
-    if (request->hasArg("trebble") && request->hasArg("middle") && request->hasArg("bass")) {
-      config.setTone(request->getParam("bass")->value().toInt(), request->getParam("middle")->value().toInt(), request->getParam("trebble")->value().toInt());
+    if (request->hasArg("treble") && request->hasArg("middle") && request->hasArg("bass")) {
+      config.setTone(request->getParam("bass")->value().toInt(), request->getParam("middle")->value().toInt(), request->getParam("treble")->value().toInt());
       request->send(200, "text/plain", "");
       return;
     }

@@ -7,13 +7,13 @@ class TouchScreen {
   public:
     TouchScreen() {}
     void init(uint16_t w, uint16_t h);
-    void loop();
     void flip();
+    void loop();
   private:
     uint16_t _oldTouchX = 0, _oldTouchY = 0, _width = 0, _height = 0;
     uint32_t _touchdelay = 0;
-    bool _checklpdelay(int m, uint32_t &tstamp);
     tsDirection_e _tsDirection(uint16_t x, uint16_t y);
+    bool _checklpdelay(int m, uint32_t &tstamp);
     bool _istouched();
 };
 

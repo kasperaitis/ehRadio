@@ -93,7 +93,7 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "Final version: ${VERSION}"
-          grep '#define RADIOVERSION ' src/core/options.h > version.txt
+          echo "ehRadio Version \"${VERSION}\"" > version.txt
 
       - name: Install PlatformIO
         run: pip install platformio

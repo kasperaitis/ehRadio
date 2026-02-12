@@ -562,7 +562,7 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
     #define CHECKUPDATEURL GITHUBURL "/releases/latest/download/version.txt" // automatically extracted from options.h during Github workflow
   #endif
   #ifndef VERSIONSTRING
-    #define VERSIONSTRING "#define RADIOVERSION" // the file above should have a line that contains this followed by a version number
+    #define VERSIONSTRING "ehRadio Version" // the file above should have a line that contains this followed by a version number (surrounded in quotes)
   #endif
 #else
   #undef FIRMWARE

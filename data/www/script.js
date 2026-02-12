@@ -115,7 +115,7 @@ function onMessage(event) {
     if(typeof data.playermode !== 'undefined') { //Web, SD
       modesd = data.playermode=='modesd';
       classEach('modeitem', function(el){ el.classList.add('hidden') });
-      if(modesd) showById(['modesd', 'sdsvg'],['plsvg']); else showById(['modeweb','plsvg','bitinfo'],['sdsvg','snuffle']);
+      if(modesd) showById(['modesd', 'sdsvg'],['plsvg']); else showById(['modeweb','plsvg','bitinfo'],['sdsvg','shuffle']);
       showById(['volslider'],['sdslider']);
       getId('toggleplaylist').classList.remove('active');
       generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
@@ -149,11 +149,11 @@ function onMessage(event) {
       getId("sdpos").attr('max',data.sdmax); 
       return;
     }
-    if(typeof data.snuffle!== 'undefined'){
-      if(data.snuffle==1){
-        getId("snuffle").classList.add("active");
+    if(typeof data.shuffle!== 'undefined'){
+      if(data.shuffle==1){
+        getId("shuffle").classList.add("active");
       }else{
-        getId("snuffle").classList.remove("active");
+        getId("shuffle").classList.remove("active");
       }
       return;
     }
@@ -761,7 +761,7 @@ function toggleTarget(el, id){
       getId('sdslider').classList.toggle('hidden');
       getId('volslider').classList.toggle('hidden');
       getId('bitinfo').classList.toggle('hidden');
-      getId('snuffle').classList.toggle('hidden');
+      getId('shuffle').classList.toggle('hidden');
     }else target.classList.toggle("hidden");
     getId(target.dataset.target).classList.toggle("active");
   }
@@ -862,10 +862,10 @@ function changeMode(el){
   else getId('modeweb').classList.remove('hidden');
   websocket.send("newmode="+(cmd=="web"?0:1));
 }
-function toggleSnuffle(){
-  let el = getId('snuffle');
+function toggleShuffle(){
+  let el = getId('shuffle');
   el.classList.toggle('active');
-  websocket.send("snuffle="+el.classList.contains('active'));
+  websocket.send("shuffle="+el.classList.contains('active'));
 }
 function previewInfo(text, url='', error=false){
   const previewinfo=getId('previewinfo');
@@ -896,7 +896,7 @@ function continueLoading(mode){
     const pathname = window.location.pathname;
     if(['/','/index.html'].includes(pathname)){
       document.title = `${yoTitle} - Player`;
-      fetch(`player.html?${yoVersion}`).then(response => response.text()).then(player => { 
+      fetch(`player.html?${radioVersion}`).then(response => response.text()).then(player => { 
         getId('content').classList.add('idx');
         getId('content').innerHTML = player; 
         fetch('logo.svg').then(response => response.text()).then(svg => { 
@@ -904,7 +904,7 @@ function continueLoading(mode){
           hideSpinner();
           audiopreview=getId('audiopreview');
         });
-        getId("version").innerText=` | ${yoVersion}`;
+        getId("version").innerText=` | ${radioVersion}`;
         document.querySelectorAll('input[type="range"]').forEach(sl => { fillSlider(sl); });
         websocket.send('getindex=1');
         //generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
@@ -912,14 +912,14 @@ function continueLoading(mode){
     }
     if(pathname=='/settings.html'){
       document.title = `${yoTitle} - Settings`;
-      fetch(`options.html?${yoVersion}`).then(response => response.text()).then(options => {
+      fetch(`options.html?${radioVersion}`).then(response => response.text()).then(options => {
         getId('content').innerHTML = options; 
         fetch('logo.svg').then(response => response.text()).then(svg => { 
           getId('logo').innerHTML = svg;
           hideSpinner();
 		  if (onlineupdatecapable) getId('webboard').classList.add('hidden');
         });
-        getId("version").innerText=` | ${yoVersion}`;
+        getId("version").innerText=` | ${radioVersion}`;
         document.querySelectorAll('input[type="range"]').forEach(sl => { fillSlider(sl); });
         if (timezoneData) {
           populateTZDropdown(timezoneData);
@@ -937,7 +937,7 @@ function continueLoading(mode){
     }
     if(pathname=='/update.html'){
       document.title = `${yoTitle} - Update`;
-      fetch(`updform.html?${yoVersion}`).then(response => response.text()).then(updform => {
+      fetch(`updform.html?${radioVersion}`).then(response => response.text()).then(updform => {
         getId('content').classList.add('upd');
         getId('content').innerHTML = updform; 
         fetch('logo.svg').then(response => response.text()).then(svg => { 
@@ -945,32 +945,32 @@ function continueLoading(mode){
           hideSpinner();
           initOnlineUpdateChecker();
         });
-        getId("version").innerText=` | ${yoVersion}`;
+        getId("version").innerText=` | ${radioVersion}`;
       });
     }
     if(pathname=='/ir.html'){
       document.title = `${yoTitle} - IR Recorder`;
-      fetch(`irrecord.html?${yoVersion}`).then(response => response.text()).then(ircontent => {
-        loadCSS(`ir.css?${yoVersion}`);
+      fetch(`irrecord.html?${radioVersion}`).then(response => response.text()).then(ircontent => {
+        loadCSS(`ir.css?${radioVersion}`);
         getId('content').innerHTML = ircontent; 
-        loadJS(`ir.js?${yoVersion}`, () => {
+        loadJS(`ir.js?${radioVersion}`, () => {
           fetch('logo.svg').then(response => response.text()).then(svg => { 
             getId('logo').innerHTML = svg;
             initControls();
             hideSpinner();
           });
         });
-        getId("version").innerText=` | ${yoVersion}`;
+        getId("version").innerText=` | ${radioVersion}`;
       });
     }
   }else{ // AP mode
-    fetch(`options.html?${yoVersion}`).then(response => response.text()).then(options => {
+    fetch(`options.html?${radioVersion}`).then(response => response.text()).then(options => {
       getId('content').innerHTML = options; 
       fetch('logo.svg').then(response => response.text()).then(svg => { 
         getId('logo').innerHTML = svg;
         hideSpinner();
       });
-      getId("version").innerText=` | ${yoVersion}`;
+      getId("version").innerText=` | ${radioVersion}`;
       getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
       websocket.send('getactive=1');
     });
@@ -1014,7 +1014,7 @@ function continueLoading(mode){
           case "reboot": websocket.send("reboot=1"); rebootSystem('Rebooting...'); break;
           case "format": websocket.send("format=1"); rebootSystem('Format SPIFFS. Rebooting...'); break;
           case "reset":  websocket.send("reset=1");  rebootSystem('Reset settings. Rebooting...'); break;
-          case "snuffle": toggleSnuffle(); break;
+          case "shuffle": toggleShuffle(); break;
           case "rebootmdns": websocket.send(`mdnsname=${getId('mdns').value}`); websocket.send("rebootmdns=1"); break;
           default: break;
         }
