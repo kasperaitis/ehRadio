@@ -6,7 +6,7 @@
 #include <ImprovWiFiLibrary.h>
 
 //#define TSYNC_DELAY 10800000    // 1000*60*60*3 = 3 hours
-#define TSYNC_DELAY       3600000     // 1000*60*60   = 1 hour
+// #define TSYNC_DELAY       3600000     // 1000*60*60   = 1 hour - unused
 #define WEATHER_STRING_L  254
 
 enum n_Status_e { CONNECTED, SOFT_AP, FAILED, SDREADY };
@@ -39,6 +39,13 @@ class MyNetwork {
     static void WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info);
     static void WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info);
 };
+
+void ticks();
+void retryStreamConnection(void * pvParameters);
+void searchWiFi(void * pvParameters);
+void rebootTime();
+void doSync(void * pvParameters);
+bool getWeather(char *wstr);
 
 extern MyNetwork network;
 

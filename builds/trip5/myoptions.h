@@ -300,6 +300,7 @@
   #define SNTP_2          "0.ru.pool.ntp.org"
   #define WEATHER_LAT     "55.7512"       /* latitude */
   #define WEATHER_LON     "37.6184"       /* longitude */
+
 #elif defined(ESP32_S3_TRIP5_ST7735_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SH1106_PCM_REMOTE) ||\
       defined(ESP32_S3_TRIP5_SH1106_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SSD1306X32_PCM_1BUTTON) ||\
       defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS ) || defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON)
@@ -368,9 +369,6 @@
 /* Extras: unused in all */
 //#define L10N_LANGUAGE EN
 //#define IR_PIN 4
-
-/* Memory? */
-//#define XTASK_MEM_SIZE 4096 /* default 4096*/
 
 /* Does this get carried to SD Lib and allow Exfat? */
 //#define FF_FS_EXFAT 1

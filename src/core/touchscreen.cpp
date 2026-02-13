@@ -40,7 +40,7 @@
   typedef FT_Point TSPoint;
 #endif
 
-void TouchScreen::init(uint16_t w, uint16_t h){
+void TouchScreen::init(uint16_t w, uint16_t h) {
   
 #if TS_MODEL==TS_MODEL_XPT2046
   #ifdef TS_SPIPINS
@@ -95,7 +95,7 @@ tsDirection_e TouchScreen::_tsDirection(uint16_t x, uint16_t y) {
   }
 }
 
-void TouchScreen::flip(){
+void TouchScreen::flip() {
 #if TS_MODEL==TS_MODEL_XPT2046
   ts.setRotation(config.store.fliptouch?3:1);
 #endif
@@ -104,7 +104,7 @@ void TouchScreen::flip(){
 #endif
 }
 
-void TouchScreen::loop(){
+void TouchScreen::loop() {
   uint16_t touchX, touchY;
   static bool wastouched = true;
   static uint32_t touchLongPress;
@@ -118,7 +118,7 @@ void TouchScreen::loop(){
   ts.read();
 #endif
   bool istouched = _istouched();
-  if(istouched){
+  if (istouched) {
   #if TS_MODEL==TS_MODEL_XPT2046
     TSPoint p = ts.getPoint();
     touchX = map(p.x, TS_X_MIN, TS_X_MAX, 0, _width);
@@ -145,7 +145,7 @@ void TouchScreen::loop(){
         case TSD_LEFT:
         case TSD_RIGHT: {
             touchLongPress=millis();
-            if(display.mode()==PLAYER || display.mode()==VOL){
+            if (display.mode()==PLAYER || display.mode()==VOL) {
               int16_t xDelta = map(abs(touchVol - touchX), 0, _width, 0, TS_STEPS);
               display.putRequest(NEWMODE, VOL);
               if (xDelta>1) {
@@ -158,7 +158,7 @@ void TouchScreen::loop(){
         case TSD_UP:
         case TSD_DOWN: {
             touchLongPress=millis();
-            if(display.mode()==PLAYER || display.mode()==STATIONS){
+            if (display.mode()==PLAYER || display.mode()==STATIONS) {
               int16_t yDelta = map(abs(touchStation - touchY), 0, _height, 0, TS_STEPS);
               display.putRequest(NEWMODE, STATIONS);
               if (yDelta>1) {
@@ -178,13 +178,13 @@ void TouchScreen::loop(){
       Serial.print(", y = ");
       Serial.println(p.y);
     }
-  }else{
+  } else {
     if (wastouched) {/*     END TOUCH     */
       if (direct == TDS_REQUEST) {
         uint32_t pressTicks = millis()-touchLongPress;
-        if( pressTicks < BTN_PRESS_TICKS*2){
-          if(pressTicks > 50) onBtnClick(EVT_BTNCENTER);
-        }else{
+        if (pressTicks < BTN_PRESS_TICKS*2) {
+          if (pressTicks > 50) onBtnClick(EVT_BTNCENTER);
+        } else {
           display.putRequest(NEWMODE, display.mode() == PLAYER ? STATIONS : PLAYER);
         }
       }
@@ -203,7 +203,7 @@ bool TouchScreen::_checklpdelay(int m, uint32_t &tstamp) {
   }
 }
 
-bool TouchScreen::_istouched(){
+bool TouchScreen::_istouched() {
 #if TS_MODEL==TS_MODEL_XPT2046
   return ts.touched();
 #elif TS_MODEL==TS_MODEL_GT911

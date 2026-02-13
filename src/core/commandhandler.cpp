@@ -10,7 +10,7 @@
 #include "mqtt.h"
 
 #if DSP_MODEL==DSP_DUMMY
-#define DUMMYDISPLAY
+  #define DUMMYDISPLAY
 #endif
 
 CommandHandler cmd;
@@ -23,12 +23,12 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "next"))     { player.next(); return true; }
   if (strEquals(command, "volm"))     { player.stepVol(false); return true; }
   if (strEquals(command, "volp"))     { player.stepVol(true); return true; }
-#ifdef USE_SD
-  if (strEquals(command, "mode"))     { config.changeMode(atoi(value)); return true; }
-#endif
+  #ifdef USE_SD
+    if (strEquals(command, "mode"))     { config.changeMode(atoi(value)); return true; }
+  #endif
   if (strEquals(command, "reset") && cid==0)    { config.reset(); return true; }
   if (strEquals(command, "ballance")) { config.setBalance(atoi(value)); return true; }
-  if (strEquals(command, "playstation") || strEquals(command, "play")){ 
+  if (strEquals(command, "playstation") || strEquals(command, "play")) { 
     int id = atoi(value);
     if (id < 1) id = 1;
     uint16_t cs = config.playlistLength();
@@ -36,7 +36,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
     player.sendCommand({PR_PLAY, id});
     return true;
   }
-  if (strEquals(command, "vol")){
+  if (strEquals(command, "vol")) {
     int v = atoi(value);
     config.store.volume = v < 0 ? 0 : (v > 254 ? 254 : v);
     player.setVol(v);
@@ -44,7 +44,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   }
   if (strEquals(command, "dspon"))     { config.setDspOn(atoi(value)!=0); return true; }
   if (strEquals(command, "dim"))       { int d=atoi(value); config.store.brightness = (uint8_t)(d < 0 ? 0 : (d > 100 ? 100 : d)); config.setBrightness(true); return true; }
-  if (strEquals(command, "clearspiffs")){ config.spiffsCleanup(); config.saveValue(&config.store.play_mode, static_cast<uint8_t>(PM_WEB)); return true; }
+  if (strEquals(command, "clearspiffs")) { config.spiffsCleanup(); config.saveValue(&config.store.play_mode, static_cast<uint8_t>(PM_WEB)); return true; }
   /*********************************************/
   /****************** WEBSOCKET ****************/
   /*********************************************/
@@ -52,14 +52,14 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   
   if (strEquals(command, "getsystem"))  { netserver.requestOnChange(GETSYSTEM, cid); return true; }
   if (strEquals(command, "getscreen"))  { netserver.requestOnChange(GETSCREEN, cid); return true; }
-  if (strEquals(command, "gettimezone")){ netserver.requestOnChange(GETTIMEZONE, cid); return true; }
-  if (strEquals(command, "getcontrols")){ netserver.requestOnChange(GETCONTROLS, cid); return true; }
+  if (strEquals(command, "gettimezone")) { netserver.requestOnChange(GETTIMEZONE, cid); return true; }
+  if (strEquals(command, "getcontrols")) { netserver.requestOnChange(GETCONTROLS, cid); return true; }
   if (strEquals(command, "getweather")) { netserver.requestOnChange(GETWEATHER, cid); return true; }
   if (strEquals(command, "getmqtt"))    { netserver.requestOnChange(GETMQTT, cid); return true; }
   if (strEquals(command, "getactive"))  { netserver.requestOnChange(GETACTIVE, cid); return true; }
   if (strEquals(command, "newmode"))    { config.newConfigMode = atoi(value); netserver.requestOnChange(CHANGEMODE, cid); return true; }
   
-  if (strEquals(command, "invertdisplay")){ config.saveValue(&config.store.invertdisplay, static_cast<bool>(atoi(value))); display.invert(); return true; }
+  if (strEquals(command, "invertdisplay")) { config.saveValue(&config.store.invertdisplay, static_cast<bool>(atoi(value))); display.invert(); return true; }
   if (strEquals(command, "numplaylist"))  { config.saveValue(&config.store.numplaylist, static_cast<bool>(atoi(value))); display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER); return true; }
   if (strEquals(command, "fliptouch"))    { config.saveValue(&config.store.fliptouch, static_cast<bool>(atoi(value))); flipTS(); return true; }
   if (strEquals(command, "dbgtouch"))     { config.saveValue(&config.store.dbgtouch, static_cast<bool>(atoi(value))); return true; }
@@ -69,22 +69,22 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "brightness"))   { if (!config.store.dspon) netserver.requestOnChange(DSPON, 0); config.store.brightness = static_cast<uint8_t>(atoi(value)); config.setBrightness(true); return true; }
   if (strEquals(command, "screenon"))     { config.setDspOn(static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "contrast"))     { config.saveValue(&config.store.contrast, static_cast<uint8_t>(atoi(value))); display.setContrast(); return true; }
-  if (strEquals(command, "screensaverenabled")){ config.enableScreensaver(static_cast<bool>(atoi(value))); return true; }
-  if (strEquals(command, "screensavertimeout")){ config.setScreensaverTimeout(static_cast<uint16_t>(atoi(value))); return true; }
+  if (strEquals(command, "screensaverenabled")) { config.enableScreensaver(static_cast<bool>(atoi(value))); return true; }
+  if (strEquals(command, "screensavertimeout")) { config.setScreensaverTimeout(static_cast<uint16_t>(atoi(value))); return true; }
   if (strEquals(command, "screensaverblank"))  { config.setScreensaverBlank(static_cast<bool>(atoi(value))); return true; }
-  if (strEquals(command, "screensaverplayingenabled")){ config.setScreensaverPlayingEnabled(static_cast<bool>(atoi(value))); return true; }
-  if (strEquals(command, "screensaverplayingtimeout")){ config.setScreensaverPlayingTimeout(static_cast<uint16_t>(atoi(value))); return true; }
+  if (strEquals(command, "screensaverplayingenabled")) { config.setScreensaverPlayingEnabled(static_cast<bool>(atoi(value))); return true; }
+  if (strEquals(command, "screensaverplayingtimeout")) { config.setScreensaverPlayingTimeout(static_cast<uint16_t>(atoi(value))); return true; }
   if (strEquals(command, "screensaverplayingblank"))  { config.setScreensaverPlayingBlank(static_cast<bool>(atoi(value))); return true; }
   
-  if (strEquals(command, "tz_name")){ config.saveValue(config.store.tz_name, value, sizeof(config.store.tz_name), false); return true; }
-  if (strEquals(command, "tzposix")){ config.saveValue(config.store.tzposix, value, sizeof(config.store.tzposix), false); network.forceTimeSync = true; network.requestTimeSync(true); return true; }
+  if (strEquals(command, "tz_name")) { config.saveValue(config.store.tz_name, value, sizeof(config.store.tz_name), false); return true; }
+  if (strEquals(command, "tzposix")) { config.saveValue(config.store.tzposix, value, sizeof(config.store.tzposix), false); network.forceTimeSync = true; network.requestTimeSync(true); return true; }
   if (strEquals(command, "sntp2"))  { config.saveValue(config.store.sntp2, value, sizeof(config.store.sntp2), false); return true; }
   if (strEquals(command, "sntp1"))  { config.saveValue(config.store.sntp1, value, sizeof(config.store.sntp1), false); network.forceTimeSync = true; network.requestTimeSync(true); return true; }
   
   if (strEquals(command, "volsteps"))         { config.saveValue(&config.store.volsteps, static_cast<uint8_t>(atoi(value))); return true; }
   if (strEquals(command, "encacc"))           { setEncAcceleration(static_cast<uint16_t>(atoi(value))); return true; }
   if (strEquals(command, "irtlp"))            { setIRTolerance(static_cast<uint8_t>(atoi(value))); return true; }
-  if (strEquals(command, "oneclickswitching")){ config.saveValue(&config.store.skipPlaylistUpDown, static_cast<bool>(atoi(value))); return true; }
+  if (strEquals(command, "oneclickswitching")) { config.saveValue(&config.store.skipPlaylistUpDown, static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "showweather"))      { config.setShowweather(static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "lat"))              { config.saveValue(config.store.weatherlat, value, sizeof(config.store.weatherlat), false); return true; }
   if (strEquals(command, "lon"))              { config.saveValue(config.store.weatherlon, value, sizeof(config.store.weatherlon), false); return true; }
@@ -115,15 +115,15 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
 #endif
   if (strEquals(command, "reset"))  { config.resetSystem(value, cid); return true; }
   
-  if (strEquals(command, "smartstart")){ bool ss = (atoi(value) != 0); config.setSmartStart(ss); return true; }
+  if (strEquals(command, "smartstart")) { bool ss = (atoi(value) != 0); config.setSmartStart(ss); return true; }
   if (strEquals(command, "audioinfo")) { config.saveValue(&config.store.audioinfo, static_cast<bool>(atoi(value))); display.putRequest(AUDIOINFO); return true; }
   if (strEquals(command, "vumeter"))   { config.saveValue(&config.store.vumeter, static_cast<bool>(atoi(value))); display.putRequest(SHOWVUMETER); return true; }
   if (strEquals(command, "wifiscan"))  { config.saveValue(&config.store.wifiscanbest, static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "softap"))    { config.saveValue(&config.store.softapdelay, static_cast<uint8_t>(atoi(value))); return true; }
   if (strEquals(command, "mdnsname"))  { config.saveValue(config.store.mdnsname, value, MDNS_LENGTH); return true; }
-  if (strEquals(command, "rebootmdns")){
+  if (strEquals(command, "rebootmdns")) {
     char buf[MDNS_LENGTH*2];
-    if(strlen(config.store.mdnsname)>0) snprintf(buf, sizeof(buf), "{\"redirect\": \"http://%s.local/settings.html\"}", config.store.mdnsname);
+    if (strlen(config.store.mdnsname)>0) snprintf(buf, sizeof(buf), "{\"redirect\": \"http://%s.local/settings.html\"}", config.store.mdnsname);
     else snprintf(buf, sizeof(buf), "{\"redirect\": \"http://%s/settings.html\"}", WiFi.localIP().toString().c_str());
     websocket.text(cid, buf); delay(500); ESP.restart();
     return true;

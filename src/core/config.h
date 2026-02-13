@@ -36,6 +36,11 @@
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 
 void u8fix(char *src);
+void cleanStaleSearchResults();
+void fixPlaylistFileEnding();
+void getRequiredFiles(void* param);
+void checkNewVersionFile();
+void startAsyncServices(void* param);
 
 struct theme_t {
   uint16_t background;
@@ -136,11 +141,11 @@ struct configKeyMap {
 };
 
 #if IR_PIN!=255
-struct ircodes_t
-{
-  unsigned int ir_set = 0; // will be 4224 if written/restored correctly
-  uint64_t irVals[20][3];
-};
+  struct ircodes_t
+  {
+    unsigned int ir_set = 0; // will be 4224 if written/restored correctly
+    uint64_t irVals[20][3];
+  };
 #endif
 
 struct station_t
@@ -163,11 +168,13 @@ class Config {
     config_t store;
     station_t station;
     theme_t   theme;
-#if IR_PIN!=255
-    int irindex = -1;
-    uint8_t irchck = 0;
-    ircodes_t ircodes;
-#endif
+
+    #if IR_PIN!=255
+      int irindex = -1;
+      uint8_t irchck = 0;
+      ircodes_t ircodes;
+    #endif
+
     BitrateFormat configFmt = BF_UNKNOWN;
     neworkItem ssids[5];
     uint8_t ssidsCount = 0;
@@ -180,7 +187,7 @@ class Config {
     bool     isScreensaver = false;
     int      newConfigMode = 0;
     char       ipBuf[16] = {0};
-  public:
+
     void init();
     void loadPreferences();
     void changeMode(int newmode=-1);
@@ -199,14 +206,10 @@ class Config {
     void setShowweather(bool val);
     void setWeatherKey(const char *val);
     void setSDpos(uint32_t val);
-#if IR_PIN!=255
     void setIrBtn(int val);
-#endif
+    void saveIR();
     void resetSystem(const char *val, uint8_t clientId);
     void setShuffle(bool sn);
-#if IR_PIN!=255
-    void saveIR();
-#endif
     void saveVolume();
     uint8_t setVolume(uint8_t val);
     void setTone(int8_t bass, int8_t middle, int8_t treble);
@@ -243,18 +246,17 @@ class Config {
     void startAsyncServicesButWait();
     void bootInfo();
     void deleteOldKeys();
-
     void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }
-    uint16_t lastStation(){
+    uint16_t lastStation() {
       return getMode()==PM_WEB?store.lastStation:store.lastSdStation;
     }
-    void lastStation(uint16_t newstation){
-      if(getMode()==PM_WEB) saveValue(&store.lastStation, newstation);
+    void lastStation(uint16_t newstation) {
+      if (getMode()==PM_WEB) saveValue(&store.lastStation, newstation);
       else saveValue(&store.lastSdStation, newstation);
     }
     uint8_t getMode() { return store.play_mode; }
-    FS* SDPLFS(){ return _SDplaylistFS; }
-    bool isRTCFound(){ return _rtcFound; };
+    FS* SDPLFS() { return _SDplaylistFS; }
+    bool isRTCFound() { return _rtcFound; };
     Preferences prefs; // For Preferences, we use a look-up table to maintain compatibility...
     static const configKeyMap keyMap[];
 
@@ -307,13 +309,14 @@ class Config {
         prefs.end();
       }
     }
-    uint32_t getChipId(){
+    uint32_t getChipId() {
       uint32_t chipId = 0;
       for(int i=0; i<17; i=i+8) {
         chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
       }
       return chipId;
     }
+
   private:
     bool _bootDone = false;
     bool _rtcFound = false;
@@ -326,7 +329,7 @@ class Config {
     void setDefaults();
     static void doSleep();
 
-    uint16_t _randomStation(){
+    uint16_t _randomStation() {
       randomSeed(esp_random() ^ millis());
       uint16_t station = random(1, store.countStation);
       return station;
@@ -335,8 +338,9 @@ class Config {
 };
 
 extern Config config;
+
 #if DSP_HSPI || TS_HSPI || VS_HSPI
-extern SPIClass  SPI2;
+  extern SPIClass  SPI2;
 #endif
 
 #endif

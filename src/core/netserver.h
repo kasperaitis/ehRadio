@@ -59,7 +59,7 @@ input[type=text],input[type=password]{width:170px;background:#272727;color:#eecc
 </div>
 </section>
 <p><a href="/emergency">emergency firmware uploader</a></p>
-<div id="copy">powered by <a target="_blank" href="https://github.com/trip5/ehRadio/">ehRadio</a><span id="version"></span></div>
+<div id="copy">powered by <a target="_blank" href="https://github.com/trip5/ehRadio/">ehRadio</a> | <span id="version"></span></div>
 </body>
 <script>
 document.wifiform.action = `/${formAction}`;
@@ -75,7 +75,7 @@ document.getElementById('credtitle').classList.remove("hidden");
 document.getElementById('credtitle-x').classList.add("hidden");
 document.getElementById('uploader').classList.add("hidden");
 }
-document.getElementById("version").innerHTML=` | ${radioVersion}`;
+document.getElementById("version").innerHTML=`${radioVersion}`;
 </script>
 </html>
 )";
@@ -114,9 +114,7 @@ struct nsRequestParams_t
   uint8_t clientId;
 };
 
-#ifdef MQTT_ENABLE
 void mqttplaylistSend();
-#endif
 char* updateError();
 void handleSearch(AsyncWebServerRequest *request);
 void handleSearchPost(AsyncWebServerRequest *request);
@@ -126,10 +124,8 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 void selectRadioBrowserServer();
 void vTaskSearchRadioBrowser(void *pvParameters);
 void launchPlaybackTask(const String& url, const String& name);
-#ifdef UPDATEURL
 void checkForOnlineUpdate();
 void startOnlineUpdate();
-#endif
 void handleNotFound(AsyncWebServerRequest * request);
 void handleIndex(AsyncWebServerRequest * request);
 
@@ -139,15 +135,15 @@ class NetServer {
     bool resumePlay = false;
     char chunkedPathBuffer[40] = {0};
     bool irRecordEnable = false;
+    String newVersion = String(RADIOVERSION);
+    bool newVersionAvailable = false;
   public:
     NetServer() {};
     bool begin(bool quiet=false);
     void chunkedHtmlPage(const String& contentType, AsyncWebServerRequest *request, const char * path);
     void loop();
-#if IR_PIN!=255
     void irToWs(const char* protocol, uint64_t irvalue);
     void irValsToWs();
-#endif
     void onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t clientId);
     void requestOnChange(requestType_e request, uint8_t clientId);
     void resetQueue();

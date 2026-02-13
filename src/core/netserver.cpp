@@ -26,12 +26,12 @@
 #endif
 
 #if USE_OTA
-#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
-#include <NetworkUdp.h>
-#else
-#include <WiFiUdp.h>
-#endif
-#include <ArduinoOTA.h>
+  #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+    #include <NetworkUdp.h>
+  #else
+    #include <WiFiUdp.h>
+  #endif
+  #include <ArduinoOTA.h>
 #endif
 
 #include <WiFiClient.h>
@@ -53,9 +53,9 @@
 #endif
 
 #ifdef DEBUG_V
-  #define DBGVB( ... ) { char buf[200]; sprintf( buf, __VA_ARGS__ ) ; Serial.print("[DEBUG]\t"); Serial.println(buf); }
+  #define DBGVB(...) { char buf[200]; sprintf(buf, __VA_ARGS__); Serial.print("[DEBUG]\t"); Serial.println(buf); }
 #else
-  #define DBGVB( ... )
+  #define DBGVB(...)
 #endif
 
 // Global list for radio-browser servers to persist across searches
@@ -178,10 +178,10 @@ void handleSearchPost(AsyncWebServerRequest *request) {
 }
 
 bool NetServer::begin(bool quiet) {
-  if(network.status==SDREADY) return true;
-  if(!quiet) Serial.print("##[BOOT]#\tnetserver.begin\t");
-  nsQueue = xQueueCreate( 20, sizeof( nsRequestParams_t ) );
-  while(nsQueue==NULL){;}
+  if (network.status==SDREADY) return true;
+  if (!quiet) Serial.print("##[BOOT]#\tnetserver.begin\t");
+  nsQueue = xQueueCreate(20, sizeof(nsRequestParams_t));
+  while(nsQueue==NULL) {;}
 
   webserver.on("/", HTTP_ANY, handleIndex);
   webserver.on("/search", HTTP_GET, handleSearch);
@@ -190,60 +190,59 @@ bool NetServer::begin(bool quiet) {
   webserver.onFileUpload(handleUpload);
 
   webserver.serveStatic("/", SPIFFS, "/www/").setCacheControl("max-age=3600");
-#ifdef CORS_DEBUG
-  DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Origin"), F("*"));
-  DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Headers"), F("content-type"));
-#endif
+  #ifdef CORS_DEBUG
+    DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Origin"), F("*"));
+    DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Headers"), F("content-type"));
+  #endif
   webserver.begin();
-  if(strlen(config.store.mdnsname)>0)
+  if (strlen(config.store.mdnsname)>0)
     MDNS.begin(config.store.mdnsname);
 
   websocket.onEvent(onWsEvent);
   webserver.addHandler(&websocket);
-#if USE_OTA
-  if(strlen(config.store.mdnsname)>0)
-    ArduinoOTA.setHostname(config.store.mdnsname);
-#ifdef OTA_PASS
-  ArduinoOTA.setPassword(OTA_PASS);
-#endif
-  ArduinoOTA
-    .onStart([]() {
-      display.putRequest(NEWMODE, UPDATING);
-      telnet.printf("Start OTA updating %s\n", ArduinoOTA.getCommand() == U_FLASH?"firmware":"filesystem");
-    })
-    .onEnd([]() {
-      telnet.printf("\nEnd OTA update, Rebooting...\n");
-    })
-    .onProgress([](unsigned int progress, unsigned int total) {
-      telnet.printf("Progress OTA: %u%%\r", (progress / (total / 100)));
-    })
-    .onError([](ota_error_t error) {
-      telnet.printf("Error[%u]: ", error);
-      if (error == OTA_AUTH_ERROR) {
-        telnet.printf("Auth Failed\n");
-      } else if (error == OTA_BEGIN_ERROR) {
-        telnet.printf("Begin Failed\n");
-      } else if (error == OTA_CONNECT_ERROR) {
-        telnet.printf("Connect Failed\n");
-      } else if (error == OTA_RECEIVE_ERROR) {
-        telnet.printf("Receive Failed\n");
-      } else if (error == OTA_END_ERROR) {
-        telnet.printf("End Failed\n");
-      }
-    });
-  ArduinoOTA.begin();
-#endif
+  #if USE_OTA
+    if (strlen(config.store.mdnsname)>0) ArduinoOTA.setHostname(config.store.mdnsname);
+    #ifdef OTA_PASS
+      ArduinoOTA.setPassword(OTA_PASS);
+    #endif
+    ArduinoOTA
+      .onStart([]() {
+        display.putRequest(NEWMODE, UPDATING);
+        telnet.printf("Start OTA updating %s\n", ArduinoOTA.getCommand() == U_FLASH?"firmware":"filesystem");
+      })
+      .onEnd([]() {
+        telnet.printf("\nEnd OTA update, Rebooting...\n");
+      })
+      .onProgress([](unsigned int progress, unsigned int total) {
+        telnet.printf("Progress OTA: %u%%\r", (progress / (total / 100)));
+      })
+      .onError([](ota_error_t error) {
+        telnet.printf("Error[%u]: ", error);
+        if (error == OTA_AUTH_ERROR) {
+          telnet.printf("Auth Failed\n");
+        } else if (error == OTA_BEGIN_ERROR) {
+          telnet.printf("Begin Failed\n");
+        } else if (error == OTA_CONNECT_ERROR) {
+          telnet.printf("Connect Failed\n");
+        } else if (error == OTA_RECEIVE_ERROR) {
+          telnet.printf("Receive Failed\n");
+        } else if (error == OTA_END_ERROR) {
+          telnet.printf("End Failed\n");
+        }
+      });
+    ArduinoOTA.begin();
+  #endif //#if USE_OTA
 
-  if(!quiet) Serial.println("done");
+  if (!quiet) Serial.println("done");
   return true;
 }
 
-size_t NetServer::chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t index){
+size_t NetServer::chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t index) {
   File requiredfile;
   bool sdpl = strcmp(netserver.chunkedPathBuffer, PLAYLIST_SD_PATH) == 0;
-  if(sdpl){
+  if (sdpl) {
     requiredfile = config.SDPLFS()->open(netserver.chunkedPathBuffer, "r");
-  }else{
+  } else {
     requiredfile = SPIFFS.open(netserver.chunkedPathBuffer, "r");
   }
   if (!requiredfile) return 0;
@@ -254,7 +253,7 @@ size_t NetServer::chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t
     return 0;
   }
   #ifdef MAX_PL_READ_BYTES
-    if(maxLen>MAX_PL_READ_BYTES) maxLen=MAX_PL_READ_BYTES;
+    if (maxLen>MAX_PL_READ_BYTES) maxLen=MAX_PL_READ_BYTES;
   #endif
   size_t canread = (needread > maxLen) ? maxLen : needread;
   DBGVB("[%s] seek to %d in %s and read %d bytes with maxLen=%d", __func__, index, netserver.chunkedPathBuffer, canread, maxLen);
@@ -302,22 +301,22 @@ const char *getFormat(BitrateFormat _format) {
 }
 
 char wsbuf[BUFLEN * 2];
-void NetServer::processQueue(){
-  if(nsQueue==NULL) return;
+void NetServer::processQueue() {
+  if (nsQueue==NULL) return;
   nsRequestParams_t request;
-  if(xQueueReceive(nsQueue, &request, NS_QUEUE_TICKS)){
+  if (xQueueReceive(nsQueue, &request, NS_QUEUE_TICKS)) {
     memset(wsbuf, 0, BUFLEN * 2);
     uint8_t clientId = request.clientId;
     switch (request.type) {
       case PLAYLIST:        getPlaylist(clientId); break;
       case PLAYLISTSAVED:   {
         #ifdef USE_SD
-        if(config.getMode()==PM_SDCARD) {
-        //  config.indexSDPlaylist();
-          config.initSDPlaylist();
-        }
+          if (config.getMode()==PM_SDCARD) {
+          //  config.indexSDPlaylist();
+            config.initSDPlaylist();
+          }
         #endif
-        if(config.getMode()==PM_WEB){
+        if (config.getMode()==PM_WEB) {
           config.indexPlaylist(); 
           config.initPlaylist(); 
         }
@@ -454,7 +453,7 @@ void NetServer::processQueue(){
       default:          break;
     }
     if (strlen(wsbuf) > 0) {
-      if (clientId == 0) { websocket.textAll(wsbuf); }else{ websocket.text(clientId, wsbuf); }
+      if (clientId == 0) { websocket.textAll(wsbuf); } else { websocket.text(clientId, wsbuf); }
       #ifdef MQTT_ENABLE
         if (config.store.mqttenable) {
           if (clientId == 0 && (request.type == STATION || request.type == ITEM || request.type == TITLE || request.type == MODE)) mqttPublishStatus();
@@ -466,7 +465,7 @@ void NetServer::processQueue(){
 }
 
 void NetServer::loop() {
-  if(network.status==SDREADY) return;
+  if (network.status==SDREADY) return;
   if (shouldReboot) {
     Serial.println("Rebooting...");
     delay(100);
@@ -479,24 +478,26 @@ void NetServer::loop() {
     default:      break;
   }
   processQueue();
-#if USE_OTA
-  ArduinoOTA.handle();
-#endif
+  #if USE_OTA
+    ArduinoOTA.handle();
+  #endif
 }
 
-#if IR_PIN!=255
 void NetServer::irToWs(const char* protocol, uint64_t irvalue) {
-  char buf[BUFLEN] = { 0 };
-  sprintf (buf, "{\"ircode\": %llu, \"protocol\": \"%s\"}", irvalue, protocol);
-  websocket.textAll(buf);
+  #if IR_PIN!=255
+    char buf[BUFLEN] = { 0 };
+    sprintf (buf, "{\"ircode\": %llu, \"protocol\": \"%s\"}", irvalue, protocol);
+    websocket.textAll(buf);
+  #endif
 }
 void NetServer::irValsToWs() {
-  if (!irRecordEnable) return;
-  char buf[BUFLEN] = { 0 };
-  sprintf (buf, "{\"irvals\": [%llu, %llu, %llu]}", config.ircodes.irVals[config.irindex][0], config.ircodes.irVals[config.irindex][1], config.ircodes.irVals[config.irindex][2]);
-  websocket.textAll(buf);
+  #if IR_PIN!=255
+    if (!irRecordEnable) return;
+    char buf[BUFLEN] = { 0 };
+    sprintf (buf, "{\"irvals\": [%llu, %llu, %llu]}", config.ircodes.irVals[config.irindex][0], config.ircodes.irVals[config.irindex][1], config.ircodes.irVals[config.irindex][2]);
+    websocket.textAll(buf);
+  #endif
 }
-#endif
 
 void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t clientId) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
@@ -539,7 +540,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
         return;
       }
       
-      if(cmd.exec(comnd, val, clientId)){
+      if (cmd.exec(comnd, val, clientId)) {
         return;
       }
     }
@@ -552,17 +553,17 @@ void NetServer::getPlaylist(uint8_t clientId) {
   if (clientId == 0) { websocket.textAll(buf); } else { websocket.text(clientId, buf); }
 }
 
-int NetServer::_readPlaylistLine(File &file, char * line, size_t size){
+int NetServer::_readPlaylistLine(File &file, char * line, size_t size) {
   int bytesRead = file.readBytesUntil('\n', line, size);
-  if(bytesRead>0){
+  if (bytesRead>0) {
     line[bytesRead] = 0;
-    if(line[bytesRead-1]=='\r') line[bytesRead-1]=0;
+    if (line[bytesRead-1]=='\r') line[bytesRead-1]=0;
   }
   return bytesRead;
 }
 
 bool NetServer::importPlaylist() {
-  if(config.getMode()==PM_SDCARD) return false;
+  if (config.getMode()==PM_SDCARD) return false;
   File tempfile = SPIFFS.open(TMP_PATH, "r");
   if (!tempfile) {
     return false;
@@ -662,39 +663,39 @@ bool NetServer::importPlaylist() {
 }
 
 void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
-  if(nsQueue==NULL) return;
+  if (nsQueue==NULL) return;
   nsRequestParams_t nsrequest;
   nsrequest.type = request;
   nsrequest.clientId = clientId;
   xQueueSend(nsQueue, &nsrequest, NSQ_SEND_DELAY);
 }
 
-void NetServer::resetQueue(){
-  if(nsQueue!=NULL) xQueueReset(nsQueue);
+void NetServer::resetQueue() {
+  if (nsQueue!=NULL) xQueueReset(nsQueue);
 }
 
 int freeSpace;
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-  if(request->url()=="/upload"){
+  if (request->url()=="/upload") {
     if (!index) {
-      if(filename!="tempwifi.csv"){
-        if(SPIFFS.exists(PLAYLIST_PATH)) SPIFFS.remove(PLAYLIST_PATH);
-        if(SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(PLAYLIST_PATH);
-        if(SPIFFS.exists(PLAYLIST_SD_PATH)) SPIFFS.remove(PLAYLIST_SD_PATH);
-        if(SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_SD_PATH);
+      if (filename!="tempwifi.csv") {
+        if (SPIFFS.exists(PLAYLIST_PATH)) SPIFFS.remove(PLAYLIST_PATH);
+        if (SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(PLAYLIST_PATH);
+        if (SPIFFS.exists(PLAYLIST_SD_PATH)) SPIFFS.remove(PLAYLIST_SD_PATH);
+        if (SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_SD_PATH);
       }
       freeSpace = (float)SPIFFS.totalBytes()/100*68-SPIFFS.usedBytes();
       request->_tempFile = SPIFFS.open(TMP_PATH , "w");
     }
     if (len) {
-      if(freeSpace>index+len){
+      if (freeSpace>index+len) {
         request->_tempFile.write(data, len);
       }
     }
     if (final) {
       request->_tempFile.close();
     }
-  }else if(request->url()=="/update"){
+  } else if (request->url()=="/update") {
     if (!index) {
       int target = (request->getParam("updatetarget", true)->value() == "spiffs") ? U_SPIFFS : U_FLASH;
       Serial.printf("Update Start: %s\n", filename.c_str());
@@ -719,11 +720,11 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
         request->send(200, "text/html", updateError());
       }
     }
-  }else{ // "/webboard"
+  } else { // "/webboard"
     DBGVB("File: %s, size:%u bytes, index: %u, final: %s\n", filename.c_str(), len, index, final?"true":"false");
     if (!index) {
       String spath = "/www/";
-      if(filename=="playlist.csv" || filename=="wifi.csv") spath = "/data/";
+      if (filename=="playlist.csv" || filename=="wifi.csv") spath = "/data/";
       request->_tempFile = SPIFFS.open(spath + filename , "w");
     }
     if (len) {
@@ -731,7 +732,7 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
     }
     if (final) {
       request->_tempFile.close();
-      if(filename=="playlist.csv") {
+      if (filename=="playlist.csv") {
         config.indexPlaylist();
         netserver.requestOnChange(PLAYLISTSAVED, 0);
       }
@@ -966,7 +967,7 @@ void launchPlaybackTask(const String& url, const String& name) {
         (void*)url_copy,
         1,
         NULL
-    );
+   );
   } else {
     Serial.println("[netserver] ERROR: Failed to allocate memory for playback task URL.");
   }
@@ -1088,19 +1089,19 @@ void startOnlineUpdate() {
 }
 
 void handleNotFound(AsyncWebServerRequest * request) {
-#if defined(HTTP_USER) && defined(HTTP_PASS)
-  if(network.status == CONNECTED)
-    if (request->url() == "/logout") {
-      request->send(401);
-      return;
-    }
-    if (!request->authenticate(HTTP_USER, HTTP_PASS)) {
-      return request->requestAuthentication();
-    }
-#endif
-  if(request->url()=="/emergency") { request->send(200, "text/html", emergency_form); return; }
-  if(request->method() == HTTP_POST && request->url()=="/webboard" && !config.wwwFilesExist) { request->redirect("/"); ESP.restart(); return; }
-  if(request->method() == HTTP_GET && request->url() == "/search") { handleSearch(request); return; }
+  #if defined(HTTP_USER) && defined(HTTP_PASS)
+    if (network.status == CONNECTED)
+      if (request->url() == "/logout") {
+        request->send(401);
+        return;
+      }
+      if (!request->authenticate(HTTP_USER, HTTP_PASS)) {
+        return request->requestAuthentication();
+      }
+  #endif
+  if (request->url()=="/emergency") { request->send(200, "text/html", emergency_form); return; }
+  if (request->method() == HTTP_POST && request->url()=="/webboard" && !config.wwwFilesExist) { request->redirect("/"); ESP.restart(); return; }
+  if (request->method() == HTTP_GET && request->url() == "/search") { handleSearch(request); return; }
   if (request->method() == HTTP_POST && request->url() == "/search") { handleSearchPost(request); return; }
 
   #ifdef UPDATEURL
@@ -1127,7 +1128,7 @@ void handleNotFound(AsyncWebServerRequest * request) {
               if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0) while (mqttplaylistblock) vTaskDelay(5);
             }
           #endif
-      if(strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 && config.getMode()==PM_SDCARD){
+      if (strcmp(request->url().c_str(), PLAYLIST_PATH) == 0 && config.getMode()==PM_SDCARD) {
         netserver.chunkedHtmlPage("application/octet-stream", request, PLAYLIST_SD_PATH);
       } else {
         netserver.chunkedHtmlPage("application/octet-stream", request, request->url().c_str());
@@ -1137,8 +1138,8 @@ void handleNotFound(AsyncWebServerRequest * request) {
   }// if (request->method() == HTTP_GET)
   
   if (request->method() == HTTP_POST) {
-    if(request->url()=="/webboard"){ request->redirect("/"); return; } // <--post files from /data/www
-    if(request->url()=="/upload"){ // <--upload playlist.csv or wifi.csv
+    if (request->url()=="/webboard") { request->redirect("/"); return; } // <--post files from /data/www
+    if (request->url()=="/upload") { // <--upload playlist.csv or wifi.csv
       if (request->hasParam("plfile", true, true)) {
         netserver.importRequest = IMPL;
         request->send(200);
@@ -1150,7 +1151,7 @@ void handleNotFound(AsyncWebServerRequest * request) {
       }
       return;
     }
-    if(request->url()=="/update"){ // <--upload firmware
+    if (request->url()=="/update") { // <--upload firmware
       shouldReboot = !Update.hasError();
       AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", shouldReboot ? "OK" : updateError());
       response->addHeader("Connection", "close");
@@ -1164,27 +1165,29 @@ void handleNotFound(AsyncWebServerRequest * request) {
     return;
   }
   if (request->url() == "/variables.js") {
-    char varjsbuf[BUFLEN];
-    const char* onlineCapable =
-      #ifdef UPDATEURL
-        "true";
-      #else
-        "false";
-      #endif
+    char varjsbuf[BUFLEN*2];
     snprintf(varjsbuf, sizeof(varjsbuf),
       "var radioVersion='%s';\n"
       "var formAction='%s';\n"
       "var playMode='%s';\n"
-      "var onlineupdatecapable=%s;\n",
+      "var onlineUpdCapable=%s;\n"
+      "var newVerAvailable=%s;\n"
+      "var updateUrl='%s';\n",
       RADIOVERSION,
       (network.status == CONNECTED && config.wwwFilesExist) ? "webboard" : "",
       (network.status == CONNECTED) ? "player" : "ap",
-      onlineCapable
-    );
+      #ifdef UPDATEURL
+        "true",
+      #else
+        "false",
+      #endif
+      (netserver.newVersionAvailable) ? "true" : "false",
+      GITHUBURL
+   );
     request->send(200, "application/javascript", varjsbuf);
     return;
   }
-  if (strcmp(request->url().c_str(), "/settings.html") == 0 || strcmp(request->url().c_str(), "/update.html") == 0 || strcmp(request->url().c_str(), "/ir.html") == 0){
+  if (strcmp(request->url().c_str(), "/settings.html") == 0 || strcmp(request->url().c_str(), "/update.html") == 0 || strcmp(request->url().c_str(), "/ir.html") == 0) {
     request->send(200, "text/html", index_html);
     return;
   }
@@ -1198,10 +1201,10 @@ void handleNotFound(AsyncWebServerRequest * request) {
 }
 
 void handleIndex(AsyncWebServerRequest * request) {
-  if(!config.wwwFilesExist){
-    if(request->url()=="/" && request->method() == HTTP_GET ) { request->send(200, "text/html", emptyfs_html); return; }
-    if(request->url()=="/" && request->method() == HTTP_POST) {
-      if(request->arg("ssid")!="" && request->arg("pass")!=""){
+  if (!config.wwwFilesExist) {
+    if (request->url()=="/" && request->method() == HTTP_GET) { request->send(200, "text/html", emptyfs_html); return; }
+    if (request->url()=="/" && request->method() == HTTP_POST) {
+      if (request->arg("ssid")!="" && request->arg("pass")!="") {
         char buf[BUFLEN];
         memset(buf, 0, BUFLEN);
         snprintf(buf, BUFLEN, "%s\t%s", request->arg("ssid").c_str(), request->arg("pass").c_str());
@@ -1217,24 +1220,25 @@ void handleIndex(AsyncWebServerRequest * request) {
     Serial.println(request->url());
     request->send(404, "text/plain", "Not found");
     return;
-  } // end if(!config.wwwFilesExist)
-#if defined(HTTP_USER) && defined(HTTP_PASS)
-  if(network.status == CONNECTED)
-    if (!request->authenticate(HTTP_USER, HTTP_PASS)) {
-      return request->requestAuthentication();
+  } // end if (!config.wwwFilesExist)
+  #if defined(HTTP_USER) && defined(HTTP_PASS)
+    if (network.status == CONNECTED) {
+      if (!request->authenticate(HTTP_USER, HTTP_PASS)) {
+        return request->requestAuthentication();
+      }
     }
-#endif
+  #endif
   if (strcmp(request->url().c_str(), "/") == 0 && request->params() == 0) {
-    if(network.status == CONNECTED) request->send(200, "text/html", index_html); else request->redirect("/settings.html");
+    if (network.status == CONNECTED) request->send(200, "text/html", index_html); else request->redirect("/settings.html");
     return;
   }
-  if(network.status == CONNECTED){
+  if (network.status == CONNECTED) {
     int paramsNr = request->params();
-    if(paramsNr==1){
+    if (paramsNr==1) {
       const AsyncWebParameter* p = request->getParam(0);
-      if(cmd.exec(p->name().c_str(),p->value().c_str())) {
-        if(p->name()=="reset" || p->name()=="clearspiffs") request->redirect("/");
-        if(p->name()=="clearspiffs") { delay(100); ESP.restart(); }
+      if (cmd.exec(p->name().c_str(),p->value().c_str())) {
+        if (p->name()=="reset" || p->name()=="clearspiffs") request->redirect("/");
+        if (p->name()=="clearspiffs") { delay(100); ESP.restart(); }
         request->send(200, "text/plain", "");
         return;
       }
@@ -1247,11 +1251,11 @@ void handleIndex(AsyncWebServerRequest * request) {
     if (request->hasArg("sleep")) {
       int sford = request->getParam("sleep")->value().toInt();
       int safterd = request->hasArg("after")?request->getParam("after")->value().toInt():0;
-      if(sford > 0 && safterd >= 0){ request->send(200, "text/plain", ""); config.sleepForAfter(sford, safterd); return; }
+      if (sford > 0 && safterd >= 0) { request->send(200, "text/plain", ""); config.sleepForAfter(sford, safterd); return; }
     }
     request->send(404, "text/plain", "Not found");
     
-  }else{
+  } else {
     request->send(404, "text/plain", "Not found");
   }
 }

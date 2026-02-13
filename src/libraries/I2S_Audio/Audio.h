@@ -25,7 +25,6 @@
 #include <SPIFFS.h>
 #include <FS.h>
 #include <FFat.h>
-#include <atomic>
 #include <codecvt>
 #include <locale>
 

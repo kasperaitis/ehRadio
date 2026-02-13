@@ -1,5 +1,5 @@
 #include "options.h"
-#if SDC_CS!=255
+#if SDC_CS!=255 // ============================== Everything ignored if not defined ==============================
 #include <Arduino.h>
 #include <SPI.h>
 #include <SD.h>
@@ -12,8 +12,8 @@
 #include "player.h"
 
 #if defined(SD_SPIPINS) || SD_HSPI
-SPIClass SDSPI(HSPI);
-#define SDREALSPI SDSPI
+  SPIClass SDSPI(HSPI);
+  #define SDREALSPI SDSPI
 #else
   #define SDREALSPI SPI
 #endif
@@ -24,35 +24,35 @@ SPIClass SDSPI(HSPI);
 
 SDManager sdman(FSImplPtr(new VFSImpl()));
 
-bool SDManager::start(){
+bool SDManager::start() {
   ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
   vTaskDelay(10);
-  if(!ready) ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
+  if (!ready) ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
   vTaskDelay(20);
-  if(!ready) ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
+  if (!ready) ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
   vTaskDelay(50);
-  if(!ready) ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
+  if (!ready) ready = begin(SDC_CS, SDREALSPI, SDSPISPEED);
   return ready;
 }
 
-void SDManager::stop(){
+void SDManager::stop() {
   end();
   ready = false;
 }
 #include "diskio_impl.h"
 bool SDManager::cardPresent() {
 
-  if(!ready) return false;
-  if(sectorSize()<1) {
+  if (!ready) return false;
+  if (sectorSize()<1) {
     return false;
   }
   uint8_t buff[sectorSize()] = { 0 };
   bool bread = readRAW(buff, 1);
-  if(sectorSize()>0 && !bread) return false;
+  if (sectorSize()>0 && !bread) return false;
   return bread;
 }
 
-bool SDManager::_checkNoMedia(const char* path){
+bool SDManager::_checkNoMedia(const char* path) {
   char nomedia[BUFLEN]= {0};
   strlcat(nomedia, path, BUFLEN);
   strlcat(nomedia, "/.nomedia", BUFLEN);
@@ -106,7 +106,7 @@ void SDManager::listSD(File &plSDfile, File &plSDindex, const char* dirname, uin
                 plSDfile.printf("%s\t%s\t0\n", fn, filePath);
                 plSDindex.write((uint8_t*)&pos, 4);
                 Serial.print(".");
-                if(display.mode()==SDCHANGE) display.putRequest(SDFILEINDEX, _sdFCount+1);
+                if (display.mode()==SDCHANGE) display.putRequest(SDFILEINDEX, _sdFCount+1);
                 _sdFCount++;
                 if (_sdFCount % 64 == 0) Serial.println();
             }
@@ -118,8 +118,8 @@ void SDManager::listSD(File &plSDfile, File &plSDindex, const char* dirname, uin
 
 void SDManager::indexSDPlaylist() {
   _sdFCount = 0;
-  if(exists(PLAYLIST_SD_PATH)) remove(PLAYLIST_SD_PATH);
-  if(exists(INDEX_SD_PATH)) remove(INDEX_SD_PATH);
+  if (exists(PLAYLIST_SD_PATH)) remove(PLAYLIST_SD_PATH);
+  if (exists(INDEX_SD_PATH)) remove(INDEX_SD_PATH);
   File playlist = open(PLAYLIST_SD_PATH, "w", true);
   if (!playlist) {
     return;

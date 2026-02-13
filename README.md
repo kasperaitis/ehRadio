@@ -22,21 +22,36 @@ Documentation will be improved at some point...
 
 ## ehRadio Version history
 
-### 2026.02.08...?
+### 2026.02.13...
   - WebUI greatly improved for mobile and tablet devices
+    - automatic checking for new version availability
+    - .css files improved
   - Broken playlist editor fixed (sorry!) with major improvements
     - can now import 2 ways: replace or merge
     - importing of json and csv is done in-browser
     - undo button can undo any changes
+    - re-order by dragging stations on mobile browsers
   - Smart start now always resumes last-played station (even if not playing when powered-off)
+    - minor side-effects
   - Broken search fixed to work with `https` radio-browser servers (using names instead of IPs)
     - fallback to `https://all.api.radio-browser.info` added
     - as part of this, ESPFileUpdater was updated to handle chunked transfers
   - SPIFFS clean-up added (after update, unwanted files are purged)
     - added because online flasher does not erase SPIFFS
   - Minor improvements to CSV importers (can handle files that exceed the usual fields)
-  - Minor improvements to code (vars set to default value in `.h` file instead of in `.cpp`)
+    - server side importer will be used to get playlists online *- not yet included*
+  - Minor improvements to code
+    - vars set to default value in `.h` file instead of in `.cpp`
+    - pretty code - most `#if` & `#ifdef` blocks now indented
+    - most functions now included no-op instead of being blocked by `#ifdef`
   - Optimized declarations in src files
+  - Added check for new versions
+  - more defaults added to `options.h` which can be changed in `myoptions.h`
+    - `#define CHECKUPDATEURL_TIME "1 day"`
+    - `#define TIMEZONES_JSON_CHECKTIME "4 weeks"`
+    - `#define RB_SERVERS_CHECKTIME "1 day"`
+    - `#define TIME_SYNC_INTERVAL 3600` (if RTC then `86400`)
+    - `#define WEATHER_SYNC_INTERVAL 1800` (maybe this should be a configurable setting?)
 
 ### 2026.02.06
   - Online Flasher introduced
@@ -44,7 +59,6 @@ Documentation will be improved at some point...
   - Improv mode added to firmware so if Wi-fi doesn't connect, use a WebUI to send Wi-fi information
 
 ### 2026.02.04
-
   - Thanks to @kasperaitis for #37
     - adds support for ES8311 + FM8002E I2C decoder and FT6336 touchscreen on the [ES3C28](https://www.lcdwiki.com/2.8inch_ESP32-S3_Display) ([Aliexpress](https://www.aliexpress.com/item/1005010338765126.html))
     - localization fix: weather now uses `LANG::weatherFmt` and `LANG::wind` instead of hardcoded strings

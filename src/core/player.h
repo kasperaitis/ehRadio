@@ -33,9 +33,7 @@ class Player: public Audio {
     bool resumeAfterUrl = false;
     uint32_t sd_min, sd_max;
     bool remoteStationName = false;
-    #ifdef MQTT_ENABLE
-      char      burl[MQTT_BURL_SIZE];  /* buffer for browseUrl  */
-    #endif
+    char burl[MQTT_BURL_SIZE];  /* buffer for browseUrl  */
   public:
     Player();
     void init();
@@ -46,9 +44,7 @@ class Player: public Audio {
     void initHeaders(const char *file);
     void loop();
     void setOutputPins(bool isPlaying);
-    #ifdef MQTT_ENABLE
-      void browseUrl();
-    #endif
+    void browseUrl();
     void playUrl(const char* url);
     void prev();
     void next();

@@ -25,18 +25,18 @@ size_t strlen_utf8(const char* s) {
 }
 
 char* utf8Rus(const char* str, bool uppercase) {
-#ifdef PRINT_FIX
-  return printFix(str);
-#endif
-  static char out[BUFLEN];
-  int outPos = 0;
-#ifdef DSP_LCD
-  static const char* mapD0[] = {
-    "A","B","V","G","D","E","ZH","Z","I","Y",
-    "K","L","M","N","O","P","R","S","T","U",
-    "F","H","TS","CH","SH","SHCH","'","YU","'","E","YU","YA"
-  };
-#endif
+  #ifdef PRINT_FIX
+    return printFix(str);
+  #endif
+    static char out[BUFLEN];
+    int outPos = 0;
+  #ifdef DSP_LCD
+    static const char* mapD0[] = {
+      "A","B","V","G","D","E","ZH","Z","I","Y",
+      "K","L","M","N","O","P","R","S","T","U",
+      "F","H","TS","CH","SH","SHCH","'","YU","'","E","YU","YA"
+    };
+  #endif
   for (int i = 0; str[i] && outPos < BUFLEN - 1; i++) {
     uint8_t c = (uint8_t)str[i];
     if (c == 0xD0 && str[i+1]) {

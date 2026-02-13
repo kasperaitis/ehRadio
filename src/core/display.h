@@ -95,25 +95,27 @@ class Display {
 
     displayMode_e mode() { return _mode; }
     void mode(displayMode_e m) { _mode=m; }
-    void loop(){}
+    void loop() {}
     bool ready() { return true; }
-    void resetQueue(){}
-    void centerText(const char* text, uint8_t y, uint16_t fg, uint16_t bg){}
-    void rightText(const char* text, uint8_t y, uint16_t fg, uint16_t bg){}
-    void flip(){}
-    void invert(){}
-    void setContrast(){}
-    bool deepsleep(){return true;}
-    void wakeup(){}
+    void resetQueue() {}
+    void centerText(const char* text, uint8_t y, uint16_t fg, uint16_t bg) {}
+    void rightText(const char* text, uint8_t y, uint16_t fg, uint16_t bg) {}
+    void flip() {}
+    void invert() {}
+    void setContrast() {}
+    bool deepsleep() {return true;}
+    void wakeup() {}
     void lock()   {}
     void unlock() {}
-    uint16_t width(){ return 0; }
-    uint16_t height(){ return 0; }
+    uint16_t width() { return 0; }
+    uint16_t height() { return 0; }
   private:
     void _createDspTask();
 };
 
 #endif
+
+void returnPlayer();
 
 extern Display display;
 

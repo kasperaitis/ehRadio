@@ -904,7 +904,8 @@ function continueLoading(mode){
           hideSpinner();
           audiopreview=getId('audiopreview');
         });
-        getId("version").innerText=` | ${radioVersion}`;
+        getId("version").innerText=`${radioVersion}`;
+        if (newVerAvailable) getId('update_available').classList.remove('hidden');
         document.querySelectorAll('input[type="range"]').forEach(sl => { fillSlider(sl); });
         websocket.send('getindex=1');
         //generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
@@ -917,9 +918,10 @@ function continueLoading(mode){
         fetch('logo.svg').then(response => response.text()).then(svg => { 
           getId('logo').innerHTML = svg;
           hideSpinner();
-		  if (onlineupdatecapable) getId('webboard').classList.add('hidden');
+		  if (onlineUpdCapable) getId('webboard').classList.add('hidden');
         });
-        getId("version").innerText=` | ${radioVersion}`;
+        getId("version").innerText=`${radioVersion}`;
+        if (newVerAvailable) getId('update_available').classList.remove('hidden');
         document.querySelectorAll('input[type="range"]').forEach(sl => { fillSlider(sl); });
         if (timezoneData) {
           populateTZDropdown(timezoneData);
@@ -945,13 +947,12 @@ function continueLoading(mode){
           hideSpinner();
           initOnlineUpdateChecker();
         });
-        getId("version").innerText=` | ${radioVersion}`;
+        getId("version").innerText=`${radioVersion}`;
       });
     }
     if(pathname=='/ir.html'){
       document.title = `${yoTitle} - IR Recorder`;
       fetch(`irrecord.html?${radioVersion}`).then(response => response.text()).then(ircontent => {
-        loadCSS(`ir.css?${radioVersion}`);
         getId('content').innerHTML = ircontent; 
         loadJS(`ir.js?${radioVersion}`, () => {
           fetch('logo.svg').then(response => response.text()).then(svg => { 
@@ -960,7 +961,7 @@ function continueLoading(mode){
             hideSpinner();
           });
         });
-        getId("version").innerText=` | ${radioVersion}`;
+        getId("version").innerText=`${radioVersion}`;
       });
     }
   }else{ // AP mode
@@ -970,7 +971,7 @@ function continueLoading(mode){
         getId('logo').innerHTML = svg;
         hideSpinner();
       });
-      getId("version").innerText=` | ${radioVersion}`;
+      getId("version").innerText=`${radioVersion}`;
       getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
       websocket.send('getactive=1');
     });
@@ -1132,16 +1133,19 @@ function abortHandler(event) {
 /** UPDATE **/
 /** ONLINE UPDATE CHECKER **/
 function initOnlineUpdateChecker() {
-  if (onlineupdatecapable) {
+  if (onlineUpdCapable) {
     getId('check_online_update').classList.remove('hidden');
     getId('check_online_update').value = "Check for Online Update";
     getId('check_online_update').disabled = false;
+    getId("update_url").href = "/update.html";
     console.log("Online Update is available");
   } else {
     getId('check_online_update').classList.add('hidden');
+    getId("update_url").href = updateUrl;
     console.log("Online Update not available");
   }
 }
+
 function checkOnlineUpdate(button) {
   if (button.value === "Check for Online Update") {
     console.log("Checking for online update");

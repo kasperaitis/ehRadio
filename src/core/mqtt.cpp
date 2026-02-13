@@ -1,5 +1,5 @@
 #include "options.h"
-#ifdef MQTT_ENABLE
+#ifdef MQTT_ENABLE // ============================== Everything ignored if not defined ==============================
 
 #include "config.h"
 #include "mqtt.h"
@@ -20,12 +20,12 @@ void mqttInit() {
   mqttClient.onConnect(onMqttConnect);
   mqttClient.onDisconnect(onMqttDisconnect);
   mqttClient.onMessage(onMqttMessage);
-  if(strlen(config.store.mqttuser)>0) mqttClient.setCredentials(config.store.mqttuser, config.store.mqttpass);
+  if (strlen(config.store.mqttuser)>0) mqttClient.setCredentials(config.store.mqttuser, config.store.mqttpass);
   mqttClient.setServer(config.store.mqtthost, config.store.mqttport);
   connectToMqtt();
 }
 
-void zeroBuffer(){ memset(topic, 0, sizeof(topic)); memset(status, 0, sizeof(status)); }
+void zeroBuffer() { memset(topic, 0, sizeof(topic)); memset(status, 0, sizeof(status)); }
 
 void onMqttConnect(bool sessionPresent) {
   zeroBuffer();
@@ -37,7 +37,7 @@ void onMqttConnect(bool sessionPresent) {
 }
 
 void mqttPublishStatus() {
-  if(mqttClient.connected()){
+  if (mqttClient.connected()) {
     zeroBuffer();
     sprintf(topic, "%s%s", config.store.mqtttopic, "status");
     char name[BUFLEN/2];
@@ -50,7 +50,7 @@ void mqttPublishStatus() {
 }
 
 void mqttPublishPlaylist() {
-  if(mqttClient.connected()){
+  if (mqttClient.connected()) {
     zeroBuffer();
     sprintf(topic, "%s%s", config.store.mqtttopic, "playlist");
     sprintf(status, "http://%s%s", WiFi.localIP().toString().c_str(), PLAYLIST_PATH);
@@ -58,8 +58,8 @@ void mqttPublishPlaylist() {
   }
 }
 
-void mqttPublishVolume(){
-  if(mqttClient.connected()){
+void mqttPublishVolume() {
+  if (mqttClient.connected()) {
     zeroBuffer();
     char vol[5];
     memset(vol, 0, 5);
@@ -77,7 +77,7 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
 
 void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
   if (len == 0) return;
-  if(len<20){
+  if (len<20) {
     char buf[len+1];
     strncpy(buf, payload, len);
     buf[len]='\0';
@@ -109,29 +109,29 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
       return;
     }
     int volume;
-    if ( sscanf(buf, "vol %d", &volume) == 1) {
+    if (sscanf(buf, "vol %d", &volume) == 1) {
       if (volume < 0) volume = 0;
       if (volume > 254) volume = 254;
       player.setVol(volume);
       return;
     }
     int sb;
-    if (sscanf(buf, "play %d", &sb) == 1 ) {
+    if (sscanf(buf, "play %d", &sb) == 1) {
       if (sb < 1) sb = 1;
       uint16_t cs = config.playlistLength();
       if (sb >= cs) sb = cs;
       player.sendCommand({PR_PLAY, (uint16_t)sb});
       return;
     }
-  }else{
-    if(len>MQTT_BURL_SIZE) return;
+  } else {
+    if (len>MQTT_BURL_SIZE) return;
     strncpy(player.burl, payload, len);
     player.burl[len]='\0';
     player.sendCommand({PR_BURL, 0});
     return;
   }
-  /*if (strstr(buf, "http")==0){
-    if(len+1>sizeof(player.burl)) return;
+  /*if (strstr(buf, "http")==0) {
+    if (len+1>sizeof(player.burl)) return;
     strlcpy(player.burl, payload, len+1);
     return;
   }*/
