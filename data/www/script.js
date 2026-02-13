@@ -935,6 +935,7 @@ function continueLoading(mode){
         getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
         websocket.send('getactive=1');
         classEach("reset", function(el){ el.innerHTML='<svg viewBox="0 0 16 16" class="fill"><path d="M8 3v5a36.973 36.973 0 0 1-2.324-1.166A44.09 44.09 0 0 1 3.417 5.5a52.149 52.149 0 0 1 2.26-1.32A43.18 43.18 0 0 1 8 3z"/><path d="M7 5v1h4.5C12.894 6 14 7.106 14 8.5S12.894 11 11.5 11H1v1h10.5c1.93 0 3.5-1.57 3.5-3.5S13.43 5 11.5 5h-4z"/></svg>'; });
+        initDangerZone();
       });
     }
     if(pathname=='/update.html'){
@@ -984,6 +985,9 @@ function continueLoading(mode){
     if(target.classList.contains("navitem")) { getId(target.dataset.target).scrollIntoView({ behavior: 'smooth' }); return; }
     if(target.classList.contains("reset")) { websocket.send("reset="+target.dataset.name); return; }
     if(target.classList.contains("done")) { window.location.href=`http://${hostname}/`; return; }
+    if(target.id === 'dangerzone_sw1') { toggleDangerZoneSwitch('dangerzone_sw1'); event.preventDefault(); event.stopPropagation(); return; }
+    if(target.id === 'dangerzone_sw2') { toggleDangerZoneSwitch('dangerzone_sw2'); event.preventDefault(); event.stopPropagation(); return; }
+    if(target.id === 'dangerzone_sw3') { toggleDangerZoneSwitch('dangerzone_sw3'); event.preventDefault(); event.stopPropagation(); return; }
     let command = target.dataset.command;
     if (command){
       if(target.classList.contains("local")){
@@ -1012,6 +1016,9 @@ function continueLoading(mode){
           case "applymqtt": applyMQTT(); break;
           case "wifiexport": window.open(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime()); break;
           case "wifiupload": submitWiFi(); break;
+          case "confirm-reboot": showDangerConfirm('dz_reboot'); break;
+          case "confirm-format": showDangerConfirm('dz_format'); break;
+          case "confirm-reset": showDangerConfirm('dz_reset'); break;
           case "reboot": websocket.send("reboot=1"); rebootSystem('Rebooting...'); break;
           case "format": websocket.send("format=1"); rebootSystem('Format SPIFFS. Rebooting...'); break;
           case "reset":  websocket.send("reset=1");  rebootSystem('Reset settings. Rebooting...'); break;
@@ -1054,6 +1061,7 @@ function continueLoading(mode){
     }
   });
 }
+
 /** UPDATE **/
 var uploadWithError = false;
 function doUpdate(el) {
@@ -1130,7 +1138,7 @@ function abortHandler(event) {
   getId("status").innerHTML = "Upload Aborted";
   getId('check_online_update').classList.remove('hidden');
 }
-/** UPDATE **/
+
 /** ONLINE UPDATE CHECKER **/
 function initOnlineUpdateChecker() {
   if (onlineUpdCapable) {
@@ -1200,7 +1208,7 @@ function checkOnlineUpdate(button) {
       });
   }
 }
-/** ONLINE UPDATE CHECKER **/
+
 /** TIMEZONES **/
 let timezoneData = null;
 async function loadTimezones() {
@@ -1234,4 +1242,67 @@ function populateTZDropdown(zones) {
     input.value = select.value;
   });
 }
-/** TIMEZONES **/
+
+/** TOOLS AKA DANGERZONE **/
+function showDangerConfirm(buttonId) {
+  hideDangerConfirm();
+  const btn = getId(buttonId);
+  if(btn) btn.classList.remove('hidden');
+}
+
+function hideDangerConfirm() {
+  const btns = ['dz_reboot', 'dz_format', 'dz_reset'];
+  btns.forEach(id => {
+    const btn = getId(id);
+    if(btn) btn.classList.add('hidden');
+  });
+}
+
+function checkDangerZone() {
+  const sw1 = getId('dangerzone_sw1');
+  const sw2 = getId('dangerzone_sw2');
+  const sw3 = getId('dangerzone_sw3');
+  if(!sw1 || !sw2 || !sw3) return;
+  
+  const allChecked = sw1.classList.contains('checked') && 
+                     sw2.classList.contains('checked') && 
+                     sw3.classList.contains('checked');
+  
+  const dangerzone = getId('dangerzone');
+  const txt = getId('dangerzone_txt');
+  
+  if(allChecked) {
+    if(dangerzone) dangerzone.classList.remove('hidden');
+    if(txt) {
+      const replacement = txt.getAttribute('replacement');
+      if(replacement) txt.textContent = replacement;
+    }
+  } else {
+    if(dangerzone) dangerzone.classList.add('hidden');
+    if(txt) txt.textContent = 'Turn on all switches to unlock';
+  }
+}
+
+function toggleDangerZoneSwitch(switchId) {
+  const sw = getId(switchId);
+  if(!sw) return;
+  sw.classList.toggle('checked');
+  hideDangerConfirm();
+  checkDangerZone();
+}
+
+function initDangerZone() {
+  const switches = ['dangerzone_sw1', 'dangerzone_sw2', 'dangerzone_sw3'];
+  switches.forEach(id => {
+    const sw = getId(id);
+    if(sw) sw.classList.remove('checked');
+  });
+  
+  const txt = getId('dangerzone_txt');
+  if(txt) txt.textContent = 'Turn on all switches to unlock';
+  
+  const dangerzone = getId('dangerzone');
+  if(dangerzone) dangerzone.classList.add('hidden');
+  
+  hideDangerConfirm();
+}

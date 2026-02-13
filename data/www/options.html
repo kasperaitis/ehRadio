@@ -104,7 +104,7 @@
               <input type="range" id="con" data-slaveid="slcontrastinfo" data-command="contrast" min="0" max="100" value="55">
             </div>
           </div>
-          <div class="row-title"><span style="margin-top:1em;">Screensaver</span></div>
+          <div class="row-title"><span>Screensaver</span></div>
           <div class="flex-row group group_tft group_oled group_nextion hidden">
             <div class="inputwrap pad">
               <span class="inputtitle">While Not Playing</span>
@@ -333,12 +333,55 @@
 
         <a name="tools"></a>
         <section class="group group_system hidden" id="group_tools">
-        <div class="title"><span>Tools</span></div>
-        <div class="flex-row center">
-          <div class="fb hl tool local" data-command="reboot" title="Reboot ESP">reboot</div>
-          <div class="fb tool local" data-command="format" title="Format SPIFFS">format</div>
-          <div class="fb tool local" data-command="reset" title="Reset settings">reset</div>
+        <div class="title"><span>Danger Zone</span></div>
+        <div class="flex-row">
+          <div class="inputwrap center">
+            <span class="inputtitle" id="dangerzone_txt" replacement="Be Careful!">Turn on all switches to unlock</span>
+          </div>
         </div>
+        <div class="flex-row">
+          <div class="inputwrap center">
+            <div class="checkbox" id="dangerzone_sw1"><div class="knob"></div></div>
+          </div>
+          <div class="inputwrap center">
+            <div class="checkbox" id="dangerzone_sw2"><div class="knob"></div></div>
+          </div>
+          <div class="inputwrap center">
+            <div class="checkbox" id="dangerzone_sw3"><div class="knob"></div></div>
+          </div>
+        </div>
+
+        <div class="flex-row center hidden" id="dangerzone">
+          <div class="inputwrap center">
+            <div class="fb tool local" data-command="confirm-reboot" title="Reboot ESP">Reboot</div>
+          </div>
+          <div class="inputwrap center">
+            <div class="fb tool local" data-command="confirm-format" title="Format SPIFFS">Format</div>
+          </div>
+          <div class="inputwrap center">
+            <div class="fb tool local" data-command="confirm-reset" title="Reset settings">Reset</div>
+          </div>
+        </div>
+        
+        <div class="flex-row center hidden" id="dz_reboot">
+          <div class="inputwrap center">
+            <span class="inputtitle">This will reboot the device.</span>
+            <div class="fb tool local" data-command="reboot">OK</div>
+          </div>
+        </div>
+        <div class="flex-row center hidden" id="dz_format">
+          <div class="inputwrap center">
+            <span class="inputtitle">This will delete all files, including playlists and wi-fi data.</span>
+            <div class="fb tool local" data-command="format">OK</div>
+          </div>
+        </div>
+        <div class="flex-row center hidden" id="dz_reset">
+          <div class="inputwrap center">
+            <span class="inputtitle">This will reset all settings to defaults.</span>
+            <div class="fb tool local" data-command="reset">OK</div>
+          </div>
+        </div>
+
         </section>
         <div class="hr">&nbsp;</div>
       </div>

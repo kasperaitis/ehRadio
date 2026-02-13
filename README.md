@@ -36,6 +36,7 @@ Documentation will be improved at some point...
   - Broken search fixed to work with `https` radio-browser servers (using names instead of IPs)
     - fallback to `https://all.api.radio-browser.info` added
     - as part of this, ESPFileUpdater was updated to handle chunked transfers
+  - Settings: Tools changed to Danger Zone - with some added warnings
   - SPIFFS clean-up added (after update, unwanted files are purged)
     - added because online flasher does not erase SPIFFS
   - Minor improvements to CSV importers (can handle files that exceed the usual fields)
