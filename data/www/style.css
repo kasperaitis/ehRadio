@@ -193,18 +193,20 @@ h2.searchtitle { padding-top: 0px; line-height: 30px; margin: 0 }
 .search-row { display: flex; align-items: center; gap: 2px; }
 .search-row .searchtextinput { flex-grow: 1; }
 .search-row .searchtextinput.select { flex-grow: 0; }
-.quicksearches { display: flex; justify-content: space-evenly; width: 100%; padding: 0 2px; margin: 0 0 4px 0; box-sizing: border-box; }
-#pageNav { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 2px; margin: 0 0 4px 0; }
 table, tr, td { margin: 0; padding: 0; }
 .searchbutton { padding: 4px; font-size: 18px; border: var(--accent-color) 2px solid; font-weight: normal; box-sizing: border-box; border-radius: 20px; cursor: pointer; text-align: center; min-width: 120px; text-transform: uppercase; color: var(--accent-color); background: var(--odd-bg-color); }
 .searchbutton:hover { background: var(--accent-dark); color: var(--accent-text-color); text-decoration: none; }
 .searchbutton:active { position: relative; top: 2px; }
+.quicksearches { display: flex; justify-content: space-evenly; width: 100%; padding: 0 2px; margin: 0 0 4px 0; box-sizing: border-box; }
 .quicksearchtable { width: 100%; padding: 0; margin: 0; text-align: center; border-spacing: 1px; }
 .quicksearch { text-transform: lowercase; cursor: pointer; color: var(--main-text-color); width: 100%; text-align: center; border: none; background-color: var(--main-bg-color); font-family: Times, "Times New Roman", serif; font-size: 16px; padding: 0px; margin: 0px; min-width: 80px; }
 .quicksearch:hover { text-decoration: underline; color: var(--accent-color); }
 .searchbutton.search.plus, .searchbutton.search.minus { margin-top: 0px; width: 22px; max-width: 22px; min-width: 22px; height: 22px; font-size: 22px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
 .searchbutton.search.plus svg, .searchbutton.search.minus svg { width: 16px; height: 16px; stroke: var(--accent-color); stroke-width: 4px; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .searchbutton.search.plus:hover svg, .searchbutton.search.minus:hover svg { stroke: var(--accent-text-color); }
+.sort-row { font-family: Times, "Times New Roman", serif; font-size: 16px; font-weight: bold; display: flex; justify-content: space-between; margin: 4px 0 4px 0; }
+.sort-row label { padding: 0 2px; margin: 0; cursor: pointer; }
+.sort-row input[type="radio"] { margin-right: 10px; cursor: pointer; }
 #searches .searchtextinput { margin: 0; width: 100%; box-sizing: border-box; background: var(--odd-bg-color); color: var(--accent-color); padding: 6px 6px; font-size: 16px; border: var(--input-border) 1px solid; font-weight: normal; box-sizing: border-box; border-radius: 4px; min-height: 32px; }
 #searches .searchtextinput.select { width: 150px; }
 table.stations { width: 100%; margin: 0; padding: 0; text-align: center; table-layout: fixed; border: none; border-collapse: collapse; }
@@ -217,7 +219,8 @@ table.stations td.name { width: auto; text-align: left; color: var(--accent-colo
 table.stations td.info { width: 85px; }
 table.stations td.info table { width: 100%; border: 1px dotted #707070; }
 table.stations td.info table td { border: none; }
-table.stations td.info table td.countrycode { text-align: center; }
+table.stations td.info table td.countrycode { text-align: left; }
+table.stations td.info table td.languagecode { text-align: right; }
 table.stations td.info table td.codec { text-align: left; }
 table.stations td.info table td.bitrate { text-align: right; }
 table.stations .searchbutton { max-width: 46px; min-width: 46px; height: 46px; text-align: center; display: flex; align-items: center; }
@@ -225,6 +228,7 @@ table.stations .searchbutton svg { stroke: var(--accent-color); stroke-width: 2p
 table.stations .searchbutton:hover svg { stroke: var(--accent-text-color); fill: none; fill: var(--accent-text-color); }
 table.stations .searchbutton.addtoplaylist { margin-left: auto; }
 table.stations .importantmessage { color: var(--accent-color) !important; font-size: 24px !important; font-style: italic !important; background: transparent !important; }
+#pageNav { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 2px; margin: 0 0 4px 0; }
 .searchbutton#prevSearchPageBtn { margin-left: 50px; }
 .searchbutton#nextSearchPageBtn { margin-right: 50px; }
 .searchbutton#prevSearchPageBtn, .searchbutton#nextSearchPageBtn { font-size: 26px; line-height: 0.75; padding-bottom: 6px; }

@@ -126,6 +126,10 @@ function setSearchButtonsDisabled(disabled) {
     searchdone.style.opacity = '1';
     searchdone.style.pointerEvents = 'auto';
   }
+  // Disable/enable sort order radio buttons
+  document.querySelectorAll('input[name="sortorder"]').forEach(radio => {
+    radio.disabled = disabled;
+  });
   // When re-enabling buttons, also update the state of the main search button
   if (!disabled) {
     updateSearchButtonState();
@@ -267,6 +271,14 @@ function loadLastSearchAndResults() {
 
     // Disable the 'add' button if all 3 rows are in use
     document.getElementById('addSearchRowBtn').disabled = (rowNum > 3);
+    
+    // Restore the sort order selection from history
+    const orderValue = params.get('order') || 'clickcount';
+    const orderRadio = document.querySelector(`input[name="sortorder"][value="${orderValue}"]`);
+    if (orderRadio) {
+      orderRadio.checked = true;
+    }
+    
     updateSearchPageDisplay();
   })
   .catch(error => {
@@ -394,13 +406,17 @@ function searchStations(isPageNav = false) {
   // record the time when this search starts
   searchStartTime = Date.now();
 
+  // Get selected sort order and determine reverse value
+  const selectedOrder = document.querySelector('input[name="sortorder"]:checked')?.value || 'clickcount';
+  const reverse = (selectedOrder === 'clickcount' || selectedOrder === 'votes') ? 'true' : 'false';
+
   // Build the full query string for the API using URLSearchParams for robustness
   const params = new URLSearchParams({
     hidebroken: 'true',
     limit: limit_per_page,
     offset: currentPage * limit_per_page,
-    order: 'name',
-    reverse: 'false'
+    order: selectedOrder,
+    reverse: reverse
   });
 
   for (const [type, value] of Object.entries(typeValueMap)) {
@@ -464,11 +480,12 @@ function populateSearchTable(data) {
         <td class="info">
           <table>
             <tr>
-              <td class="countrycode" colspan="2">${station.countrycode.length > 2 ? '?' : station.countrycode}</td>
+              <td class="countrycode">${!station.countrycode || station.countrycode.length > 2 ? '?' : station.countrycode.toUpperCase()}</td>
+              <td class="languagecode">${!station.languagecodes ? '?' : (station.languagecodes.length > 5 ? station.languagecodes.substring(0, 2).toLowerCase() + ',⋯' : station.languagecodes.toLowerCase())}</td>
             </tr>
             <tr>
-              <td class="codec">${station.codec.toUpperCase() === 'UNKNOWN' ? '?' : station.codec}</td>
-              <td class="bitrate">${station.bitrate === 0 ? '?' : station.bitrate + 'k'}</td>
+              <td class="codec">${!station.codec || station.codec.toUpperCase() === 'UNKNOWN' ? '?' : station.codec.toUpperCase()}</td>
+              <td class="bitrate">${!station.bitrate || station.bitrate === 0 ? '?' : station.bitrate + 'k'}</td>
             </tr>
           </table>
         </td>

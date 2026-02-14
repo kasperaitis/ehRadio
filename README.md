@@ -37,6 +37,7 @@ Documentation will be improved at some point...
     - fallback server added to defines:
       - `#define RADIO_BROWSER_SERVER "all.api.radio-browser.info"` added
     - as part of this, ESPFileUpdater was updated to handle chunked transfers
+    - sort options added (sort by clicks is the default instead of by name)
   - Send clicks to Radio Browser API
     - Delay before sending the click `#define RADIO_BROWSER_SEND_CLICK_DELAY 5000`
     - opt out with `#define RADIO_BROWSER_NO_SEND_CLICKS` in `myoptions.h`
@@ -48,6 +49,7 @@ Documentation will be improved at some point...
     - server side importer will be used to get playlists online *- not yet included*
   - Minor improvements to code
     - vars set to default value in `.h` file instead of in `.cpp`
+    - fixed `.h` framework headers to use `< >` instead of `" "`
     - pretty code - most `#if` & `#ifdef` blocks now indented
     - most functions now included no-op instead of being blocked by `#ifdef`
   - Optimized declarations in src files

@@ -53,14 +53,13 @@
       </table>
     </div> <!-- end of quick searches -->
     <div id="searches">
-      <div id=sortRow" class="sort-row">
-      
-        <button class="sortbutton search" id="clicks" title="Sort by click count">
-          <svg viewBox="0 0 24 24" class="stroke">
-            <path d="M5 12h7m7 0h-7m0 0V5m0 7v7" />
-          </svg>
-        </button>      
-      
+      <div class="sort-row">
+        Sort:
+        <label for="order_name"><input type="radio" id="order_name" name="sortorder" value="name" />Name</label>
+        <label for="order_clickcount"><input type="radio" id="order_clickcount" name="sortorder" value="clickcount" checked />Clicks</label>
+        <label for="order_votes"><input type="radio" id="order_votes" name="sortorder" value="votes" />Votes</label>
+        <label for="order_country"><input type="radio" id="order_country" name="sortorder" value="country" />Country</label>
+        <label for="order_language"><input type="radio" id="order_language" name="sortorder" value="language" />Language</label>
       </div>
       <div id="searchRow1" class="search-row">
         <button class="searchbutton search plus" id="addSearchRowBtn" title="Add search criteria">
