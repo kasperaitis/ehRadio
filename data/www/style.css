@@ -204,7 +204,7 @@ table, tr, td { margin: 0; padding: 0; }
 .searchbutton.search.plus, .searchbutton.search.minus { margin-top: 0px; width: 22px; max-width: 22px; min-width: 22px; height: 22px; font-size: 22px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
 .searchbutton.search.plus svg, .searchbutton.search.minus svg { width: 16px; height: 16px; stroke: var(--accent-color); stroke-width: 4px; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .searchbutton.search.plus:hover svg, .searchbutton.search.minus:hover svg { stroke: var(--accent-text-color); }
-.sort-row { font-family: Times, "Times New Roman", serif; font-size: 16px; font-weight: bold; display: flex; justify-content: space-between; margin: 4px 0 4px 0; }
+.sort-row { font-family: Times, "Times New Roman", serif; font-size: 16px; font-weight: bold; display: flex; justify-content: space-between; width: 100%; margin: 4px 0 4px 0; }
 .sort-row label { padding: 0 2px; margin: 0; cursor: pointer; }
 .sort-row input[type="radio"] { margin-right: 10px; cursor: pointer; }
 #searches .searchtextinput { margin: 0; width: 100%; box-sizing: border-box; background: var(--odd-bg-color); color: var(--accent-color); padding: 6px 6px; font-size: 16px; border: var(--input-border) 1px solid; font-weight: normal; box-sizing: border-box; border-radius: 4px; min-height: 32px; }
@@ -339,6 +339,8 @@ table.stations .importantmessage { color: var(--accent-color) !important; font-s
   .quicksearch { min-width: 1px; }
   .searchbutton { min-width: 80px; font-size: 14px; }
   .searchbutton#prevSearchPageBtn, .searchbutton#nextSearchPageBtn { min-width: 60px; }
+  .sort-row { font-size: 13px; }
+  .sort-row input[type="radio"] { margin-right: 0; }
   table.stations td.preview, td.add { width: 45px; }
   table.stations td.info { font-size: 14px; width: 70px; }
   table.stations .searchbutton { max-width: 35px; min-width: 35px; height: 35px; }
@@ -359,6 +361,8 @@ table.stations .importantmessage { color: var(--accent-color) !important; font-s
   .plename { flex: 5 1 0!important; }
   .pleurl { flex: 3 1 0!important; }
   .quicksearchtable { border-spacing: 2px; }
+  .sort-row { font-size: 16px; }
+  .sort-row input[type="radio"] { margin-right: 10px; }
   #irremote { zoom: 105%; -moz-transform: scale(1.05); }
 }
 @media screen and (min-width: 900px) and (max-width: 1200px) {
@@ -368,6 +372,8 @@ table.stations .importantmessage { color: var(--accent-color) !important; font-s
   .plename { flex: 7 1 0!important; }
   .pleurl { flex: 4 1 0!important; }
   .quicksearchtable { border-spacing: 2px; }
+  .sort-row { font-size: 16px; }
+  .sort-row input[type="radio"] { margin-right: 10px; }
   #irremote { zoom: 110%; -moz-transform: scale(1.10); }
 }
 /* iPad (all models) */

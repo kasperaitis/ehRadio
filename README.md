@@ -22,7 +22,7 @@ Documentation will be improved at some point...
 
 ## ehRadio Version history
 
-### 2026.02.13...
+### 2026.02.15...?
   - WebUI greatly improved for mobile and tablet devices
     - automatic checking for new version availability
     - .css files improved
