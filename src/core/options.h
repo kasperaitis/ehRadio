@@ -603,6 +603,28 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   #define RB_SERVERS_CHECKTIME "1 day"
 #endif
 
+/*  SOURCE OF CURATED PLAYLISTS   */
+#ifndef CURATED_LISTS
+  #define CURATED_LISTS "Trip5's webstations"
+  #ifndef CURATED_LISTS_LINK
+    #define CURATED_LISTS_LINK "https://github.com/trip5/webstations"
+  #endif
+  #ifndef CURATED_LISTS_URL
+    #define CURATED_LISTS_URL "https://github.com/trip5/webstations/releases/latest/download/"
+  #endif
+  #ifndef CURATED_LISTS_INDEX
+    #define CURATED_LISTS_INDEX "index.json"
+  #endif
+#else
+  #if !defined(CURATED_LISTS_LINK) || !defined(CURATED_LISTS_URL) || !defined(CURATED_LISTS_INDEX)
+    #undef CURATED_LISTS
+    #undef CURATED_LISTS_LINK
+    #undef CURATED_LISTS_URL
+    #undef CURATED_LISTS_INDEX
+  #endif
+#endif
+
+
 /*    RADIO BROWSER API SERVER    */
 /* Used as fallback for search and primary for sending clicks */
 #ifndef RADIO_BROWSER_SERVER
@@ -666,6 +688,9 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #endif
 #ifndef WIFI_SCAN_BEST_RSSI
   #define WIFI_SCAN_BEST_RSSI false
+#endif
+#ifndef AUDIO_PREVIEW_IN_BROWSER
+  #define AUDIO_PREVIEW_IN_BROWSER false
 #endif
 #ifndef SOFTAP_REBOOT_DELAY
   #define SOFTAP_REBOOT_DELAY 0

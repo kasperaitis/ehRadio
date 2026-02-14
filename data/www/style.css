@@ -187,7 +187,11 @@ section .reset:hover svg.fill{ fill: var(--main-bg-color); }
 .tzoption { margin-top: 1em; }
 
 /* SEARCH */
-h2.searchtitle { padding-top: 0px; line-height: 30px; margin: 0 }
+#searchheader { width: 100%; position: relative; margin-bottom: 8px; min-height: 32px; }
+#searchheader .searchtitle1 { margin: 0; padding: 0 8px; font-size: 26px; font-weight: bold; text-align: center; position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: max-content; right: 0; z-index: 2; background: transparent; }
+#searchheader .searchtitle2 { margin: 0; padding: 7.5 0px 0px 8px; font-size: 13px; font-weight: bold; text-align: right; float: right; display: block; z-index: 1; background: transparent; }
+#searchheader .searchtitle2 a { cursor: pointer; color: var(--main-text-color); }
+#searchheader .searchtitle2 a:hover { color: var(--accent-color); text-decoration: underline; }
 #searchcontent { display: flex; max-width: 580px; margin: 0 auto; flex-direction: column; align-items: center; padding: 4px; height: 100%; box-sizing: border-box; position: relative; padding-top: 2px; padding-bottom: 2px; }
 #searches { display: flex; flex-direction: column; width: 100%; gap: 4px; margin-bottom: 4px; }
 .search-row { display: flex; align-items: center; gap: 2px; }
@@ -236,6 +240,8 @@ table.stations .importantmessage { color: var(--accent-color) !important; font-s
 .searchwrap::-webkit-scrollbar { width: 5px; height: 8px; background-color: var(--main-bg-color); }
 .searchwrap { scrollbar-color: var(--accent-dark) var(--main-bg-color); scrollbar-width: thin; }
 .searchwrap::-webkit-scrollbar-thumb { background: var(--odd-bg-color); }
+
+/* CURATED */
 
 /* UPDATE */
 #uploaderwrap { max-width: 100%; width: 100%; padding-top: 25px; display: flex; flex-direction: column; align-items: center; flex: 1; margin: 0 auto; }

@@ -9,6 +9,14 @@ let searchStartTime = 0;  // track when a search is initiated
 
 window.addEventListener('load', onSearchLoad);
 
+// Unhide 'searchtitle2' if curatedLists is true (for curated.html)
+window.addEventListener('DOMContentLoaded', function() {
+  if (typeof curatedLists !== 'undefined' && curatedLists === true) {
+    var el = document.querySelector('.searchtitle2');
+    if (el) el.classList.remove('hidden');
+  }
+});
+
 function onSearchLoad(event) {
   // Centralized event listeners
   document.getElementById('searchdone').addEventListener('click', () => { window.location.href = '/'; });

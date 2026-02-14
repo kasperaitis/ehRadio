@@ -318,6 +318,7 @@
   #define WEATHER_LON     "-63.5724"      /* longitude */
   #define HIDE_WEATHER
   #define MQTT_ENABLE
+  #define PLAYLIST_DEFAULT_URL "https://github.com/trip5/webstations/releases/latest/download/trip5-radio-playlist.csv"
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define SMART_START true
   #define SHOW_AUDIO_INFO true
@@ -350,7 +351,9 @@
 
 //#define ESPFILEUPDATER_DEBUG
 
-//#define RADIO_BROWSER_NO_SEND_CLICKS
+//#define RADIO_BROWSER_SEND_CLICKS false
+
+//#define CURATED_LISTS false
 
 
 /* --- URL SOURCE OVERRIDE --- */

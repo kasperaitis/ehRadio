@@ -358,10 +358,10 @@ void NetServer::processQueue() {
         }
       //case STARTUP:       sprintf (wsbuf, "{\"command\":\"startup\", \"payload\": {\"mode\":\"%s\", \"version\":\"%s\"}}", network.status == CONNECTED ? "player" : "ap", RADIOVERSION); break;
       case GETINDEX:      {
-          requestOnChange(STATION, clientId); 
-          requestOnChange(TITLE, clientId); 
-          requestOnChange(VOLUME, clientId); 
-          requestOnChange(EQUALIZER, clientId); 
+          requestOnChange(STATION, clientId);
+          requestOnChange(TITLE, clientId);
+          requestOnChange(VOLUME, clientId);
+          requestOnChange(EQUALIZER, clientId);
           requestOnChange(BALANCE, clientId); 
           requestOnChange(BITRATE, clientId); 
           requestOnChange(MODE, clientId); 
@@ -371,11 +371,12 @@ void NetServer::processQueue() {
           return; 
           break;
         }
-      case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"wifiscan\":%d,\"softr\":%d,\"vut\":%d,\"mdns\":\"%s\"}", 
+      case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"wifiscan\":%d,,\"inbrowser\":%d,\"softr\":%d,\"vut\":%d,\"mdns\":\"%s\"}", 
                                   config.store.smartstart,
                                   config.store.audioinfo,
                                   config.store.vumeter,
                                   config.store.wifiscanbest,
+                                  config.store.audioinbrowser,
                                   config.store.softapdelay,
                                   config.vuThreshold,
                                   config.store.mdnsname);
@@ -402,13 +403,13 @@ void NetServer::processQueue() {
                                   config.store.tz_name,
                                   config.store.tzposix,
                                   config.store.sntp1,
-                                  config.store.sntp2); 
+                                  config.store.sntp2);
                                   break;
       case GETWEATHER:    sprintf (wsbuf, "{\"wen\":%d,\"wlat\":\"%s\",\"wlon\":\"%s\",\"wkey\":\"%s\"}",
                                   config.store.showweather,
                                   config.store.weatherlat,
                                   config.store.weatherlon,
-                                  config.store.weatherkey); 
+                                  config.store.weatherkey);
                                   break;
       case GETMQTT:       sprintf (wsbuf, "{\"mqttenable\":%d,\"mqtthost\":\"%s\",\"mqttport\":\"%d\",\"mqttuser\":\"%s\",\"mqttpass\":\"%s\",\"mqtttopic\":\"%s\"}",
                                   config.store.mqttenable,
@@ -416,13 +417,13 @@ void NetServer::processQueue() {
                                   config.store.mqttport,
                                   config.store.mqttuser,
                                   config.store.mqttpass,
-                                  config.store.mqtttopic); 
+                                  config.store.mqtttopic);
                                   break;
       case GETCONTROLS:   sprintf (wsbuf, "{\"vols\":%d,\"enca\":%d,\"irtl\":%d,\"skipup\":%d}",
                                   config.store.volsteps,
                                   config.store.encacc,
                                   config.store.irtlp,
-                                  config.store.skipPlaylistUpDown); 
+                                  config.store.skipPlaylistUpDown);
                                   break;
       case DSPON:         sprintf (wsbuf, "{\"dspontrue\":%d}", 1); break;
       case STATION:       requestOnChange(STATIONNAME, clientId); requestOnChange(ITEM, clientId); break;
@@ -1335,24 +1336,54 @@ void handleNotFound(AsyncWebServerRequest * request) {
   }
   if (request->url() == "/variables.js") {
     char varjsbuf[BUFLEN*2];
+    char escapedRadioVersion[BUFLEN];
+    config.escapeQuotes(RADIOVERSION, escapedRadioVersion, sizeof(escapedRadioVersion));
+    char escapedGithubUrl[BUFLEN];
+    config.escapeQuotes(GITHUBURL, escapedGithubUrl, sizeof(escapedGithubUrl));
     snprintf(varjsbuf, sizeof(varjsbuf),
       "var radioVersion='%s';\n"
       "var formAction='%s';\n"
       "var playMode='%s';\n"
+      "var previewMode='%s';\n",
       "var onlineUpdCapable=%s;\n"
       "var newVerAvailable=%s;\n"
       "var updateUrl='%s';\n",
-      RADIOVERSION,
+      escapedRadioVersion,
       (network.status == CONNECTED && config.wwwFilesExist) ? "webboard" : "",
       (network.status == CONNECTED) ? "player" : "ap",
+      (config.store.audioinbrowser) ? "browser" : "speaker",
       #ifdef UPDATEURL
         "true",
       #else
         "false",
       #endif
       (netserver.newVersionAvailable) ? "true" : "false",
-      GITHUBURL
+      escapedGithubUrl
    );
+    request->send(200, "application/javascript", varjsbuf);
+    return;
+  }
+  if (request->url() == "/curated_variables.js") {
+    char varjsbuf[BUFLEN];
+    #ifdef CURATED_LISTS
+      char escapedName[BUFLEN];
+      config.escapeQuotes(CURATED_LISTS, escapedName, sizeof(escapedName));
+      char escapedLink[BUFLEN];
+      config.escapeQuotes(CURATED_LISTS_LINK, escapedLink, sizeof(escapedLink));
+      snprintf(varjsbuf, sizeof(varjsbuf),
+        "var curatedLists=true;\n"
+        "var curatedName=\"%s\";\n"
+        "var curatedLink=\"%s\";\n",
+        escapedName,
+        escapedLink
+      );
+    #else
+      snprintf(varjsbuf, sizeof(varjsbuf),
+        "var curatedLists=false;\n"
+        "var curatedName=\"\";\n"
+        "var curatedLink=\"\";\n"
+      );
+    #endif
     request->send(200, "application/javascript", varjsbuf);
     return;
   }
