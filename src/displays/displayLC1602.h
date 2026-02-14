@@ -1,7 +1,7 @@
 #ifndef displayLC1602_h
 #define displayLC1602_h
 
-#include "Arduino.h"
+#include <Arduino.h>
 
 #define DSP_NOT_FLIPPED
 

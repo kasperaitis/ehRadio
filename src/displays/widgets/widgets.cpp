@@ -1,7 +1,7 @@
 #include "../../core/options.h"
 #if DSP_MODEL!=DSP_DUMMY
 #include "../dspcore.h"
-#include "Arduino.h"
+#include <Arduino.h>
 #include "widgets.h"
 #include "../../core/player.h"    //  for VU widget
 #include "../../core/network.h"   //  for Clock widget

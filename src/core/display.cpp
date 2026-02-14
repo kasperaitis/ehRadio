@@ -1,8 +1,8 @@
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Ticker.h>
 #include "options.h"
-#include "WiFi.h"
-#include "time.h"
+#include <WiFi.h>
+#include <time.h>
 #include "config.h"
 #include "display.h"
 #include "player.h"

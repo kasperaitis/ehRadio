@@ -3,7 +3,7 @@
 
 #include "config.h"
 #include "mqtt.h"
-#include "WiFi.h"
+#include <WiFi.h>
 #include "player.h"
 
 AsyncMqttClient mqttClient;

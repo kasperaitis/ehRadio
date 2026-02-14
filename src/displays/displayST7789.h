@@ -1,7 +1,7 @@
 #ifndef displayST7789_h
 #define displayST7789_h
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
 

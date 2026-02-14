@@ -1,7 +1,7 @@
 #ifndef displayN5110_h
 #define displayN5110_h
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
 #include "fonts/TinyFont5.h"

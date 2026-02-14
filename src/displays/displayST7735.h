@@ -1,7 +1,7 @@
 #ifndef displayST7735_h
 #define displayST7735_h
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7735.h>
 #include "fonts/bootlogo62x40.h"

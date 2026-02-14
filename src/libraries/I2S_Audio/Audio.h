@@ -9,7 +9,7 @@
  */
 #if I2S_DOUT!=255
 
-#include "esp_arduino_version.h"
+#include <esp_arduino_version.h>
 
 #pragma once
 #pragma GCC optimize ("Ofast")

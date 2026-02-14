@@ -1,6 +1,6 @@
 #include "options.h"
 #if (TS_MODEL!=TS_MODEL_UNDEFINED) && (DSP_MODEL!=DSP_DUMMY)
-#include "Arduino.h"
+#include <Arduino.h>
 #include "touchscreen.h"
 #include "config.h"
 #include "controls.h"

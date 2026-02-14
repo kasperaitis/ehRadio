@@ -1,7 +1,7 @@
 #ifndef config_h
 #define config_h
 #pragma once
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Ticker.h>
 #include <SPI.h>
 #include <SPIFFS.h>

@@ -9,30 +9,30 @@
 #ifndef _vs1053_ext
 #define _vs1053_ext
 
-#include "esp_arduino_version.h"
+#include <esp_arduino_version.h>
 
 #pragma once
 //#pragma GCC optimize ("Ofast")
 #include <vector>
-#include "Arduino.h"
+#include <Arduino.h>
 #include "libb64/cencode.h"
 //#include <esp32-hal-log.h>
-#include "SPI.h"
+#include <SPI.h>
 #include <WiFi.h>
-#include "WiFiClient.h"
-#include "WiFiClientSecure.h"
+#include <WiFiClient.h>
+#include <WiFiClientSecure.h>
 #include <atomic>
 #include <codecvt>
 #include <locale>
 
-#include "SD.h"
-#include "SD_MMC.h"
-#include "SPIFFS.h"
-#include "FS.h"
-#include "FFat.h"
+#include <SD.h>
+#include <SD_MMC.h>
+#include <SPIFFS.h>
+#include <FS.h>
+#include <FFat.h>
 
 #if ESP_IDF_VERSION_MAJOR >= 5
-    #include "driver/gpio.h"
+    #include <driver/gpio.h>
 #endif
 
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)

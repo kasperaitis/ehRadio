@@ -1,5 +1,5 @@
-#include "Arduino.h"
-#include "esp_system.h"
+#include <Arduino.h>
+#include <esp_system.h>
 
 #include "core/options.h"
 
