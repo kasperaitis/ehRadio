@@ -988,10 +988,12 @@ void launchPlaybackTask(const String& url, const String& name) {
     client.setInsecure();
     HTTPClient http;
     http.begin(client, url);
+    http.setTimeout(10000);  // 10 second timeout for server response
     http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
     http.addHeader("User-Agent", ESPFILEUPDATER_USERAGENT);
     int httpCode = http.GET();
     if (httpCode != HTTP_CODE_OK) {
+      Serial.printf("[RB Click] HTTP error %d\n", httpCode);
       http.end();
       return "";
     }
@@ -1002,7 +1004,15 @@ void launchPlaybackTask(const String& url, const String& name) {
     bool inValue = false;
     bool foundKey = false;
     bool isStringValue = false;
+    unsigned long loopStart = millis();
+    const unsigned long loopTimeout = 15000; // 15 second max loop time
     while (stream->connected() || stream->available()) {
+      // Check for loop timeout
+      if (millis() - loopStart > loopTimeout) {
+        Serial.println("[RB Click] Stream parsing timeout");
+        http.end();
+        return "";
+      }
       if (!stream->available()) {
         delay(1);
         continue;
