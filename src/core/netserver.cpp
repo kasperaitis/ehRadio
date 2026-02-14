@@ -478,6 +478,9 @@ void NetServer::loop() {
     default:      break;
   }
   processQueue();
+  #ifdef RADIO_BROWSER_SEND_CLICKS
+    processRadioBrowserClick();
+  #endif
   #if USE_OTA
     ArduinoOTA.handle();
   #endif
@@ -797,13 +800,13 @@ void selectRadioBrowserServer() {
     }
 
     // Add fallback as last option after shuffled servers
-    rb_servers[count] = "all.api.radio-browser.info";
+    rb_servers[count] = RADIO_BROWSER_SERVER;
   }
   return;
 useHostname:
   // Use hostname instead of IP to ensure proper Host header and HTTPS support
-  Serial.println("[Search] Using fallback: all.api.radio-browser.info.");
-  rb_servers[0] = "all.api.radio-browser.info";
+  Serial.printf("[Search] Using fallback: %s.\n", RADIO_BROWSER_SERVER);
+  rb_servers[0] = RADIO_BROWSER_SERVER;
 }
 
 void vTaskSearchRadioBrowser(void *pvParameters) {
@@ -971,6 +974,162 @@ void launchPlaybackTask(const String& url, const String& name) {
   } else {
     Serial.println("[netserver] ERROR: Failed to allocate memory for playback task URL.");
   }
+}
+
+#ifdef RADIO_BROWSER_SEND_CLICKS
+  // Global state for click tracking
+  static unsigned long clickDelayStart = 0;
+  static bool clickDelayActive = false;
+  static char pendingClickUrl[256] = {0};
+  // Helper: Make HTTPS request and extract a specific JSON key's value
+  // Returns extracted value or empty string on failure
+  String streamJsonExtract(const String& url, const char* key) {
+    WiFiClientSecure client;
+    client.setInsecure();
+    HTTPClient http;
+    http.begin(client, url);
+    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+    http.addHeader("User-Agent", ESPFILEUPDATER_USERAGENT);
+    int httpCode = http.GET();
+    if (httpCode != HTTP_CODE_OK) {
+      http.end();
+      return "";
+    }
+    WiFiClient* stream = http.getStreamPtr();
+    String keyPattern = String("\"") + key + "\"";
+    String buffer;
+    String value;
+    bool inValue = false;
+    bool foundKey = false;
+    bool isStringValue = false;
+    while (stream->connected() || stream->available()) {
+      if (!stream->available()) {
+        delay(1);
+        continue;
+      }
+      char c = stream->read();
+      buffer += c;
+      if (buffer.length() > 512) buffer = buffer.substring(buffer.length() - 256); // Keep buffer manageable
+      if (!foundKey && c == ']') {
+        http.end();
+        return ""; // End of array without finding the key (empty array or key not present)
+      }
+      // Look for our key
+      if (!foundKey && buffer.indexOf(keyPattern) >= 0) {
+        foundKey = true;
+        buffer.clear();
+        continue;
+      }
+      // Once key is found, extract the value
+      if (foundKey && !inValue) {
+        if (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == ':') {
+          continue;
+        }
+        inValue = true;
+        if (c == '"') {
+          // String value (quoted)
+          isStringValue = true;
+          value.clear();
+        } else {
+          // Unquoted value (boolean, number, etc.)
+          isStringValue = false;
+          value = c;
+        }
+      } else if (foundKey && inValue) {
+        if (isStringValue) {
+          // Handle quoted string
+          if (c == '"') {
+            // Found closing quote - we're done
+            http.end();
+            return value;
+          } else if (c == '\\') {
+            // Handle escaped characters - read next char
+            if (stream->available()) {
+              value += (char)stream->read();
+            }
+          } else {
+            value += c;
+          }
+        } else {
+          // Handle unquoted value - stop at comma, closing brace, or whitespace
+          if (c == ',' || c == '}' || c == ']' || c == ' ' || c == '\t' || c == '\n' || c == '\r') {
+            http.end();
+            return value;
+          } else {
+            value += c;
+          }
+        }
+      }
+    }
+    http.end();
+    return value; // Return what we have, even if incomplete
+  }
+#endif //#ifdef RADIO_BROWSER_SEND_CLICKS
+
+void radioBrowserSendClick(const char* stationUrl) {
+  #ifdef RADIO_BROWSER_SEND_CLICKS
+    // If a new request comes in, cancel the pending one and start fresh
+    if (clickDelayActive) Serial.println("[RB Click] New station - canceling pending click");
+    // Store the URL and start the delay timer
+    strlcpy(pendingClickUrl, stationUrl, sizeof(pendingClickUrl));
+    clickDelayStart = millis();
+    clickDelayActive = true;
+    Serial.printf("[RB Click] Starting %dms delay for: %s\n", RADIO_BROWSER_SEND_CLICK_DELAY, stationUrl);
+  #endif //#ifdef RADIO_BROWSER_SEND_CLICKS
+}
+
+#ifdef RADIO_BROWSER_SEND_CLICKS
+  // Background task to register the click without blocking
+  void vTaskRadioBrowserClick(void* pvParameters) {
+    char* stationUrl = (char*)pvParameters;
+    // Step 1: Get station UUID from URL
+    String lookupUrl = String("https://") + RADIO_BROWSER_SERVER + "/json/stations/byurl?url=" + String(stationUrl);
+    Serial.printf("[RB Click] Looking up UUID: %s\n", lookupUrl.c_str());
+    String stationUuid = streamJsonExtract(lookupUrl, "stationuuid");
+    if (stationUuid.length() == 0) {
+      Serial.println("[RB Click] Station not found in Radio-Browser database (empty response or lookup failed)");
+      delete[] stationUrl;
+      vTaskDelete(NULL);
+      return;
+    }
+    // Step 2: Send the click
+    String clickUrl = String("https://") + RADIO_BROWSER_SERVER + "/json/url/" + stationUuid;
+    String okStatus = streamJsonExtract(clickUrl, "ok");
+    if (okStatus == "true") {
+      Serial.println("[RB Click] Click registered successfully");
+    } else {
+      Serial.println("[RB Click] Click not confirmed");
+    }
+    delete[] stationUrl;
+    vTaskDelete(NULL);
+  }
+#endif
+  
+void processRadioBrowserClick() {
+  #ifdef RADIO_BROWSER_SEND_CLICKS
+    if (!clickDelayActive) return;
+    // Check if delay has elapsed
+    if (millis() - clickDelayStart < RADIO_BROWSER_SEND_CLICK_DELAY) {
+      return; // Still waiting
+    }
+    clickDelayActive = false;
+    // Copy URL to pass to task (task will delete it)
+    char* urlCopy = new char[strlen(pendingClickUrl) + 1];
+    if (urlCopy == nullptr) {
+      Serial.println("[RB Click] Failed to allocate memory for task");
+      return;
+    }
+    strcpy(urlCopy, pendingClickUrl);
+    // Spawn the background task (allow multiple concurrent tasks for different stations)
+    xTaskCreate(
+      vTaskRadioBrowserClick,
+      "rbClickTask",
+      8192,  // Stack size - HTTPS needs more memory
+      (void*)urlCopy,
+      1,     // Priority
+      NULL   // No handle tracking - task cleans up itself
+    );
+  #endif // RADIO_BROWSER_SEND_CLICKS
 }
 
 void checkForOnlineUpdate() {

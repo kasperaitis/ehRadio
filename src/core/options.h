@@ -537,10 +537,10 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   #define SCREENSAVERSTARTUPDELAY 5
 #endif
 #ifndef HEADER_TIMEOUT
-  #define HEADER_TIMEOUT    5000
+  #define HEADER_TIMEOUT 5000
 #endif
 #ifndef USE_OTA
-  #define USE_OTA    false
+  #define USE_OTA false
 #endif
 
 #ifndef AP_SSID
@@ -552,7 +552,7 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   #endif
 #endif
 #ifndef BUFLEN
-  #define BUFLEN                    170
+  #define BUFLEN 170 // seems safe... a lot of multipliers exist in the code...
 #endif
 
 //#define OTA_PASS "myotapassword12345"
@@ -591,22 +591,41 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 
 /*      SOURCE OF JSON FILES      */
 #ifndef TIMEZONES_JSON_URL
-#define TIMEZONES_JSON_URL "https://raw.githubusercontent.com/trip5/timezones.json/master/timezones.json.gz"
+  #define TIMEZONES_JSON_URL "https://raw.githubusercontent.com/trip5/timezones.json/master/timezones.json.gz"
 #endif
 #ifndef TIMEZONES_JSON_CHECKTIME
-#define TIMEZONES_JSON_CHECKTIME "4 weeks"
+  #define TIMEZONES_JSON_CHECKTIME "4 weeks"
 #endif
 #ifndef RADIO_BROWSER_SERVERS_URL 
-#define RADIO_BROWSER_SERVERS_URL "https://all.api.radio-browser.info/json/servers"
+  #define RADIO_BROWSER_SERVERS_URL "https://all.api.radio-browser.info/json/servers"
 #endif
 #ifndef RB_SERVERS_CHECKTIME
-#define RB_SERVERS_CHECKTIME "1 day"
+  #define RB_SERVERS_CHECKTIME "1 day"
+#endif
+
+/*    RADIO BROWSER API SERVER    */
+/* Used as fallback for search and primary for sending clicks */
+#ifndef RADIO_BROWSER_SERVER
+  #define RADIO_BROWSER_SERVER "all.api.radio-browser.info"
+#endif
+
+/* OPT-OUT SENDING CLICKS TO RADIO-BROWSER API */
+#ifndef RADIO_BROWSER_NO_SEND_CLICKS
+  #ifndef RADIO_BROWSER_SEND_CLICKS
+    #define RADIO_BROWSER_SEND_CLICKS
+  #endif
+  #ifndef RADIO_BROWSER_SEND_CLICK_DELAY
+    #define RADIO_BROWSER_SEND_CLICK_DELAY 5000 // wait 5 seconds before sending the click
+  #endif
+#else
+  #ifdef RADIO_BROWSER_SEND_CLICKS
+    #undef RADIO_BROWSER_SEND_CLICKS
+  #endif
 #endif
 
 /*         USER DEFAULTS          */
 /*   sets defaults in config.h    */
 /*    still editable in WebUI     */
-
 #ifndef SOUND_VOLUME
   #define SOUND_VOLUME 12
 #elif (SOUND_VOLUME < 0) || (SOUND_VOLUME > 254)

@@ -34,8 +34,13 @@ Documentation will be improved at some point...
   - Smart start now always resumes last-played station (even if not playing when powered-off)
     - minor side-effects
   - Broken search fixed to work with `https` radio-browser servers (using names instead of IPs)
-    - fallback to `https://all.api.radio-browser.info` added
+    - fallback server added to defines:
+      - `#define RADIO_BROWSER_SERVER "all.api.radio-browser.info"` added
     - as part of this, ESPFileUpdater was updated to handle chunked transfers
+  - Send clicks to Radio Browser API
+    - Delay before sending the click `#define RADIO_BROWSER_SEND_CLICK_DELAY 5000`
+    - opt out with `#define RADIO_BROWSER_NO_SEND_CLICKS` in `myoptions.h`
+      - semi-functional [Search by url doesn't find resolved_url](https://gitlab.com/radiobrowser/radiobrowser-api-rust/-/issues?sort=created_date&state=opened&search=url&first_page_size=20&show=eyJpaWQiOiIyNDkiLCJmdWxsX3BhdGgiOiJyYWRpb2Jyb3dzZXIvcmFkaW9icm93c2VyLWFwaS1ydXN0IiwiaWQiOjE4NDA4NzM5MH0%3D)
   - Settings: Tools changed to Danger Zone - with some added warnings
   - SPIFFS clean-up added (after update, unwanted files are purged)
     - added because online flasher does not erase SPIFFS

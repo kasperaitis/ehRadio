@@ -124,6 +124,8 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 void selectRadioBrowserServer();
 void vTaskSearchRadioBrowser(void *pvParameters);
 void launchPlaybackTask(const String& url, const String& name);
+void radioBrowserSendClick(const char* stationUrl);
+void processRadioBrowserClick();
 void checkForOnlineUpdate();
 void startOnlineUpdate();
 void handleNotFound(AsyncWebServerRequest * request);

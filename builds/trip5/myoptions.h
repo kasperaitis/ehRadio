@@ -350,6 +350,8 @@
 
 //#define ESPFILEUPDATER_DEBUG
 
+//#define RADIO_BROWSER_NO_SEND_CLICKS
+
 
 /* --- URL SOURCE OVERRIDE --- */
 /* Only use this if you've decided to use your own Github as the source of files */
