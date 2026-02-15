@@ -351,7 +351,7 @@
 
 //#define ESPFILEUPDATER_DEBUG
 
-//#define RADIO_BROWSER_SEND_CLICKS false
+//#define RADIO_BROWSER_NO_SEND_CLICKS
 
 //#define CURATED_LISTS false
 

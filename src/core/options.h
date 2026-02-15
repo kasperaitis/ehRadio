@@ -640,9 +640,7 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
     #define RADIO_BROWSER_SEND_CLICK_DELAY 5000 // wait 5 seconds before sending the click
   #endif
 #else
-  #ifdef RADIO_BROWSER_SEND_CLICKS
-    #undef RADIO_BROWSER_SEND_CLICKS
-  #endif
+  #undef RADIO_BROWSER_SEND_CLICKS
 #endif
 
 /*         USER DEFAULTS          */

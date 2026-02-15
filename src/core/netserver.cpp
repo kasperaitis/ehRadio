@@ -58,7 +58,7 @@
   #define DBGVB(...)
 #endif
 
-// Global list for radio-browser servers to persist across searches
+// Global list for Radio-Browser servers to persist across searches
 String rb_servers[20];
 // For the search task
 TaskHandle_t g_searchTaskHandle = NULL;
@@ -371,12 +371,11 @@ void NetServer::processQueue() {
           return; 
           break;
         }
-      case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"wifiscan\":%d,,\"inbrowser\":%d,\"softr\":%d,\"vut\":%d,\"mdns\":\"%s\"}", 
+      case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"wifiscan\":%d,\"softr\":%d,\"vut\":%d,\"mdns\":\"%s\"}", 
                                   config.store.smartstart,
                                   config.store.audioinfo,
                                   config.store.vumeter,
                                   config.store.wifiscanbest,
-                                  config.store.audioinbrowser,
                                   config.store.softapdelay,
                                   config.vuThreshold,
                                   config.store.mdnsname);
@@ -812,7 +811,7 @@ useHostname:
 
 void vTaskSearchRadioBrowser(void *pvParameters) {
   char* search_str = (char*)pvParameters;
-  Serial.printf("[Search] Starting radio browser search. Search: %s\n", search_str);
+  Serial.printf("[Search] Starting Radio Browser search. Search: %s\n", search_str);
   SPIFFS.remove("/www/searchresults.json");
   // Check SPIFFS free space
   size_t freeSpace = SPIFFS.totalBytes() - SPIFFS.usedBytes();
@@ -1344,14 +1343,12 @@ void handleNotFound(AsyncWebServerRequest * request) {
       "var radioVersion='%s';\n"
       "var formAction='%s';\n"
       "var playMode='%s';\n"
-      "var previewMode='%s';\n",
       "var onlineUpdCapable=%s;\n"
       "var newVerAvailable=%s;\n"
       "var updateUrl='%s';\n",
       escapedRadioVersion,
       (network.status == CONNECTED && config.wwwFilesExist) ? "webboard" : "",
       (network.status == CONNECTED) ? "player" : "ap",
-      (config.store.audioinbrowser) ? "browser" : "speaker",
       #ifdef UPDATEURL
         "true",
       #else

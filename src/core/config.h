@@ -90,7 +90,6 @@ struct config_t // specify defaults here (and macros in options.h) (defaults are
   bool      audioinfo = SHOW_AUDIO_INFO;
   bool      vumeter = SHOW_VU_METER;
   bool      wifiscanbest = WIFI_SCAN_BEST_RSSI;
-  bool      audioinbrowser = AUDIO_PREVIEW_IN_BROWSER;
   uint8_t   softapdelay = SOFTAP_REBOOT_DELAY;
   char      mdnsname[24] = "";
   bool      flipscreen = SCREEN_FLIP;
