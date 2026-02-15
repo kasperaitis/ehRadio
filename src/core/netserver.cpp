@@ -3,6 +3,7 @@
 #include <SPIFFS.h>
 #include <Update.h>
 #include <ESPmDNS.h>
+#include <esp_task_wdt.h>
 #include "config.h"
 #include "netserver.h"
 #include <ArduinoJson.h>
@@ -126,36 +127,45 @@ void handleSearchPost(AsyncWebServerRequest *request) {
   sUrl.trim();
   if (sName.length() >= sizeof(config.station.name)) sName = sName.substring(0, sizeof(config.station.name) - 1);
   if (sUrl.length() >= sizeof(config.station.url)) sUrl = sUrl.substring(0, sizeof(config.station.url) - 1);
+  player.sendCommand({PR_STOP, 0}); // Stop current playback
   
-  if (!addtoplaylist) { // This is a preview - no duplicate check needed
-    config.loadStation(0); // Load into temporary station slot
-    launchPlaybackTask(sUrl, sName);
-    netserver.requestOnChange(GETINDEX, 0);
-    request->send(200, "text/plain", "PREVIEW");
-  } else { // This is add to playlist - check for duplicates
-    // Check for duplicate URL in playlist (only when adding)
-    bool found = false;
-    int foundIdx = 0;
-    auto normalizeUrl = [](const String& url) -> String {
-        String u = url;
-        u.trim();
-        if (u.startsWith("http://")) u = u.substring(7);
-        else if (u.startsWith("https://")) u = u.substring(8);
-        u.trim();
-        return u;
-        };
-    String normNewUrl = normalizeUrl(sUrl);
-    uint16_t cs = config.playlistLength();
-    for (int i = 1; i <= cs; ++i) {
-      config.loadStation(i);
-      String existingUrl = String(config.station.url);
-      String normExistingUrl = normalizeUrl(existingUrl);
-      if (normExistingUrl.equalsIgnoreCase(normNewUrl)) {
-        found = true;
-        foundIdx = i;
-        break;
-      }
+  // Check for duplicate URL in playlist (for both preview and add)
+  bool found = false;
+  int foundIdx = 0;
+  auto normalizeUrl = [](const String& url) -> String {
+      String u = url;
+      u.trim();
+      if (u.startsWith("http://")) u = u.substring(7);
+      else if (u.startsWith("https://")) u = u.substring(8);
+      u.trim();
+      return u;
+      };
+  String normNewUrl = normalizeUrl(sUrl);
+  uint16_t cs = config.playlistLength();
+  for (int i = 1; i <= cs; ++i) {
+    config.loadStation(i);
+    String existingUrl = String(config.station.url);
+    String normExistingUrl = normalizeUrl(existingUrl);
+    if (normExistingUrl.equalsIgnoreCase(normNewUrl)) {
+      found = true;
+      foundIdx = i;
+      break;
     }
+    // Reset watchdog every 5 iterations to prevent timeout
+    if (i % 5 == 0) esp_task_wdt_reset();
+  }
+  
+  if (!addtoplaylist) { // This is a preview
+    if (found) { // URL exists in playlist, play that station
+      player.sendCommand({PR_PLAY, (uint16_t)foundIdx});
+      request->send(200, "text/plain", "EXISTING");
+    } else { // URL not in playlist, preview in slot 0
+      config.loadStation(0); // Load into temporary station slot
+      launchPlaybackTask(sUrl, sName);
+      netserver.requestOnChange(GETINDEX, 0);
+      request->send(200, "text/plain", "PREVIEW");
+    }
+  } else { // This is add to playlist
     int sOvol = 0;
     if (found) { // play the slot if it already exists
       player.sendCommand({PR_PLAY, (uint16_t)foundIdx});
@@ -165,8 +175,10 @@ void handleSearchPost(AsyncWebServerRequest *request) {
       if (playlistfile) {
         playlistfile.printf("%s\t%s\t%d\r\n", sName.c_str(), sUrl.c_str(), sOvol);
         playlistfile.close();
+        esp_task_wdt_reset(); // Reset watchdog before heavy operations
         uint16_t newIdx = cs + 1;
         config.indexPlaylist();
+        esp_task_wdt_reset(); // Reset watchdog between operations
         config.initPlaylist();
         player.sendCommand({PR_PLAY, newIdx});
         netserver.requestOnChange(PLAYLISTSAVED, 0);
