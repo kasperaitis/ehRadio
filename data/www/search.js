@@ -333,7 +333,7 @@ function fetchSearchResults(showLoadingMsg, retries = 5, delay = 300) {
   })
   .then(data => {
     stationArr = Array.isArray(data) ? data : [];
-    populateSearchTable(stationArr);
+    populateSearchTable(stationArr, true);
     updateSearchPageDisplay();
     setSearchButtonsDisabled(false);
   })
@@ -465,12 +465,13 @@ function searchStations(isPageNav = false) {
   });
 }
 
-function populateSearchTable(data) {
+function populateSearchTable(data, afterSearch = false) {
   const table = document.getElementById('stationsTable');
   table.innerHTML = "";
   if (!data || data.length === 0) {
-    table.innerHTML = '<tr><td class="importantmessage" colspan="4">Try searching.</td></tr>';
-    hideSearchPageNav();
+    const message = afterSearch ? 'No results found. Try a different search.' : 'Try searching.';
+    table.innerHTML = `<tr><td class="importantmessage" colspan="4">${message}</td></tr>`;
+    hideSearchPageNav(); //
     return;
   }
   const rows = data.map((station, i) => {

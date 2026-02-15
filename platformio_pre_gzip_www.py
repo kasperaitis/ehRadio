@@ -95,5 +95,26 @@ def compress_and_hide_originals(source, target, env):
     print(f"SPIFFS will contain ONLY .gz files (and excluded files)")
     print("="*70 + "\n")
 
-# Register the pre-build action
-env.AddPreAction("$BUILD_DIR/spiffs.bin", compress_and_hide_originals)
+# Detect if we're doing a filesystem operation
+import sys
+any_fs_target = any(t in sys.argv for t in ["uploadfs", "buildfs", "--target"])
+
+if any_fs_target:
+    # Delete cached spiffs.bin to force rebuild
+    spiffs_bin = Path(env.subst("$BUILD_DIR")) / "spiffs.bin"
+    if spiffs_bin.exists():
+        print("\n" + "="*70)
+        print("INIT: Deleting cached spiffs.bin")
+        print("="*70)
+        spiffs_bin.unlink()
+        print("  → Deleted spiffs.bin - will rebuild with compression")
+        print("="*70 + "\n")
+    
+    # Run compression now at init time
+    print("\n" + "="*70)
+    print("INIT: Running compression now (before build starts)")
+    print("="*70 + "\n")
+    compress_and_hide_originals(None, None, env)
+
+# Note: NOT using AddPreAction here because we run compression at init time instead
+# This ensures compression always runs for filesystem operations
