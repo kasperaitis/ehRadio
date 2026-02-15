@@ -53,7 +53,8 @@ Documentation will be improved at some point...
     - pretty code - most `#if` & `#ifdef` blocks now indented
     - most functions now included no-op instead of being blocked by `#ifdef`
   - Optimized declarations in src files
-  - Added check for new versions
+  - Added check for new versions (and will show if available in WebUI)
+  - Platformio.ini now includes pre- and post-steps to compress www files for SPIFFS
   - more defaults added to `options.h` which can be changed in `myoptions.h`
     - `#define CHECKUPDATEURL_TIME "1 day"`
     - `#define TIMEZONES_JSON_CHECKTIME "4 weeks"`

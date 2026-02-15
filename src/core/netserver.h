@@ -94,6 +94,7 @@ const char index_html[] PROGMEM = R"(
   <script type="text/javascript" src="variables.js"></script>
   <script type="text/javascript" src="script.js"></script>
   <script type="text/javascript" src="dragpl.js"></script>
+  <script type="text/javascript" src="playstation.js"></script>
   </head>
 <body>
 <div id="content" class="hidden progmem"></div><!--content--><div id="progress"><span id="loader"></span></div>

@@ -24,9 +24,10 @@
 
 
 // List of required web asset files
-static const char* wwwFiles[] = {"dragpl.js", "ir.js", "script.js", "search.js", "logo.svg", "rb_srvrs.json", "timezones.json",
-                                "style.css", "theme.css", "curated.html", "irrecord.html", "options.html", "search.html", "updform.html",
-                                "player.html"}; // keep main page at end
+static const char* wwwFiles[] = {"dragpl.js", "ir.js", "options.js", "playstation.js", "script.js", "search.js", "updform.js",
+                                 "logo.svg", "rb_srvrs.json", "timezones.json",
+                                 "style.css", "theme.css", "curated.html", "irrecord.html", "options.html", "search.html", "updform.html",
+                                 "player.html"}; // keep main page at end
 static const size_t wwwFilesCount = sizeof(wwwFiles) / sizeof(wwwFiles[0]);
 
 // List of optional data files

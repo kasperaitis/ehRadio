@@ -49,9 +49,9 @@ function onSearchLoad(event) {
       const index = button.dataset.index;
       const action = button.dataset.action;
       if (action === 'preview') {
-        sendStationAction(index, false);
+        handleStationAction(index, false);
       } else if (action === 'add') {
-        sendStationAction(index, true);
+        handleStationAction(index, true);
       }
     }
   });
@@ -524,7 +524,7 @@ function quickSearch(genre) {
   searchStations();
 }
 
-function sendStationAction(inx, addtoplaylist) {
+function handleStationAction(inx, addtoplaylist) {
   const station = stationArr[inx];
   if (!station) {
     console.error('Invalid station index:', inx);
@@ -532,22 +532,5 @@ function sendStationAction(inx, addtoplaylist) {
   }
   const name = station.name;
   const url = station.url_resolved || station.url;
-  const label = addtoplaylist ? "Added to playlist: " : "Preview: ";
-  const formData = new URLSearchParams();
-  formData.append('name', name);
-  formData.append('url', url);
-  formData.append('addtoplaylist', addtoplaylist);
-  fetch('/search', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: formData
-  })
-  .then(response => {
-    if (!response.ok) throw new Error('Action failed');
-    return response.text();
-  })
-  .then(responseText => {
-    console.log(label + name, 'Response:', responseText);
-  })
-  .catch(error => console.error('Error sending station action:', error));
+  sendStationAction(name, url, addtoplaylist);
 }

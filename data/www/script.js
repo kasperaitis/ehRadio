@@ -3,7 +3,6 @@ var modesd = false;
 const query = window.location.search;
 const params = new URLSearchParams(query);
 const yoTitle = 'ehRadio';
-let audiopreview=null;
 if(params.size>0){
   if(params.has('host')) hostname=params.get('host');
 }
@@ -12,8 +11,6 @@ var wserrcnt = 0;
 var wstimeout;
 var loaded = false;
 var currentItem = 0;
-const localTZjson = 'timezones.json';
-document.addEventListener('DOMContentLoaded', () => { loadTimezones(); });
 window.addEventListener('load', onLoad);
 
 function loadCSS(href){ const link = document.createElement("link"); link.rel = "stylesheet"; link.href = href; document.head.appendChild(link); }
@@ -306,7 +303,7 @@ function handlePlaylistData(fileData) {
   if(!modesd) initPLEditor();
 }
 function generatePlaylist(path){
-  getId('playlist').innerHTML='<div id="progress"><span id="loader"></span></div>';
+  getId('playlist').innerHTML='<div class="plloader"><span class="loader"></span></div>';
   var xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function() {
     if (xhr.readyState == 4) {
@@ -736,25 +733,29 @@ function exportCurrentPlaylist() {
   URL.revokeObjectURL(link.href);
 }
 /***--- eof playlist ---***/
+let pleditorTimeout = null;
 function toggleTarget(el, id){
   const target = getId(id);
   if(id=='pleditorwrap'){
-    audiopreview.pause();
-    audiopreview.src='';
-    getId('previewinfo').innerHTML='';
+    // Clear any active preview states
+    classEach('pleitem', function(el){ el.classList.remove('active') });
     // If opening editor (not closing), refresh playlist first to ensure fresh data
     if(target && target.classList.contains('hidden')) {
+      // Cancel any pending timeout to prevent race conditions
+      if(pleditorTimeout) { clearTimeout(pleditorTimeout); pleditorTimeout = null; }
       // Don't toggle visibility yet, wait for fresh data
       generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
       // generatePlaylist will call handlePlaylistData, which will call initPLEditor
       // Then we toggle visibility after a brief delay to let data load
-      setTimeout(() => {
-        target.classList.toggle("hidden");
-        getId(target.dataset.target).classList.toggle("active");
+      pleditorTimeout = setTimeout(() => {
+        target.classList.remove("hidden");
+        getId(target.dataset.target).classList.add("active");
+        pleditorTimeout = null;
       }, 200);
       return; // Exit early, don't run the normal toggle below
     }
-    // If closing editor, do it immediately (normal flow below)
+    // If closing editor, cancel any pending timeout and close immediately
+    if(pleditorTimeout) { clearTimeout(pleditorTimeout); pleditorTimeout = null; }
   }
   if(target){
     if(id=='pleditorwrap' && modesd) {
@@ -773,51 +774,6 @@ function checkboxClick(cb, command){
 function sliderInput(sl, command){
   websocket.send(`${command}=${sl.value}`);
   fillSlider(sl);
-}
-function handleWiFiData(fileData) {
-  if (!fileData) return;
-  var lines = fileData.split('\n');
-  for(var i = 0;i < lines.length;i++){
-    let line = lines[i].split('\t');
-    if(line.length==2){
-      getId("ssid"+i).value=line[0].trim();
-      getId("pass"+i).attr('data-pass', line[1].trim());
-    }
-  }
-}
-function getWiFi(path){
-  var xhr = new XMLHttpRequest();
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState == 4) {
-      if (xhr.status == 200) {
-        handleWiFiData(xhr.responseText);
-      } else {
-        handleWiFiData(null);
-      }
-    }
-  };
-  xhr.open("GET", path);
-  xhr.send(null);
-}
-function applyTZ(){
-  websocket.send("tz_name="+getId("tz_name").selectedOptions[0].text);
-  websocket.send("tzposix="+getId("tzposix").value);
-  websocket.send("sntp2="+getId("sntp2").value);
-  websocket.send("sntp1="+getId("sntp1").value);
-}
-function applyMQTT(){
-  websocket.send("mqttenable="+getId("mqttenable").value);
-  websocket.send("mqtthost="+getId("mqtthost").value);
-  websocket.send("mqttport="+getId("mqttport").value);
-  websocket.send("mqttuser="+getId("mqttuser").value);
-  websocket.send("mqttpass="+getId("mqttpass").value);
-  websocket.send("mqtttopic="+getId("mqtttopic").value);
-}
-function rebootSystem(info){
-  getId("settingscontent").innerHTML=`<h2>${info}</h2>`;
-  getId("settingsdone").classList.add("hidden");
-  getId("navigation").classList.add("hidden");
-  setTimeout(function(){ window.location.href=`http://${hostname}/`; }, 5000);
 }
 function submitWiFi(){
   var output="";
@@ -867,28 +823,22 @@ function toggleShuffle(){
   el.classList.toggle('active');
   websocket.send("shuffle="+el.classList.contains('active'));
 }
-function previewInfo(text, url='', error=false){
-  const previewinfo=getId('previewinfo');
-  previewinfo.classList.remove('error');
-  if(url!='') previewinfo.innerHTML=`${text} <a href="${url}" target="_blank">${url}</a>`;
-  else previewinfo.innerHTML=`${text}`;
-  if(error) previewinfo.classList.add('error');
-}
-const PREVIEW_TIMEOUT = 3000;
 function playPreview(root) {
-  const streamUrl=root.getElementsByClassName('pleurl')[0].value;
-  if(root.hasClass('active')){ root.classList.remove('active'); audiopreview.pause(); previewInfo('Stop playback:', streamUrl); return; }
+  const streamUrl = root.getElementsByClassName('pleurl')[0].value;
+  const stationName = root.getElementsByClassName('plename')[0].value;
+  
+  // Toggle active state
+  if(root.hasClass('active')){
+    classEach('pleitem', function(el){ el.classList.remove('active') });
+    return;
+  }
+  
+  // Send preview request to device
   classEach('pleitem', function(el){ el.classList.remove('active') });
-  if(streamUrl=='' || !audiopreview) { previewInfo("No streams available.", '', true); return; }
-  previewInfo('Attempting to play:', streamUrl);
-  audiopreview.src = streamUrl;
-  audiopreview.load();
-  let isTimeout = false;
-  const timeout = setTimeout(() => { isTimeout = true; previewInfo("Connection timeout", streamUrl, true); root.classList.remove('active'); audiopreview.pause(); return; }, PREVIEW_TIMEOUT);
-  const onCanPlay = () => { if (!isTimeout) { clearTimeout(timeout); previewInfo('Playback', streamUrl); root.classList.add('active'); audiopreview.play().catch(err => { previewInfo("Playback error:", streamUrl, true); root.classList.remove('active'); return; }); }  };
-  const onError = () => { if (!isTimeout) { clearTimeout(timeout); root.classList.remove('active'); previewInfo("Error loading stream:", streamUrl, true); return; } };
-  audiopreview.addEventListener("canplay", onCanPlay, { once: true });
-  audiopreview.addEventListener("error", onError, { once: true });
+  if(streamUrl=='') { console.error("No stream URL available."); return; }
+  
+  root.classList.add('active');
+  sendStationAction(stationName, streamUrl, false);
 }
 function continueLoading(mode){
   if(typeof mode === 'undefined' || loaded) return;
@@ -902,7 +852,6 @@ function continueLoading(mode){
         fetch('logo.svg').then(response => response.text()).then(svg => { 
           getId('logo').innerHTML = svg;
           hideSpinner();
-          audiopreview=getId('audiopreview');
         });
         getId("version").innerText=`${radioVersion}`;
         if (newVerAvailable) getId('update_available').classList.remove('hidden');
@@ -914,39 +863,43 @@ function continueLoading(mode){
     if(pathname=='/settings.html'){
       document.title = `${yoTitle} - Settings`;
       fetch(`options.html?${radioVersion}`).then(response => response.text()).then(options => {
-        getId('content').innerHTML = options; 
-        fetch('logo.svg').then(response => response.text()).then(svg => { 
-          getId('logo').innerHTML = svg;
-          hideSpinner();
-		  if (onlineUpdCapable) getId('webboard').classList.add('hidden');
+        getId('content').innerHTML = options;
+        loadJS(`options.js?${radioVersion}`, () => {
+          fetch('logo.svg').then(response => response.text()).then(svg => { 
+            getId('logo').innerHTML = svg;
+            hideSpinner();
+            if (onlineUpdCapable) getId('webboard').classList.add('hidden');
+          });
+          getId("version").innerText=`${radioVersion}`;
+          if (newVerAvailable) getId('update_available').classList.remove('hidden');
+          document.querySelectorAll('input[type="range"]').forEach(sl => { fillSlider(sl); });
+          if (timezoneData) {
+            populateTZDropdown(timezoneData);
+          }
+          websocket.send('getsystem=1');
+          websocket.send('getscreen=1');
+          websocket.send('gettimezone=1');
+          websocket.send('getweather=1');
+          websocket.send('getmqtt=1');
+          websocket.send('getcontrols=1');
+          getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
+          websocket.send('getactive=1');
+          classEach("reset", function(el){ el.innerHTML='<svg viewBox="0 0 16 16" class="fill"><path d="M8 3v5a36.973 36.973 0 0 1-2.324-1.166A44.09 44.09 0 0 1 3.417 5.5a52.149 52.149 0 0 1 2.26-1.32A43.18 43.18 0 0 1 8 3z"/><path d="M7 5v1h4.5C12.894 6 14 7.106 14 8.5S12.894 11 11.5 11H1v1h10.5c1.93 0 3.5-1.57 3.5-3.5S13.43 5 11.5 5h-4z"/></svg>'; });
+          initDangerZone();
         });
-        getId("version").innerText=`${radioVersion}`;
-        if (newVerAvailable) getId('update_available').classList.remove('hidden');
-        document.querySelectorAll('input[type="range"]').forEach(sl => { fillSlider(sl); });
-        if (timezoneData) {
-          populateTZDropdown(timezoneData);
-        }
-        websocket.send('getsystem=1');
-        websocket.send('getscreen=1');
-        websocket.send('gettimezone=1');
-        websocket.send('getweather=1');
-        websocket.send('getmqtt=1');
-        websocket.send('getcontrols=1');
-        getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
-        websocket.send('getactive=1');
-        classEach("reset", function(el){ el.innerHTML='<svg viewBox="0 0 16 16" class="fill"><path d="M8 3v5a36.973 36.973 0 0 1-2.324-1.166A44.09 44.09 0 0 1 3.417 5.5a52.149 52.149 0 0 1 2.26-1.32A43.18 43.18 0 0 1 8 3z"/><path d="M7 5v1h4.5C12.894 6 14 7.106 14 8.5S12.894 11 11.5 11H1v1h10.5c1.93 0 3.5-1.57 3.5-3.5S13.43 5 11.5 5h-4z"/></svg>'; });
-        initDangerZone();
       });
     }
     if(pathname=='/update.html'){
       document.title = `${yoTitle} - Update`;
       fetch(`updform.html?${radioVersion}`).then(response => response.text()).then(updform => {
         getId('content').classList.add('upd');
-        getId('content').innerHTML = updform; 
-        fetch('logo.svg').then(response => response.text()).then(svg => { 
-          getId('logo').innerHTML = svg;
-          hideSpinner();
-          initOnlineUpdateChecker();
+        getId('content').innerHTML = updform;
+        loadJS(`updform.js?${radioVersion}`, () => {
+          fetch('logo.svg').then(response => response.text()).then(svg => {
+            getId('logo').innerHTML = svg;
+            hideSpinner();
+            initOnlineUpdateChecker();
+          });
         });
         getId("version").innerText=`${radioVersion}`;
       });
@@ -954,9 +907,9 @@ function continueLoading(mode){
     if(pathname=='/ir.html'){
       document.title = `${yoTitle} - IR Recorder`;
       fetch(`irrecord.html?${radioVersion}`).then(response => response.text()).then(ircontent => {
-        getId('content').innerHTML = ircontent; 
+        getId('content').innerHTML = ircontent;
         loadJS(`ir.js?${radioVersion}`, () => {
-          fetch('logo.svg').then(response => response.text()).then(svg => { 
+          fetch('logo.svg').then(response => response.text()).then(svg => {
             getId('logo').innerHTML = svg;
             initControls();
             hideSpinner();
@@ -967,14 +920,16 @@ function continueLoading(mode){
     }
   }else{ // AP mode
     fetch(`options.html?${radioVersion}`).then(response => response.text()).then(options => {
-      getId('content').innerHTML = options; 
-      fetch('logo.svg').then(response => response.text()).then(svg => { 
-        getId('logo').innerHTML = svg;
-        hideSpinner();
+      getId('content').innerHTML = options;
+      loadJS(`options.js?${radioVersion}`, () => {
+        fetch('logo.svg').then(response => response.text()).then(svg => {
+          getId('logo').innerHTML = svg;
+          hideSpinner();
+        });
+        getId("version").innerText=`${radioVersion}`;
+        getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
+        websocket.send('getactive=1');
       });
-      getId("version").innerText=`${radioVersion}`;
-      getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
-      websocket.send('getactive=1');
     });
   }
   document.body.addEventListener('click', (event) => {
@@ -1004,14 +959,7 @@ function continueLoading(mode){
           case "webboard": window.location.href=`http://${hostname}/webboard`; break;
           case "setupir": window.location.href=`http://${hostname}/ir.html`; break;
           case "search": window.location.href=`http://${hostname}/search.html`; break;
-          case "applyweather":
-            let key=getId("wkey").value;
-            if(key!=""){
-              websocket.send("lat="+getId("wlat").value);
-              websocket.send("lon="+getId("wlon").value);
-              websocket.send("key="+key);
-            }
-            break;
+          case "applyweather": applyWeather(); break;
           case "applytz": applyTZ(); break;
           case "applymqtt": applyMQTT(); break;
           case "wifiexport": window.open(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime()); break;
@@ -1139,170 +1087,4 @@ function abortHandler(event) {
   getId('check_online_update').classList.remove('hidden');
 }
 
-/** ONLINE UPDATE CHECKER **/
-function initOnlineUpdateChecker() {
-  if (onlineUpdCapable) {
-    getId('check_online_update').classList.remove('hidden');
-    getId('check_online_update').value = "Check for Online Update";
-    getId('check_online_update').disabled = false;
-    getId("update_url").href = "/update.html";
-    console.log("Online Update is available");
-  } else {
-    getId('check_online_update').classList.add('hidden');
-    getId("update_url").href = updateUrl;
-    console.log("Online Update not available");
-  }
-}
 
-function checkOnlineUpdate(button) {
-  if (button.value === "Check for Online Update") {
-    console.log("Checking for online update");
-    button.value = "Checking...";
-    button.disabled = true;
-    fetch('/onlineupdatecheck')
-      .then(response => response.text())
-      .then(data => {
-        console.log("Check update response:", data);
-        // The server will send WebSocket messages with the actual results so just wait
-      })
-      .catch(error => {
-        console.error("Error checking for updates:", error);
-        button.value = "Check for Online Update";
-        button.disabled = false;
-      });
-  } else if (button.value.startsWith("Update to")) {
-    console.log("Starting online update via HTTP");
-    // Show and reset progress bar
-    const bar = getId('updateprogress');
-    if (bar) { bar.hidden = false; bar.value = 0; }
-
-    button.disabled = true;
-    fetch('/onlineupdatestart')
-      .then(response => response.text())
-      .then(data => {
-        console.log("Start update response:", data);
-        // Prepare UI: hide form, show status and progress bar
-        getId('updateform').attr('class','hidden');
-        const status = getId('uploadstatus');
-        
-        if(status) status.innerHTML = getId('check_online_update').value;
-
-        getId("uploadstatus").innerHTML = "Starting online update...";
-        getId('updateform').classList.add('hidden');
-        getId("updateprogress").value = 0;
-        getId('updateprogress').hidden=false;
-        getId('update_cancel_button').hidden=true;
-        getId('check_online_update').classList.add('hidden');
-        // WebSocket messages will drive progress
-      })
-      .catch(error => {
-        console.error("Error starting update:", error);
-        button.value = "Check for Online Update";
-        button.disabled = false;
-        getId("uploadstatus").innerHTML = "Error starting online update";
-        getId('updateform').classList.remove('hidden');
-        getId('updateprogress').hidden=true;
-        getId("updateprogress").value = 0;
-        getId('update_cancel_button').hidden=false;
-        getId('check_online_update').classList.remove('hidden');
-      });
-  }
-}
-
-/** TIMEZONES **/
-let timezoneData = null;
-async function loadTimezones() {
-  try {
-    const response = await fetch(localTZjson);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    timezoneData = await response.json();
-    populateTZDropdown(timezoneData);
-  } catch (err) {
-    console.error("Failed to load local timezones:", err);
-  }
-}
-function populateTZDropdown(zones) {
-  const select = getId('tz_name');
-  const input = getId('tzposix');
-  if (!select || !input) {
-    return;
-  }
-  select.innerHTML = '';
-  input.readOnly = true;
-  Object.entries(zones).forEach(([zone, posix]) => {
-    const option = document.createElement('option');
-    option.value = posix;
-    option.textContent = zone.length > 60 ? zone.substring(0, 57) + '...' : zone;
-    select.appendChild(option);
-  });
-  // Handle dropdown changes
-  select.addEventListener('change', () => {
-    input.value = select.value;
-  });
-}
-
-/** TOOLS AKA DANGERZONE **/
-function showDangerConfirm(buttonId) {
-  hideDangerConfirm();
-  const btn = getId(buttonId);
-  if(btn) btn.classList.remove('hidden');
-}
-
-function hideDangerConfirm() {
-  const btns = ['dz_reboot', 'dz_format', 'dz_reset'];
-  btns.forEach(id => {
-    const btn = getId(id);
-    if(btn) btn.classList.add('hidden');
-  });
-}
-
-function checkDangerZone() {
-  const sw1 = getId('dangerzone_sw1');
-  const sw2 = getId('dangerzone_sw2');
-  const sw3 = getId('dangerzone_sw3');
-  if(!sw1 || !sw2 || !sw3) return;
-  
-  const allChecked = sw1.classList.contains('checked') && 
-                     sw2.classList.contains('checked') && 
-                     sw3.classList.contains('checked');
-  
-  const dangerzone = getId('dangerzone');
-  const txt = getId('dangerzone_txt');
-  
-  if(allChecked) {
-    if(dangerzone) dangerzone.classList.remove('hidden');
-    if(txt) {
-      const replacement = txt.getAttribute('replacement');
-      if(replacement) txt.textContent = replacement;
-    }
-  } else {
-    if(dangerzone) dangerzone.classList.add('hidden');
-    if(txt) txt.textContent = 'Turn on all switches to unlock';
-  }
-}
-
-function toggleDangerZoneSwitch(switchId) {
-  const sw = getId(switchId);
-  if(!sw) return;
-  sw.classList.toggle('checked');
-  hideDangerConfirm();
-  checkDangerZone();
-}
-
-function initDangerZone() {
-  const switches = ['dangerzone_sw1', 'dangerzone_sw2', 'dangerzone_sw3'];
-  switches.forEach(id => {
-    const sw = getId(id);
-    if(sw) sw.classList.remove('checked');
-  });
-  
-  const txt = getId('dangerzone_txt');
-  if(txt) txt.textContent = 'Turn on all switches to unlock';
-  
-  const dangerzone = getId('dangerzone');
-  if(dangerzone) dangerzone.classList.add('hidden');
-  
-  hideDangerConfirm();
-}
