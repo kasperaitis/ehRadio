@@ -159,6 +159,7 @@ void loopControls() {
   #endif
 }
 
+#if (ENC_BTNL!=255 && ENC_BTNR!=255) || (ENC2_BTNL!=255 && ENC2_BTNR!=255)
 void encodersLoop(AiEsp32RotaryEncoder *enc, bool first) {
   #if ENC_BTNL!=255 || ENC2_BTNL!=255
     if (network.status != CONNECTED && network.status!=SDREADY) return;
@@ -194,6 +195,7 @@ void encodersLoop(AiEsp32RotaryEncoder *enc, bool first) {
     }
   #endif //#if ENC_BTNL!=255 || ENC2_BTNL!=255
 }
+#endif
 
 void encoder1Loop() {
   #if ENC_BTNL!=255

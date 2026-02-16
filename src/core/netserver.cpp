@@ -528,9 +528,18 @@ void NetServer::irValsToWs() {
 void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t clientId) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-    data[len] = 0;
+    /*
+     * Do NOT write to data[len] — AsyncWebServer does not guarantee an extra
+     * NUL byte in the provided buffer. Copy into a local, NUL-terminated
+     * stack buffer and parse that instead to avoid heap corruption.
+     */
+    char payload[BUFLEN * 2];
+    size_t payloadLen = (len < sizeof(payload) - 1) ? len : (sizeof(payload) - 1);
+    memcpy(payload, data, payloadLen);
+    payload[payloadLen] = '\0';
+
     char comnd[65], val[65];
-    if (config.parseWsCommand((const char*)data, comnd, val, 65)) {
+    if (config.parseWsCommand(payload, comnd, val, 65)) {
       if (strcmp(comnd, "treble") == 0) {
         int8_t valb = atoi(val);
         config.setTone(config.store.bass, config.store.middle, valb);
