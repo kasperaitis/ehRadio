@@ -1,20 +1,19 @@
 #ifndef mqtt_h
 #define mqtt_h
 
-#ifdef MQTT_ENABLE
+#ifdef MQTT_ENABLE // ============================== Everything ignored if not defined ==============================
 #include <AsyncMqttClient.h>
 
-void mqttInit();
 void connectToMqtt();
+void mqttInit();
+void zeroBuffer();
 void onMqttConnect(bool sessionPresent);
-void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
-void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
 void mqttPublishStatus();
 void mqttPublishPlaylist();
 void mqttPublishVolume();
-void zeroBuffer();
+void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
+void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
 
 #endif // #ifdef MQTT_ENABLE
-
 
 #endif

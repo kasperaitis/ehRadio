@@ -213,9 +213,9 @@ class ClockWidget: public Widget {
   private:
   #ifndef DSP_LCD
     #if DSP_MODEL==DSP_ILI9225
-    auto &getRealDsp();
+      auto &getRealDsp();
     #else
-    Adafruit_GFX &getRealDsp();
+      Adafruit_GFX &getRealDsp();
     #endif
   #endif
   protected:

@@ -4,7 +4,7 @@
 
 #define RTCSUPPORTED (RTC_SDA!=255 && RTC_SCL!=255 && (RTC_MODULE==DS3231 || RTC_MODULE==DS1307))
 
-#if RTCSUPPORTED
+#if RTCSUPPORTED // ============================== Everything ignored if not defined ==============================
 #include "RTClib.h"
 
 #if RTC_MODULE==DS3231

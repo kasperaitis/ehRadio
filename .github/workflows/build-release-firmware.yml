@@ -287,7 +287,7 @@ jobs:
             # Pop the stashed changes and commit
             git stash pop
             git add "builds/${{ github.repository_owner }}/web_assets/"
-            git commit -m "Update web assets for ${{ steps.get_version.outputs.version }} [skip ci]"
+            git commit -m "Update web assets for ${{ steps.get_version.outputs.version }}"
             git push origin $BRANCH
             echo "✅ Web assets committed and pushed to $BRANCH"
           fi

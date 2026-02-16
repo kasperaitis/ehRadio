@@ -28,23 +28,35 @@ class Display {
   public:
     Display() {};
     ~Display();
-    displayMode_e mode() { return _mode; }
-    void mode(displayMode_e m) { _mode=m; }
     void init();
-    void loop();
-    void _start();
-    bool ready() { return _bootStep==2; }
-    void resetQueue();
-    void putRequest(displayRequestType_e type, int payload=0);
-    void flip();
-    void invert();
-    bool deepsleep();
-    void wakeup();
-    void setContrast();
-    void lock()   { _locked=true; }
-    void unlock() { _locked=false; }
     uint16_t width();
     uint16_t height();
+    void _bootScreen();
+    void _buildPager();
+    void _apScreen();
+    void _start();
+    void resetQueue();
+    void _drawPlaylist();
+    void _drawNextStationNum(uint16_t num);
+    void putRequest(displayRequestType_e type, int payload=0);
+    void _layoutChange(bool played);
+    void loop();
+    void _setRSSI(int rssi);
+    void _station();
+    void _title();
+    void _time(bool redraw = false);
+    void _volume();
+    void flip();
+    void invert();
+    void setContrast();
+    bool deepsleep();
+    void wakeup();
+
+    displayMode_e mode() { return _mode; }
+    void mode(displayMode_e m) { _mode=m; }
+    bool ready() { return _bootStep==2; }
+    void lock()   { _locked=true; }
+    void unlock() { _locked=false; }
   private:
     ScrollWidget *_meta, *_title1, *_plcurrent, *_weather, *_title2;
     PlayListWidget *_plwidget;
@@ -61,21 +73,11 @@ class Display {
     Ticker _returnTicker;
     bool _locked = false;
     uint8_t _bootStep = 0;
-    void _time(bool redraw = false);
-    void _apScreen();
-    void _swichMode(displayMode_e newmode);
-    void _drawPlaylist();
-    void _volume();
-    void _title();
-    void _station();
-    void _drawNextStationNum(uint16_t num);
+
     void _createDspTask();
     void _showDialog(const char *title);
-    void _buildPager();
-    void _bootScreen();
     void _setReturnTicker(uint8_t time_s);
-    void _layoutChange(bool played);
-    void _setRSSI(int rssi);
+    void _swichMode(displayMode_e newmode);
     #if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
       void _updateBattery();
     #endif
@@ -90,30 +92,33 @@ class Display {
     displayMode_e _mode;
   public:
     Display() {};
-    displayMode_e mode() { return _mode; }
-    void mode(displayMode_e m) { _mode=m; }
     void init();
     void _start();
     void putRequest(displayRequestType_e type, int payload=0);
-    void loop(){}
+
+    displayMode_e mode() { return _mode; }
+    void mode(displayMode_e m) { _mode=m; }
+    void loop() {}
     bool ready() { return true; }
-    void resetQueue(){}
-    void centerText(const char* text, uint8_t y, uint16_t fg, uint16_t bg){}
-    void rightText(const char* text, uint8_t y, uint16_t fg, uint16_t bg){}
-    void flip(){}
-    void invert(){}
-    void setContrast(){}
-    bool deepsleep(){return true;}
-    void wakeup(){}
+    void resetQueue() {}
+    void centerText(const char* text, uint8_t y, uint16_t fg, uint16_t bg) {}
+    void rightText(const char* text, uint8_t y, uint16_t fg, uint16_t bg) {}
+    void flip() {}
+    void invert() {}
+    void setContrast() {}
+    bool deepsleep() {return true;}
+    void wakeup() {}
     void lock()   {}
     void unlock() {}
-    uint16_t width(){ return 0; }
-    uint16_t height(){ return 0; }
+    uint16_t width() { return 0; }
+    uint16_t height() { return 0; }
   private:
     void _createDspTask();
 };
 
 #endif
+
+void returnPlayer();
 
 extern Display display;
 

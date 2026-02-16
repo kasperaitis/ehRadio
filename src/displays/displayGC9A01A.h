@@ -2,7 +2,7 @@
 #define displayGC9A01A_h
 #include "../core/options.h"
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_GC9A01A.h>
 #include "fonts/bootlogo99x64.h"

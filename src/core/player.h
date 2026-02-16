@@ -28,48 +28,44 @@ struct playerRequestParams_t
 enum plStatus_e : uint8_t{ PLAYING = 1, STOPPED = 2 };
 
 class Player: public Audio {
+  public:
+    bool lockOutput = true;
+    bool resumeAfterUrl = false;
+    uint32_t sd_min, sd_max;
+    bool remoteStationName = false;
+    char burl[MQTT_BURL_SIZE];  /* buffer for browseUrl  */
+  public:
+    Player();
+    void init();
+    void sendCommand(playerRequestParams_t request);
+    void resetQueue();
+    void stopInfo();
+    void setError(const char *e);
+    void initHeaders(const char *file);
+    void loop();
+    void setOutputPins(bool isPlaying);
+    void browseUrl();
+    void playUrl(const char* url);
+    void prev();
+    void next();
+    void toggle();
+    void stepVol(bool up);
+    uint8_t volToI2S(uint8_t volume);
+    void setVol(uint8_t volume);
+
+    bool hasError() { return strlen(_plError)>0; }
+    plStatus_e status() { return _status; }
+    void setResumeFilePos(uint32_t pos) { _resumeFilePos = pos; }
   private:
     uint32_t    _volTicks = 0;       /* delayed volume save  */
     bool        _volTimer = false;   /* delayed volume save  */
     uint32_t    _resumeFilePos = 0;
     plStatus_e  _status = STOPPED;
     char        _plError[PLERR_LN];
-  private:
+
     void _stop(bool alreadyStopped = false);
     void _play(uint16_t stationId);
     void _loadVol(uint8_t volume);
-  public:
-    bool lockOutput = true;
-    bool resumeAfterUrl = false;
-    uint32_t sd_min, sd_max;
-    #ifdef MQTT_ENABLE
-      char      burl[MQTT_BURL_SIZE];  /* buffer for browseUrl  */
-    #endif
-  public:
-    Player();
-    void init();
-    void loop();
-    void initHeaders(const char *file);
-    void setError(const char *e);
-    bool hasError() { return strlen(_plError)>0; }
-    void sendCommand(playerRequestParams_t request);
-    void resetQueue();
-    #ifdef MQTT_ENABLE
-      void browseUrl();
-    #endif
-    void playUrl(const char* url);
-    bool remoteStationName = false;
-    plStatus_e status() { return _status; }
-    void prev();
-    void next();
-    void toggle();
-    void stepVol(bool up);
-    void setVol(uint8_t volume);
-    uint8_t volToI2S(uint8_t volume);
-    void stopInfo();
-    void setOutputPins(bool isPlaying);
-    void setResumeFilePos(uint32_t pos) { _resumeFilePos = pos; }
-
 };
 
 extern Player player;

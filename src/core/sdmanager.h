@@ -13,13 +13,12 @@ class SDManager : public SDFS {
     void indexSDPlaylist();
   private:
     uint32_t _sdFCount = 0;
-  private:
     bool _checkNoMedia(const char* path);
     bool _endsWith (const char* base, const char* str);
 };
 
 extern SDManager sdman;
 #if defined(SD_SPIPINS) || SD_HSPI
-extern SPIClass  SDSPI;
+  extern SPIClass  SDSPI;
 #endif
 #endif

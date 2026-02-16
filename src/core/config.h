@@ -1,7 +1,7 @@
 #ifndef config_h
 #define config_h
 #pragma once
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Ticker.h>
 #include <SPI.h>
 #include <SPIFFS.h>
@@ -36,6 +36,11 @@
 enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 
 void u8fix(char *src);
+void cleanStaleSearchResults();
+void fixPlaylistFileEnding();
+void getRequiredFiles(void* param);
+void checkNewVersionFile();
+void startAsyncServices(void* param);
 
 struct theme_t {
   uint16_t background;
@@ -77,10 +82,10 @@ struct config_t // specify defaults here (and macros in options.h) (defaults are
   uint8_t   play_mode = 0;
   uint8_t   volume = SOUND_VOLUME;
   int8_t    balance = SOUND_BALANCE;
-  int8_t    trebble = EQ_TREBLE;
+  int8_t    treble = EQ_TREBLE;
   int8_t    middle = EQ_MIDDLE;
   int8_t    bass = EQ_BASS;
-  bool      sdsnuffle = SD_SHUFFLE;
+  bool      sdshuffle = SD_SHUFFLE;
   bool      smartstart = SMART_START;
   bool      audioinfo = SHOW_AUDIO_INFO;
   bool      vumeter = SHOW_VU_METER;
@@ -138,11 +143,11 @@ struct configKeyMap {
 };
 
 #if IR_PIN!=255
-struct ircodes_t
-{
-  unsigned int ir_set = 0; // will be 4224 if written/restored correctly
-  uint64_t irVals[20][3];
-};
+  struct ircodes_t
+  {
+    unsigned int ir_set = 0; // will be 4224 if written/restored correctly
+    uint64_t irVals[20][3];
+  };
 #endif
 
 struct station_t
@@ -165,11 +170,13 @@ class Config {
     config_t store;
     station_t station;
     theme_t   theme;
-#if IR_PIN!=255
-    int irindex = -1;
-    uint8_t irchck = 0;
-    ircodes_t ircodes;
-#endif
+
+    #if IR_PIN!=255
+      int irindex = -1;
+      uint8_t irchck = 0;
+      ircodes_t ircodes;
+    #endif
+
     BitrateFormat configFmt = BF_UNKNOWN;
     neworkItem ssids[5];
     uint8_t ssidsCount = 0;
@@ -182,57 +189,15 @@ class Config {
     bool     isScreensaver = false;
     int      newConfigMode = 0;
     char       ipBuf[16] = {0};
-  public:
+
     void init();
     void loadPreferences();
-    void deleteOldKeys();
-    void loadTheme();
-    uint8_t setVolume(uint8_t val);
-    void saveVolume();
-    void setTone(int8_t bass, int8_t middle, int8_t trebble);
-    void setBalance(int8_t balance);
-    uint8_t setLastStation(uint16_t val);
-    uint8_t setCountStation(uint16_t val);
-    uint8_t setLastSSID(uint8_t val);
-    void setTitle(const char* title);
-    void setStation(const char* station);
-    void escapeQuotes(const char* input, char* output, size_t maxLen);
-    bool parseCSV(const char* line, char* name, char* url, int &ovol);
-    bool parseCSVimport(const char* line, char* name, char* url, int &ovol);
-    bool parseJSON(const char* line, char* name, char* url, int &ovol);
-    bool parseWsCommand(const char* line, char* cmd, char* val, uint8_t cSize);
-    bool parseSsid(const char* line, char* ssid, char* pass);
-    bool loadStation(uint16_t station);
-    bool initNetwork();
-    bool saveWifi();
-    bool saveWifiFromNextion(const char* post);
-    void setSmartStart(bool ss);
-    void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }
-    void initPlaylist();
-    void indexPlaylist();
-    void purgeUnwantedFiles();
-    void deleteMainwwwFile();
-    void startAsyncServicesButWait();
-    void updateFile(void* param, const char* localFile, const char* onlineFile, const char* updatePeriod, const char* simpleName);
-    void initSDPlaylist();
     void changeMode(int newmode=-1);
-    uint16_t playlistLength();
-    uint16_t lastStation(){
-      return getMode()==PM_WEB?store.lastStation:store.lastSdStation;
-    }
-    void lastStation(uint16_t newstation){
-      if(getMode()==PM_WEB) saveValue(&store.lastStation, newstation);
-      else saveValue(&store.lastSdStation, newstation);
-    }
-    char * stationByNum(uint16_t num);
-    void setBrightness(bool dosave=false);
-    void setDspOn(bool dspon, bool saveval = true);
-    void sleepForAfter(uint16_t sleepfor, uint16_t sleepafter=0);
-    void bootInfo();
-    void doSleepW();
-    void setSnuffle(bool sn);
-    uint8_t getMode() { return store.play_mode/* & 0b11*/; }
+    void initSDPlaylist();
+    bool spiffsCleanup();
+    char * ipToStr(IPAddress ip);
     void initPlaylistMode();
+    void loadTheme();
     void reset();
     void enableScreensaver(bool val);
     void setScreensaverTimeout(uint16_t val);
@@ -243,15 +208,57 @@ class Config {
     void setShowweather(bool val);
     void setWeatherKey(const char *val);
     void setSDpos(uint32_t val);
-#if IR_PIN!=255
-    void saveIR();
     void setIrBtn(int val);
-#endif
+    void saveIR();
     void resetSystem(const char *val, uint8_t clientId);
-    FS* SDPLFS(){ return _SDplaylistFS; }
-    bool spiffsCleanup();
-    char * ipToStr(IPAddress ip);
-    bool isRTCFound(){ return _rtcFound; };
+    void setShuffle(bool sn);
+    void saveVolume();
+    uint8_t setVolume(uint8_t val);
+    void setTone(int8_t bass, int8_t middle, int8_t treble);
+    void setSmartStart(bool ss);
+    void setBalance(int8_t balance);
+    uint8_t setLastStation(uint16_t val);
+    uint8_t setCountStation(uint16_t val);
+    uint8_t setLastSSID(uint8_t val);
+    void setTitle(const char* title);
+    void setStation(const char* station);
+    void indexPlaylist();
+    void initPlaylist();
+    uint16_t playlistLength();
+    bool loadStation(uint16_t station);
+    char * stationByNum(uint16_t num);
+    void escapeQuotes(const char* input, char* output, size_t maxLen);
+    bool parseCSV(const char* line, char* name, char* url, int &ovol);
+    bool parseCSVimport(const char* line, char* name, char* url, int &ovol);
+    bool parseJSON(const char* line, char* name, char* url, int &ovol);
+    void urlToName(const char* url, char* name, size_t maxLen);
+    bool parseWsCommand(const char* line, char* cmd, char* val, uint8_t cSize);
+    bool parseSsid(const char* line, char* ssid, char* pass);
+    bool saveWifi(const char* post);
+    bool addSsid(const char* ssid, const char* password);
+    bool importWifi();
+    bool initNetwork();
+    void setBrightness(bool dosave=false);
+    void setDspOn(bool dspon, bool saveval = true);
+    void doSleepW();
+    void sleepForAfter(uint16_t sleepfor, uint16_t sa=0);
+    void purgeUnwantedFiles();
+    void deleteMainwwwFile();
+    void updateFile(void* param, const char* localFile, const char* onlineFile, const char* updatePeriod, const char* simpleName);
+    void startAsyncServicesButWait();
+    void bootInfo();
+    void deleteOldKeys();
+    void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }
+    uint16_t lastStation() {
+      return getMode()==PM_WEB?store.lastStation:store.lastSdStation;
+    }
+    void lastStation(uint16_t newstation) {
+      if (getMode()==PM_WEB) saveValue(&store.lastStation, newstation);
+      else saveValue(&store.lastSdStation, newstation);
+    }
+    uint8_t getMode() { return store.play_mode; }
+    FS* SDPLFS() { return _SDplaylistFS; }
+    bool isRTCFound() { return _rtcFound; };
     Preferences prefs; // For Preferences, we use a look-up table to maintain compatibility...
     static const configKeyMap keyMap[];
 
@@ -304,24 +311,27 @@ class Config {
         prefs.end();
       }
     }
-    uint32_t getChipId(){
+    uint32_t getChipId() {
       uint32_t chipId = 0;
       for(int i=0; i<17; i=i+8) {
         chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
       }
       return chipId;
     }
+
   private:
     bool _bootDone = false;
     bool _rtcFound = false;
     FS* _SDplaylistFS = nullptr;
-    void setDefaults();
     Ticker   _sleepTimer;
-    static void doSleep();
-    uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
-    void _initHW();
+
     bool _wwwFilesExist();
-    uint16_t _randomStation(){
+    void _initHW();
+    uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
+    void setDefaults();
+    static void doSleep();
+
+    uint16_t _randomStation() {
       randomSeed(esp_random() ^ millis());
       uint16_t station = random(1, store.countStation);
       return station;
@@ -330,8 +340,9 @@ class Config {
 };
 
 extern Config config;
+
 #if DSP_HSPI || TS_HSPI || VS_HSPI
-extern SPIClass  SPI2;
+  extern SPIClass  SPI2;
 #endif
 
 #endif

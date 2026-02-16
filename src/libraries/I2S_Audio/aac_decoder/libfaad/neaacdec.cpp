@@ -27,7 +27,7 @@
 **
 ** $Id: bits.c,v 1.44 2007/11/01 12:33:29 menno Exp $
 **/
-#include "Arduino.h"
+#include <Arduino.h>
 #include <stdlib.h>
 #include <stdint-gcc.h>
 #include "neaacdec.h"

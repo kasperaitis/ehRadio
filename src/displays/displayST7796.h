@@ -1,7 +1,7 @@
 #ifndef displayST7796_h
 #define displayST7796_h
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include "../libraries/Adafruit_ST7796S/Adafruit_ST7796S_kbv.h"
 

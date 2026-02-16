@@ -24,12 +24,12 @@
 
 
 // List of required web asset files
-static const char* wwwFiles[] = {"dragpl.js","ir.css","irrecord.html","ir.js","logo.svg","options.html","script.js",
-                                "timezones.json","search.html","search.js","search.css", "rb_srvrs.json",
-                                "style.css","updform.html","theme.css","player.html"}; // keep main page at end
+static const char* wwwFiles[] = {"dragpl.js", "ir.js", "script.js", "search.js", "logo.svg", "timezones.json", "rb_srvrs.json",
+                                "theme.css", "style.css", "options.html", "updform.html", "search.html", "irrecord.html",
+                                "player.html"}; // keep main page at end
 static const size_t wwwFilesCount = sizeof(wwwFiles) / sizeof(wwwFiles[0]);
 
-// List of required data files
+// List of optional data files
 static const char* dataFiles[] = {"playlist.csv", "wifi.csv"};
 static const size_t dataFilesCount = sizeof(dataFiles) / sizeof(dataFiles[0]);
 
@@ -37,7 +37,7 @@ Config config;
 
 bool wasUpdated(ESPFileUpdater::UpdateStatus status) { return status == ESPFileUpdater::UPDATED; }
 
-void u8fix(char *src){
+void u8fix(char *src) {
   char last = src[strlen(src)-1]; 
   if ((uint8_t)last >= 0xC2) src[strlen(src)-1]='\0';
 }
@@ -58,27 +58,27 @@ bool Config::_wwwFilesExist() {
 void Config::init() {
   loadPreferences();
   bootInfo();
-#if RTCSUPPORTED
-  BOOTLOG("RTC begin(SDA=%d,SCL=%d)", RTC_SDA, RTC_SCL);
-  if(rtc.init()){
-    BOOTLOG("done");
-    _rtcFound = true;
-  }else{
-    BOOTLOG("[ERROR] - Couldn't find RTC");
-  }
-#endif
-#if defined(SD_SPIPINS) || SD_HSPI
-  #if !defined(SD_SPIPINS)
-    SDSPI.begin();
-  #else
-    SDSPI.begin(SD_SPIPINS); // SCK, MISO, MOSI
+  #if RTCSUPPORTED
+    BOOTLOG("RTC begin(SDA=%d,SCL=%d)", RTC_SDA, RTC_SCL);
+    if (rtc.init()) {
+      BOOTLOG("done");
+      _rtcFound = true;
+    } else {
+      BOOTLOG("[ERROR] - Couldn't find RTC");
+    }
   #endif
-#endif
+  #if defined(SD_SPIPINS) || SD_HSPI
+    #if !defined(SD_SPIPINS)
+      SDSPI.begin();
+    #else
+      SDSPI.begin(SD_SPIPINS); // SCK, MISO, MOSI
+    #endif
+  #endif
   if (store.config_set != 4262) {
     setDefaults();
   }
   store.play_mode = store.play_mode & 0b11;
-  if(store.play_mode>1) store.play_mode=PM_WEB;
+  if (store.play_mode>1) store.play_mode=PM_WEB;
   _initHW();
   if (!SPIFFS.begin(true)) {
     Serial.println("##[ERROR]#\tSPIFFS Mount Failed");
@@ -127,9 +127,9 @@ void Config::init() {
   }
 
   #ifdef USE_SD
-  _SDplaylistFS = getMode()==PM_SDCARD?&sdman:(true?&SPIFFS:_SDplaylistFS);
+    _SDplaylistFS = getMode()==PM_SDCARD?&sdman:(true?&SPIFFS:_SDplaylistFS);
   #else
-  _SDplaylistFS = &SPIFFS;
+    _SDplaylistFS = &SPIFFS;
   #endif
 }
 
@@ -159,124 +159,124 @@ void Config::loadPreferences() {
   prefs.end();
 }
 
-void Config::changeMode(int newmode){
-#ifdef USE_SD
-  bool pir = player.isRunning();
-  if(SDC_CS==255) return;
-  if(getMode()==PM_SDCARD) {
-    sdResumePos = player.getFilePos();
-  }
-  if(network.status==SOFT_AP || display.mode()==LOST){
-    saveValue(&store.play_mode, static_cast<uint8_t>(PM_SDCARD));
-    delay(50);
-    ESP.restart();
-  }
-  if(!sdman.ready && newmode!=PM_WEB) {
-    if(!sdman.start()){
-      Serial.println("##[ERROR]#\tSD Not Found");
-      netserver.requestOnChange(GETPLAYERMODE, 0);
-      sdman.stop();
-      return;
+void Config::changeMode(int newmode) {
+  #ifdef USE_SD
+    bool pir = player.isRunning();
+    if (SDC_CS==255) return;
+    if (getMode()==PM_SDCARD) {
+      sdResumePos = player.getFilePos();
     }
-  }
-  if(newmode<0||newmode>MAX_PLAY_MODE){
-    store.play_mode++;
-    if(getMode() > MAX_PLAY_MODE) store.play_mode=0;
-  }else{
-    store.play_mode=(playMode_e)newmode;
-  }
-  saveValue(&store.play_mode, store.play_mode, true, true);
-  _SDplaylistFS = getMode()==PM_SDCARD?&sdman:(true?&SPIFFS:_SDplaylistFS);
-  if(getMode()==PM_SDCARD){
-    if(pir) player.sendCommand({PR_STOP, 0});
-    display.putRequest(NEWMODE, SDCHANGE);
-    while(display.mode()!=SDCHANGE)
-      delay(10);
-    delay(50);
-  }
-  if(getMode()==PM_WEB) {
-    if(network.status==SDREADY) ESP.restart();
-    sdman.stop();
-  }
-  if(!_bootDone) return;
-  initPlaylistMode();
-  if (pir) player.sendCommand({PR_PLAY, getMode()==PM_WEB?store.lastStation:store.lastSdStation});
-  netserver.resetQueue();
-  //netserver.requestOnChange(GETPLAYERMODE, 0);
-  netserver.requestOnChange(GETINDEX, 0);
-  //netserver.requestOnChange(GETMODE, 0);
- // netserver.requestOnChange(CHANGEMODE, 0);
-  display.resetQueue();
-  display.putRequest(NEWMODE, PLAYER);
-  display.putRequest(NEWSTATION);
-#endif //#ifdef USE_SD
+    if (network.status==SOFT_AP || display.mode()==LOST) {
+      saveValue(&store.play_mode, static_cast<uint8_t>(PM_SDCARD));
+      delay(50);
+      ESP.restart();
+    }
+    if (!sdman.ready && newmode!=PM_WEB) {
+      if (!sdman.start()) {
+        Serial.println("##[ERROR]#\tSD Not Found");
+        netserver.requestOnChange(GETPLAYERMODE, 0);
+        sdman.stop();
+        return;
+      }
+    }
+    if (newmode<0||newmode>MAX_PLAY_MODE) {
+      store.play_mode++;
+      if (getMode() > MAX_PLAY_MODE) store.play_mode=0;
+    } else {
+      store.play_mode=(playMode_e)newmode;
+    }
+    saveValue(&store.play_mode, store.play_mode, true, true);
+    _SDplaylistFS = getMode()==PM_SDCARD?&sdman:(true?&SPIFFS:_SDplaylistFS);
+    if (getMode()==PM_SDCARD) {
+      if (pir) player.sendCommand({PR_STOP, 0});
+      display.putRequest(NEWMODE, SDCHANGE);
+      while(display.mode()!=SDCHANGE)
+        delay(10);
+      delay(50);
+    }
+    if (getMode()==PM_WEB) {
+      if (network.status==SDREADY) ESP.restart();
+      sdman.stop();
+    }
+    if (!_bootDone) return;
+    initPlaylistMode();
+    if (pir) player.sendCommand({PR_PLAY, getMode()==PM_WEB?store.lastStation:store.lastSdStation});
+    netserver.resetQueue();
+    //netserver.requestOnChange(GETPLAYERMODE, 0);
+    netserver.requestOnChange(GETINDEX, 0);
+    //netserver.requestOnChange(GETMODE, 0);
+    // netserver.requestOnChange(CHANGEMODE, 0);
+    display.resetQueue();
+    display.putRequest(NEWMODE, PLAYER);
+    display.putRequest(NEWSTATION);
+  #endif //#ifdef USE_SD
 }
+
 
 void Config::initSDPlaylist() {
-#ifdef USE_SD
-  //store.countStation = 0;
-  bool doIndex = !sdman.exists(INDEX_SD_PATH);
-  if(doIndex) sdman.indexSDPlaylist();
-  if (SDPLFS()->exists(INDEX_SD_PATH)) {
-    File index = SDPLFS()->open(INDEX_SD_PATH, "r");
-    //store.countStation = index.size() / 4;
-    if(doIndex){
-      lastStation(_randomStation());
-      sdResumePos = 0;
+  #ifdef USE_SD
+    //store.countStation = 0;
+    bool doIndex = !sdman.exists(INDEX_SD_PATH);
+    if (doIndex) sdman.indexSDPlaylist();
+    if (SDPLFS()->exists(INDEX_SD_PATH)) {
+      File index = SDPLFS()->open(INDEX_SD_PATH, "r");
+      //store.countStation = index.size() / 4;
+      if (doIndex) {
+        lastStation(_randomStation());
+        sdResumePos = 0;
+      }
+      index.close();
+      //saveValue(&store.countStation, store.countStation, true, true);
     }
-    index.close();
-    //saveValue(&store.countStation, store.countStation, true, true);
-  }
-#endif //#ifdef USE_SD
+  #endif //#ifdef USE_SD
 }
 
-
-bool Config::spiffsCleanup(){
+bool Config::spiffsCleanup() {
   bool ret = (SPIFFS.exists(PLAYLIST_SD_PATH)) || (SPIFFS.exists(INDEX_SD_PATH)) || (SPIFFS.exists(INDEX_PATH));
-  if(SPIFFS.exists(PLAYLIST_SD_PATH)) SPIFFS.remove(PLAYLIST_SD_PATH);
-  if(SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_SD_PATH);
-  if(SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(INDEX_PATH);
+  if (SPIFFS.exists(PLAYLIST_SD_PATH)) SPIFFS.remove(PLAYLIST_SD_PATH);
+  if (SPIFFS.exists(INDEX_SD_PATH)) SPIFFS.remove(INDEX_SD_PATH);
+  if (SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(INDEX_PATH);
   return ret;
 }
 
-char * Config::ipToStr(IPAddress ip){
+char * Config::ipToStr(IPAddress ip) {
   snprintf(ipBuf, 16, "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
   return ipBuf;
 }
 
-void Config::initPlaylistMode(){
+void Config::initPlaylistMode() {
   uint16_t _lastStation = 0;
   uint16_t cs = playlistLength();
   #ifdef USE_SD
-    if(getMode()==PM_SDCARD){
-      if(!sdman.start()){
+    if (getMode()==PM_SDCARD) {
+      if (!sdman.start()) {
         store.play_mode=PM_WEB;
         Serial.println("SD Mount Failed");
         changeMode(PM_WEB);
         _lastStation = store.lastStation;
-      }else{
-        if(_bootDone) Serial.println("SD Mounted"); else BOOTLOG("SD Mounted");
-          if(_bootDone) Serial.println("Waiting for SD card indexing..."); else BOOTLOG("Waiting for SD card indexing...");
+      } else {
+        if (_bootDone) Serial.println("SD Mounted"); else BOOTLOG("SD Mounted");
+          if (_bootDone) Serial.println("Waiting for SD card indexing..."); else BOOTLOG("Waiting for SD card indexing...");
           initSDPlaylist();
-          if(_bootDone) Serial.println("done"); else BOOTLOG("done");
+          if (_bootDone) Serial.println("done"); else BOOTLOG("done");
           _lastStation = store.lastSdStation;
           
-          if(_lastStation>cs && cs>0){
+          if (_lastStation>cs && cs>0) {
             _lastStation=1;
           }
-          if(_lastStation==0) {
+          if (_lastStation==0) {
             _lastStation = _randomStation();
           }
       }
-    }else{
+    } else {
       Serial.println("done");
       _lastStation = store.lastStation;
     }
-  #else //ifdef USE_SD
+  #else
     store.play_mode=PM_WEB;
     _lastStation = store.lastStation;
-  #endif
-  if(getMode()==PM_WEB && _wwwFilesExist()) initPlaylist();
+  #endif //ifdef USE_SD
+  if (getMode()==PM_WEB && _wwwFilesExist()) initPlaylist();
   log_i("%d" ,_lastStation);
   // Validate station number is within range
   if (cs == 0) {
@@ -292,18 +292,18 @@ void Config::initPlaylistMode(){
   loadStation(_lastStation);
 }
 
-void Config::_initHW(){
+void Config::_initHW() {
   loadTheme();
   #if IR_PIN!=255
-  prefs.begin("ehradio", false);
-  memset(&ircodes, 0, sizeof(ircodes));
-  size_t read = prefs.getBytes("ircodes", &ircodes, sizeof(ircodes));
-  if (read != sizeof(ircodes) || ircodes.ir_set != 4224) {
+    prefs.begin("ehradio", false);
+    memset(&ircodes, 0, sizeof(ircodes));
+    size_t read = prefs.getBytes("ircodes", &ircodes, sizeof(ircodes));
+    if (read != sizeof(ircodes) || ircodes.ir_set != 4224) {
       Serial.println("[_initHW] ircodes not initialized or corrupt, resetting...");
       prefs.remove("ircodes");
       memset(ircodes.irVals, 0, sizeof(ircodes.irVals));
-  }
-  prefs.end();
+    }
+    prefs.end();
   #endif
   #if BRIGHTNESS_PIN!=255
     pinMode(BRIGHTNESS_PIN, OUTPUT);
@@ -316,7 +316,7 @@ uint16_t Config::color565(uint8_t r, uint8_t g, uint8_t b)
   return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 }
 
-void Config::loadTheme(){
+void Config::loadTheme() {
   theme.background    = color565(COLOR_BACKGROUND);
   theme.meta          = color565(COLOR_STATION_NAME);
   theme.metabg        = color565(COLOR_STATION_BG);
@@ -352,7 +352,7 @@ void Config::loadTheme(){
   #include "../displays/tools/tftinverttitle.h"
 }
 
-void Config::reset(){
+void Config::reset() {
   Serial.print("[Prefs] Reset requested, resetting config...\n");
   nvs_flash_erase();
   nvs_flash_init();
@@ -363,78 +363,80 @@ void Config::reset(){
   delay(500);
   ESP.restart();
 }
-void Config::enableScreensaver(bool val){
+void Config::enableScreensaver(bool val) {
   saveValue(&store.screensaverEnabled, val);
-#ifndef DSP_LCD
-  display.putRequest(NEWMODE, PLAYER);
-#endif
+  #ifndef DSP_LCD
+    display.putRequest(NEWMODE, PLAYER);
+  #endif
 }
-void Config::setScreensaverTimeout(uint16_t val){
+void Config::setScreensaverTimeout(uint16_t val) {
   val=constrain(val,5,65520);
   saveValue(&store.screensaverTimeout, val);
-#ifndef DSP_LCD
-  display.putRequest(NEWMODE, PLAYER);
-#endif
+  #ifndef DSP_LCD
+    display.putRequest(NEWMODE, PLAYER);
+  #endif
 }
-void Config::setScreensaverBlank(bool val){
+void Config::setScreensaverBlank(bool val) {
   saveValue(&store.screensaverBlank, val);
-#ifndef DSP_LCD
-  display.putRequest(NEWMODE, PLAYER);
-#endif
+  #ifndef DSP_LCD
+    display.putRequest(NEWMODE, PLAYER);
+  #endif
 }
-void Config::setScreensaverPlayingEnabled(bool val){
+void Config::setScreensaverPlayingEnabled(bool val) {
   saveValue(&store.screensaverPlayingEnabled, val);
-#ifndef DSP_LCD
-  display.putRequest(NEWMODE, PLAYER);
-#endif
+  #ifndef DSP_LCD
+    display.putRequest(NEWMODE, PLAYER);
+  #endif
 }
-void Config::setScreensaverPlayingTimeout(uint16_t val){
+void Config::setScreensaverPlayingTimeout(uint16_t val) {
   val=constrain(val,1,1080);
   config.saveValue(&config.store.screensaverPlayingTimeout, val);
-#ifndef DSP_LCD
-  display.putRequest(NEWMODE, PLAYER);
-#endif
+  #ifndef DSP_LCD
+    display.putRequest(NEWMODE, PLAYER);
+  #endif
 }
-void Config::setScreensaverPlayingBlank(bool val){
+void Config::setScreensaverPlayingBlank(bool val) {
   saveValue(&store.screensaverPlayingBlank, val);
-#ifndef DSP_LCD
-  display.putRequest(NEWMODE, PLAYER);
-#endif
+  #ifndef DSP_LCD
+    display.putRequest(NEWMODE, PLAYER);
+  #endif
 }
 
-void Config::setShowweather(bool val){
+void Config::setShowweather(bool val) {
   config.saveValue(&config.store.showweather, val);
   network.trueWeather=false;
   network.forceWeather = true;
   display.putRequest(SHOWWEATHER);
 }
-void Config::setWeatherKey(const char *val){
+void Config::setWeatherKey(const char *val) {
   saveValue(store.weatherkey, val, WEATHERKEY_LENGTH);
   network.trueWeather=false;
   display.putRequest(NEWMODE, CLEAR);
   display.putRequest(NEWMODE, PLAYER);
 }
-void Config::setSDpos(uint32_t val){
-  if (getMode()==PM_SDCARD){
+void Config::setSDpos(uint32_t val) {
+  if (getMode()==PM_SDCARD) {
     sdResumePos = 0;
-    if(!player.isRunning()){
+    if (!player.isRunning()) {
       player.setResumeFilePos(val-player.sd_min);
       player.sendCommand({PR_PLAY, config.store.lastSdStation});
-    }else{
+    } else {
       player.setFilePos(val-player.sd_min);
     }
   }
 }
-#if IR_PIN!=255
-void Config::setIrBtn(int val){
-  irindex = val;
-  netserver.irRecordEnable = (irindex >= 0);
-  irchck = 0;
-  netserver.irValsToWs();
-  if (irindex < 0) saveIR();
+
+void Config::setIrBtn(int val) {
+  #if IR_PIN!=255
+    irindex = val;
+    netserver.irRecordEnable = (irindex >= 0);
+    irchck = 0;
+    netserver.irValsToWs();
+    if (irindex < 0) saveIR();
+  #endif
 }
-#endif
-void Config::resetSystem(const char *val, uint8_t clientId){
+
+void Config::resetSystem(const char *val, uint8_t clientId) {
   if (strcmp(val, "system") == 0) {
     saveValue(&store.smartstart, SMART_START, false);
     saveValue(&store.audioinfo, SHOW_AUDIO_INFO, false);
@@ -525,21 +527,21 @@ void Config::setDefaults() {
   snprintf(store.mdnsname, MDNS_LENGTH, "ehradio-%x", getChipId());
 }
 
-void Config::setSnuffle(bool sn){
-  saveValue(&store.sdsnuffle, sn);
-  if(store.sdsnuffle) player.next();
+void Config::setShuffle(bool sn) {
+  saveValue(&store.sdshuffle, sn);
+  if (store.sdshuffle) player.next();
 }
 
-#if IR_PIN!=255
-void Config::saveIR(){
-  ircodes.ir_set = 4224;
-  prefs.begin("ehradio", false);
-  size_t written = prefs.putBytes("ircodes", &ircodes, sizeof(ircodes));
-  prefs.end();
+void Config::saveIR() {
+  #if IR_PIN!=255
+    ircodes.ir_set = 4224;
+    prefs.begin("ehradio", false);
+    size_t written = prefs.putBytes("ircodes", &ircodes, sizeof(ircodes));
+    prefs.end();
+  #endif
 }
-#endif
 
-void Config::saveVolume(){
+void Config::saveVolume() {
   saveValue(&store.volume, store.volume, true, true);
 }
 
@@ -550,11 +552,11 @@ uint8_t Config::setVolume(uint8_t val) {
   return store.volume;
 }
 
-void Config::setTone(int8_t bass, int8_t middle, int8_t trebble) {
+void Config::setTone(int8_t bass, int8_t middle, int8_t treble) {
   saveValue(&store.bass, bass, false);
   saveValue(&store.middle, middle, false);
-  saveValue(&store.trebble, trebble);
-  player.setTone(store.bass, store.middle, store.trebble);
+  saveValue(&store.treble, treble);
+  player.setTone(store.bass, store.middle, store.treble);
   netserver.requestOnChange(EQUALIZER, 0);
 }
 
@@ -628,7 +630,7 @@ void Config::initPlaylist() {
     saveValue(&store.countStation, store.countStation, true, true);
   }*/
 }
-uint16_t Config::playlistLength(){
+uint16_t Config::playlistLength() {
   uint16_t out = 0;
   if (SDPLFS()->exists(REAL_INDEX)) {
     File index = SDPLFS()->open(REAL_INDEX, "r");
@@ -670,7 +672,7 @@ bool Config::loadStation(uint16_t ls) {
   return true;
 }
 
-char * Config::stationByNum(uint16_t num){
+char * Config::stationByNum(uint16_t num) {
   File playlist = SDPLFS()->open(REAL_PLAYL, "r");
   File index = SDPLFS()->open(REAL_INDEX, "r");
   index.seek((num - 1) * 4, SeekSet);
@@ -755,12 +757,7 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
           }
         }
         if (name) {
-          const char* u = url;
-          if (strncmp(u, "http://", 7) == 0) u += 7;
-          else if (strncmp(u, "https://", 8) == 0) u += 8;
-          strlcpy(name, u, BUFLEN);
-          // Sanitize '/' to ' '
-          for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
+          urlToName(url, name, BUFLEN);
         }
         ovol = 0;
         return true;
@@ -784,8 +781,6 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
       }
       if (name) {
         strlcpy(name, tokens[nameIdx], BUFLEN);
-        // Sanitize '/' to ' '
-        for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
       }
       ovol = 0;
       return true;
@@ -825,23 +820,20 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
         }
       }
       
-      // Build name from all remaining fields (not URL, not ovol)
+      // Name is FIRST field only (not all non-URL fields)
       if (name) {
         name[0] = 0;
-        for (int i = 0; i < t; ++i) {
-          if (i == urlIdx || i == ovolIdx) continue; // Skip URL and ovol
-          if (strlen(name) > 0) strlcat(name, " ", BUFLEN);
-          strlcat(name, tokens[i], BUFLEN);
-        }
-        
-        // If name is empty, use URL (minus protocol) as name
-        if (strlen(name) == 0) {
-          const char* u = url;
-          if (strncmp(u, "http://", 7) == 0) u += 7;
-          else if (strncmp(u, "https://", 8) == 0) u += 8;
-          strlcpy(name, u, BUFLEN);
-          // Sanitize '/' to ' '
-          for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
+        if (urlIdx > 0) {
+          // URL not first, so name is first token
+          strlcpy(name, tokens[0], BUFLEN);
+        } else if (urlIdx == 0 && t > 1) {
+          // URL is first, name is second token (if not ovol)
+          if (ovolIdx == 1 && t == 2) {
+            // No name, only url and ovol
+            name[0] = 0;
+          } else {
+            strlcpy(name, tokens[1], BUFLEN);
+          }
         }
       }
       
@@ -861,31 +853,34 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
   }
   if (urlIdx == -1) return false; // URL is required
 
-  // Check for ovol at the end (name url ovol), clamp to -30/+30
-  int ovolIdx = -1;
-  if (t == urlIdx + 2) {
-    char* endptr = nullptr;
-    long val = strtol(tokens[t-1], &endptr, 10);
-    if (endptr && *endptr == '\0' && val >= -64 && val <= 64) {
-      ovolIdx = t-1;
-      if (val < -30) val = -30;
-      if (val > 30) val = 30;
-      ovol = (int)val;
-    }
-  }
-
-  // If URL is at the end
-  if (urlIdx == t-1 || (ovolIdx != -1 && urlIdx == t-2)) {
-    // name is everything before URL (or before URL and ovol)
-    if (name) name[0] = 0;
-    int nameEnd = (ovolIdx != -1) ? urlIdx : t-1;
-    for (int i = 0; i < nameEnd; ++i) {
-      if (name && tokens[i][0]) {
+  // Name is FIRST field only
+  if (name) {
+    name[0] = 0;
+    if (urlIdx > 0) {
+      // URL not first, so name is first token
+      strlcpy(name, tokens[0], BUFLEN);
+      // Check if LAST token is ovol (must be at end)
+      const char* lastToken = tokens[t-1];
+      char* endptr = nullptr;
+      long val = strtol(lastToken, &endptr, 10);
+      if (endptr && *endptr == '\0' && val >= -64 && val <= 64 && t >= 2) {
+        if (val < -30) val = -30;
+        if (val > 30) val = 30;
+        ovol = (int)val;
+      } else {
+        ovol = 0;
+      }
+    } else {
+      // URL is first: everything after URL is the name (no ovol)
+      for (int i = urlIdx + 1; i < t; ++i) {
         if (strlen(name) > 0) strlcat(name, " ", BUFLEN);
         strlcat(name, tokens[i], BUFLEN);
       }
+      ovol = 0;
     }
-    // URL
+  }
+
+  // Extract URL
     if (url) {
       if (strncmp(tokens[urlIdx], "http://", 7) != 0 && strncmp(tokens[urlIdx], "https://", 8) != 0) {
         snprintf(url, BUFLEN, "http://%s", tokens[urlIdx]);
@@ -893,66 +888,17 @@ bool Config::parseCSVimport(const char* line, char* name, char* url, int &ovol) 
         strlcpy(url, tokens[urlIdx], BUFLEN);
       }
     }
-    if (ovolIdx == -1) ovol = 0;
-    // If name is missing or empty, use url (minus protocol) as name
-    if ((name == nullptr || strlen(name) == 0) && url && strlen(url) > 0) {
-      const char* u = url;
-      if (strncmp(u, "http://", 7) == 0) u += 7;
-      else if (strncmp(u, "https://", 8) == 0) u += 8;
-      if (name) {
-        strlcpy(name, u, BUFLEN);
-        // Sanitize '/' to ' '
-        for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
-      }
-    }
-    if (!url || strlen(url) == 0) return false;
-    return true;
+  
+  // If name is missing or empty, generate from URL
+  if ((name == nullptr || strlen(name) == 0) && url && strlen(url) > 0) {
+    urlToName(url, name, BUFLEN);
   }
-  // If URL is at the beginning
-  if (urlIdx == 0) {
-    // name is everything after URL (and before ovol if present)
-    if (name) name[0] = 0;
-    int nameStart = 1;
-    int nameEnd = (ovolIdx != -1) ? ovolIdx : t;
-    for (int i = nameStart; i < nameEnd; ++i) {
-      if (name && tokens[i][0]) {
-        if (strlen(name) > 0) strlcat(name, " ", BUFLEN);
-        strlcat(name, tokens[i], BUFLEN);
-      }
-    }
-    // URL
-    if (url) {
-      if (strncmp(tokens[0], "http://", 7) != 0 && strncmp(tokens[0], "https://", 8) != 0) {
-        snprintf(url, BUFLEN, "http://%s", tokens[0]);
-      } else {
-        strlcpy(url, tokens[0], BUFLEN);
-      }
-    }
-    if (ovolIdx == -1) ovol = 0;
-    // If name is missing or empty, use url (minus protocol) as name
-    if ((name == nullptr || strlen(name) == 0) && url && strlen(url) > 0) {
-      const char* u = url;
-      if (strncmp(u, "http://", 7) == 0) u += 7;
-      else if (strncmp(u, "https://", 8) == 0) u += 8;
-      if (name) {
-        strlcpy(name, u, BUFLEN);
-        // Sanitize '/' to ' '
-        for (char* p = name; *p; ++p) if (*p == '/') *p = ' ';
-      }
-    }
-    if (!url || strlen(url) == 0) return false;
-    return true;
-  }
-  // Otherwise, invalid for space-delimited
-  return false;
+  
+  if (!url || strlen(url) == 0) return false;
+  return true;
 }
 
 bool Config::parseJSON(const char* line, char* name, char* url, int &ovol) {
-  // Reset outputs
-  if (name) name[0] = 0;
-  if (url) url[0] = 0;
-  ovol = 0;
-
   // Helper lambda to extract a value by key (key must be quoted, e.g. "name")
   // Handles both string and numeric values
   auto extract = [](const char* src, const char* key, char* out, size_t outlen) -> bool {
@@ -1006,12 +952,20 @@ bool Config::parseJSON(const char* line, char* name, char* url, int &ovol) {
     strncpy(objbuf, start, len);
     objbuf[len] = 0;
     obj = objbuf;
+  } else if (line[0] == '{') {
+    // Single JSON object (JSONL/NDJSON format) - use as-is
+    obj = line;
+  } else {
+    // Try to parse as simple key-value format
+    return false;
   }
 
   char buf[256];
-  // 1. Extract name
+  // 1. Extract name (optional)
   if (!extract(obj, "\"name\"", name, BUFLEN)) {
-    return false;
+    if (!extract(obj, "\"title\"", name, BUFLEN)) {
+      if (name) name[0] = 0; // Name is optional
+    }
   }
 
   // 2. Try url_resolved, then url, then host+file+port
@@ -1023,19 +977,32 @@ bool Config::parseJSON(const char* line, char* name, char* url, int &ovol) {
     strncpy(url, buf, BUFLEN);
     gotUrl = true;
   } else {
-    char host[246] = {0}, file[254] = {0}, port[16] = {0};
+    char host[246] = {0}, file[254] = {0}, portStr[16] = {0};
     bool gotHost = extract(obj, "\"host\"", host, sizeof(host));
     bool gotFile = extract(obj, "\"file\"", file, sizeof(file));
-    bool gotPort = extract(obj, "\"port\"", port, sizeof(port));
-    if (gotHost && gotFile) {
-      if (strstr(host, "http://") == NULL && strstr(host, "https://") == NULL) {
-        snprintf(buf, sizeof(buf), "http://%s", host);
-        strlcpy(host, buf, sizeof(host));
-      }
-      if (gotPort && strlen(port) > 0) {
-        snprintf(url, BUFLEN, "%s:%s%s", host, port, file);
+    bool gotPort = extract(obj, "\"port\"", portStr, sizeof(portStr));
+    int port = gotPort ? atoi(portStr) : 80;
+    
+    if (gotHost) {
+      // Determine protocol based on port
+      const char* protocol = (port == 443) ? "https://" : "http://";
+      
+      // Only add port if non-default for the protocol
+      bool addPort = (strcmp(protocol, "http://") == 0 && port != 80) || 
+                     (strcmp(protocol, "https://") == 0 && port != 443);
+      
+      if (gotFile && strlen(file) > 0) {
+        if (addPort) {
+          snprintf(url, BUFLEN, "%s%s:%d%s", protocol, host, port, file[0] == '/' ? file : "/");
+        } else {
+          snprintf(url, BUFLEN, "%s%s%s", protocol, host, file[0] == '/' ? file : "/");
+        }
       } else {
-        snprintf(url, BUFLEN, "%s%s", host, file);
+        if (addPort) {
+          snprintf(url, BUFLEN, "%s%s:%d", protocol, host, port);
+        } else {
+          snprintf(url, BUFLEN, "%s%s", protocol, host);
+        }
       }
       gotUrl = true;
     }
@@ -1053,7 +1020,46 @@ bool Config::parseJSON(const char* line, char* name, char* url, int &ovol) {
   } else {
     ovol = 0;
   }
+  
+  // 4. If name is missing or empty, generate from URL
+  if ((name == nullptr || strlen(name) == 0) && url && strlen(url) > 0) {
+    urlToName(url, name, BUFLEN);
+  }
+  
   return true;
+}
+
+
+void Config::urlToName(const char* url, char* name, size_t maxLen) {
+  // Convert URL to readable name: drop protocol, port, convert special chars to hyphens
+  const char* start = url;
+  // Skip protocol
+  if (strncmp(start, "http://", 7) == 0) start += 7;
+  else if (strncmp(start, "https://", 8) == 0) start += 8;
+  
+  size_t j = 0;
+  for (size_t i = 0; start[i] != '\0' && j < maxLen - 1; ++i) {
+    char c = start[i];
+    // Skip port numbers (":1234")
+    if (c == ':' && start[i+1] >= '0' && start[i+1] <= '9') {
+      // Skip until end of port number or next path segment
+      while (start[i] != '\0' && start[i] != '/') i++;
+      if (start[i] == '\0') break;
+      c = start[i];
+    }
+    // Convert special chars to hyphens
+    if (c == '/' || c == '=' || c == '&' || c == '?') {
+      // Don't add hyphen if previous char was already a hyphen
+      if (j > 0 && name[j-1] != '-') {
+        name[j++] = '-';
+      }
+    } else {
+      name[j++] = c;
+    }
+  }
+  // Trim trailing hyphens
+  while (j > 0 && name[j-1] == '-') j--;
+  name[j] = '\0';
 }
 
 bool Config::parseWsCommand(const char* line, char* cmd, char* val, uint8_t cSize) {
@@ -1073,27 +1079,63 @@ bool Config::parseSsid(const char* line, char* ssid, char* pass) {
   tmpe = strstr(line, "\t");
   if (tmpe == NULL) return false;
   uint16_t pos = tmpe - line;
-  if (pos > 29 || strlen(line) > 71) return false;
-  memset(ssid, 0, 30);
+  if (pos >= sizeof(ssids[0].ssid)) return false;
+  if (strlen(line + pos + 1) >= sizeof(ssids[0].password)) return false;
+  memset(ssid, 0, sizeof(ssids[0].ssid));
   strlcpy(ssid, line, pos + 1);
-  memset(pass, 0, 40);
-  strlcpy(pass, line + pos + 1, strlen(line) - pos);
+  memset(pass, 0, sizeof(ssids[0].password));
+  strlcpy(pass, line + pos + 1, sizeof(ssids[0].password));
   return true;
 }
 
-bool Config::saveWifiFromNextion(const char* post){
-  File file = SPIFFS.open(SSIDS_PATH, "w");
-  if (!file) {
-    return false;
-  } else {
-    file.print(post);
-    file.close();
-    ESP.restart();
-    return true;
+bool Config::saveWifi(const char* post) {
+  char ssidval[sizeof(ssids[0].ssid)], passval[sizeof(ssids[0].password)];
+  if (parseSsid(post, ssidval, passval)) {
+    if (addSsid(ssidval, passval)) {
+      ESP.restart();
+      return true;
+    }
   }
+  return false;
 }
 
-bool Config::saveWifi() {
+bool Config::addSsid(const char* ssid, const char* password) {
+  int slot = -1;
+  for (int i = 0; i < ssidsCount; i++) {
+    if (strcmp(ssids[i].ssid, ssid) == 0) {
+      slot = i;
+      break;
+    }
+  }
+  
+  if (slot == -1) {
+    slot = (ssidsCount < 5) ? ssidsCount : 4;
+    if (slot == ssidsCount && ssidsCount < 5) {
+      ssidsCount++;
+    }
+  }
+  
+  strlcpy(ssids[slot].ssid, ssid, sizeof(ssids[0].ssid));
+  strlcpy(ssids[slot].password, password, sizeof(ssids[0].password));
+  setLastSSID(slot + 1);
+
+  File file = SPIFFS.open(TMP_PATH, "w");
+  if (!file) return false;
+  for (int i = 0; i < ssidsCount; i++) {
+    if (strlen(ssids[i].ssid) > 0) {
+      file.printf("%s\t%s\n", ssids[i].ssid, ssids[i].password);
+    }
+  }
+  file.close();
+  
+  if (SPIFFS.exists(TMP_PATH)) {
+    SPIFFS.remove(SSIDS_PATH);
+    return SPIFFS.rename(TMP_PATH, SSIDS_PATH);
+  }
+  return false;
+}
+
+bool Config::importWifi() {
   if (!SPIFFS.exists(TMP_PATH)) return false;
   SPIFFS.remove(SSIDS_PATH);
   SPIFFS.rename(TMP_PATH, SSIDS_PATH);
@@ -1106,95 +1148,94 @@ bool Config::initNetwork() {
   if (!file || file.isDirectory()) {
     return false;
   }
-  char ssidval[30], passval[40];
-  uint8_t c = 0;
-  while (file.available()) {
+  ssidsCount = 0;
+  char ssidval[sizeof(ssids[0].ssid)], passval[sizeof(ssids[0].password)];
+  while (file.available() && ssidsCount < 5) {
     if (parseSsid(file.readStringUntil('\n').c_str(), ssidval, passval)) {
-      strlcpy(ssids[c].ssid, ssidval, 30);
-      strlcpy(ssids[c].password, passval, 40);
+      strlcpy(ssids[ssidsCount].ssid, ssidval, sizeof(ssids[0].ssid));
+      strlcpy(ssids[ssidsCount].password, passval, sizeof(ssids[0].password));
       ssidsCount++;
-      c++;
     }
   }
   file.close();
   return true;
 }
 
-void Config::setBrightness(bool dosave){
-#if BRIGHTNESS_PIN!=255
-  if(!store.dspon && dosave) {
-    display.wakeup();
-  }
-  analogWrite(BRIGHTNESS_PIN, map(store.brightness, 0, 100, 0, 255));
-  if(!store.dspon) store.dspon = true;
-  if(dosave){
-    saveValue(&store.brightness, store.brightness, false, true);
-    saveValue(&store.dspon, store.dspon, true, true);
-  }
-#endif
-#ifdef USE_NEXTION
-  nextion.wake();
-  char cmd[15];
-  snprintf(cmd, 15, "dims=%d", store.brightness);
-  nextion.putcmd(cmd);
-  if(!store.dspon) store.dspon = true;
-  if(dosave){
-    saveValue(&store.brightness, store.brightness, false, true);
-    saveValue(&store.dspon, store.dspon, true, true);
-  }
-#endif
+void Config::setBrightness(bool dosave) {
+  #if BRIGHTNESS_PIN!=255
+    if (!store.dspon && dosave) {
+      display.wakeup();
+    }
+    analogWrite(BRIGHTNESS_PIN, map(store.brightness, 0, 100, 0, 255));
+    if (!store.dspon) store.dspon = true;
+    if (dosave) {
+      saveValue(&store.brightness, store.brightness, false, true);
+      saveValue(&store.dspon, store.dspon, true, true);
+    }
+  #endif
+  #ifdef USE_NEXTION
+    nextion.wake();
+    char cmd[15];
+    snprintf(cmd, 15, "dims=%d", store.brightness);
+    nextion.putcmd(cmd);
+    if (!store.dspon) store.dspon = true;
+    if (dosave) {
+      saveValue(&store.brightness, store.brightness, false, true);
+      saveValue(&store.dspon, store.dspon, true, true);
+    }
+  #endif
 }
 
-void Config::setDspOn(bool dspon, bool saveval){
-  if(saveval){
+void Config::setDspOn(bool dspon, bool saveval) {
+  if (saveval) {
     store.dspon = dspon;
     saveValue(&store.dspon, store.dspon, true, true);
   }
-#ifdef USE_NEXTION
-  if(!dspon) nextion.sleep();
-  else nextion.wake();
-#endif
-  if(!dspon){
-#if BRIGHTNESS_PIN!=255
-  analogWrite(BRIGHTNESS_PIN, 0);
-#endif
+  #ifdef USE_NEXTION
+    if (!dspon) nextion.sleep();
+    else nextion.wake();
+  #endif
+  if (!dspon) {
+    #if BRIGHTNESS_PIN!=255
+      analogWrite(BRIGHTNESS_PIN, 0);
+    #endif
     display.deepsleep();
-  }else{
+  } else {
     display.wakeup();
-#if BRIGHTNESS_PIN!=255
-  analogWrite(BRIGHTNESS_PIN, map(store.brightness, 0, 100, 0, 255));
-#endif
+    #if BRIGHTNESS_PIN!=255
+      analogWrite(BRIGHTNESS_PIN, map(store.brightness, 0, 100, 0, 255));
+    #endif
   }
 }
 
-void Config::doSleep(){
-  if(BRIGHTNESS_PIN!=255) analogWrite(BRIGHTNESS_PIN, 0);
+void Config::doSleep() {
+  if (BRIGHTNESS_PIN!=255) analogWrite(BRIGHTNESS_PIN, 0);
   display.deepsleep();
-#ifdef USE_NEXTION
-  nextion.sleep();
-#endif
-#if !defined(ARDUINO_ESP32C3_DEV)
-  if(WAKE_PIN!=255) esp_sleep_enable_ext0_wakeup((gpio_num_t)WAKE_PIN, LOW);
-  esp_sleep_enable_timer_wakeup(config.sleepfor * 60 * 1000000ULL);
-  esp_deep_sleep_start();
-#endif
+  #ifdef USE_NEXTION
+    nextion.sleep();
+  #endif
+  #ifndef ARDUINO_ESP32C3_DEV
+    if (WAKE_PIN!=255) esp_sleep_enable_ext0_wakeup((gpio_num_t)WAKE_PIN, LOW);
+    esp_sleep_enable_timer_wakeup(config.sleepfor * 60 * 1000000ULL);
+    esp_deep_sleep_start();
+  #endif
 }
 
-void Config::doSleepW(){
-  if(BRIGHTNESS_PIN!=255) analogWrite(BRIGHTNESS_PIN, 0);
+void Config::doSleepW() {
+  if (BRIGHTNESS_PIN!=255) analogWrite(BRIGHTNESS_PIN, 0);
   display.deepsleep();
-#ifdef USE_NEXTION
-  nextion.sleep();
-#endif
-#if !defined(ARDUINO_ESP32C3_DEV)
-  if(WAKE_PIN!=255) esp_sleep_enable_ext0_wakeup((gpio_num_t)WAKE_PIN, LOW);
-  esp_deep_sleep_start();
-#endif
+  #ifdef USE_NEXTION
+    nextion.sleep();
+  #endif
+  #ifndef ARDUINO_ESP32C3_DEV
+    if (WAKE_PIN!=255) esp_sleep_enable_ext0_wakeup((gpio_num_t)WAKE_PIN, LOW);
+    esp_deep_sleep_start();
+  #endif
 }
 
-void Config::sleepForAfter(uint16_t sf, uint16_t sa){
+void Config::sleepForAfter(uint16_t sf, uint16_t sa) {
   sleepfor = sf;
-  if(sa > 0) _sleepTimer.attach(sa * 60, doSleep);
+  if (sa > 0) _sleepTimer.attach(sa * 60, doSleep);
   else doSleep();
 }
 
@@ -1291,8 +1332,8 @@ void fixPlaylistFileEnding() {
   playlistfile.close();
 }
 
-#ifdef UPDATEURL
-  void getRequiredFiles(void* param) {
+void getRequiredFiles(void* param) {
+  #ifdef UPDATEURL
     player.sendCommand({PR_STOP, 0});
     char localFileGz[64];
     char localFile[64];
@@ -1308,10 +1349,10 @@ void fixPlaylistFileEnding() {
       for (size_t j = 0; j < 2; j++) {
         if (j == 0) { // Try compressed first
           snprintf(tryFile, sizeof(tryFile), "%s", localFileGz);
-          snprintf(tryUrl, sizeof(tryUrl), "%s%s.gz", UPDATEURL, fname);
+          snprintf(tryUrl, sizeof(tryUrl), "%s%s.gz", FILESURL, fname);
         } else { // Fallback to uncompressed
           snprintf(tryFile, sizeof(tryFile), "%s", localFile);
-          snprintf(tryUrl, sizeof(tryUrl), "%s%s", UPDATEURL, fname);
+          snprintf(tryUrl, sizeof(tryUrl), "%s%s", FILESURL, fname);
         }
         Serial.printf("[ESPFileUpdater: %s] Updating required file.\n", tryFile);
         ESPFileUpdater* getfile = (ESPFileUpdater*)param;
@@ -1320,13 +1361,13 @@ void fixPlaylistFileEnding() {
             tryUrl,
             "",
             ESPFILEUPDATER_VERBOSE
-        );
+       );
         if (result == ESPFileUpdater::UPDATED) {
           Serial.printf("[ESPFileUpdater: %s] Download completed.\n", tryFile);
           break; // Exit inner loop on success
         } else {
           if (j == 0) Serial.printf("[ESPFileUpdater: %s] Download failed. Will retry for uncompressed file.\n", tryFile);
-          if (j == 1) Serial.printf("[ESPFileUpdater: %s] Download failed. Moving onto next file anyways.\n", tryFile);
+          if (j == 1) Serial.printf("[ESPFileUpdater: %s] Download failed. No online file available. Are you running a custom version?\n", tryFile);
         }
       }
     }
@@ -1360,8 +1401,38 @@ void fixPlaylistFileEnding() {
     delay(200);
     ESP.restart();
     vTaskDelete(NULL);
-  }
-#endif //#ifdef UPDATEURL
+  #endif //#ifdef UPDATEURL
+}
+
+void checkNewVersionFile() {
+  #ifdef UPDATEURL
+    const char* newVersionPath = "/data/new_ver.txt";
+    netserver.newVersion = String(RADIOVERSION);
+    if (SPIFFS.exists(newVersionPath)) {
+      File newVerFile = SPIFFS.open(newVersionPath, "r");
+      if (newVerFile) {
+        String line = newVerFile.readStringUntil('\n');
+        line.trim();
+        if (line.indexOf(VERSIONSTRING) >= 0) {
+          int firstQuote = line.indexOf('"');
+          int lastQuote = line.lastIndexOf('"');
+          if (firstQuote >= 0 && lastQuote > firstQuote) {
+            String extractedVersion = line.substring(firstQuote + 1, lastQuote);
+            if (extractedVersion.length() > 0) {
+              netserver.newVersion = extractedVersion;
+            }
+          }
+        }
+        newVerFile.close();
+      }
+    }
+    if (netserver.newVersion != String(RADIOVERSION)) {
+      netserver.newVersionAvailable = true;
+    } else {
+      netserver.newVersionAvailable =  false;
+    }
+  #endif //#ifdef UPDATEURL
+}
 
 void Config::updateFile(void* param, const char* localFile, const char* onlineFile, const char* updatePeriod, const char* simpleName) {
   Serial.printf("[ESPFileUpdater: %s] Started update.\n", simpleName);
@@ -1371,7 +1442,7 @@ void Config::updateFile(void* param, const char* localFile, const char* onlineFi
       onlineFile,
       updatePeriod,
       ESPFILEUPDATER_VERBOSE
-  );
+ );
   if (result == ESPFileUpdater::UPDATED) {
     Serial.printf("[ESPFileUpdater: %s] Update completed.\n", simpleName);
   } else if (result == ESPFileUpdater::NOT_MODIFIED||result == ESPFileUpdater::MAX_AGE_NOT_REACHED) {
@@ -1382,9 +1453,13 @@ void Config::updateFile(void* param, const char* localFile, const char* onlineFi
 }
 
 void startAsyncServices(void* param) {
+  #ifdef UPDATEURL
+    config.updateFile(param, "/data/new_ver.txt", CHECKUPDATEURL, CHECKUPDATEURL_TIME, "New version number");
+    checkNewVersionFile();
+  #endif
   fixPlaylistFileEnding();
-  config.updateFile(param, "/www/timezones.json.gz", TIMEZONES_JSON_URL, "1 week", "Timezones database file");
-  config.updateFile(param, "/www/rb_srvrs.json", RADIO_BROWSER_SERVERS_URL, "1 day", "Radio Browser Servers list");
+  config.updateFile(param, "/www/timezones.json.gz", TIMEZONES_JSON_URL, TIMEZONES_JSON_CHECKTIME, "Timezones database file");
+  config.updateFile(param, "/www/rb_srvrs.json", RADIO_BROWSER_SERVERS_URL, RB_SERVERS_CHECKTIME, "Radio Browser Servers list");
   cleanStaleSearchResults();
   vTaskDelete(NULL);
 }
@@ -1418,9 +1493,9 @@ void Config::bootInfo() {
   }
   BOOTLOG("chip:\t\tmodel: %s | rev: %d | id: %d | cores: %d | psram: %d", ESP.getChipModel(), ESP.getChipRevision(), chipId, ESP.getChipCores(), ESP.getPsramSize());
   BOOTLOG("display:\t%d", DSP_MODEL);
-  if(VS1053_CS==255) {
+  if (VS1053_CS==255) {
     BOOTLOG("audio:\t\t%s (%d, %d, %d)", "I2S", I2S_DOUT, I2S_BCLK, I2S_LRC);
-  }else{
+  } else {
     BOOTLOG("audio:\t\t%s (%d, %d, %d, %d, %s)", "VS1053", VS1053_CS, VS1053_DCS, VS1053_DREQ, VS1053_RST, VS_HSPI?"true":"false");
   }
   BOOTLOG("audioinfo:\t%s", store.audioinfo?"true":"false");
@@ -1439,9 +1514,12 @@ void Config::bootInfo() {
   BOOTLOG("encoders:\tl1=%d, b1=%d, r1=%d, pullup=%s, l2=%d, b2=%d, r2=%d, pullup=%s", 
           ENC_BTNL, ENC_BTNB, ENC_BTNR, ENC_INTERNALPULLUP?"true":"false", ENC2_BTNL, ENC2_BTNB, ENC2_BTNR, ENC2_INTERNALPULLUP?"true":"false");
   BOOTLOG("ir:\t\t%d", IR_PIN);
-  if(SDC_CS!=255) BOOTLOG("SD:\t%d", SDC_CS);
+  if (SDC_CS!=255) BOOTLOG("SD:\t%d", SDC_CS);
   #ifdef FIRMWARE
     BOOTLOG("firmware:\t%s", FIRMWARE);
+  #endif
+  #ifdef UPDATEURL
+    BOOTLOG("updateurl:\t%s", UPDATEURL);
   #endif
   BOOTLOG("------------------------------------------------");
 }
@@ -1457,10 +1535,10 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(play_mode, "playmode"),
   CONFIG_KEY_ENTRY(volume, "vol"),
   CONFIG_KEY_ENTRY(balance, "bal"),
-  CONFIG_KEY_ENTRY(trebble, "treb"),
+  CONFIG_KEY_ENTRY(treble, "treb"),
   CONFIG_KEY_ENTRY(middle, "mid"),
   CONFIG_KEY_ENTRY(bass, "bass"),
-  CONFIG_KEY_ENTRY(sdsnuffle, "sdshuffle"),
+  CONFIG_KEY_ENTRY(sdshuffle, "sdshuffle"),
   CONFIG_KEY_ENTRY(smartstart, "smartstartx"),
   CONFIG_KEY_ENTRY(audioinfo, "audioinfo"),
   CONFIG_KEY_ENTRY(vumeter, "vumeter"),

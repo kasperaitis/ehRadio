@@ -11,7 +11,7 @@
 #include "opus_decoder.h"
 #include "celt.h"
 #include "silk.h"
-#include "Arduino.h"
+#include <Arduino.h>
 #include <vector>
 
 #define __malloc_heap_psram(size) \

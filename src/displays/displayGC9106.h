@@ -2,7 +2,7 @@
 #define displayGC9106_h
 #include "../core/options.h"
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include "../libraries/Adafruit_GC9106Ex/Adafruit_GC9106Ex.h"       // https://github.com/prenticedavid/Adafruit_GC9102_kbv
 #include "fonts/bootlogo62x40.h"

@@ -7,7 +7,7 @@
 #include <inttypes.h>
 #if defined(ARDUINO) && ARDUINO >= 100
 
-#include "Arduino.h"
+#include <Arduino.h>
 
 #define printIIC(args)	Wire.write(args)
 inline size_t LiquidCrystal_I2C::write(uint8_t value) {
@@ -24,7 +24,7 @@ inline void LiquidCrystal_I2C::write(uint8_t value) {
 }
 
 #endif
-#include "Wire.h"
+#include <Wire.h>
 
 // When the display powers up, it is configured as follows:
 //

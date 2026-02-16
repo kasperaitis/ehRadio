@@ -115,7 +115,7 @@ function onMessage(event) {
     if(typeof data.playermode !== 'undefined') { //Web, SD
       modesd = data.playermode=='modesd';
       classEach('modeitem', function(el){ el.classList.add('hidden') });
-      if(modesd) showById(['modesd', 'sdsvg'],['plsvg']); else showById(['modeweb','plsvg','bitinfo'],['sdsvg','snuffle']);
+      if(modesd) showById(['modesd', 'sdsvg'],['plsvg']); else showById(['modeweb','plsvg','bitinfo'],['sdsvg','shuffle']);
       showById(['volslider'],['sdslider']);
       getId('toggleplaylist').classList.remove('active');
       generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
@@ -149,11 +149,11 @@ function onMessage(event) {
       getId("sdpos").attr('max',data.sdmax); 
       return;
     }
-    if(typeof data.snuffle!== 'undefined'){
-      if(data.snuffle==1){
-        getId("snuffle").classList.add("active");
+    if(typeof data.shuffle!== 'undefined'){
+      if(data.shuffle==1){
+        getId("shuffle").classList.add("active");
       }else{
-        getId("snuffle").classList.remove("active");
+        getId("shuffle").classList.remove("active");
       }
       return;
     }
@@ -292,7 +292,7 @@ function initPLEditor(){
       <input class="pleinput plename" type="text" value="${quoteattr(item.dataset.name)}" maxlength="140" />
       <input class="pleinput pleurl" type="text" value="${item.dataset.url}" maxlength="140" />
       <span class="pleinput pleplay" data-command="preview">&#9658;</span>
-      <input class="pleinput pleovol" type="number" min="-64" max="64" step="1" value="${item.dataset.ovol}" />
+      <input class="pleinput pleovol" type="number" min="-30" max="30" step="1" value="${item.dataset.ovol}" />
       </li>`;
   });
   ple.innerHTML=html;
@@ -330,6 +330,10 @@ function generatePlaylist(path){
   xhr.open("GET", path);
   xhr.send(null);
 }
+function uncheckSelectAll(){
+  const checkbox = getId('selectAllCheckbox');
+  if(checkbox) checkbox.checked = false;
+}
 function plAdd(){
   let ple=getId('pleditorcontent');
   let plitem = document.createElement('li');
@@ -348,13 +352,24 @@ function plAdd(){
     left: 0,
     behavior: 'smooth'
   });
+  uncheckSelectAll();
 }
 function selectAll(checkbox){
   let items=getId('pleditorcontent').getElementsByTagName('li');
   for (let i = 0; i < items.length; i++) {
     let cb = items[i].getElementsByTagName('span')[1].getElementsByTagName('input')[0];
-    cb.checked = checkbox.checked;
+    if (checkbox.checked) {
+      // Invert selection
+      cb.checked = !cb.checked;
+    } else {
+      // Uncheck all
+      cb.checked = false;
+    }
   }
+}
+function undoPlaylistChanges(){
+  generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
+  uncheckSelectAll();
 }
 function plRemove(){
   let items=getId('pleditorcontent').getElementsByTagName('li');
@@ -376,6 +391,7 @@ function plRemove(){
   for (let i = 0; i <= items.length-1; i++) {
     items[i].getElementsByTagName('span')[0].innerText=("00"+(i+1)).slice(-3);
   }
+  uncheckSelectAll();
 }
 function submitPlaylist(){
   var items=getId("pleditorcontent").getElementsByTagName("li");
@@ -393,31 +409,341 @@ function submitPlaylist(){
   container.items.add(file);
   let fileuploadinput=getId("file-upload");
   fileuploadinput.files = container.files;
-  window.importMode = 'replace'; // Save always replaces entire playlist
   doPlUpload(fileuploadinput);
   toggleTarget(0, 'pleditorwrap');
 }
 function doPlUpload(finput) {
+  if (!finput.files || !finput.files[0]) return;
   var formData = new FormData();
-  formData.append("plfile", finput.files[0]);
-  // Add mode parameter (merge or replace)
-  const importMode = window.importMode || 'replace'; // Default to replace for safety
-  formData.append("mode", importMode);
+  formData.append("data", finput.files[0], "playlist.csv");
   var xhr = new XMLHttpRequest();
-  xhr.open("POST",`http://${hostname}/webboard`,true);
   xhr.onload = function() {
     if (xhr.status === 200) {
-      // Notify server that playlist save is complete - triggers refresh
-      websocket.send('submitplaylistdone=1');
+      // Server will send PLAYLISTSAVED event via WebSocket
+      console.log('Playlist saved successfully');
     }
   };
+  xhr.open("POST", `http://${hostname}/webboard`, true);
   xhr.send(formData);
   finput.value = '';
-  delete window.importMode; // Clean up
 }
+function doPlImport(finput) {
+  if (!finput.files || !finput.files[0]) return;
+  const file = finput.files[0];
+  const mode = window.importMode || 'replace';
+  const reader = new FileReader();
+  
+  reader.onload = function(e) {
+    const content = e.target.result;
+    const isJSON = file.name.endsWith('.json');
+    
+    if (mode === 'replace') {
+      // Clear existing playlist
+      getId('pleditorcontent').innerHTML = '';
+    }
+    
+    if (isJSON) {
+      parseAndAddJSON(content, addStationToEditor, mode);
+    } else {
+      parseAndAddCSV(content, addStationToEditor, mode);
+    }
+    
+    finput.value = '';
+    delete window.importMode;
+    uncheckSelectAll();
+  };
+  
+  reader.readAsText(file);
+}
+
+function parseAndAddJSON(content, targetCallback, mode = 'replace') {
+  try {
+    // Handle JSONL/NDJSON (missing opening/closing brackets and commas)
+    content = content.trim();
+    if (!content.startsWith('[')) {
+      // JSONL format: multiple objects on separate lines, need commas between them
+      const lines = content.split('\n').filter(line => line.trim());
+      content = '[\n' + lines.join(',\n') + '\n]';
+    }
+    
+    let data = JSON.parse(content);
+    if (!Array.isArray(data)) data = [data];
+    
+    const existingURLs = mode === 'merge' ? getExistingURLs() : new Set();
+    let addedCount = 0;
+    let duplicateCount = 0;
+    
+    data.forEach(item => {
+      // Extract name (try name first, then title)
+      const name = item.name || item.title || '';
+      
+      // Extract URL with fallback chain: url_resolved -> url -> host+file+port
+      let url = '';
+      if (item.url_resolved) {
+        url = item.url_resolved;
+      } else if (item.url) {
+        url = item.url;
+      } else if (item.host) {
+        // Build URL from host + file + port
+        const host = item.host || '';
+        const file = item.file || '';
+        const port = item.port || 80;
+        
+        if (host) {
+          const protocol = (port === 443) ? 'https://' : 'http://';
+          url = protocol + host;
+          // Only add port if non-default for the protocol
+          if ((protocol === 'http://' && port !== 80) || (protocol === 'https://' && port !== 443)) {
+            url += ':' + port;
+          }
+          if (file) {
+            url += (file.startsWith('/') ? '' : '/') + file;
+          }
+        }
+      }
+      
+      // Extract and clamp ovol
+      const ovol = Math.max(-30, Math.min(30, parseInt(item.ovol || 0)));
+      
+      // If no name, generate from URL
+      const finalName = name || (url ? urlToName(url) : '');
+      
+      // Check for duplicates
+      if (url) {
+        if (existingURLs.has(url)) {
+          duplicateCount++;
+        } else {
+          targetCallback(finalName, url, ovol);
+          existingURLs.add(url);
+          addedCount++;
+        }
+      }
+    });
+    
+    if (mode === 'replace') {
+      alert(`Import complete: ${addedCount} stations loaded.`);
+    } else if (duplicateCount > 0) {
+      alert(`Import complete: ${addedCount} stations added, ${duplicateCount} duplicates skipped.`);
+    }
+  } catch(e) {
+    alert('Invalid JSON format: ' + e.message);
+  }
+}
+
+function urlToName(url) {
+  // Convert URL to readable name: drop protocol, port, convert special chars to hyphens
+  let name = url.replace(/^https?:\/\//, ''); // Drop protocol
+  name = name.replace(/:\d+/, ''); // Drop port number
+  name = name.replace(/[=&?]/g, '-'); // Convert query chars to hyphens
+  name = name.replace(/\/+/g, '-'); // Convert slashes to hyphens
+  name = name.replace(/--+/g, '-'); // Collapse multiple hyphens
+  name = name.replace(/^-|-$/g, ''); // Trim leading/trailing hyphens
+  return name;
+}
+
+function parseAndAddCSV(content, targetCallback, mode = 'replace') {
+  const lines = content.split('\n');
+  const existingURLs = mode === 'merge' ? getExistingURLs() : new Set();
+  let addedCount = 0;
+  let duplicateCount = 0;
+  
+  lines.forEach(line => {
+    line = line.trim();
+    if (!line) return;
+    
+    let name = '', url = '', ovol = 0;
+    
+    // Try tab-delimited first
+    if (line.includes('\t')) {
+      const parts = line.split('\t').map(p => p.trim());
+      
+      if (parts.length === 1) {
+        // 1 field: URL only
+        if (parts[0].includes('.') && (parts[0].includes('/') || parts[0].includes('://'))) {
+          url = parts[0];
+          name = ''; // Will be generated from URL later
+          ovol = 0;
+        }
+      } else if (parts.length === 2) {
+        // 2 fields: one is URL, one is name (order does not matter)
+        let urlIdx = -1, nameIdx = -1;
+        for (let i = 0; i < 2; i++) {
+          if (parts[i].includes('.') && (parts[i].includes('/') || parts[i].includes('://'))) {
+            urlIdx = i;
+          } else {
+            nameIdx = i;
+          }
+        }
+        if (urlIdx !== -1 && nameIdx !== -1) {
+          url = parts[urlIdx];
+          name = parts[nameIdx];
+          ovol = 0;
+        }
+      } else if (parts.length >= 3) {
+        // 3+ fields: Find URL (required), ovol (optional), and name from remaining fields
+        let urlIdx = -1;
+        for (let i = 0; i < parts.length; i++) {
+          if (parts[i].includes('.') && (parts[i].includes('/') || parts[i].includes('://'))) {
+            urlIdx = i;
+            break;
+          }
+        }
+        
+        if (urlIdx !== -1) {
+          url = parts[urlIdx];
+          
+          // Find ovol (optional) - numeric value between -64 and 64
+          let ovolIdx = -1;
+          for (let i = 0; i < parts.length; i++) {
+            if (i === urlIdx) continue; // Skip URL field
+            const val = parseInt(parts[i]);
+            if (!isNaN(val) && parts[i] === val.toString() && val >= -64 && val <= 64) {
+              ovolIdx = i;
+              ovol = Math.max(-30, Math.min(30, val));
+              break; // Use the first matching ovol
+            }
+          }
+          
+          // Name is FIRST field that's not URL or ovol
+          for (let i = 0; i < parts.length; i++) {
+            if (i !== urlIdx && i !== ovolIdx && parts[i]) {
+              name = parts[i];
+              break;
+            }
+          }
+          
+          if (ovolIdx === -1) ovol = 0;
+        }
+      }
+    } else {
+      // Space-delimited: find URL (contains . and / or ://)
+      const tokens = line.split(/\s+/);
+      let urlIdx = -1;
+      
+      for (let i = 0; i < tokens.length; i++) {
+        if (tokens[i].includes('.') && (tokens[i].includes('/') || tokens[i].includes('://'))) {
+          urlIdx = i;
+          break;
+        }
+      }
+      
+      if (urlIdx !== -1) {
+        url = tokens[urlIdx];
+        
+        // Name is FIRST field only
+        if (urlIdx > 0) {
+          // URL not first, so name is first token
+          name = tokens[0];
+          // Check if LAST token is ovol (must be at end)
+          const lastToken = tokens[tokens.length - 1];
+          const lastNum = parseInt(lastToken);
+          if (!isNaN(lastNum) && lastNum >= -64 && lastNum <= 64 && tokens.length >= 2) {
+            ovol = Math.max(-30, Math.min(30, lastNum));
+          }
+        } else {
+          // URL is first: everything after URL is the name (no ovol)
+          const nameTokens = [];
+          for (let i = urlIdx + 1; i < tokens.length; i++) {
+            nameTokens.push(tokens[i]);
+          }
+          name = nameTokens.join(' ');
+          ovol = 0;
+        }
+      }
+    }
+    
+    // Add http:// if missing
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'http://' + url;
+    }
+    
+    // If no name, generate from URL
+    if (!name && url) {
+      name = urlToName(url);
+    }
+    
+    // Check for duplicates
+    if (url) {
+      if (existingURLs.has(url)) {
+        duplicateCount++;
+      } else {
+        targetCallback(name, url, ovol);
+        existingURLs.add(url);
+        addedCount++;
+      }
+    }
+  });
+  
+  if (mode === 'replace') {
+    alert(`Import complete: ${addedCount} stations loaded.`);
+  } else if (duplicateCount > 0) {
+    alert(`Import complete: ${addedCount} stations added, ${duplicateCount} duplicates skipped.`);
+  }
+}
+
+function getExistingURLs() {
+  const urls = new Set();
+  const items = document.getElementById('pleditorcontent').getElementsByTagName('li');
+  for (let i = 0; i < items.length; i++) {
+    const inputs = items[i].getElementsByTagName('input');
+    const url = inputs[2].value; // URL is third input (after checkbox and name)
+    if (url) urls.add(url);
+  }
+  return urls;
+}
+
+function addStationToEditor(name, url, ovol) {
+  const ple = getId('pleditorcontent');
+  const cnt = ple.getElementsByTagName('li').length;
+  const plitem = document.createElement('li');
+  plitem.className = 'pleitem';
+  plitem.id = 'plitem' + cnt;
+  plitem.innerHTML = `<span class="grabbable" draggable="true">${("00"+(cnt+1)).slice(-3)}</span>
+    <span class="pleinput plecheck"><input type="checkbox" class="plcb" /></span>
+    <input class="pleinput plename" type="text" value="${name.replace(/"/g, '&quot;')}" maxlength="140" />
+    <input class="pleinput pleurl" type="text" value="${url}" maxlength="140" />
+    <span class="pleinput pleplay" data-command="preview">&#9658;</span>
+    <input class="pleinput pleovol" type="number" min="-30" max="30" step="1" value="${ovol}" />`;
+  ple.appendChild(plitem);
+}
+
 function triggerImport(mode) {
   window.importMode = mode;
   getId('file-upload').click();
+}
+function exportCurrentPlaylist() {
+  const items = getId('pleditorcontent').getElementsByTagName('li');
+  if (items.length === 0) {
+    alert('Playlist is empty, nothing to export.');
+    return;
+  }
+  
+  let csvContent = '';
+  for (let i = 0; i < items.length; i++) {
+    const inputs = items[i].getElementsByTagName('input');
+    const name = inputs[1].value; // plename
+    const url = inputs[2].value;   // pleurl
+    const ovol = inputs[3].value;  // pleovol
+    
+    if (name === '' || url === '') {
+      alert(`Station ${i+1} is missing name or URL. Please fill in all fields before exporting.`);
+      return;
+    }
+    
+    csvContent += `${name}\t${url}\t${ovol}\n`;
+  }
+  
+  // Create blob and trigger download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+  link.href = URL.createObjectURL(blob);
+  link.download = `playlist_${timestamp}.csv`;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
 }
 /***--- eof playlist ---***/
 function toggleTarget(el, id){
@@ -445,7 +771,7 @@ function toggleTarget(el, id){
       getId('sdslider').classList.toggle('hidden');
       getId('volslider').classList.toggle('hidden');
       getId('bitinfo').classList.toggle('hidden');
-      getId('snuffle').classList.toggle('hidden');
+      getId('shuffle').classList.toggle('hidden');
     }else target.classList.toggle("hidden");
     getId(target.dataset.target).classList.toggle("active");
   }
@@ -546,10 +872,10 @@ function changeMode(el){
   else getId('modeweb').classList.remove('hidden');
   websocket.send("newmode="+(cmd=="web"?0:1));
 }
-function toggleSnuffle(){
-  let el = getId('snuffle');
+function toggleShuffle(){
+  let el = getId('shuffle');
   el.classList.toggle('active');
-  websocket.send("snuffle="+el.classList.contains('active'));
+  websocket.send("shuffle="+el.classList.contains('active'));
 }
 function previewInfo(text, url='', error=false){
   const previewinfo=getId('previewinfo');
@@ -580,7 +906,7 @@ function continueLoading(mode){
     const pathname = window.location.pathname;
     if(['/','/index.html'].includes(pathname)){
       document.title = `${yoTitle} - Player`;
-      fetch(`player.html?${yoVersion}`).then(response => response.text()).then(player => { 
+      fetch(`player.html?${radioVersion}`).then(response => response.text()).then(player => { 
         getId('content').classList.add('idx');
         getId('content').innerHTML = player; 
         fetch('logo.svg').then(response => response.text()).then(svg => { 
@@ -588,7 +914,8 @@ function continueLoading(mode){
           hideSpinner();
           audiopreview=getId('audiopreview');
         });
-        getId("version").innerText=` | ${yoVersion}`;
+        getId("version").innerText=`${radioVersion}`;
+        if (newVerAvailable) getId('update_available').classList.remove('hidden');
         document.querySelectorAll('input[type="range"]').forEach(sl => { fillSlider(sl); });
         websocket.send('getindex=1');
         //generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
@@ -596,14 +923,15 @@ function continueLoading(mode){
     }
     if(pathname=='/settings.html'){
       document.title = `${yoTitle} - Settings`;
-      fetch(`options.html?${yoVersion}`).then(response => response.text()).then(options => {
+      fetch(`options.html?${radioVersion}`).then(response => response.text()).then(options => {
         getId('content').innerHTML = options; 
         fetch('logo.svg').then(response => response.text()).then(svg => { 
           getId('logo').innerHTML = svg;
           hideSpinner();
-		  if (onlineupdatecapable) getId('webboard').classList.add('hidden');
+		  if (onlineUpdCapable) getId('webboard').classList.add('hidden');
         });
-        getId("version").innerText=` | ${yoVersion}`;
+        getId("version").innerText=`${radioVersion}`;
+        if (newVerAvailable) getId('update_available').classList.remove('hidden');
         document.querySelectorAll('input[type="range"]').forEach(sl => { fillSlider(sl); });
         if (timezoneData) {
           populateTZDropdown(timezoneData);
@@ -618,11 +946,12 @@ function continueLoading(mode){
         getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
         websocket.send('getactive=1');
         classEach("reset", function(el){ el.innerHTML='<svg viewBox="0 0 16 16" class="fill"><path d="M8 3v5a36.973 36.973 0 0 1-2.324-1.166A44.09 44.09 0 0 1 3.417 5.5a52.149 52.149 0 0 1 2.26-1.32A43.18 43.18 0 0 1 8 3z"/><path d="M7 5v1h4.5C12.894 6 14 7.106 14 8.5S12.894 11 11.5 11H1v1h10.5c1.93 0 3.5-1.57 3.5-3.5S13.43 5 11.5 5h-4z"/></svg>'; });
+        initDangerZone();
       });
     }
     if(pathname=='/update.html'){
       document.title = `${yoTitle} - Update`;
-      fetch(`updform.html?${yoVersion}`).then(response => response.text()).then(updform => {
+      fetch(`updform.html?${radioVersion}`).then(response => response.text()).then(updform => {
         getId('content').classList.add('upd');
         getId('content').innerHTML = updform; 
         fetch('logo.svg').then(response => response.text()).then(svg => { 
@@ -630,32 +959,31 @@ function continueLoading(mode){
           hideSpinner();
           initOnlineUpdateChecker();
         });
-        getId("version").innerText=` | ${yoVersion}`;
+        getId("version").innerText=`${radioVersion}`;
       });
     }
     if(pathname=='/ir.html'){
       document.title = `${yoTitle} - IR Recorder`;
-      fetch(`irrecord.html?${yoVersion}`).then(response => response.text()).then(ircontent => {
-        loadCSS(`ir.css?${yoVersion}`);
+      fetch(`irrecord.html?${radioVersion}`).then(response => response.text()).then(ircontent => {
         getId('content').innerHTML = ircontent; 
-        loadJS(`ir.js?${yoVersion}`, () => {
+        loadJS(`ir.js?${radioVersion}`, () => {
           fetch('logo.svg').then(response => response.text()).then(svg => { 
             getId('logo').innerHTML = svg;
             initControls();
             hideSpinner();
           });
         });
-        getId("version").innerText=` | ${yoVersion}`;
+        getId("version").innerText=`${radioVersion}`;
       });
     }
   }else{ // AP mode
-    fetch(`options.html?${yoVersion}`).then(response => response.text()).then(options => {
+    fetch(`options.html?${radioVersion}`).then(response => response.text()).then(options => {
       getId('content').innerHTML = options; 
       fetch('logo.svg').then(response => response.text()).then(svg => { 
         getId('logo').innerHTML = svg;
         hideSpinner();
       });
-      getId("version").innerText=` | ${yoVersion}`;
+      getId("version").innerText=`${radioVersion}`;
       getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
       websocket.send('getactive=1');
     });
@@ -668,6 +996,9 @@ function continueLoading(mode){
     if(target.classList.contains("navitem")) { getId(target.dataset.target).scrollIntoView({ behavior: 'smooth' }); return; }
     if(target.classList.contains("reset")) { websocket.send("reset="+target.dataset.name); return; }
     if(target.classList.contains("done")) { window.location.href=`http://${hostname}/`; return; }
+    if(target.id === 'dangerzone_sw1') { toggleDangerZoneSwitch('dangerzone_sw1'); event.preventDefault(); event.stopPropagation(); return; }
+    if(target.id === 'dangerzone_sw2') { toggleDangerZoneSwitch('dangerzone_sw2'); event.preventDefault(); event.stopPropagation(); return; }
+    if(target.id === 'dangerzone_sw3') { toggleDangerZoneSwitch('dangerzone_sw3'); event.preventDefault(); event.stopPropagation(); return; }
     let command = target.dataset.command;
     if (command){
       if(target.classList.contains("local")){
@@ -675,10 +1006,11 @@ function continueLoading(mode){
           case "toggle": toggleTarget(target, target.dataset.target); break;
           case "settings": window.location.href=`http://${hostname}/settings.html`; break;
           case "plimport": break;
-          case "plexport": window.open(`http://${hostname}/data/playlist.csv`); break;
+          case "plexport": exportCurrentPlaylist(); uncheckSelectAll(); break;
           case "pladd": plAdd(); break;
           case "pldel": plRemove(); break;
           case "plsubmit": submitPlaylist(); break;
+          case "plundo": undoPlaylistChanges(); break;
           case "fwupdate": window.location.href=`http://${hostname}/update.html`; break;
           case "webboard": window.location.href=`http://${hostname}/webboard`; break;
           case "setupir": window.location.href=`http://${hostname}/ir.html`; break;
@@ -695,10 +1027,13 @@ function continueLoading(mode){
           case "applymqtt": applyMQTT(); break;
           case "wifiexport": window.open(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime()); break;
           case "wifiupload": submitWiFi(); break;
+          case "confirm-reboot": showDangerConfirm('dz_reboot'); break;
+          case "confirm-format": showDangerConfirm('dz_format'); break;
+          case "confirm-reset": showDangerConfirm('dz_reset'); break;
           case "reboot": websocket.send("reboot=1"); rebootSystem('Rebooting...'); break;
           case "format": websocket.send("format=1"); rebootSystem('Format SPIFFS. Rebooting...'); break;
           case "reset":  websocket.send("reset=1");  rebootSystem('Reset settings. Rebooting...'); break;
-          case "snuffle": toggleSnuffle(); break;
+          case "shuffle": toggleShuffle(); break;
           case "rebootmdns": websocket.send(`mdnsname=${getId('mdns').value}`); websocket.send("rebootmdns=1"); break;
           case "savebattref": websocket.send(`battref=${getId('battref').value}`); break;
           default: break;
@@ -738,6 +1073,7 @@ function continueLoading(mode){
     }
   });
 }
+
 /** UPDATE **/
 var uploadWithError = false;
 function doUpdate(el) {
@@ -814,19 +1150,22 @@ function abortHandler(event) {
   getId("status").innerHTML = "Upload Aborted";
   getId('check_online_update').classList.remove('hidden');
 }
-/** UPDATE **/
+
 /** ONLINE UPDATE CHECKER **/
 function initOnlineUpdateChecker() {
-  if (onlineupdatecapable) {
+  if (onlineUpdCapable) {
     getId('check_online_update').classList.remove('hidden');
     getId('check_online_update').value = "Check for Online Update";
     getId('check_online_update').disabled = false;
+    getId("update_url").href = "/update.html";
     console.log("Online Update is available");
   } else {
     getId('check_online_update').classList.add('hidden');
+    getId("update_url").href = updateUrl;
     console.log("Online Update not available");
   }
 }
+
 function checkOnlineUpdate(button) {
   if (button.value === "Check for Online Update") {
     console.log("Checking for online update");
@@ -881,7 +1220,7 @@ function checkOnlineUpdate(button) {
       });
   }
 }
-/** ONLINE UPDATE CHECKER **/
+
 /** TIMEZONES **/
 let timezoneData = null;
 async function loadTimezones() {
@@ -915,4 +1254,67 @@ function populateTZDropdown(zones) {
     input.value = select.value;
   });
 }
-/** TIMEZONES **/
+
+/** TOOLS AKA DANGERZONE **/
+function showDangerConfirm(buttonId) {
+  hideDangerConfirm();
+  const btn = getId(buttonId);
+  if(btn) btn.classList.remove('hidden');
+}
+
+function hideDangerConfirm() {
+  const btns = ['dz_reboot', 'dz_format', 'dz_reset'];
+  btns.forEach(id => {
+    const btn = getId(id);
+    if(btn) btn.classList.add('hidden');
+  });
+}
+
+function checkDangerZone() {
+  const sw1 = getId('dangerzone_sw1');
+  const sw2 = getId('dangerzone_sw2');
+  const sw3 = getId('dangerzone_sw3');
+  if(!sw1 || !sw2 || !sw3) return;
+  
+  const allChecked = sw1.classList.contains('checked') && 
+                     sw2.classList.contains('checked') && 
+                     sw3.classList.contains('checked');
+  
+  const dangerzone = getId('dangerzone');
+  const txt = getId('dangerzone_txt');
+  
+  if(allChecked) {
+    if(dangerzone) dangerzone.classList.remove('hidden');
+    if(txt) {
+      const replacement = txt.getAttribute('replacement');
+      if(replacement) txt.textContent = replacement;
+    }
+  } else {
+    if(dangerzone) dangerzone.classList.add('hidden');
+    if(txt) txt.textContent = 'Turn on all switches to unlock';
+  }
+}
+
+function toggleDangerZoneSwitch(switchId) {
+  const sw = getId(switchId);
+  if(!sw) return;
+  sw.classList.toggle('checked');
+  hideDangerConfirm();
+  checkDangerZone();
+}
+
+function initDangerZone() {
+  const switches = ['dangerzone_sw1', 'dangerzone_sw2', 'dangerzone_sw3'];
+  switches.forEach(id => {
+    const sw = getId(id);
+    if(sw) sw.classList.remove('checked');
+  });
+  
+  const txt = getId('dangerzone_txt');
+  if(txt) txt.textContent = 'Turn on all switches to unlock';
+  
+  const dangerzone = getId('dangerzone');
+  if(dangerzone) dangerzone.classList.add('hidden');
+  
+  hideDangerConfirm();
+}

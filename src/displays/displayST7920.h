@@ -1,7 +1,7 @@
 #ifndef displayST7920_h
 #define displayST7920_h
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include "../libraries/ST7920/ST7920.h"
 #include "fonts/bootlogo21x32.h"

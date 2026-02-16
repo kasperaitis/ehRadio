@@ -1,14 +1,15 @@
 #include "core/rgbled.h"
 
-#if defined(RGB_LED_PIN) && (RGB_LED_PIN!=255)
+#if defined(RGB_LED_PIN) && (RGB_LED_PIN!=255) // ============================== Everything ignored if not defined ==============================
+
 #include <FastLED.h>
 
 #ifndef RGB_LED_ORDER
-#define RGB_LED_ORDER GRB
+  #define RGB_LED_ORDER GRB
 #endif
 
 #ifndef RGB_LED_CLASS
-#define RGB_LED_CLASS WS2812B
+  #define RGB_LED_CLASS WS2812B
 #endif
 
 #define NUM_RGB_LEDS 1
@@ -91,10 +92,8 @@ void rgbled_loop() {
   }
 }
 
+#else // ============================== No-op stubs when RGB_LED_PIN not defined ==============================
 
-
-#else
-// No-op stubs when RGB_LED_PIN not defined
 void rgbled_init() {}
 void rgbled_loop() {}
 void rgbled_set(uint8_t r, uint8_t g, uint8_t b) {}

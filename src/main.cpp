@@ -1,5 +1,5 @@
-#include "Arduino.h"
-#include "esp_system.h"
+#include <Arduino.h>
+#include <esp_system.h>
 
 #include "core/options.h"
 
@@ -20,11 +20,11 @@ SET_LOOP_TASK_STACK_SIZE(LOOP_TASK_STACK_SIZE * 1024);
 #include "core/battery.h"
 #include "esp_sleep.h"
 #ifdef USE_NEXTION
-#include "displays/nextion.h"
+  #include "displays/nextion.h"
 #endif
 
 #if DSP_HSPI || TS_HSPI || VS_HSPI
-SPIClass SPI2(HSPI);
+  SPIClass SPI2(HSPI);
 #endif
 
 extern __attribute__((weak)) void ehradio_on_setup();
@@ -52,7 +52,7 @@ void setup() {
     }
   #endif
 
-  if(REAL_LEDBUILTIN!=255) pinMode(REAL_LEDBUILTIN, OUTPUT);
+  if (REAL_LEDBUILTIN!=255) pinMode(REAL_LEDBUILTIN, OUTPUT);
   rgbled_init();
   // Initialize battery monitoring
   battery_init();
@@ -74,7 +74,7 @@ void setup() {
     while(!display.ready()) delay(10);
     return;
   }
-  if(SDC_CS!=255) {
+  if (SDC_CS!=255) {
     display.putRequest(WAITFORSD, 0);
     Serial.print("##[BOOT]#\tSD search\t");
   }
@@ -88,7 +88,7 @@ void setup() {
     if (config.store.mqttenable) mqttInit();
   #endif
   #if LED_INVERT
-    if(REAL_LEDBUILTIN!=255) digitalWrite(REAL_LEDBUILTIN, true);
+    if (REAL_LEDBUILTIN!=255) digitalWrite(REAL_LEDBUILTIN, true);
   #endif
   if (config.getMode()==PM_SDCARD) player.initHeaders(config.station.url);
   player.lockOutput=false;

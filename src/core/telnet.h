@@ -4,19 +4,19 @@
 
 #define MAX_TLN_CLIENTS 5
 #define MAX_PRINTF_LEN BUFLEN+50
-#define BOOTLOG( ... ) { char buf[120]; sprintf( buf, __VA_ARGS__ ) ; telnet.printf("##[BOOT]#\t%s\r\n",buf); }
+#define BOOTLOG(...) { char buf[120]; sprintf(buf, __VA_ARGS__); telnet.printf("##[BOOT]#\t%s\r\n",buf); }
 
 class Telnet {
   public:
     Telnet() {};
     bool begin(bool quiet=false);
-    void loop();
     void stop();
-    void print(uint8_t id, const char *buf);
-    void print(const char *buf);
-    void printf(uint8_t id, const char *format, ...);
-    void printf(const char *format, ...);
     void cleanupClients();
+    void loop();
+    void print(const char *buf);
+    void print(uint8_t id, const char *buf);
+    void printf(const char *format, ...);
+    void printf(uint8_t id, const char *format, ...);
     void info();
     void showPromptNow(uint8_t clientId);
   protected:

@@ -22,16 +22,44 @@ Documentation will be improved at some point...
 
 ## ehRadio Version history
 
-### 2026.02.08...?
-  - Broken playlist editor fixed (sorry!) with some improvements as well
+### 2026.02.15...?
+  - WebUI greatly improved for mobile and tablet devices
+    - automatic checking for new version availability
+    - .css files improved
+  - Broken playlist editor fixed (sorry!) with major improvements
+    - can now import 2 ways: replace or merge
+    - importing of json and csv is done in-browser
+    - undo button can undo any changes
+    - re-order by dragging stations on mobile browsers
   - Smart start now always resumes last-played station (even if not playing when powered-off)
+    - minor side-effects
   - Broken search fixed to work with `https` radio-browser servers (using names instead of IPs)
-    - fallback to `https://all.api.radio-browser.info` added
+    - fallback server added to defines:
+      - `#define RADIO_BROWSER_SERVER "all.api.radio-browser.info"` added
     - as part of this, ESPFileUpdater was updated to handle chunked transfers
+    - sort options added (sort by clicks is the default instead of by name)
+  - Send clicks to Radio Browser API
+    - Delay before sending the click `#define RADIO_BROWSER_SEND_CLICK_DELAY 5000`
+    - opt out with `#define RADIO_BROWSER_NO_SEND_CLICKS` in `myoptions.h`
+      - semi-functional [Search by url doesn't find resolved_url](https://gitlab.com/radiobrowser/radiobrowser-api-rust/-/issues?sort=created_date&state=opened&search=url&first_page_size=20&show=eyJpaWQiOiIyNDkiLCJmdWxsX3BhdGgiOiJyYWRpb2Jyb3dzZXIvcmFkaW9icm93c2VyLWFwaS1ydXN0IiwiaWQiOjE4NDA4NzM5MH0%3D)
+  - Settings: Tools changed to Danger Zone - with some added warnings
   - SPIFFS clean-up added (after update, unwanted files are purged)
     - added because online flasher does not erase SPIFFS
-  - Minor improvements to CSV importer (can handle files that exceed the usual fields)
-  - Minor improvements to code (vars set to default value in `.h` file instead of in `.cpp`)
+  - Minor improvements to CSV importers (can handle files that exceed the usual fields)
+    - server side importer will be used to get playlists online *- not yet included*
+  - Minor improvements to code
+    - vars set to default value in `.h` file instead of in `.cpp`
+    - fixed `.h` framework headers to use `< >` instead of `" "`
+    - pretty code - most `#if` & `#ifdef` blocks now indented
+    - most functions now included no-op instead of being blocked by `#ifdef`
+  - Optimized declarations in src files
+  - Added check for new versions
+  - more defaults added to `options.h` which can be changed in `myoptions.h`
+    - `#define CHECKUPDATEURL_TIME "1 day"`
+    - `#define TIMEZONES_JSON_CHECKTIME "4 weeks"`
+    - `#define RB_SERVERS_CHECKTIME "1 day"`
+    - `#define TIME_SYNC_INTERVAL 3600` (if RTC then `86400`)
+    - `#define WEATHER_SYNC_INTERVAL 1800` (maybe this should be a configurable setting?)
 
 ### 2026.02.06
   - Online Flasher introduced
@@ -39,7 +67,6 @@ Documentation will be improved at some point...
   - Improv mode added to firmware so if Wi-fi doesn't connect, use a WebUI to send Wi-fi information
 
 ### 2026.02.04
-
   - Thanks to @kasperaitis for #37
     - adds support for ES8311 + FM8002E I2C decoder and FT6336 touchscreen on the [ES3C28](https://www.lcdwiki.com/2.8inch_ESP32-S3_Display) ([Aliexpress](https://www.aliexpress.com/item/1005010338765126.html))
     - localization fix: weather now uses `LANG::weatherFmt` and `LANG::wind` instead of hardcoded strings
@@ -280,7 +307,7 @@ Documentation will be improved at some point...
   - the online file that the current version can compare it's version against:
     - `#define CHECKUPDATEURL "https://raw.githubusercontent.com/trip5/yoradio/refs/heads/trip5/yoRadio/src/core/options.h"`
   - the above file must contain a line that is defined by this setting:
-    - `#define VERSIONSTRING "#define YOVERSION"` (followed by a version string)
+    - `#define VERSIONSTRING "#define RADIOVERSION"` (followed by a version string)
   - which `.bin` file to be used for online OTA updates can be specified as:
     - `#define FIRMWARE "firmware_sh1106_pcm_remote.bin"`
   - all of these can be automatically defined by `platformio.ini` amd `myoptions.h`

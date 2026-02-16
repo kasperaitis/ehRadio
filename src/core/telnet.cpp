@@ -59,17 +59,17 @@ bool Telnet::_isIPSet(IPAddress ip) {
 }
 
 bool Telnet::begin(bool quiet) {
-  if(network.status==SDREADY) {
+  if (network.status==SDREADY) {
     BOOTLOG("Ready in SD Mode!");
     BOOTLOG("------------------------------------------------");
     Serial.println("##[BOOT]#");
     return true;
   }
-  if(!quiet) Serial.print("##[BOOT]#\ttelnet.begin\t");
+  if (!quiet) Serial.print("##[BOOT]#\ttelnet.begin\t");
   if (WiFi.status() == WL_CONNECTED || _isIPSet(WiFi.softAPIP())) {
     server.begin();
     server.setNoDelay(true);
-    if(!quiet){
+    if (!quiet) {
       Serial.println("done");
       Serial.println("##[BOOT]#");
       BOOTLOG("Ready! Go to http:/%s/ to configure", WiFi.localIP().toString().c_str());
@@ -105,15 +105,15 @@ void Telnet::cleanupClients() {
   }
 }
 
-void Telnet::handleSerial(){
-  if(Serial.available()){
+void Telnet::handleSerial() {
+  if (Serial.available()) {
     String request = Serial.readStringUntil('\n'); request.trim();
     on_input(request.c_str(), 100);
   }
 }
 
 void Telnet::loop() {
-  if(network.status==SDREADY || network.status!=CONNECTED) {
+  if (network.status==SDREADY || network.status!=CONNECTED) {
     handleSerial();
     return;
   }
@@ -174,7 +174,7 @@ void Telnet::print(uint8_t id, const char *buf) {
 void Telnet::printf(const char *format, ...) {
   char buf[MAX_PRINTF_LEN];
   va_list args;
-  va_start (args, format );
+  va_start (args, format);
   vsnprintf(buf, MAX_PRINTF_LEN, format, args);
   va_end (args);
 
@@ -267,7 +267,7 @@ void Telnet::showPromptNow(uint8_t clientId) {
 
 void Telnet::on_input(const char* str, uint8_t clientId) {
   if (strlen(str) == 0) return;
-  if(network.status == CONNECTED){
+  if (network.status == CONNECTED) {
     if (strcmp(str, "cli.prev") == 0 || strcmp(str, "prev") == 0) {
       player.prev();
       goto show_prompt;
@@ -468,17 +468,17 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       goto show_prompt;
     }
     #ifdef USE_SD
-    int mm;
-    if (sscanf(str, "mode %d", &mm) == 1 ) {
-      if (mm > 2) mm = 0;
-      if(mm==2)
-        config.changeMode();
-      else
-        config.changeMode(mm);
-      goto show_prompt;
-    }
+      int mm;
+      if (sscanf(str, "mode %d", &mm) == 1) {
+        if (mm > 2) mm = 0;
+        if (mm==2)
+          config.changeMode();
+        else
+          config.changeMode(mm);
+        goto show_prompt;
+      }
     #endif
-    if (strcmp(str, "sys.tz") == 0 || strcmp(str, "tz") == 0 )  {
+    if (strcmp(str, "sys.tz") == 0 || strcmp(str, "tz") == 0)  {
       char timeStringBuff[50];
       strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S", &network.timeinfo);
       printf(clientId, "##SYS.DATE#: %s\r\n", timeStringBuff);
@@ -491,9 +491,15 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       //printf(clientId, "##ACTUAL TIME#: %s\r\n", timeStringBuff);
 
       printf(clientId, "##SYS.TZNAME#: %s\r\n", config.store.tz_name);
-      printf(clientId, "##SYS.TZPOS IX#: %s\r\n", config.store.tzposix);      goto show_prompt;
+      printf(clientId, "##SYS.TZPOSIX#: %s\r\n", config.store.tzposix);
+      goto show_prompt;
+
     }
-    if (strcmp(str, "sys.tzname") == 0 || strcmp(str, "tzname") == 0  )  {
+    if (strcmp(str, "sys.tzo") == 0 || strcmp(str, "tzo") == 0)  {
+      printf(clientId, "##SYS.TZPOSIX#: %s\r\n", config.store.tzposix);
+      goto show_prompt;
+    }
+    if (strcmp(str, "sys.tzname") == 0 || strcmp(str, "tzname") == 0 )  {
       printf(clientId, "##SYS.TZNAME#: %s\r\n", config.store.tz_name);
       goto show_prompt;
     }
@@ -535,7 +541,7 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       network.requestTimeSync(true);
       return;
     }
-    if (strcmp(str, "sys.tzposix") == 0 || strcmp(str, "tzposix") == 0 )  {
+    if (strcmp(str, "sys.tzposix") == 0 || strcmp(str, "tzposix") == 0)  {
       printf(clientId, "##SYS.TZPOSIX#: %s\r\n", config.store.tzposix);
       printf(clientId, "WARNING! USE THIS COMMAND CAREFULLY!\r\n");
       goto show_prompt;
@@ -578,19 +584,19 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       goto show_prompt;
     }
     if (sscanf(str, "sleep(%d,%d)", &tzh, &tzm) == 2 || sscanf(str, "cli.sleep(\"%d\",\"%d\")", &tzh, &tzm) == 2 || sscanf(str, "sleep %d %d", &tzh, &tzm) == 2) {
-      if(tzh>0 && tzm>0) {
+      if (tzh>0 && tzm>0) {
         printf(clientId, "sleep for %d minutes after %d minutes ...\r\n", tzh, tzm);
         config.sleepForAfter(tzh, tzm);
-      }else{
+      } else {
         printf(clientId, "##CMD_ERROR#\tunknown command <%s>\r\n", str);
       }
       goto show_prompt;
     }
     if (sscanf(str, "sleep(%d)", &tzh) == 1 || sscanf(str, "cli.sleep(\"%d\")", &tzh) == 1 || sscanf(str, "sleep %d", &tzh) == 1) {
-      if(tzh>0) {
+      if (tzh>0) {
         printf(clientId, "sleep for %d minutes ...\r\n", tzh);
         config.sleepForAfter(tzh);
-      }else{
+      } else {
         printf(clientId, "##CMD_ERROR#\tunknown command <%s>\r\n", str);
       }
       goto show_prompt;
@@ -653,7 +659,7 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       uint8_t c = 1;
       while (file.available()) {
         if (config.parseSsid(file.readStringUntil('\n').c_str(), sSid, sPas)) {
-          if(c==config.store.lastSSID) printf(clientId, "%d: %s, %s\r\n", c, sSid, sPas);
+          if (c==config.store.lastSSID) printf(clientId, "%d: %s, %s\r\n", c, sSid, sPas);
           c++;
         }
       }
@@ -661,16 +667,15 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     printf(clientId, "##WIFI.STATION#\r\n");
     goto show_prompt;
   }
-  char newssid[30], newpass[40];
-  // Use width limits in sscanf to prevent buffer overflow (29 and 39 to leave room for null terminator)
-  if (sscanf(str, "wifi.con(\"%29[^\"]\",\"%39[^\"]\")", newssid, newpass) == 2 || sscanf(str, "wifi.con(%29[^,],%39[^)])", newssid, newpass) == 2 || sscanf(str, "wifi.con(%29[^ ] %39[^)])", newssid, newpass) == 2 || sscanf(str, "wifi %29[^ ] %39s", newssid, newpass) == 2) {
+  char newssid[sizeof(config.ssids[1].ssid)], newpass[sizeof(config.ssids[1].password)];
+  if (sscanf(str, "wifi.con(\"%[^\"]\",\"%[^\"]\")", newssid, newpass) == 2 || sscanf(str, "wifi.con(%[^,],%[^)])", newssid, newpass) == 2 || sscanf(str, "wifi.con(%[^ ] %[^)])", newssid, newpass) == 2 || sscanf(str, "wifi %[^ ] %s", newssid, newpass) == 2) {
     char buf[BUFLEN];
     snprintf(buf, BUFLEN, "New SSID: \"%s\" with PASS: \"%s\" for next boot\r\n", newssid, newpass);
     printf(clientId, buf);
     printf(clientId, "...REBOOTING...\r\n");
     memset(buf, 0, BUFLEN);
     snprintf(buf, BUFLEN, "%s\t%s", newssid, newpass);
-    config.saveWifiFromNextion(buf);
+    config.saveWifi(buf);
     goto show_prompt;
   }
   if (strcmp(str, "wifi.status") == 0 || strcmp(str, "status") == 0) {
@@ -680,7 +685,7 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       WiFi.getMode()==WIFI_STA?WiFi.subnetMask().toString():"255.255.255.0",
       WiFi.getMode()==WIFI_STA?WiFi.gatewayIP().toString():WiFi.softAPIP().toString(),
       WiFi.RSSI()
-    );
+   );
     goto show_prompt;
   }
   if (strcmp(str, "wifi.rssi") == 0 || strcmp(str, "rssi") == 0) {
