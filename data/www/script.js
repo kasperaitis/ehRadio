@@ -2,7 +2,7 @@ var hostname = window.location.hostname;
 var modesd = false;
 const query = window.location.search;
 const params = new URLSearchParams(query);
-const yoTitle = 'ehRadio';
+const Title = 'ehRadio';
 if(params.size>0){
   if(params.has('host')) hostname=params.get('host');
 }
@@ -845,7 +845,7 @@ function continueLoading(mode){
   if(mode=="player"){
     const pathname = window.location.pathname;
     if(['/','/index.html'].includes(pathname)){
-      document.title = `${yoTitle} - Player`;
+      document.title = `${Title} - Player`;
       fetch(`player.html?${radioVersion}`).then(response => response.text()).then(player => { 
         getId('content').classList.add('idx');
         getId('content').innerHTML = player; 
@@ -861,7 +861,7 @@ function continueLoading(mode){
       });
     }
     if(pathname=='/settings.html'){
-      document.title = `${yoTitle} - Settings`;
+      document.title = `${Title} - Settings`;
       fetch(`options.html?${radioVersion}`).then(response => response.text()).then(options => {
         getId('content').innerHTML = options;
         loadJS(`options.js?${radioVersion}`, () => {
@@ -890,7 +890,7 @@ function continueLoading(mode){
       });
     }
     if(pathname=='/update.html'){
-      document.title = `${yoTitle} - Update`;
+      document.title = `${Title} - Update`;
       fetch(`updform.html?${radioVersion}`).then(response => response.text()).then(updform => {
         getId('content').classList.add('upd');
         getId('content').innerHTML = updform;
@@ -905,7 +905,7 @@ function continueLoading(mode){
       });
     }
     if(pathname=='/ir.html'){
-      document.title = `${yoTitle} - IR Recorder`;
+      document.title = `${Title} - IR Recorder`;
       fetch(`irrecord.html?${radioVersion}`).then(response => response.text()).then(ircontent => {
         getId('content').innerHTML = ircontent;
         loadJS(`ir.js?${radioVersion}`, () => {
