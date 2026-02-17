@@ -947,17 +947,9 @@ function playPreview(root) {
   const streamUrl = root.getElementsByClassName('pleurl')[0].value;
   const stationName = root.getElementsByClassName('plename')[0].value;
   
-  // Toggle active state
-  if(root.hasClass('active')){
-    classEach('pleitem', function(el){ el.classList.remove('active') });
-    return;
-  }
-  
   // Send preview request to device
-  classEach('pleitem', function(el){ el.classList.remove('active') });
   if(streamUrl=='') { console.error("No stream URL available."); return; }
   
-  root.classList.add('active');
   sendStationAction(stationName, streamUrl, false);
 }
 function continueLoading(mode){
