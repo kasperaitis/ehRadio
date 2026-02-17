@@ -51,7 +51,6 @@ Documentation will be improved at some point...
     - must be added in `myoptions.h` - there is no default
     - `#define PLAYLIST_DEFAULT_URL "https://github.com/trip5/webstations/releases/latest/download/trip5-radio-playlist.csv"`
   - Smart start now always resumes last-played station (even if not playing when powered-off)
-    - minor side-effects
   - Send clicks to Radio Browser API
     - Delay before sending the click `#define RADIO_BROWSER_SEND_CLICK_DELAY 5000`
     - opt out with `#define RADIO_BROWSER_NO_SEND_CLICKS` in `myoptions.h`
@@ -65,6 +64,7 @@ Documentation will be improved at some point...
     - pretty code - most `#if` & `#ifdef` blocks now indented
     - most functions now included no-op instead of being blocked by `#ifdef`
   - Optimized declarations in src files
+  - More cleanup to various files and folders
   - Added check for new versions (and will show if available in WebUI)
   - Platformio.ini now includes pre- and post-steps to compress www files for SPIFFS
   - more defaults added to `options.h` which can be changed in `myoptions.h`
