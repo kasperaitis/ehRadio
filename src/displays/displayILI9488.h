@@ -1,7 +1,7 @@
 #ifndef displayILI9488_h
 #define displayILI9488_h
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include "../libraries/ILI9488/ILI9486_SPI.h"
 #ifdef BIG_BOOT_LOGO

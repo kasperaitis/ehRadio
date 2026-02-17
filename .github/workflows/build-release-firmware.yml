@@ -1,0 +1,363 @@
+name: Build and Release Firmware
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for required config files
+        run: |
+          MISSING_FILES=""
+          if [ ! -f "builds/${{ github.repository_owner }}/platformio.ini" ]; then
+            MISSING_FILES="${MISSING_FILES}platformio.ini "
+          fi
+          if [ ! -f "builds/${{ github.repository_owner }}/myoptions.h" ]; then
+            MISSING_FILES="${MISSING_FILES}myoptions.h "
+          fi
+          if [ ! -f "builds/${{ github.repository_owner }}/releases.md" ]; then
+            MISSING_FILES="${MISSING_FILES}releases.md "
+          fi
+          if [ ! -f "builds/${{ github.repository_owner }}/firmware.txt" ]; then
+            MISSING_FILES="${MISSING_FILES}firmware.txt "
+          fi
+          
+          if [ -n "$MISSING_FILES" ]; then
+            echo "❌ Error: Missing required files in builds/${{ github.repository_owner }}/"
+            echo "Missing: $MISSING_FILES"
+            echo ""
+            echo "Required files:"
+            echo "  - platformio.ini (build configuration)"
+            echo "  - myoptions.h (hardware pin definitions)"
+            echo "  - releases.md (release description)"
+            echo "  - firmware.txt (firmware list)"
+            exit 1
+          fi
+          echo "✅ All required contributor config files found for ${{ github.repository_owner }}"
+
+      - name: Load release body text
+        id: release_body
+        run: |
+          echo "Using release body from builds/${{ github.repository_owner }}/releases.md"
+          # Read the file and set as multiline output
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          cat "builds/${{ github.repository_owner }}/releases.md" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+
+      - name: Copy config files to project root
+        run: |
+          if [ -d "builds/${{ github.repository_owner }}" ]; then
+            cp -rf builds/${{ github.repository_owner }}/* .
+          fi
+
+      - name: Prepare Gzipped Web Assets for Release
+        run: |
+          mkdir -p www_release
+          for file in data/www/*; do
+            filename=$(basename "$file")
+            if [[ "$filename" == *.gz ]]; then
+              echo "Copying $filename without compression (already gzipped)."
+              cp "$file" "www_release/"
+            elif [[ "$filename" == "rb_srvrs.json" ]]; then
+              cp "$file" "www_release/"
+              echo "Adding $filename without compression."
+            else
+              echo "Compressing $filename."
+              gzip -c -9 "$file" > "www_release/$filename.gz"
+            fi
+          done
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Get version tag
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION=$(grep -oP '#define RADIOVERSION "\K[^"]+' src/core/options.h)
+            TAG="${VERSION}"
+            echo "Extracted version from options.h: ${VERSION}"
+          else
+            TAG=${GITHUB_REF#refs/tags/}
+            VERSION=${TAG}
+            echo "Using git tag: ${TAG}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Final version: ${VERSION}"
+          grep '#define RADIOVERSION ' src/core/options.h > version.txt
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Make binaries folder to stash .bin files
+        run: mkdir -p binaries
+
+      - name: Build all firmwares
+        run: pio run
+
+      - name: Rename firmware files with env name
+        run: |
+          for d in .pio/build/*/ ; do
+            env=$(basename "$d")
+            if [ -f "$d/firmware.bin" ]; then
+              cp "$d/firmware.bin" "binaries/${env}.bin"
+            fi
+          done
+
+      - name: Save bootloader/partitions for each board environment
+        run: |
+          # Extract all environments prefixed with 'board' from platformio.ini
+          board_envs=$(grep -oP '(?<=\[env:board_)[^\]]+' platformio.ini | tr '\n' ' ')
+          echo "Board environments: $board_envs"
+
+          # Iterate over all board environments
+          for env in $board_envs; do
+            echo "Processing environment: $env"
+
+            # Copy and rename bootloader and partitions binaries
+            cp .pio/build/board_$env/bootloader.bin binaries/board_${env}_bootloader.bin
+            cp .pio/build/board_$env/partitions.bin binaries/board_${env}_partitions.bin
+          done
+
+      - name: Build SPIFFS and extract for each board environment
+        run: |
+          # Extract all environments prefixed with 'board' from platformio.ini
+          board_envs=$(grep -oP '(?<=\[env:board_)[^\]]+' platformio.ini | tr '\n' ' ')
+          echo "Board environments: $board_envs"
+
+          # Iterate over all board environments
+          for env in $board_envs; do
+            echo "Processing environment: $env"
+
+            # Build SPIFFS
+            pio run --environment board_$env --target buildfs
+
+            # Copy and rename SPIFFS binaries
+            cp .pio/build/board_$env/spiffs.bin binaries/board_${env}_spiffs.bin
+
+          done
+
+      - name: Organize firmware for ESP Web Tools
+        run: |
+          echo "📦 Organizing firmware for ESP Web Tools manifests..."
+          mkdir -p firmware
+          
+          # Copy firmware.txt for reference
+          cp "builds/${{ github.repository_owner }}/firmware.txt" firmware.txt
+          
+          # Extract unique board environments and copy bootloader/partitions
+          BOARD_ENVS=$(awk -F'|' '{print $1}' firmware.txt | sort -u)
+          for board_env in $BOARD_ENVS; do
+            echo "📋 Copying shared files for $board_env..."
+            mkdir -p "firmware/$board_env"
+            cp "binaries/${board_env}_bootloader.bin" "firmware/$board_env/bootloader.bin"
+            cp "binaries/${board_env}_partitions.bin" "firmware/$board_env/partitions.bin"
+            echo "✅ $board_env: bootloader + partitions"
+          done
+          
+          # Copy individual firmware binaries
+          while IFS='|' read -r board_env chip_family fw_env friendly_name; do
+            echo "📦 Copying firmware: $fw_env"
+            mkdir -p "firmware/$fw_env"
+            if [ -f "binaries/${fw_env}.bin" ]; then
+              cp "binaries/${fw_env}.bin" "firmware/$fw_env/firmware.bin"
+              echo "✅ $fw_env: firmware.bin"
+            else
+              echo "❌ Warning: firmware.bin not found for $fw_env"
+            fi
+          done < firmware.txt
+          
+          echo "📦 Firmware organization complete"
+
+      - name: Generate ESP Web Tools manifests
+        run: |
+          echo "📝 Generating ESP Web Tools manifests..."
+          mkdir -p "builds/${{ github.repository_owner }}/web_assets/manifests"
+          
+          # Copy firmware.txt for reference
+          cp "builds/${{ github.repository_owner }}/firmware.txt" firmware.txt
+          
+          # Generate manifest for each firmware
+          while IFS='|' read -r board_env chip_family fw_env friendly_name; do
+            echo "Creating manifest for: $friendly_name"
+            
+            # Determine bootloader offset based on chip family
+            BL_OFFSET=4096
+            if [[ "$chip_family" == "ESP32-S3" || "$chip_family" == "ESP32-C3" ]]; then
+              BL_OFFSET=0
+            fi
+
+            manifest_file="builds/${{ github.repository_owner }}/web_assets/manifests/${fw_env}-manifest.json"
+            echo '{' > "$manifest_file"
+            echo "  \"name\": \"ehRadio - ${friendly_name}\"," >> "$manifest_file"
+            echo '  "version": "${{ steps.get_version.outputs.version }}",' >> "$manifest_file"
+            # To enable "Add to Home Assistant" button, uncomment the line below. 
+            # Note: The integration currently requires manual configuration and MQTT.
+            # echo '  "home_assistant_domain": "ehradio",' >> "$manifest_file"
+            echo '  "funding_url": "https://github.com/sponsors/trip5",' >> "$manifest_file"
+            echo '  "builds": [' >> "$manifest_file"
+            echo '    {' >> "$manifest_file"
+            echo "      \"chipFamily\": \"${chip_family}\"," >> "$manifest_file"
+            echo '      "parts": [' >> "$manifest_file"
+            echo '        {' >> "$manifest_file"
+            echo "          \"path\": \"../firmware/${board_env}_bootloader.bin\"," >> "$manifest_file"
+            echo "          \"offset\": ${BL_OFFSET}" >> "$manifest_file"
+            echo '        },' >> "$manifest_file"
+            echo '        {' >> "$manifest_file"
+            echo "          \"path\": \"../firmware/${board_env}_partitions.bin\"," >> "$manifest_file"
+            echo '          "offset": 32768' >> "$manifest_file"
+            echo '        },' >> "$manifest_file"
+            echo '        {' >> "$manifest_file"
+            echo "          \"path\": \"../firmware/${fw_env}.bin\"," >> "$manifest_file"
+            echo '          "offset": 65536' >> "$manifest_file"
+            echo '        }' >> "$manifest_file"
+            echo '      ]' >> "$manifest_file"
+            echo '    }' >> "$manifest_file"
+            echo '  ]' >> "$manifest_file"
+            echo '}' >> "$manifest_file"
+            echo "✅ Created $manifest_file"
+          done < firmware.txt
+          
+          echo "📝 Manifests generated"
+
+      - name: Generate firmware-info.json
+        run: |
+          echo "📝 Creating firmware-info.json..."
+          BUILD_DATE=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          
+          echo '{' > "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          echo '  "project": "ehRadio",' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          echo '  "version": "${{ steps.get_version.outputs.version }}",' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          echo "  \"build_date\": \"${BUILD_DATE}\"," >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          echo '  "variants": [' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          
+          # Add firmware variants
+          FIRST=true
+          while IFS='|' read -r board_env chip_family fw_env friendly_name; do
+            if [ "$FIRST" = "false" ]; then
+              echo "  ," >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+            fi
+            FIRST=false
+            
+            echo '  {' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+            echo "    \"name\": \"${friendly_name}\"," >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+            echo "    \"manifest\": \"manifests/${fw_env}-manifest.json\"," >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+            echo "    \"description\": \"ehRadio - ${fw_env}\"" >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+            echo '  }' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          done < firmware.txt
+          
+          echo '  ]' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          echo '}' >> "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+          
+          echo "✅ firmware-info.json created"
+          cat "builds/${{ github.repository_owner }}/web_assets/firmware-info.json"
+
+      - name: Commit web assets to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Use the repository's default branch
+          BRANCH="${{ github.event.repository.default_branch }}"
+          echo "Target branch: $BRANCH"
+          
+          # Stage changes first
+          git add "builds/${{ github.repository_owner }}/web_assets/"
+          
+          # Check if there are changes
+          if git diff --cached --quiet; then
+            echo "No changes to web assets"
+          else
+            # Stash the staged changes
+            git stash push -m "web assets update"
+            
+            # Fetch and checkout the branch
+            git fetch origin $BRANCH
+            git checkout $BRANCH
+            
+            # Pop the stashed changes and commit
+            git stash pop
+            git add "builds/${{ github.repository_owner }}/web_assets/"
+            git commit -m "Update web assets for ${{ steps.get_version.outputs.version }}"
+            git push origin $BRANCH
+            echo "✅ Web assets committed and pushed to $BRANCH"
+          fi
+
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-binaries
+          path: |
+            binaries/*.bin
+            firmware/**/*.bin
+            www_release/*
+            builds/${{ github.repository_owner }}/web_assets/**
+          retention-days: 90
+
+# Here we also make some OTA-TEST builds (to be deleted later)
+
+#      - name: Prepare TEST-OTA version in options.h
+#        run: |
+#          # append “-OTA-TEST” inside the quotes of the RADIOVERSION line
+#          sed -i '/#define RADIOVERSION/ s/"\([^"]*\)"/"\1-OTA-TEST"/' src/core/options.h
+
+#      - name: Prepare TEST-OTA PlatformIO builds in platformio.ini
+#        run: |
+#          # for every “[env:…]” line, append “_ota_test” before the closing bracket
+#          sed -i '/^\[env:/ s/]/_ota_test]/' platformio.ini
+#          # also update any ${env:…​.lib_deps} macros to include _ota_test
+#          sed -Ei 's|\$\{env:([^}]+)\.lib_deps\}|\$\{env:\1_ota_test.lib_deps\}|g' platformio.ini
+#          # update any extends = env:… lines to include _ota_test
+#          sed -i 's/^\(extends[[:space:]]*=[[:space:]]*env:[^[:space:]]*\)/\1_ota_test/' platformio.ini
+
+#      - name: Build TEST-OTA firmwares
+#        run: pio run
+
+#      - name: Rename firmware files with env name
+#        run: |
+#          for d in .pio/build/*/ ; do
+#            env=$(basename "$d")
+#            if [ -f "$d/firmware.bin" ]; then
+#              cp "$d/firmware.bin" "binaries/${env}.bin"
+#            fi
+#          done
+
+# End of OTA-TEST builds
+
+# End of Notes:
+
+#              - the `_ota_test` files are just to show off that online OTA can work
+#                - functionally identical to a normal .bin
+#                - they have a "fake" version that will allow an update to a normal .bin
+
+      - name: Create ehRadio Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          name: "${{ steps.get_version.outputs.tag }}"
+          body: ${{ steps.release_body.outputs.body }}
+          files: |
+            binaries/*.bin
+            www_release/*
+            version.txt
+          fail_on_unmatched_files: false
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete old releases and assets
+        uses: dev-drprasad/delete-older-releases@v0.3.3
+        with:
+          keep_latest: 10
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

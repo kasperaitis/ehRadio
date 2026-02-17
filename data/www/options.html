@@ -1,6 +1,6 @@
     <div id="logo" class="ls">
     </div>
-    <h2 class="pagetitle" style="padding: 0;">Settings</h2>
+    <h2 class="pagetitle">Settings</h2>
     <div class="navigation group group_system hidden" id="navigation">
       <div class="navitem group group_system hidden" data-target="group_system">system</div>
       <div class="navitem group group_display group_nextion hidden" data-target="group_display">screen</div>
@@ -15,31 +15,43 @@
       <div id="settingscontent">
         <a name="system"></a>
         <section class="group group_system hidden" id="group_system">
-          <div class="title"><span>system</span></div>
+          <div class="title"><span>System</span></div>
           <div class="reset" data-name="system" title="reset"></div>
           <div class="flex-row">
-            <div class="checkbox" id="sst" data-command="smartstart"><div class="knob"></div>Smart Start</div>
-            <div class="checkbox" id="aif" data-command="audioinfo"><div class="knob"></div>Audio info</div>
-            <div class="checkbox group group_vu hidden" id="vu" data-command="vumeter"><div class="knob"></div>VU Meter</div>
+            <div class="inputwrap center">
+              <span class="inputtitle">Smart Start</span>
+              <div class="checkbox" id="sst" data-command="smartstart"><div class="knob"></div></div>
+            </div>
+            <div class="inputwrap center">
+              <span class="inputtitle">Audio Info</span>
+              <div class="checkbox" id="aif" data-command="audioinfo"><div class="knob"></div></div>
+            </div>
+            <div class="inputwrap center group group_vu hidden">
+              <span class="inputtitle">VU Meter</span>
+              <div class="checkbox" id="vu" data-command="vumeter"><div class="knob"></div></div>
+            </div>
           </div>
           <div class="flex-row">
-            <div class="checkbox" id="wifiscan" data-command="wifiscan"><div class="knob"></div>Scan for best wi-fi on boot</div>
+            <div class="inputwrap center">
+              <span class="inputtitle">Scan for Best Wi-fi on Boot</span>
+              <div class="checkbox" id="wifiscan" data-command="wifiscan"><div class="knob"></div></div>
+            </div>
           </div>
           <div class="flex-row">
-            <div class="inputwrap">
-              <span class="inputtitle">soft ap reboot delay (min)</span>
+            <div class="inputwrap pad">
+              <span class="inputtitle">Soft AP Reboot Delay (min)</span>
               <span class="inputinfo" id="slsoftapinfo">0</span>
               <input type="range" id="softr" data-slaveid="slsoftapinfo" data-command="softap" min="0" max="20" value="0">
             </div>
           </div>
           <div class="flex-row" id="mdnsnamerow">
-            <div class="inputwrap">
-              <span class="inputtitle">mDNS name</span>
+            <div class="inputwrap pad">
+              <span class="inputtitle">mDNS Name</span>
               <input type="text" id="mdns" class="text" name="mdnsname" value="" maxlength="24" />
             </div>
             <div class="fb hl local" data-command="rebootmdns" style=" margin-top: 24px; height: 37px;">save</div>
           </div>
-          <div class="row-title"><span>update</span></div>
+          <div class="row-title"><span>Update</span></div>
           <div class="flex-row last">
             <div class="fb local" data-command="fwupdate">Firmware</div>
             <div class="fb local" data-command="webboard" id="webboard">Board</div>
@@ -47,60 +59,77 @@
         </section>
         <a name="screen"></a>
         <section class="group group_display group_oled group_nextion hidden" id="group_display">
-          <div class="title"><span>screen</span></div>
+          <div class="title"><span>Screen</span></div>
           <div class="reset" data-name="screen" title="reset"></div>
+          <div class="flex-row group_tft hidden">
+            <div class="inputwrap center">
+              <span class="inputtitle">Flip screen</span>
+              <div class="checkbox" id="flip" data-command="flipscreen"><div class="knob"></div></div>
+            </div>
+            <div class="inputwrap center">
+              <span class="inputtitle">Invert screen</span>
+              <div class="checkbox" id="inv" data-command="invertdisplay"><div class="knob"></div></div>
+            </div>
+          </div>
           <div class="flex-row">
-            <div class="checkbox group_tft hidden" id="flip" data-command="flipscreen"><div class="knob"></div>Flip screen</div>
-            <div class="checkbox group_tft hidden" id="inv" data-command="invertdisplay"><div class="knob"></div>Invert screen</div>
             <!-- <div class="checkbox group_brightness group_oled hidden" id="dspon" data-command="screenon"><div class="knob"></div>Turn on</div> -->
           </div>
-          <div class="flex-row group group_tft group_oled group_nextion hidden">
-            <div class="checkbox" id="nump" data-command="numplaylist"><div class="knob"></div>Numbered Playlist</div>
-            <div class="checkbox" id="clock12" data-command="clock12"><div class="knob"></div>12-Hour Clock</div>
+          <div class="flex-row group_tft hidden">
+            <div class="inputwrap center">
+              <span class="inputtitle">Numbered Playlist</span>
+              <div class="checkbox" id="nump" data-command="numplaylist"><div class="knob"></div></div>
+            </div>
+            <div class="inputwrap center">
+              <span class="inputtitle">12-Hour Clock</span>
+              <div class="checkbox" id="clock12" data-command="clock12"><div class="knob"></div></div>
+            </div>
           </div>
           <div class="flex-row">
-            <div class="checkbox" id="volumepage" data-command="volumepage"><div class="knob"></div>Volume Page</div>
+            <div class="inputwrap center">
+              <span class="inputtitle">Volume Page</span>
+              <div class="checkbox" id="volumepage" data-command="volumepage"><div class="knob"></div></div>
+            </div>
           </div>
           <div class="flex-row group group_brightness hidden">
             <div class="inputwrap">
-              <span class="inputtitle">brightness</span>
+              <span class="inputtitle">Brightness</span>
               <span class="inputinfo" id="slbrightnessinfo">0</span>
               <input type="range" id="br" data-slaveid="slbrightnessinfo" data-command="brightness" min="0" max="100" value="100">
             </div>
           </div>
           <div class="flex-row group group_nokia hidden">
             <div class="inputwrap">
-              <span class="inputtitle">contrast</span>
+              <span class="inputtitle">Contrast</span>
               <span class="inputinfo" id="slcontrastinfo">0</span>
               <input type="range" id="con" data-slaveid="slcontrastinfo" data-command="contrast" min="0" max="100" value="55">
             </div>
           </div>
-          <div class="row-title"><span>screensaver</span></div>
-          <div class="flex-row group group_tft group_oled group_nextion hidden" style="margin-top:20px;">
-            <div class="inputwrap">
-              <span class="inputtitle">while not playing</span>
-              <div class="checkbox cbwtitle" id="scre" data-command="screensaverenabled"><div class="knob"></div></div>
+          <div class="row-title"><span>Screensaver</span></div>
+          <div class="flex-row group group_tft group_oled group_nextion hidden">
+            <div class="inputwrap pad">
+              <span class="inputtitle">While Not Playing</span>
+              <div class="checkbox tzoption" id="scre" data-command="screensaverenabled"><div class="knob"></div></div>
             </div>
-            <div class="inputwrap">
-              <span class="inputtitle">blank screen</span>
-              <div class="checkbox cbwtitle" id="scrb" data-command="screensaverblank"><div class="knob"></div></div>
+            <div class="inputwrap pad">
+              <span class="inputtitle">Blank Screen</span>
+              <div class="checkbox tzoption" id="scrb" data-command="screensaverblank"><div class="knob"></div></div>
             </div>
-            <div class="inputwrap">
-              <span class="inputtitle">timeout (sec)</span>
+            <div class="inputwrap pad">
+              <span class="inputtitle">Timeout (sec)</span>
               <input type="number" id="scrt" data-command="screensavertimeout" value="" maxlength="3" min="5" max="65520" />
             </div>
           </div>
           <div class="flex-row group group_tft group_oled group_nextion hidden">
-            <div class="inputwrap">
-              <span class="inputtitle">while playing</span>
-              <div class="checkbox cbwtitle" id="scrpe" data-command="screensaverplayingenabled"><div class="knob"></div></div>
+            <div class="inputwrap pad">
+              <span class="inputtitle">While Playing</span>
+              <div class="checkbox tzoption" id="scrpe" data-command="screensaverplayingenabled"><div class="knob"></div></div>
             </div>
-            <div class="inputwrap">
-              <span class="inputtitle">blank screen</span>
-              <div class="checkbox cbwtitle" id="scrpb" data-command="screensaverplayingblank"><div class="knob"></div></div>
+            <div class="inputwrap pad">
+              <span class="inputtitle">Blank Screen</span>
+              <div class="checkbox tzoption" id="scrpb" data-command="screensaverplayingblank"><div class="knob"></div></div>
             </div>
-            <div class="inputwrap">
-              <span class="inputtitle">timeout (min)</span>
+            <div class="inputwrap pad">
+              <span class="inputtitle">Timeout (min)</span>
               <input type="number" id="scrpt" data-command="screensaverplayingtimeout" value="" maxlength="3" min="1" max="1080" />
             </div>
           </div>
@@ -110,8 +139,8 @@
           <div class="title"><span>Controls</span></div>
           <div class="reset" data-name="controls" title="reset"></div>
           <div class="flex-row">
-            <div class="inputwrap">
-              <span class="inputtitle">volume steps</span>
+            <div class="inputwrap pad">
+              <span class="inputtitle">Volume Steps</span>
               <span class="inputinfo" id="slvolstepsinfo">0</span>
               <input type="range" id="vols" data-command="volsteps" data-slaveid="slvolstepsinfo" min="1" max="10" value="1">
             </div>
@@ -122,19 +151,20 @@
           </div>
           <div class="flex-row group group_encoder hidden">
             <div class="inputwrap">
-              <span class="inputtitle">rotary encoder acceleration</span>
+              <span class="inputtitle">Rotary Encoder Acceleration</span>
               <span class="inputinfo" id="slencaccelerationinfo">0</span>
               <input type="range" id="enca" data-command="encacc" data-slaveid="slencaccelerationinfo" min="0" max="700" value="200">
             </div>
           </div>
           <div class="flex-row">
-            <div class="inputwrap">
-              <div class="checkbox" id="skipup" data-command="oneclickswitching"><div class="knob"></div>one-click station switching</div>
+            <div class="inputwrap center">
+              <span class="inputtitle">One-click Station Switching</span>
+              <div class="checkbox" id="skipup" data-command="oneclickswitching"><div class="knob"></div></div>
             </div>
           </div>
           <div class="flex-row group group_ir hidden">
             <div class="inputwrap">
-              <span class="inputtitle">IR tolerance [<a href="https://crankyoldgit.github.io/IRremoteESP8266/doxygen/html/" target="_blank">docs</a>]</span>
+              <span class="inputtitle">IR Tolerance [<a href="https://crankyoldgit.github.io/IRremoteESP8266/doxygen/html/" target="_blank">docs</a>]</span>
               <span class="inputinfo" id="slirtlpinfo">0</span>
               <input type="range" id="irtl" data-command="irtlp" data-slaveid="slirtlpinfo" min="10" max="80" value="0">
             </div>
@@ -145,27 +175,27 @@
         </section>
         <a name="timezone"></a>
         <section class="group group_timezone hidden" id="group_timezone">
-          <div class="title"><span>timezone</span></div>
+          <div class="title"><span>Timezone</span></div>
           <div class="reset" data-name="timezone" title="reset"></div>
           <div class="flex-row">
             <div class="inputwrap">
-              <span class="inputtitle">select time zone</span>
+              <span class="inputtitle">Select Time Zone</span>
               <select type="text" id="tz_name" name="tz_name">
                 <option value="">Timezones Load Here</option>
                 </select>
             </div>
             <div class="inputwrap">
-              <span class="inputtitle">posix string</span>
+              <span class="inputtitle">POSIX String</span>
               <input type="text" id="tzposix" name="tzposix" maxlength="69" />
             </div>
           </div>
           <div class="flex-row">
             <div class="inputwrap">
-              <span class="inputtitle">ntp server #1</span>
+              <span class="inputtitle">NTP Server #1</span>
               <input type="text" id="sntp1" name="sntp1" value="" maxlength="34" />
             </div>
             <div class="inputwrap">
-              <span class="inputtitle">ntp server #2</span>
+              <span class="inputtitle">NTP Server #2</span>
               <input type="text" id="sntp2" name="sntp2" value="" maxlength="34" />
             </div>
           </div>
@@ -178,51 +208,51 @@
           <div class="title"><span>Wi-Fi</span></div>
           <div class="flex-row credential">
             <div class="inputwrap">
-              <span class="inputtitle">ssid</span>
+              <span class="inputtitle">SSID</span>
               <input type="text" id="ssid0" class="textinput" name="ssid" value="" maxlength="30" autocomplete="off" />
             </div>
             <div class="inputwrap">
-              <span class="inputtitle">pass</span>
+              <span class="inputtitle">Password</span>
               <input type="text" id="pass0" class="textinput" name="pass" value="" placeholder="**********" maxlength="40" autocomplete="off" readonly="readonly" data-pass="" onfocus="this.removeAttribute('readonly');" />
             </div>
           </div>
           <div class="flex-row credential">
             <div class="inputwrap">
-              <span class="inputtitle">ssid</span>
+              <span class="inputtitle">SSID</span>
               <input type="text" id="ssid1" class="textinput" name="ssid" maxlength="30" autocomplete="off" />
             </div>
             <div class="inputwrap">
-              <span class="inputtitle">pass</span>
+              <span class="inputtitle">Password</span>
               <input type="text" id="pass1" class="textinput" name="pass" value="" placeholder="**********" maxlength="40" autocomplete="off" readonly="readonly" data-pass="" onfocus="this.removeAttribute('readonly');" />
             </div>
           </div>
           <div class="flex-row credential">
             <div class="inputwrap">
-              <span class="inputtitle">ssid</span>
+              <span class="inputtitle">SSID</span>
               <input type="text" id="ssid2" class="textinput" name="ssid" value="" maxlength="30" autocomplete="off" />
             </div>
             <div class="inputwrap">
-              <span class="inputtitle">pass</span>
+              <span class="inputtitle">Password</span>
               <input type="text" id="pass2" class="textinput" name="pass" value="" placeholder="**********" maxlength="40" autocomplete="off" readonly="readonly" data-pass="" onfocus="this.removeAttribute('readonly');" />
             </div>
           </div>
           <div class="flex-row credential">
             <div class="inputwrap">
-              <span class="inputtitle">ssid</span>
+              <span class="inputtitle">SSID</span>
               <input type="text" id="ssid3" class="textinput" name="ssid" value="" maxlength="30" autocomplete="off" />
             </div>
             <div class="inputwrap">
-              <span class="inputtitle">pass</span>
+              <span class="inputtitle">Password</span>
               <input type="text" id="pass3" class="textinput" name="pass" value="" placeholder="**********" maxlength="40" autocomplete="off" readonly="readonly" data-pass="" onfocus="this.removeAttribute('readonly');" />
             </div>
           </div>
           <div class="flex-row credential">
             <div class="inputwrap">
-              <span class="inputtitle">ssid</span>
+              <span class="inputtitle">SSID</span>
               <input type="text" id="ssid4" class="textinput" name="ssid" value="" maxlength="30" autocomplete="off" />
             </div>
             <div class="inputwrap">
-              <span class="inputtitle">pass</span>
+              <span class="inputtitle">Password</span>
               <input type="text" id="pass4" class="textinput" name="pass" value="" placeholder="**********" maxlength="40" autocomplete="off" readonly="readonly" data-pass="" onfocus="this.removeAttribute('readonly');" />
             </div>
           </div>
@@ -241,17 +271,17 @@
           </div>
           <div class="flex-row">
             <div class="inputwrap">
-              <span class="inputtitle">latitude</span>
+              <span class="inputtitle">Latitude</span>
               <input type="number" id="wlat" value="" min="-90" max="90" step="0.0001" />
             </div>
             <div class="inputwrap">
-              <span class="inputtitle">longitude</span>
+              <span class="inputtitle">Longitude</span>
               <input type="number" id="wlon" value="" min="-90" max="90" step="0.0001" />
             </div>
           </div>
           <div class="flex-row">
             <div class="inputwrap">
-              <span class="inputtitle">openweathermap api key [<a href="https://openweathermap.org/appid" target="_blank">link</a>]</span>
+              <span class="inputtitle">Openweathermap API Key [<a href="https://openweathermap.org/appid" target="_blank">link</a>]</span>
               <input type="text" id="wkey" value="" />
             </div>
           </div>
@@ -264,32 +294,35 @@
         <section class="group group_mqtt hidden" id="group_mqtt">
           <div class="title"><span>MQTT</span></div>
           <div class="reset" data-name="mqtt" title="reset"></div>
-          <div class="flex-row center">
-            <div class="checkbox" id="mqttenable" data-command="mqttenable"><div class="knob"></div>enable mqtt</div>
+          <div class="flex-row">
+            <div class="inputwrap center">
+              <span class="inputtitle">Enable MQTT</span>
+              <div class="checkbox" id="mqttenable" data-command="mqttenable"><div class="knob"></div></div>
+            </div>
           </div>
           <div class="flex-row">
             <div class="inputwrap">
-              <span class="inputtitle">host</span>
+              <span class="inputtitle">Host</span>
               <input type="text" id="mqtthost" class="textinput" placeholder="192.168.1.2" maxlength="59" autocomplete="off" />
             </div>
             <div class="inputwrap">
-              <span class="inputtitle">port</span>
+              <span class="inputtitle">Port</span>
               <input type="number" id="mqttport" value="" min="1" max="65535" step="1" />
             </div>
           </div>
           <div class="flex-row">
             <div class="inputwrap">
-              <span class="inputtitle">user</span>
+              <span class="inputtitle">User</span>
               <input type="text" id="mqttuser" class="textinput" placeholder="mqttuser" maxlength="29" autocomplete="off" />
             </div>
             <div class="inputwrap">
-              <span class="inputtitle">password</span>
+              <span class="inputtitle">Password</span>
               <input type="text" id="mqttpass" class="textinput" name="pass" value="" placeholder="**********" maxlength="39" autocomplete="off" readonly="readonly" data-pass="" onfocus="this.removeAttribute('readonly');" />
             </div>
           </div>
           <div class="flex-row">
             <div class="inputwrap">
-              <span class="inputtitle">root topic</span>
+              <span class="inputtitle">Root Topic</span>
               <input type="text" id="mqtttopic" class="textinput" placeholder="ehradio/myradio/" maxlength="59" autocomplete="off" />
             </div>
           </div>
@@ -300,16 +333,62 @@
 
         <a name="tools"></a>
         <section class="group group_system hidden" id="group_tools">
-        <div class="title"><span>Tools</span></div>
-        <div class="flex-row center">
-          <div class="fb hl tool local" data-command="reboot" title="Reboot ESP">reboot</div>
-          <div class="fb tool local" data-command="format" title="Format SPIFFS">format</div>
-          <div class="fb tool local" data-command="reset" title="Reset settings">reset</div>
+        <div class="title"><span>Danger Zone</span></div>
+        <div class="flex-row">
+          <div class="inputwrap center">
+            <span class="inputtitle" id="dangerzone_txt" replacement="Be Careful!">Turn on all switches to unlock</span>
+          </div>
         </div>
+        <div class="flex-row">
+          <div class="inputwrap center">
+            <div class="checkbox" id="dangerzone_sw1"><div class="knob"></div></div>
+          </div>
+          <div class="inputwrap center">
+            <div class="checkbox" id="dangerzone_sw2"><div class="knob"></div></div>
+          </div>
+          <div class="inputwrap center">
+            <div class="checkbox" id="dangerzone_sw3"><div class="knob"></div></div>
+          </div>
+        </div>
+
+        <div class="flex-row center hidden" id="dangerzone">
+          <div class="inputwrap center">
+            <div class="fb tool local" data-command="confirm-reboot" title="Reboot ESP">Reboot</div>
+          </div>
+          <div class="inputwrap center">
+            <div class="fb tool local" data-command="confirm-format" title="Format SPIFFS">Format</div>
+          </div>
+          <div class="inputwrap center">
+            <div class="fb tool local" data-command="confirm-reset" title="Reset settings">Reset</div>
+          </div>
+        </div>
+        
+        <div class="flex-row center hidden" id="dz_reboot">
+          <div class="inputwrap center">
+            <div class="row-title"><span>This will reboot the device.</span></div>
+            <div class="fb tool local" data-command="reboot">OK</div>
+          </div>
+        </div>
+        <div class="flex-row center hidden" id="dz_format">
+          <div class="inputwrap center">
+            <div class="row-title"><span>This will delete all files, including playlists and wi-fi data.</span></div>
+            <div class="fb tool local" data-command="format">OK</div>
+          </div>
+        </div>
+        <div class="flex-row center hidden" id="dz_reset">
+          <div class="inputwrap center">
+            <div class="row-title"><span>This will reset all settings to defaults.</span></div>
+            <div class="fb tool local" data-command="reset">OK</div>
+          </div>
+        </div>
+
         </section>
         <div class="hr">&nbsp;</div>
       </div>
     </div><!--playerwrap-->
     <div class="fb done group group_system hidden" data-name="settingsdone" id="settingsdone">done</div>
-    <div id="copy">powered by <a target="_blank" href="https://github.com/trip5/ehRadio/">ehRadio</a><span id="version"></span></div>
+    <div id="copy">powered by <a target="_blank" href="https://github.com/trip5/ehRadio/">ehRadio</a> |
+      <span id="version"></span>
+      <span id="update_available" class="hidden">| <a href="/update.html">Update Available</a></span>
+    </div>
     

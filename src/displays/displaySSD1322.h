@@ -1,7 +1,7 @@
 #ifndef displaySSD1322_h
 #define displaySSD1322_h
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include "../libraries/SSD1322/SSD1322.h"
 #include "fonts/bootlogo21x32.h"

@@ -1,7 +1,7 @@
 // based om helix mp3 decoder
 #pragma once
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include "assert.h"
 
 static const uint8_t  m_HUFF_PAIRTABS          =32;

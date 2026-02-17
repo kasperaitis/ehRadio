@@ -1,7 +1,7 @@
 #ifndef displaySSD1306_h
 #define displaySSD1306_h
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 

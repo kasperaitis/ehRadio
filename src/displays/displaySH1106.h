@@ -1,7 +1,7 @@
 #ifndef displaySH1106_h
 #define displaySH1106_h
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
 #include "fonts/bootlogo21x32.h"

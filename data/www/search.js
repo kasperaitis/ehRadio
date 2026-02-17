@@ -9,6 +9,14 @@ let searchStartTime = 0;  // track when a search is initiated
 
 window.addEventListener('load', onSearchLoad);
 
+// Unhide 'searchtitle2' if curatedLists is true (for curated.html)
+window.addEventListener('DOMContentLoaded', function() {
+  if (typeof curatedLists !== 'undefined' && curatedLists === true) {
+    var el = document.querySelector('.searchtitle2');
+    if (el) el.classList.remove('hidden');
+  }
+});
+
 function onSearchLoad(event) {
   // Centralized event listeners
   document.getElementById('searchdone').addEventListener('click', () => { window.location.href = '/'; });
@@ -41,9 +49,9 @@ function onSearchLoad(event) {
       const index = button.dataset.index;
       const action = button.dataset.action;
       if (action === 'preview') {
-        sendStationAction(index, false);
+        handleStationAction(index, false);
       } else if (action === 'add') {
-        sendStationAction(index, true);
+        handleStationAction(index, true);
       }
     }
   });
@@ -126,6 +134,10 @@ function setSearchButtonsDisabled(disabled) {
     searchdone.style.opacity = '1';
     searchdone.style.pointerEvents = 'auto';
   }
+  // Disable/enable sort order radio buttons
+  document.querySelectorAll('input[name="sortorder"]').forEach(radio => {
+    radio.disabled = disabled;
+  });
   // When re-enabling buttons, also update the state of the main search button
   if (!disabled) {
     updateSearchButtonState();
@@ -267,6 +279,14 @@ function loadLastSearchAndResults() {
 
     // Disable the 'add' button if all 3 rows are in use
     document.getElementById('addSearchRowBtn').disabled = (rowNum > 3);
+    
+    // Restore the sort order selection from history
+    const orderValue = params.get('order') || 'clickcount';
+    const orderRadio = document.querySelector(`input[name="sortorder"][value="${orderValue}"]`);
+    if (orderRadio) {
+      orderRadio.checked = true;
+    }
+    
     updateSearchPageDisplay();
   })
   .catch(error => {
@@ -313,7 +333,7 @@ function fetchSearchResults(showLoadingMsg, retries = 5, delay = 300) {
   })
   .then(data => {
     stationArr = Array.isArray(data) ? data : [];
-    populateSearchTable(stationArr);
+    populateSearchTable(stationArr, true);
     updateSearchPageDisplay();
     setSearchButtonsDisabled(false);
   })
@@ -394,13 +414,17 @@ function searchStations(isPageNav = false) {
   // record the time when this search starts
   searchStartTime = Date.now();
 
+  // Get selected sort order and determine reverse value
+  const selectedOrder = document.querySelector('input[name="sortorder"]:checked')?.value || 'clickcount';
+  const reverse = (selectedOrder === 'clickcount' || selectedOrder === 'votes') ? 'true' : 'false';
+
   // Build the full query string for the API using URLSearchParams for robustness
   const params = new URLSearchParams({
     hidebroken: 'true',
     limit: limit_per_page,
     offset: currentPage * limit_per_page,
-    order: 'name',
-    reverse: 'false'
+    order: selectedOrder,
+    reverse: reverse
   });
 
   for (const [type, value] of Object.entries(typeValueMap)) {
@@ -441,12 +465,13 @@ function searchStations(isPageNav = false) {
   });
 }
 
-function populateSearchTable(data) {
+function populateSearchTable(data, afterSearch = false) {
   const table = document.getElementById('stationsTable');
   table.innerHTML = "";
   if (!data || data.length === 0) {
-    table.innerHTML = '<tr><td class="importantmessage" colspan="4">Try searching.</td></tr>';
-    hideSearchPageNav();
+    const message = afterSearch ? 'No results found. Try a different search.' : 'Try searching.';
+    table.innerHTML = `<tr><td class="importantmessage" colspan="4">${message}</td></tr>`;
+    hideSearchPageNav(); //
     return;
   }
   const rows = data.map((station, i) => {
@@ -464,11 +489,12 @@ function populateSearchTable(data) {
         <td class="info">
           <table>
             <tr>
-              <td class="countrycode" colspan="2">${station.countrycode.length > 2 ? '?' : station.countrycode}</td>
+              <td class="countrycode">${!station.countrycode || station.countrycode.length > 2 ? '?' : station.countrycode.toUpperCase()}</td>
+              <td class="languagecode">${!station.languagecodes ? '?' : (station.languagecodes.length > 5 ? station.languagecodes.substring(0, 2).toLowerCase() + ',⋯' : station.languagecodes.toLowerCase())}</td>
             </tr>
             <tr>
-              <td class="codec">${station.codec.toUpperCase() === 'UNKNOWN' ? '?' : station.codec}</td>
-              <td class="bitrate">${station.bitrate === 0 ? '?' : station.bitrate + 'k'}</td>
+              <td class="codec">${!station.codec || station.codec.toUpperCase() === 'UNKNOWN' ? '?' : station.codec.toUpperCase()}</td>
+              <td class="bitrate">${!station.bitrate || station.bitrate === 0 ? '?' : station.bitrate + 'k'}</td>
             </tr>
           </table>
         </td>
@@ -482,6 +508,8 @@ function populateSearchTable(data) {
   }).join('');
   table.innerHTML = rows;
 }
+
+// SVG icons from https://www.svgviewer.dev/s/474949/play & https://www.svgviewer.dev/s/495943/plus
 
 function quickSearch(genre) {
   document.getElementById('searchType1').value = 'tag';
@@ -499,7 +527,7 @@ function quickSearch(genre) {
   searchStations();
 }
 
-function sendStationAction(inx, addtoplaylist) {
+function handleStationAction(inx, addtoplaylist) {
   const station = stationArr[inx];
   if (!station) {
     console.error('Invalid station index:', inx);
@@ -507,22 +535,5 @@ function sendStationAction(inx, addtoplaylist) {
   }
   const name = station.name;
   const url = station.url_resolved || station.url;
-  const label = addtoplaylist ? "Added to playlist: " : "Preview: ";
-  const formData = new URLSearchParams();
-  formData.append('name', name);
-  formData.append('url', url);
-  formData.append('addtoplaylist', addtoplaylist);
-  fetch('/search', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: formData
-  })
-  .then(response => {
-    if (!response.ok) throw new Error('Action failed');
-    return response.text();
-  })
-  .then(responseText => {
-    console.log(label + name, 'Response:', responseText);
-  })
-  .catch(error => console.error('Error sending station action:', error));
+  sendStationAction(name, url, addtoplaylist);
 }

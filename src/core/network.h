@@ -3,38 +3,49 @@
 #include <Ticker.h>
 #include <WiFi.h>
 #include <DNSServer.h>
+#include <ImprovWiFiLibrary.h>
 
 //#define TSYNC_DELAY 10800000    // 1000*60*60*3 = 3 hours
-#define TSYNC_DELAY       3600000     // 1000*60*60   = 1 hour
+// #define TSYNC_DELAY       3600000     // 1000*60*60   = 1 hour - unused
 #define WEATHER_STRING_L  254
 
 enum n_Status_e { CONNECTED, SOFT_AP, FAILED, SDREADY };
 
 class MyNetwork {
   public:
-    n_Status_e status;
+    n_Status_e status = FAILED;
 // Ensure DNSServer full definition is available
-    struct tm timeinfo;
-    bool firstRun, forceTimeSync, forceWeather;
+    struct tm timeinfo = {0};
+    bool firstRun = true, forceTimeSync = true, forceWeather = true;
     bool lostPlaying = false, beginReconnect = false;
     //uint8_t tsFailCnt, wsFailCnt;
     Ticker ctimer;
-    char *weatherBuf;
-    bool trueWeather;
-    DNSServer* dnsServer;
+    char *weatherBuf = nullptr;
+    bool trueWeather = false;
+    DNSServer* dnsServer = nullptr;
+    ImprovWiFi *improv = nullptr;
   public:
-    MyNetwork() {};
-    void begin();
-    void requestTimeSync(bool withTelnetOutput=false, uint8_t clientId=0);
-    void requestWeatherSync();
-    void setWifiParams();
+    MyNetwork() : improv(nullptr) {};
     bool wifiBegin(bool silent=false);
+    void begin();
+    void loopImprov();
+    void setWifiParams();
+    void requestTimeSync(bool withTelnetOutput=false, uint8_t clientId=0);
+    void raiseSoftAP();
+    void requestWeatherSync();
   private:
     Ticker rtimer;
-    void raiseSoftAP();
-    static void WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info);
+    unsigned long lastImprovBroadcast = 0;
     static void WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info);
+    static void WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info);
 };
+
+void ticks();
+void retryStreamConnection(void * pvParameters);
+void searchWiFi(void * pvParameters);
+void rebootTime();
+void doSync(void * pvParameters);
+bool getWeather(char *wstr);
 
 extern MyNetwork network;
 

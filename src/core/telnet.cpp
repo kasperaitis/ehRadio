@@ -13,17 +13,17 @@ bool Telnet::_isIPSet(IPAddress ip) {
 }
 
 bool Telnet::begin(bool quiet) {
-  if(network.status==SDREADY) {
+  if (network.status==SDREADY) {
     BOOTLOG("Ready in SD Mode!");
     BOOTLOG("------------------------------------------------");
     Serial.println("##[BOOT]#");
     return true;
   }
-  if(!quiet) Serial.print("##[BOOT]#\ttelnet.begin\t");
+  if (!quiet) Serial.print("##[BOOT]#\ttelnet.begin\t");
   if (WiFi.status() == WL_CONNECTED || _isIPSet(WiFi.softAPIP())) {
     server.begin();
     server.setNoDelay(true);
-    if(!quiet){
+    if (!quiet) {
       Serial.println("done");
       Serial.println("##[BOOT]#");
       BOOTLOG("Ready! Go to http:/%s/ to configure", WiFi.localIP().toString().c_str());
@@ -59,15 +59,15 @@ void Telnet::cleanupClients() {
   }
 }
 
-void Telnet::handleSerial(){
-  if(Serial.available()){
+void Telnet::handleSerial() {
+  if (Serial.available()) {
     String request = Serial.readStringUntil('\n'); request.trim();
     on_input(request.c_str(), 100);
   }
 }
 
 void Telnet::loop() {
-  if(network.status==SDREADY || network.status!=CONNECTED) {
+  if (network.status==SDREADY || network.status!=CONNECTED) {
     handleSerial();
     return;
   }
@@ -127,7 +127,7 @@ void Telnet::print(uint8_t id, const char *buf) {
 void Telnet::printf(const char *format, ...) {
   char buf[MAX_PRINTF_LEN];
   va_list args;
-  va_start (args, format );
+  va_start (args, format);
   vsnprintf(buf, MAX_PRINTF_LEN, format, args);
   va_end (args);
   for (int id = 0; id < MAX_TLN_CLIENTS; id++) {
@@ -136,7 +136,7 @@ void Telnet::printf(const char *format, ...) {
     }
   }
   if (strcmp(buf, "> ") == 0) return;
-  //if(strstr(buf,"\n> ")==NULL) Serial.print(buf);
+  //if (strstr(buf,"\n> ")==NULL) Serial.print(buf);
   char *nl = strstr(buf, "\n> ");
   if (nl != NULL) { buf[nl-buf+1] = '\0'; }
   Serial.print(buf);
@@ -148,7 +148,7 @@ void Telnet::printf(uint8_t id, const char *format, ...) {
   va_start(argptr, format);
   vsnprintf(buf, MAX_PRINTF_LEN, format, argptr);
   va_end(argptr);
-  if(id>MAX_TLN_CLIENTS){
+  if (id>MAX_TLN_CLIENTS) {
     Serial.print(buf);
     return;
   }
@@ -159,7 +159,7 @@ void Telnet::printf(uint8_t id, const char *format, ...) {
 
 void Telnet::on_connect(const char* str, uint8_t clientId) {
   Serial.printf("Telnet: [%d] %s connected\n", clientId, str);
-  print(clientId, "\nWelcome to ehRadio!\n(Use ^] + q  ( Ctrl+[ + q ) to disconnect.)\n> ");
+  print(clientId, "\nWelcome to ehRadio!\n(Use ^] + q  (Ctrl+[ + q) to disconnect.)\n> ");
 }
 
 void Telnet::info() {
@@ -184,7 +184,7 @@ void Telnet::info() {
 
 void Telnet::on_input(const char* str, uint8_t clientId) {
   if (strlen(str) == 0) return;
-  if(network.status == CONNECTED){
+  if (network.status == CONNECTED) {
     if (strcmp(str, "cli.prev") == 0 || strcmp(str, "prev") == 0) {
       player.prev();
       return;
@@ -240,13 +240,13 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       return;
     }
     if (strcmp(str, "cli.smartstart") == 0 || strcmp(str, "smartstart") == 0) {
-      printf(clientId, "##CLI.SMARTSTART#: %d\n> ", config.store.smartstart);
+      printf(clientId, "##CLI.SMARTSTART#: %s\n> ", config.store.smartstart ? "true" : "false");
       return;
     }
     int sstart;
     if (sscanf(str, "smartstart(%d)", &sstart) == 1 || sscanf(str, "cli.smartstart(\"%d\")", &sstart) == 1 || sscanf(str, "smartstart %d", &sstart) == 1) {
-      config.saveValue(&config.store.smartstart, static_cast<uint8_t>(sstart));
-      printf(clientId, "new smartstart value is: %d\n> ", config.store.smartstart);
+      config.saveValue(&config.store.smartstart, (bool)(sstart != 0));
+      printf(clientId, "new smartstart value is: %s\n> ", config.store.smartstart ? "true" : "false");
       return;
     }
     if (strcmp(str, "cli.list") == 0 || strcmp(str, "list") == 0) {
@@ -305,17 +305,17 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       return;
     }
     #ifdef USE_SD
-    int mm;
-    if (sscanf(str, "mode %d", &mm) == 1 ) {
-      if (mm > 2) mm = 0;
-      if(mm==2)
-        config.changeMode();
-      else
-        config.changeMode(mm);
-      return;
-    }
+      int mm;
+      if (sscanf(str, "mode %d", &mm) == 1) {
+        if (mm > 2) mm = 0;
+        if (mm==2)
+          config.changeMode();
+        else
+          config.changeMode(mm);
+        return;
+      }
     #endif
-    if (strcmp(str, "sys.tz") == 0 || strcmp(str, "tz") == 0 )  {
+    if (strcmp(str, "sys.tz") == 0 || strcmp(str, "tz") == 0)  {
       char timeStringBuff[50];
       strftime(timeStringBuff, sizeof(timeStringBuff), "%Y-%m-%dT%H:%M:%S", &network.timeinfo);
       printf(clientId, "##SYS.DATE#: %s\n", timeStringBuff);
@@ -331,11 +331,11 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       printf(clientId, "##SYS.TZPOSIX#: %s\n", config.store.tzposix);
       return;
     }
-    if (strcmp(str, "sys.tzo") == 0 || strcmp(str, "tzo") == 0 )  {
+    if (strcmp(str, "sys.tzo") == 0 || strcmp(str, "tzo") == 0)  {
       printf(clientId, "##SYS.TZPOSIX#: %s\n", config.store.tzposix);
       return;
     }
-    if (strcmp(str, "sys.tzname") == 0 || strcmp(str, "tzname") == 0  )  {
+    if (strcmp(str, "sys.tzname") == 0 || strcmp(str, "tzname") == 0 )  {
       printf(clientId, "##SYS.TZNAME#: %s\n", config.store.tz_name);
       return;
     }
@@ -377,7 +377,7 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       network.requestTimeSync(true);
       return;
     }
-    if (strcmp(str, "sys.tzposix") == 0 || strcmp(str, "tzposix") == 0 )  {
+    if (strcmp(str, "sys.tzposix") == 0 || strcmp(str, "tzposix") == 0)  {
       printf(clientId, "##SYS.TZPOSIX#: %s\n", config.store.tzposix);
       printf(clientId, "WARNING! USE THIS COMMAND CAREFULLY!\n", config.store.tzposix);
       return;
@@ -420,19 +420,19 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       return;
     }
     if (sscanf(str, "sleep(%d,%d)", &tzh, &tzm) == 2 || sscanf(str, "cli.sleep(\"%d\",\"%d\")", &tzh, &tzm) == 2 || sscanf(str, "sleep %d %d", &tzh, &tzm) == 2) {
-      if(tzh>0 && tzm>0) {
+      if (tzh>0 && tzm>0) {
         printf(clientId, "sleep for %d minutes after %d minutes ...\n> ", tzh, tzm);
         config.sleepForAfter(tzh, tzm);
-      }else{
+      } else {
         printf(clientId, "##CMD_ERROR#\tunknown command <%s>\n> ", str);
       }
       return;
     }
     if (sscanf(str, "sleep(%d)", &tzh) == 1 || sscanf(str, "cli.sleep(\"%d\")", &tzh) == 1 || sscanf(str, "sleep %d", &tzh) == 1) {
-      if(tzh>0) {
+      if (tzh>0) {
         printf(clientId, "sleep for %d minutes ...\n> ", tzh);
         config.sleepForAfter(tzh);
-      }else{
+      } else {
         printf(clientId, "##CMD_ERROR#\tunknown command <%s>\n> ", str);
       }
       return;
@@ -495,7 +495,7 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       uint8_t c = 1;
       while (file.available()) {
         if (config.parseSsid(file.readStringUntil('\n').c_str(), sSid, sPas)) {
-          if(c==config.store.lastSSID) printf(clientId, "%d: %s, %s\n", c, sSid, sPas);
+          if (c==config.store.lastSSID) printf(clientId, "%d: %s, %s\n", c, sSid, sPas);
           c++;
         }
       }
@@ -503,7 +503,7 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     printf(clientId, "##WIFI.STATION#\n> ");
     return;
   }
-  char newssid[30], newpass[40];
+  char newssid[sizeof(config.ssids[1].ssid)], newpass[sizeof(config.ssids[1].password)];
   if (sscanf(str, "wifi.con(\"%[^\"]\",\"%[^\"]\")", newssid, newpass) == 2 || sscanf(str, "wifi.con(%[^,],%[^)])", newssid, newpass) == 2 || sscanf(str, "wifi.con(%[^ ] %[^)])", newssid, newpass) == 2 || sscanf(str, "wifi %[^ ] %s", newssid, newpass) == 2) {
     char buf[BUFLEN];
     snprintf(buf, BUFLEN, "New SSID: \"%s\" with PASS: \"%s\" for next boot\n> ", newssid, newpass);
@@ -511,7 +511,7 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
     printf(clientId, "...REBOOTING...\n> ");
     memset(buf, 0, BUFLEN);
     snprintf(buf, BUFLEN, "%s\t%s", newssid, newpass);
-    config.saveWifiFromNextion(buf);
+    config.saveWifi(buf);
     return;
   }
   if (strcmp(str, "wifi.status") == 0 || strcmp(str, "status") == 0) {
@@ -521,7 +521,7 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       WiFi.getMode()==WIFI_STA?WiFi.subnetMask().toString():"255.255.255.0",
       WiFi.getMode()==WIFI_STA?WiFi.gatewayIP().toString():WiFi.softAPIP().toString(),
       WiFi.RSSI()
-    );
+   );
     return;
   }
   if (strcmp(str, "wifi.rssi") == 0 || strcmp(str, "rssi") == 0) {

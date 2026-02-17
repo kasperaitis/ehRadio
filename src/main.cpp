@@ -1,5 +1,5 @@
-#include "Arduino.h"
-#include "esp_system.h"
+#include <Arduino.h>
+#include <esp_system.h>
 
 #include "core/options.h"
 
@@ -18,11 +18,11 @@ SET_LOOP_TASK_STACK_SIZE(LOOP_TASK_STACK_SIZE * 1024);
 #include "core/optionschecker.h"
 #include "core/rgbled.h"
 #ifdef USE_NEXTION
-#include "displays/nextion.h"
+  #include "displays/nextion.h"
 #endif
 
 #if DSP_HSPI || TS_HSPI || VS_HSPI
-SPIClass SPI2(HSPI);
+  SPIClass SPI2(HSPI);
 #endif
 
 extern __attribute__((weak)) void ehradio_on_setup();
@@ -35,7 +35,7 @@ void setup() {
       Serial.println("##[BOOT]#       Delay 1 second after cold boot to ensure serial logs are completely available. Only when CORE_DEBUG_LEVEL > 0.");
     }
   #endif
-  if(REAL_LEDBUILTIN!=255) pinMode(REAL_LEDBUILTIN, OUTPUT);
+  if (REAL_LEDBUILTIN!=255) pinMode(REAL_LEDBUILTIN, OUTPUT);
   rgbled_init();
   if (ehradio_on_setup) ehradio_on_setup();
   pm.on_setup();
@@ -53,7 +53,7 @@ void setup() {
     while(!display.ready()) delay(10);
     return;
   }
-  if(SDC_CS!=255) {
+  if (SDC_CS!=255) {
     display.putRequest(WAITFORSD, 0);
     Serial.print("##[BOOT]#\tSD search\t");
   }
@@ -67,30 +67,34 @@ void setup() {
     if (config.store.mqttenable) mqttInit();
   #endif
   #if LED_INVERT
-    if(REAL_LEDBUILTIN!=255) digitalWrite(REAL_LEDBUILTIN, true);
+    if (REAL_LEDBUILTIN!=255) digitalWrite(REAL_LEDBUILTIN, true);
   #endif
   if (config.getMode()==PM_SDCARD) player.initHeaders(config.station.url);
   player.lockOutput=false;
-  if (config.store.smartstart == 1) {
+  if (config.store.smartstart) {  // If smart start is enabled
     //delay(99);
-    player.sendCommand({PR_PLAY, config.lastStation()});
+    uint16_t stn = config.lastStation();
+    if (stn > 0) {  // Only play if there's a valid station
+      player.sendCommand({PR_PLAY, stn});
+    }
   }
   config.startAsyncServicesButWait();
   pm.on_end_setup();
 }
 
 void loop() {
-  telnet.loop();
+  if (network.status == SOFT_AP) {
+    network.loopImprov();
+    if (network.dnsServer) network.dnsServer->processNextRequest();
+  } else {
+    telnet.loop();
+  }
+  
   rgbled_loop();
   if (network.status == CONNECTED || network.status==SDREADY) {
     player.loop();
-    //loopControls();
   }
   loopControls();
-  // Process captive portal DNS requests in Soft AP mode
-  if (network.status == SOFT_AP && network.dnsServer) {
-    network.dnsServer->processNextRequest();
-  }
   netserver.loop();
 }
 

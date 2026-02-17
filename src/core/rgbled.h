@@ -5,12 +5,11 @@
 #include "core/options.h"
 
 void rgbled_init();
-void rgbled_loop();
+bool rgbled_is_initialized();
 void rgbled_set(uint8_t r, uint8_t g, uint8_t b);
 void rgbled_playing();
 void rgbled_stopped();
 void rgbled_trackchange();
-
-bool rgbled_is_initialized();
+void rgbled_loop();
 
 #endif // rgbled_h

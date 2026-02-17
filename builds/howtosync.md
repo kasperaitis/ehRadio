@@ -46,10 +46,10 @@ This folder contains contributor-specific configuration files that are automatic
 
 ### Done!
 
-The 3 important files that are ignored by .gitignore will now be backed-up and shared and Github workflow will build your firmwares automatically!
+The 3 important files that are ignored by `.gitignore` will now be backed-up and shared and Github workflow will build your firmwares automatically!
 
 ### Note
 
 I could not find a way to elegantly match the files in the root of the workspace folder so it matches an exact filename but uses an if in the cmd.
 
-If you use powershell or bash... please edit and share your `settings.json` after you get it working!
+If you use powershell or bash... please edit and share your `settings.json` in your builds folder after you get it working!

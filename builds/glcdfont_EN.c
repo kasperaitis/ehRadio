@@ -1,3 +1,5 @@
+// Edited Version of Adafruit version 2019 to include special characters
+
 // This is the 'classic' fixed-space bitmap font for Adafruit_GFX since 1.0.
 // See gfxfont.h for newer custom bitmap font info.
 

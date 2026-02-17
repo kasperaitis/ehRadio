@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#e3d25f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABABAMAAABYR2ztAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAB5QTFRFyAwCAAAAyAwCyAwCyAwCyAwCyAwCyAwCyAwCyAwCS0TDwgAAAAp0Uk5T/wAM4Cq8mkZ/ZYZ9vz0AAAIWSURBVHichZXBb9MwFMY/YZLC0W5puluddWp2i9YWbbdFSidxC9uoOLYDUe22DoTgloGQdmTAhf8W20ldk9nOu9S1f+p73/eeXdBGJI3vaALfMz/A0js/EOHIDwzQ8QMvEPqBUxDuBZbAxgf0UmDlA/oAzn3AjQA6PqAUQOgC9kT5hQACseY2oH/JGWRwGk1twIC8HVXA6PeVDYgAooD7wvDCAHrYRWYDWGEF+u/1+kafPzdk9sj1VtNSAzuvYojtk/pLqQHtVTSDaDDqLKcaeFpXdZaGECMCslZZ9jXwugLOUkwhhkyEmtShBlRD2WexeqiBDvtjAk8kMJd94VAjAHIoWtQ1U8QsVXprABe4lNXUsaGHs4NKL+hevUk2GiBcuFpUckATLX6ugfijdgyGwalevdkZAkO9JaSKgQ9ABjkn7ghFCpZ6gE4bcCSBwgOs5Mj9bAOG7nPxFMAcxUfxjBq9sEUgf8Hrw7QlhZJJI7cRQaZu1oETOK+unrOKY14BTi+/bS9vcmGvgOvb3bPVObsyrr8tyS3fAqP8i+W8fpLB8q+OGl9+WEgVS4eCqozrWyS+gRIzB/rKN1HBL1lk4jqeLKpesNJ+TuLaarpPJhNLKVNt1PhTnsupIJNFefxDoeG7WboyH1JWBn/Xecy7d9K3RTpl2ZibAI0r47oP6mO81g8p/T+Gm8bGo7/FViBrAea8sfEPiURzVU+EBKkAAAAASUVORK5CYII=">
+  <link rel="stylesheet" id="themeCSS" href="theme.css" type="text/css">
+  <link rel="stylesheet" id="styleCSS" href="style.css" type="text/css">
+  <title>ehRadio - Curated Lists</title>
+</head>
+
+<body>
+  <div id="curatedcontent">
+    <div id="curatedheader">
+      <h2 class="searchtitle1">Curated Lists</h2>
+      <h2 class="searchtitle2"><a href="search.html">Search</a></h2>
+    </div>
+    
+    <div id="loadSection">
+      <input type="fb searchbutton" class="fb" id="loadListsBtn" value="Load Index" onclick="loadCuratedIndex(this)"/>
+    </div><!-- end of header area -->
+
+    <div id="indexwrap" class="scrollable">
+      <table class="stations" id="indexTable">
+        <!-- Index rows will be dynamically added here -->
+      </table>
+    </div>
+
+    <h3 class="sectiontitle" id="playlistSectionTitle">Select a Playlist</h3>
+    <div id="listwrap" class="scrollable">
+      <table class="stations" id="playlistTable">
+      </table>
+    </div>
+
+    <!-- footer begins -->
+    <div id="importSection">
+      <button class="fb searchbutton" id="replaceBtn" disabled>Replace Playlist</button>
+      <button class="fb searchbutton" id="mergeBtn" disabled>Merge with Playlist</button>
+    </div>
+
+
+    <div class="fb" id="curateddone">Done</div>
+    <div id="copy">Curated lists from <span id="curatedBy"></span></div>
+  </div>
+</body>
+
+<script src="variables.js"></script>
+<script src="curated_variables.js"></script>
+<script>
+  var v = '?v=' + radioVersion;
+  document.getElementById('themeCSS').href = 'theme.css' + v;
+  document.getElementById('styleCSS').href = 'style.css' + v;
+  document.write('<script src="playstation.js' + v + '"><\/script>');
+  document.write('<script src="curated.js' + v + '"><\/script>');
+</script>
+
+</html>

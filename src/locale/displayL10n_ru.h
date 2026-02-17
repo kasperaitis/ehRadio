@@ -74,7 +74,7 @@ const char        apNameTxt[]    PROGMEM = "ТОЧКА ДОСТУПА";
   const char        apPassTxt[]    PROGMEM = "НЕТ ПАРОЛЯ";
 #endif
 const char       bootstrFmt[]    PROGMEM = "Соединяюсь с %s";
-const char        apSettFmt[]    PROGMEM = "НАСТРОЙКИ: HTTP://%s/";
+const char        apSettFmt[]    PROGMEM = "ПОДКЛЮЧИТЕСЬ И ОТКРЫТЬТЕ HTTP://%s/";
 #if EXT_WEATHER
 const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 ощущается: %.1f\011C \007 давление: %d мм \007 влажность: %s%% \007 ветер: %.1f м/с [%s]";
 #else

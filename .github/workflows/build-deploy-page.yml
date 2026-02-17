@@ -1,0 +1,108 @@
+name: Build and Deploy GitHub Page
+
+on:
+  workflow_run:
+    workflows: ["Build and Release Firmware"]
+    types:
+      - completed
+  push:
+    branches: [ '**' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install mkdocs-material
+
+      - name: Copy README and images to docs
+        run: |
+          cp README.md docs/index.md
+          cp -r images docs/
+
+      - name: Update GitHub link in documentation index
+        run: |
+          # Replace only the first occurrence of 'Github Page' with 'Github Repository'
+          sed -i '0,/Github Page/s|Github Page|Github Repository|' docs/index.md
+          # Replace only the first occurrence of the link after that phrase with the correct repo link
+          sed -i "0,/(https:\/\/[^)]*)/s|(https://[^)]*)|(https://github.com/${{ github.repository }})|" docs/index.md
+          # Replace only the first occurrence of 'easier to read' with 'easier to explore'
+          sed -i '0,/easier to read/s|easier to read|easier to explore|' docs/index.md
+
+      - name: Copy web assets (manifests and firmware-info.json)
+        run: |
+          if [ -d "builds/${{ github.repository_owner }}/web_assets" ]; then
+            echo "✅ Copying web assets from builds/${{ github.repository_owner }}/web_assets/"
+            cp -r "builds/${{ github.repository_owner }}/web_assets/"* docs/
+          else
+            echo "⚠️ No web assets found for ${{ github.repository_owner }}"
+            echo "Run the Build and Release Firmware workflow to generate them."
+          fi
+
+      - name: Convert relative YAML links to GitHub URLs
+        run: |
+          sed -i 's|](\([^:)]*\.yaml\))|](https://github.com/${{ github.repository }}/blob/ehradio/\1)|g' docs/index.md
+
+      - name: Customize firmware.html
+        if: github.repository_owner != 'trip5'
+        run: |
+          if [ -f "docs/firmware.html" ]; then
+            sed -i "s|const GITHUB_OWNER = '.*'|const GITHUB_OWNER = '${{ github.repository_owner }}'|g" docs/firmware.html
+            sed -i "s|const REPO_NAME = '.*'|const REPO_NAME = '${{ github.event.repository.name }}'|g" docs/firmware.html
+            sed -i "s|github.com/trip5/ehRadio/releases|github.com/${{ github.repository }}/releases|g" docs/firmware.html
+            sed -i "s|<!-- <p>Forked by XYZ from</p> -->|<p>Forked by ${{ github.repository_owner }} from</p>|g" docs/firmware.html
+            echo "✅ Customized firmware.html for ${{ github.repository_owner }}"
+          fi
+
+      - name: Download latest release firmware (.bin files)
+        run: |
+          mkdir -p docs/firmware
+          gh release download --repo ${{ github.repository }} --pattern '*.bin' --dir docs/firmware || echo "⚠️ No release binaries found to download."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Debug - Show docs structure before build
+        run: |
+          echo "📂 Docs folder structure:"
+          find docs -type f | sort
+          echo ""
+          echo "📊 File counts:"
+          echo "  Manifests: $(find docs/manifests -name '*.json' 2>/dev/null | wc -l)"
+          echo "  Firmware binaries: $(find docs/firmware -name '*.bin' 2>/dev/null | wc -l)"
+          echo "  HTML files: $(find docs -name '*.html' | wc -l)"
+
+      - name: Build documentation
+        run: mkdocs build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build-deploy
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

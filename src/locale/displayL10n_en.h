@@ -75,7 +75,7 @@ const char        apNameTxt[]    PROGMEM = "AP NAME";
 #endif
 
 const char       bootstrFmt[]    PROGMEM = "Wi-fi: %s";
-const char        apSettFmt[]    PROGMEM = "SETTINGS PAGE ON: HTTP://%s/";
+const char        apSettFmt[]    PROGMEM = "CONNECT & OPEN HTTP://%s/";
 #if EXT_WEATHER
 const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 feels like: %.1f\011C \007 pressure: %d мм \007 humidity: %s%% \007 wind: %.1f m/s [%s]";
 #else

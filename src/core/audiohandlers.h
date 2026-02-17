@@ -6,8 +6,8 @@
 //=============================================//
 
 void audio_info(const char *info) {
-  if(player.lockOutput) return;
-  if(config.store.audioinfo) telnet.printf("##AUDIO.INFO#: %s\n", info);
+  if (player.lockOutput) return;
+  if (config.store.audioinfo) telnet.printf("##AUDIO.INFO#: %s\n", info);
   #ifdef USE_NEXTION
     nextion.audioinfo(info);
   #endif
@@ -32,7 +32,7 @@ void audio_info(const char *info) {
 
 void audio_bitrate(const char *info)
 {
-  if(config.store.audioinfo) telnet.printf("%s %s\n", "##AUDIO.BITRATE#:", info);
+  if (config.store.audioinfo) telnet.printf("%s %s\n", "##AUDIO.BITRATE#:", info);
   config.station.bitrate = atoi(info) / 1000;
   display.putRequest(DBITRATE);
   #ifdef USE_NEXTION
@@ -42,7 +42,7 @@ void audio_bitrate(const char *info)
 }
 
 bool printable(const char *info) {
-  if(L10N_LANGUAGE!=RU) return true;
+  if (L10N_LANGUAGE!=RU) return true;
   bool p = true;
   for (int c = 0; c < strlen(info); c++)
   {
@@ -54,7 +54,7 @@ bool printable(const char *info) {
 
 void audio_showstation(const char *info) {
   bool p = printable(info) && (strlen(info) > 0);(void)p;
-  if(player.remoteStationName){
+  if (player.remoteStationName) {
     config.setStation(p?info:config.station.name);
     display.putRequest(NEWSTATION);
     netserver.requestOnChange(STATION, 0);
@@ -75,18 +75,18 @@ void audio_error(const char *info) {
   player.setError(info);
 }
 
-void audio_id3artist(const char *info){
-  if(printable(info)) config.setStation(info);
+void audio_id3artist(const char *info) {
+  if (printable(info)) config.setStation(info);
   display.putRequest(NEWSTATION);
   netserver.requestOnChange(STATION, 0);
 }
 
-void audio_id3album(const char *info){
-  if(player.lockOutput) return;
-  if(printable(info)){
-    if(strlen(config.station.title)==0){
+void audio_id3album(const char *info) {
+  if (player.lockOutput) return;
+  if (printable(info)) {
+    if (strlen(config.station.title)==0) {
       config.setTitle(info);
-    }else{
+    } else {
       char tmp[BUFLEN];
       snprintf(tmp, BUFLEN, "%s - %s", config.station.title, info);
       config.setTitle(tmp);
@@ -94,36 +94,36 @@ void audio_id3album(const char *info){
   }
 }
 
-void audio_id3title(const char *info){
+void audio_id3title(const char *info) {
   audio_id3album(info);
 }
 
-void audio_beginSDread(){
+void audio_beginSDread() {
   config.setTitle("");
 }
 
-void audio_id3data(const char *info){  //id3 metadata
-    if(player.lockOutput) return;
+void audio_id3data(const char *info) {  //id3 metadata
+    if (player.lockOutput) return;
     telnet.printf("##AUDIO.ID3#: %s\n", info);
 }
 
-void audio_eof_mp3(const char *info){  //end of file
+void audio_eof_mp3(const char *info) {  //end of file
     config.sdResumePos = 0;
     player.next();
 }
 
-void audio_eof_stream(const char *info){
+void audio_eof_stream(const char *info) {
   player.sendCommand({PR_STOP, 0});
-  if(!player.resumeAfterUrl) return;
-  if (config.getMode()==PM_WEB){
+  if (!player.resumeAfterUrl) return;
+  if (config.getMode()==PM_WEB) {
     player.sendCommand({PR_PLAY, config.lastStation()});
-  }else{
-    player.setResumeFilePos( config.sdResumePos==0?0:config.sdResumePos-player.sd_min);
+  } else {
+    player.setResumeFilePos(config.sdResumePos==0?0:config.sdResumePos-player.sd_min);
     player.sendCommand({PR_PLAY, config.lastStation()});
   }
 }
 
-void audio_progress(uint32_t startpos, uint32_t endpos){
+void audio_progress(uint32_t startpos, uint32_t endpos) {
   player.sd_min = startpos;
   player.sd_max = endpos;
   netserver.requestOnChange(SDLEN, 0);

@@ -1,7 +1,7 @@
 #ifndef displaySSD1327_h
 #define displaySSD1327_h
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1327.h>
 #include "fonts/bootlogo62x40.h"

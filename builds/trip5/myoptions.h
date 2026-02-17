@@ -18,6 +18,7 @@
 #if defined(BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
   #undef FIRMWARE
   #define FIRMWARE "board_esp32.bin"
+  #define ARDUINO_ESP32_DEV
   //#undef UPDATEURL /* if an ESP does not have the memory to do online updates from https sources (this will disable it) */
 #elif defined(BOARD_ESP32_S3_N16R8)
   #undef FIRMWARE
@@ -49,7 +50,7 @@
   #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #undef FIRMWARE
-  #define FIRMWARE "esp32_s3_kasperaitis_esc3c28p.bin"
+  #define FIRMWARE "esp32_s3_kasperaitis_es3c28p.bin"
   #define ARDUINO_ESP32S3_DEV
 #endif
 
@@ -192,6 +193,18 @@
 #endif
 
 
+/* --- TOUCH --- */
+
+#if defined(ESP32_S3_KASPERAITIS_ES3C28P)
+  // For some ES3C28P boards the touch controller may be D-FT6336G family — set to TS_MODEL_FT6336 if required
+  #define TS_MODEL            TS_MODEL_FT6336
+  #define TS_SDA              16
+  #define TS_SCL              15
+  #define TS_INT              17
+  #define TS_RST              18
+#endif
+
+
 /* --- BUTTONS --- */
 
 #if defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS)
@@ -287,6 +300,7 @@
   #define SNTP_2          "0.ru.pool.ntp.org"
   #define WEATHER_LAT     "55.7512"       /* latitude */
   #define WEATHER_LON     "37.6184"       /* longitude */
+
 #elif defined(ESP32_S3_TRIP5_ST7735_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SH1106_PCM_REMOTE) ||\
       defined(ESP32_S3_TRIP5_SH1106_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SSD1306X32_PCM_1BUTTON) ||\
       defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS ) || defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON)
@@ -304,6 +318,7 @@
   #define WEATHER_LON     "-63.5724"      /* longitude */
   #define HIDE_WEATHER
   #define MQTT_ENABLE
+  #define PLAYLIST_DEFAULT_URL "https://github.com/trip5/webstations/releases/latest/download/trip5-radio-playlist.csv"
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define SMART_START true
   #define SHOW_AUDIO_INFO true
@@ -330,7 +345,23 @@
       defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define LOOP_TASK_STACK_SIZE 16  /* Compiler default is 8KB but seems safe on ESP32-S3 to increase to 16KB for audio decoding + concurrent tasks / 8KB is safe when using a VS1053 decoder */
   #define CONFIG_ASYNC_TCP_QUEUE_SIZE 64
+  #define SEARCHRESULTS_BUFFER 1024*32 // 32KB matches chunk sizes from radio-browser.info but likely only good for ESP32-S3
+  #define SEARCHRESULTS_YIELDINTERVAL 0 // With a large buffer, skipping is almost eliminated with 0
 #endif
+
+//#define ESPFILEUPDATER_DEBUG
+
+//#define RADIO_BROWSER_NO_SEND_CLICKS
+
+//#define CURATED_LISTS false
+
+
+/* --- URL SOURCE OVERRIDE --- */
+/* Only use this if you've decided to use your own Github as the source of files */
+/* ...or your firmware is not available from Trip5's Github... sorry! */
+/* Read the notes in the ./builds folder for more detailed information */
+
+//#define GITHUBURL "https://github.com/kasperaitis/ehradio" // used by the radio to update firmware and files...
 
 
 /* --- MORE, UNUSED, UNKNOWN, NOTES --- */
@@ -340,14 +371,9 @@
 
 //#define ROTATE_90 /* rotates 90 degrees? */
 
-//#define ESPFILEUPDATER_DEBUG
-
 /* Extras: unused in all */
 //#define L10N_LANGUAGE EN
 //#define IR_PIN 4
-
-/* Memory? */
-//#define XTASK_MEM_SIZE 4096 /* default 4096*/
 
 /* Does this get carried to SD Lib and allow Exfat? */
 //#define FF_FS_EXFAT 1

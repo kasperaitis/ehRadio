@@ -1,7 +1,7 @@
 #ifndef FT6336_H
 #define FT6336_H
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <Wire.h>
 
 #define FT6336_ADDR 0x38

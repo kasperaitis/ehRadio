@@ -1,22 +1,85 @@
 <img src="images/logo-color.svg" width="250">
 
+# ehRadio
+
+***This documentation is the same on the [Github Page](https://trip5.github.io/ehRadio/), which may be easier to read.***
+
 ## Under Heavy Construction
 
-I've recently decided to fork yoRadio from version 0.9.533.  Many changes are coming... many things remain untested.
+This is a fork of yoRadio from version 0.9.533.  Many changes are coming... many things remain untested.
 
-I will absolutely drop support for ESP8266 (mostly already deleted but some elements remain).  Support for low-end versions of ESP32s may get dropped inadvertantly.  I build with ESP32-S3s and various displays.  I can't test all of them.
+The objective of this fork is to create a more pleasant experience to use for all users, including those we builders might want to give to family members.
+
+I will absolutely drop support for ESP8266 (mostly already deleted but some elements remain).  Support for low-end versions of ESP32s may get dropped (PSRAM is already a requirement).  I build with ESP32-S3s and various displays.
+I can't test every piece of hardware this firmware is capable of suporting.
 
 I may drop support for certain components like Nextion.
 
-But for now, check yoRadio documentation.  The hardware implementations should still be 100% compatible.
+If you have issues it may help to also check yoRadio documentation.  The hardware implementations should still be 100% compatible.
 
-Documentation will be slowly improved.
+Documentation will be improved at some point...
 
 
 ## ehRadio Version history
 
-### 2026.02.04
+### 2026.02.17
+  - WebUI greatly improved for mobile and tablet devices
+    - automatic checking for new version availability
+    - .css files improved
+  - Broken playlist editor fixed (sorry!) with major improvements
+    - can now import 2 ways: replace or merge
+    - importing of json and csv files are done in-browser
+    - undo button can undo any changes
+    - re-order by dragging stations on mobile browsers
+  - Broken search fixed to work with `https` radio-browser servers (using names instead of IPs)
+    - fallback server added to defines:
+      - `#define RADIO_BROWSER_SERVER "all.api.radio-browser.info"` added
+    - as part of this, ESPFileUpdater was updated to handle chunked transfers
+    - sort options added (sort by clicks is the default instead of by name)
+  - Curated Lists
+    - uses Releases at [Trip5's webstations](https://github.com/trip5/webstations)
+    - lists can be viewed, individual stations previewed and added (just like search)
+    - lists can be directly imported to the playlist editor with replace or merge
+    - defines in `myoptions.h` can be used to edit sources:
+      - name that appears `#define CURATED_LISTS "Trip5's webstations"`
+      - the link used with the name `#define CURATED_LISTS_LINK "https://github.com/trip5/webstations"`
+      - the base url where playlists can be downloaded `#define CURATED_LISTS_URL "https://github.com/trip5/webstations/releases/latest/download/"`
+      - the json file that is an index of the playlists `#define CURATED_LISTS_INDEX "index.json"`
+      - or disabled with `#define CURATED_LISTS false`
+        - actually any define here will work as long as all others are not defined.
+  - A default playlist can be downloaded on first boot if there is no playlist detected
+    - must be added in `myoptions.h` - there is no default
+    - `#define PLAYLIST_DEFAULT_URL "https://github.com/trip5/webstations/releases/latest/download/trip5-radio-playlist.csv"`
+  - Smart start now always resumes last-played station (even if not playing when powered-off)
+  - Send clicks to Radio Browser API
+    - Delay before sending the click `#define RADIO_BROWSER_SEND_CLICK_DELAY 5000`
+    - opt out with `#define RADIO_BROWSER_NO_SEND_CLICKS` in `myoptions.h`
+      - semi-functional [Search by url doesn't find resolved_url](https://gitlab.com/radiobrowser/radiobrowser-api-rust/-/issues?sort=created_date&state=opened&search=url&first_page_size=20&show=eyJpaWQiOiIyNDkiLCJmdWxsX3BhdGgiOiJyYWRpb2Jyb3dzZXIvcmFkaW9icm93c2VyLWFwaS1ydXN0IiwiaWQiOjE4NDA4NzM5MH0%3D)
+  - Settings: Tools changed to Danger Zone - with some added warnings
+  - SPIFFS clean-up added (after update, unwanted files are purged)
+    - added because online flasher does not erase SPIFFS
+  - Minor improvements to code
+    - vars set to default value in `.h` file instead of in `.cpp`
+    - fixed `.h` framework headers to use `< >` instead of `" "`
+    - pretty code - most `#if` & `#ifdef` blocks now indented
+    - most functions now included no-op instead of being blocked by `#ifdef`
+  - Optimized declarations in src files
+  - More cleanup to various files and folders
+  - Added check for new versions (and will show if available in WebUI)
+  - Platformio.ini now includes pre- and post-steps to compress www files for SPIFFS
+  - more defaults added to `options.h` which can be changed in `myoptions.h`
+    - `#define CHECKUPDATEURL_TIME "1 day"`
+    - `#define TIMEZONES_JSON_CHECKTIME "4 weeks"`
+    - `#define RB_SERVERS_CHECKTIME "1 day"`
+    - `#define TIME_SYNC_INTERVAL 3600` (if RTC then `86400`)
+    - `#define WEATHER_SYNC_INTERVAL 1800` (maybe this should be a configurable setting?)
 
+### 2026.02.06
+  - Online Flasher introduced
+  - Workflows make forking and building your own firmware easier
+  - Improv mode added to firmware so if Wi-fi doesn't connect, use a WebUI to send Wi-fi information
+
+### 2026.02.04
   - Thanks to @kasperaitis for #37
     - adds support for ES8311 + FM8002E I2C decoder and FT6336 touchscreen on the [ES3C28](https://www.lcdwiki.com/2.8inch_ESP32-S3_Display) ([Aliexpress](https://www.aliexpress.com/item/1005010338765126.html))
     - localization fix: weather now uses `LANG::weatherFmt` and `LANG::wind` instead of hardcoded strings
@@ -257,7 +320,7 @@ Documentation will be slowly improved.
   - the online file that the current version can compare it's version against:
     - `#define CHECKUPDATEURL "https://raw.githubusercontent.com/trip5/yoradio/refs/heads/trip5/yoRadio/src/core/options.h"`
   - the above file must contain a line that is defined by this setting:
-    - `#define VERSIONSTRING "#define YOVERSION"` (followed by a version string)
+    - `#define VERSIONSTRING "#define RADIOVERSION"` (followed by a version string)
   - which `.bin` file to be used for online OTA updates can be specified as:
     - `#define FIRMWARE "firmware_sh1106_pcm_remote.bin"`
   - all of these can be automatically defined by `platformio.ini` amd `myoptions.h`

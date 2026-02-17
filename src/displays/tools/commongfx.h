@@ -1,6 +1,6 @@
 #ifndef common_gfx_h
 #define common_gfx_h
-#include "Arduino.h"
+#include <Arduino.h>
 #include "../widgets/widgetsconfig.h" // displayXXXDDDDconf.h
 #include "utf8Rus.h"
 
