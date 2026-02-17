@@ -1456,6 +1456,10 @@ void startAsyncServices(void* param) {
   #ifdef UPDATEURL
     config.updateFile(param, "/data/new_ver.txt", CHECKUPDATEURL, CHECKUPDATEURL_TIME, "New version number");
     checkNewVersionFile();
+    if (config.store.autoupdate && netserver.newVersionAvailable) {
+      Serial.println("[AutoUpdate] autoupdate enabled and new version detected - starting online update");
+      startOnlineUpdate();
+    }
   #endif
   fixPlaylistFileEnding();
   config.updateFile(param, "/www/timezones.json.gz", TIMEZONES_JSON_URL, TIMEZONES_JSON_CHECKTIME, "Timezones database file");
@@ -1540,6 +1544,7 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(bass, "bass"),
   CONFIG_KEY_ENTRY(sdshuffle, "sdshuffle"),
   CONFIG_KEY_ENTRY(smartstart, "smartstartx"),
+  CONFIG_KEY_ENTRY(autoupdate, "autoupdate"),
   CONFIG_KEY_ENTRY(audioinfo, "audioinfo"),
   CONFIG_KEY_ENTRY(vumeter, "vumeter"),
   CONFIG_KEY_ENTRY(wifiscanbest, "wifiscan"),

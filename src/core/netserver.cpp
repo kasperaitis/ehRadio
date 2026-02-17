@@ -376,13 +376,14 @@ void NetServer::processQueue() {
           return; 
           break;
         }
-      case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"wifiscan\":%d,\"softr\":%d,\"vut\":%d,\"mdns\":\"%s\"}", 
+      case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"wifiscan\":%d,\"softr\":%d,\"vut\":%d,\"autoupdate\":%d,\"mdns\":\"%s\"}", 
                                   config.store.smartstart,
                                   config.store.audioinfo,
                                   config.store.vumeter,
                                   config.store.wifiscanbest,
                                   config.store.softapdelay,
                                   config.vuThreshold,
+                                  config.store.autoupdate,
                                   config.store.mdnsname);
                                   break;
       case GETSCREEN:     sprintf (wsbuf, "{\"flip\":%d,\"inv\":%d,\"nump\":%d,\"tsf\":%d,\"tsd\":%d,\"dspon\":%d,\"br\":%d,\"con\":%d,\"scre\":%d,\"scrt\":%d,\"scrb\":%d,\"scrpe\":%d,\"scrpt\":%d,\"scrpb\":%d,\"volumepage\":%d,\"clock12\":%d}",

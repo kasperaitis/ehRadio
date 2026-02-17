@@ -87,6 +87,7 @@ struct config_t // specify defaults here (and macros in options.h) (defaults are
   int8_t    bass = EQ_BASS;
   bool      sdshuffle = SD_SHUFFLE;
   bool      smartstart = SMART_START;
+  bool      autoupdate = false;
   bool      audioinfo = SHOW_AUDIO_INFO;
   bool      vumeter = SHOW_VU_METER;
   bool      wifiscanbest = WIFI_SCAN_BEST_RSSI;
