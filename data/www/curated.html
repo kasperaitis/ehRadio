@@ -7,10 +7,10 @@
   <meta name="theme-color" content="#e3d25f">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABABAMAAABYR2ztAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAB5QTFRFyAwCAAAAyAwCyAwCyAwCyAwCyAwCyAwCyAwCyAwCS0TDwgAAAAp0Uk5T/wAM4Cq8mkZ/ZYZ9vz0AAAIWSURBVHichZXBb9MwFMY/YZLC0W5puluddWp2i9YWbbdFSidxC9uoOLYDUe22DoTgloGQdmTAhf8W20ldk9nOu9S1f+p73/eeXdBGJI3vaALfMz/A0js/EOHIDwzQ8QMvEPqBUxDuBZbAxgf0UmDlA/oAzn3AjQA6PqAUQOgC9kT5hQACseY2oH/JGWRwGk1twIC8HVXA6PeVDYgAooD7wvDCAHrYRWYDWGEF+u/1+kafPzdk9sj1VtNSAzuvYojtk/pLqQHtVTSDaDDqLKcaeFpXdZaGECMCslZZ9jXwugLOUkwhhkyEmtShBlRD2WexeqiBDvtjAk8kMJd94VAjAHIoWtQ1U8QsVXprABe4lNXUsaGHs4NKL+hevUk2GiBcuFpUckATLX6ugfijdgyGwalevdkZAkO9JaSKgQ9ABjkn7ghFCpZ6gE4bcCSBwgOs5Mj9bAOG7nPxFMAcxUfxjBq9sEUgf8Hrw7QlhZJJI7cRQaZu1oETOK+unrOKY14BTi+/bS9vcmGvgOvb3bPVObsyrr8tyS3fAqP8i+W8fpLB8q+OGl9+WEgVS4eCqozrWyS+gRIzB/rKN1HBL1lk4jqeLKpesNJ+TuLaarpPJhNLKVNt1PhTnsupIJNFefxDoeG7WboyH1JWBn/Xecy7d9K3RTpl2ZibAI0r47oP6mO81g8p/T+Gm8bGo7/FViBrAea8sfEPiURzVU+EBKkAAAAASUVORK5CYII=">
+  <link rel="icon" type="image/x-icon" href="icon.png">
   <link rel="stylesheet" title="base" href="theme.css" type="text/css">
   <link rel="stylesheet" title="base" href="style.css" type="text/css">
-  <title>ehRadio - Search</title>
+  <title>ehRadio - Curated Lists</title>
 </head>
 
 <body>
@@ -19,117 +19,50 @@
       <h2 class="searchtitle1">Curated Lists</h2>
       <h2 class="searchtitle2"><a href="curated.html">Search</a></h2>
     </div>
-    <div class="quicksearches">
-      <table class="quicksearchtable">
-        <tr>
-          <td><button class="quicksearch" data-genre="60s">60s</button></td>
-          <td><button class="quicksearch" data-genre="70s">70s</button></td>
-          <td><button class="quicksearch" data-genre="80s">80s</button></td>
-          <td><button class="quicksearch" data-genre="90s">90s</button></td>
-          <td><button class="quicksearch" data-genre="2000s">2000s</button></td>
-          <td><button class="quicksearch" data-genre="2010s">2010s</button></td>
-        </tr>
-        <tr>
-          <td><button class="quicksearch" data-genre="pop">pop</button></td>
-          <td><button class="quicksearch" data-genre="top 40">top 40</button></td>
-          <td><button class="quicksearch" data-genre="pop rock">pop rock</button></td>
-          <td><button class="quicksearch" data-genre="oldies">oldies</button></td>
-          <td><button class="quicksearch" data-genre="classic hits">classic hits</button></td>
-          <td><button class="quicksearch" data-genre="rock">rock</button></td>
-        </tr>
-        <tr>
-          <td><button class="quicksearch" data-genre="classic rock">classic rock</button></td>
-          <td><button class="quicksearch" data-genre="country">country</button></td>
-          <td><button class="quicksearch" data-genre="gospel">gospel</button></td>
-          <td><button class="quicksearch" data-genre="folk">folk</button></td>
-          <td><button class="quicksearch" data-genre="indie">indie</button></td>
-          <td><button class="quicksearch" data-genre="jazz">jazz</button></td>
-        </tr>
-        <tr>
-          <td><button class="quicksearch" data-genre="hiphop">hiphop</button></td>
-          <td><button class="quicksearch" data-genre="classical">classical</button></td>
-          <td><button class="quicksearch" data-genre="chillout">chillout</button></td>
-          <td><button class="quicksearch" data-genre="ambient">ambient</button></td>
-          <td><button class="quicksearch" data-genre="electronic">electronic</button></td>
-          <td><button class="quicksearch" data-genre="metal">metal</button></td>
-        </tr>
-      </table>
-    </div> <!-- end of quick searches -->
-    <div id="searches">
-      <div class="sort-row">
-        Sort:
-        <label for="order_name"><input type="radio" id="order_name" name="sortorder" value="name" />Name</label>
-        <label for="order_clickcount"><input type="radio" id="order_clickcount" name="sortorder" value="clickcount" checked />Clicks</label>
-        <label for="order_votes"><input type="radio" id="order_votes" name="sortorder" value="votes" />Votes</label>
-        <label for="order_country"><input type="radio" id="order_country" name="sortorder" value="country" />Country</label>
-        <label for="order_language"><input type="radio" id="order_language" name="sortorder" value="language" />Language</label>
-      </div>
-      <div id="searchRow1" class="search-row">
-        <button class="searchbutton search plus" id="addSearchRowBtn" title="Add search criteria">
-          <!--https://www.svgviewer.dev/s/473138/minus-->
-          <svg viewBox="0 0 24 24" class="stroke">
-            <path d="M5 12h7m7 0h-7m0 0V5m0 7v7" />
-          </svg>
-        </button>
-        <select id="searchType1" class="searchtextinput select">
-          <option value="name">Name</option>
-          <option value="tag">Tag / Genre</option>
-          <option value="country">Country</option>
-          <option value="countrycode">Country Code</option>
-          <option value="language">Language</option>
-        </select>
-        <input type="text" class="searchtextinput" id="searchInput1" placeholder="Enter search term">
-        <button class="searchbutton search" id="searchBtn" disabled>Search</button>
-      </div>
-      <div id="searchRow2" class="search-row hidden">
-        <button class="searchbutton search minus" id="removeSearchRowBtn2" data-row="2" title="Remove search criteria">
-          <svg viewBox="0 0 24 24" class="stroke">
-            <path d="M5 12h14" />
-          </svg>
-        </button>
-        <select id="searchType2" class="searchtextinput select">
-          <option value="name">Name</option>
-          <option value="tag">Tag / Genre</option>
-          <option value="country">Country</option>
-          <option value="countrycode">Country Code</option>
-          <option value="language">Language</option>
-        </select>
-        <input type="text" class="searchtextinput" id="searchInput2" placeholder="Enter search term">
-      </div>
-      <div id="searchRow3" class="search-row hidden">
-        <button class="searchbutton search minus" id="removeSearchRowBtn3" data-row="3" title="Remove search criteria">
-          <svg viewBox="0 0 24 24" class="stroke">
-            <path d="M5 12h14" />
-          </svg>
-        </button>
-        <select id="searchType3" class="searchtextinput select">
-          <option value="name">Name</option>
-          <option value="tag">Tag / Genre</option>
-          <option value="country">Country</option>
-          <option value="countrycode">Country Code</option>
-          <option value="language">Language</option>
-        </select>
-        <input type="text" class="searchtextinput" id="searchInput3" placeholder="Enter search term">
-      </div>
-    </div> <!-- end of searches -->
-    <div class="searchwrap"><!--scrollable search results table -->
-      <div class="scrollable">
-        <table class="stations" id="stationsTable">
-          <!-- Table rows will be dynamically added here -->
-        </table>
-      </div>
-    </div><!--searchwrap-->
-    <!-- Page navigation -->
-    <div id="pageNav" class="page-navigation">
-      <button class="searchbutton hidden" id="prevSearchPageBtn">&larr;</button>
-      <span class="hidden" id="pageDisplay">Page 1</span>
-      <button class="searchbutton hidden" id="nextSearchPageBtn">&rarr;</button>
+    
+    <div id="loadSection">
+      <button class="searchbutton" id="loadListsBtn">Load Lists</button>
+      <div id="loadStatus" class="hidden"></div>
     </div>
-    <div class="searchbutton" data-name="searchdone" id="searchdone">done</div>
-    <div id="copy">Curated lists from <a target="_blank" href="https://github.com/trip5/webstations">webstations</a> &mdash; submit yours, too!</div>
+
+    <!-- Index list view (shown after Load Lists is clicked) -->
+    <div id="indexView" class="hidden">
+      <h3>Available Playlists:</h3>
+      <div class="searchwrap">
+        <div class="scrollable">
+          <table class="stations" id="indexTable">
+            <!-- Index rows will be dynamically added here -->
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Playlist view (shown after a playlist is selected) -->
+    <div id="playlistView" class="hidden">
+      <h3 id="playlistTitle"></h3>
+      <div id="playlistDescription"></div>
+      <div class="searchwrap">
+        <div class="scrollable">
+          <table class="stations" id="playlistTable">
+            <!-- Playlist station rows will be dynamically added here -->
+          </table>
+        </div>
+      </div>
+      <div id="importSection" class="import-buttons">
+        <button class="searchbutton" id="replaceBtn">Replace Playlist</button>
+        <button class="searchbutton" id="mergeBtn">Merge with Playlist</button>
+        <button class="searchbutton" id="backToIndexBtn">Back to Lists</button>
+      </div>
+    </div>
+
+    <div class="searchbutton" id="curateddone">done</div>
+    <div id="copy">Curated by <span id="curatedBy"></span></div>
   </div>
 </body>
 
+<script type="text/javascript" src="variables.js"></script>
 <script type="text/javascript" src="curated_variables.js"></script>
+<script type="text/javascript" src="playstation.js"></script>
+<script type="text/javascript" src="curated.js"></script>
 
 </html>

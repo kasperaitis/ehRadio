@@ -75,7 +75,7 @@ def compress_and_hide_originals(source, target, env):
     print("="*70)
     
     # Second pass: move originals outside data directory
-    print("\nMoving original files out of data/www (only .gz will be in SPIFFS)...")
+    print("\nMoving original files out of data/www (only .gz and files excluded from compression will be in SPIFFS)...")
     hidden_count = 0
     for pattern in patterns:
         for file_path in sorted(data_dir.glob(pattern)):

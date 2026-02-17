@@ -12,6 +12,17 @@ def restore_and_cleanup(source, target, env):
     print("="*70)
     
     data_dir = Path("data/www")
+
+    # Delete all .gz files from data/www
+    print("\nDeleting all .gz files from data/www...")
+    deleted_count = 0
+    for gz_file in sorted(data_dir.glob("*.gz")):
+        gz_file.unlink()
+        deleted_count += 1
+        print(f"  ✗ {gz_file.name} deleted")
+    
+    print("-"*70)
+    print(f"Deleted: {deleted_count} .gz files")
     
     # Restore original files from backup
     restored_count = 0
@@ -32,17 +43,9 @@ def restore_and_cleanup(source, target, env):
     else:
         print(f"No backup directory found at {TEMP_BACKUP_DIR}")
     
-    # Delete all .gz files from data/www
-    print("\nDeleting all .gz files from data/www...")
-    deleted_count = 0
-    for gz_file in sorted(data_dir.glob("*.gz")):
-        gz_file.unlink()
-        deleted_count += 1
-        print(f"  ✗ {gz_file.name} deleted")
-    
     print("-"*70)
-    print(f"Restored: {restored_count} files | Deleted: {deleted_count} .gz files")
-    print(f"data/www now contains only original source files for editing")
+    print(f"Restored: {restored_count} files")
+    print(f"data/www now contains only original source files")
     print("="*70 + "\n")
 
 # Register the post-build action

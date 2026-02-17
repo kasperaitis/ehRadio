@@ -354,9 +354,52 @@ function selectAll(checkbox){
     }
   }
 }
+function clearImportReviewFlags() {
+  if (sessionStorage.getItem('pl_import_review') === 'true') {
+    sessionStorage.removeItem('pl_import_review');
+    sessionStorage.removeItem('pl_import_mode');
+    if (getId('plImportWarning')) getId('plImportWarning').classList.add('hidden');
+  }
+}
+
+function setImportReviewFlags(mode) {
+  sessionStorage.setItem('pl_import_mode', mode);
+  sessionStorage.setItem('pl_import_review', 'true');
+  if (getId('plImportWarning')) getId('plImportWarning').classList.remove('hidden');
+}
+
 function undoPlaylistChanges(){
+  clearImportReviewFlags();
   generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
   uncheckSelectAll();
+}
+
+function loadCuratedForReview(mode) {
+  console.log('[Curated] Loading pl_import.json for review, mode:', mode);
+  
+  // Open the playlist editor
+  if (getId('pleditorwrap').classList.contains('hidden')) {
+    getId('toggleplaylist').click();
+  }
+  
+  // For merge mode, load current playlist first
+  if (mode === 'merge') {
+    generatePlaylist(`http://${hostname}/data/playlist.csv?` + Date.now());
+    // Wait for current playlist to load, then import
+    setTimeout(() => {
+      doPlImportCurated('pl_import.json', mode);
+      // Show warning banner
+      setImportReviewFlags(mode);
+    }, 300);
+  } else {
+    // Replace mode: wait for editor to open and load current playlist first
+    // then clear and import (prevents race condition)
+    setTimeout(() => {
+      doPlImportCurated('pl_import.json', mode);
+      // Show warning banner
+      setImportReviewFlags(mode);
+    }, 400);
+  }
 }
 function plRemove(){
   let items=getId('pleditorcontent').getElementsByTagName('li');
@@ -381,6 +424,7 @@ function plRemove(){
   uncheckSelectAll();
 }
 function submitPlaylist(){
+  clearImportReviewFlags();
   var items=getId("pleditorcontent").getElementsByTagName("li");
   var output="";
   for (var i = 0; i <= items.length - 1; i++) {
@@ -414,6 +458,38 @@ function doPlUpload(finput) {
   xhr.send(formData);
   finput.value = '';
 }
+
+function doPlImportCurated(localPath, mode) {
+  // Load local file from ESP32 filesystem (for curated playlists)
+  const importMode = mode || 'replace';
+  console.log('[doPlImportCurated] Loading local file:', localPath, 'mode:', importMode);
+  fetch(localPath + '?' + Date.now())
+    .then(response => {
+      if (!response.ok) throw new Error('Failed to load ' + localPath);
+      return response.text();
+    })
+    .then(content => {
+      const isJSON = localPath.endsWith('.json');
+      if (importMode === 'replace') {
+        // Clear existing playlist
+        getId('pleditorcontent').innerHTML = '';
+      }
+      if (isJSON) {
+        parseAndAddJSON(content, addStationToEditor, importMode);
+      } else {
+        parseAndAddCSV(content, addStationToEditor, importMode);
+      }
+      uncheckSelectAll();
+    })
+    .catch(error => {
+      console.error('[doPlImportCurated] Error loading file:', error);
+      // Silently clear flags if file doesn't exist (e.g., after fresh flash)
+      sessionStorage.removeItem('pl_import_review');
+      sessionStorage.removeItem('pl_import_mode');
+      if (getId('plImportWarning')) getId('plImportWarning').classList.add('hidden');
+    });
+}
+
 function doPlImport(finput) {
   if (!finput.files || !finput.files[0]) return;
   const file = finput.files[0];
@@ -428,7 +504,6 @@ function doPlImport(finput) {
       // Clear existing playlist
       getId('pleditorcontent').innerHTML = '';
     }
-    
     if (isJSON) {
       parseAndAddJSON(content, addStationToEditor, mode);
     } else {
@@ -438,8 +513,8 @@ function doPlImport(finput) {
     finput.value = '';
     delete window.importMode;
     uncheckSelectAll();
+    setImportReviewFlags(mode);
   };
-  
   reader.readAsText(file);
 }
 
@@ -488,13 +563,10 @@ function parseAndAddJSON(content, targetCallback, mode = 'replace') {
           }
         }
       }
-      
       // Extract and clamp ovol
       const ovol = Math.max(-30, Math.min(30, parseInt(item.ovol || 0)));
-      
       // If no name, generate from URL
       const finalName = name || (url ? urlToName(url) : '');
-      
       // Check for duplicates
       if (url) {
         if (existingURLs.has(url)) {
@@ -506,7 +578,6 @@ function parseAndAddJSON(content, targetCallback, mode = 'replace') {
         }
       }
     });
-    
     if (mode === 'replace') {
       alert(`Import complete: ${addedCount} stations loaded.`);
     } else if (duplicateCount > 0) {
@@ -537,7 +608,6 @@ function parseAndAddCSV(content, targetCallback, mode = 'replace') {
   lines.forEach(line => {
     line = line.trim();
     if (!line) return;
-    
     let name = '', url = '', ovol = 0;
     
     // Try tab-delimited first
@@ -756,6 +826,8 @@ function toggleTarget(el, id){
     }
     // If closing editor, cancel any pending timeout and close immediately
     if(pleditorTimeout) { clearTimeout(pleditorTimeout); pleditorTimeout = null; }
+    // Clear import review flags when closing editor
+    clearImportReviewFlags();
   }
   if(target){
     if(id=='pleditorwrap' && modesd) {
@@ -857,6 +929,12 @@ function continueLoading(mode){
         if (newVerAvailable) getId('update_available').classList.remove('hidden');
         document.querySelectorAll('input[type="range"]').forEach(sl => { fillSlider(sl); });
         websocket.send('getindex=1');
+        // Check if we need to load curated playlist for review
+        if (sessionStorage.getItem('pl_import_review') === 'true') {
+          const mode = sessionStorage.getItem('pl_import_mode') || 'replace';
+          console.log('[Curated] Loading playlist for review, mode:', mode);
+          setTimeout(() => loadCuratedForReview(mode), 200);
+        }
         //generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
       });
     }

@@ -63,6 +63,8 @@
 String rb_servers[20];
 // For the search task
 TaskHandle_t g_searchTaskHandle = NULL;
+// For the curated playlists task
+TaskHandle_t g_curatedTaskHandle = NULL;
 #define FS_REQUIRED_FREE_SPACE 150 // in KB - must be minimum x1.5 of the limit_per_page in search.js (100)
 
 //#define CORS_DEBUG //Enable CORS policy: 'Access-Control-Allow-Origin' (for testing)
@@ -460,6 +462,9 @@ void NetServer::processQueue() {
       case GETPLAYERMODE: sprintf (wsbuf, "{\"playermode\": \"%s\"}", config.getMode()==PM_SDCARD?"modesd":"modeweb"); break;
       case SEARCH_DONE:   sprintf (wsbuf, "{\"search_done\":true}"); break;
       case SEARCH_FAILED: sprintf (wsbuf, "{\"search_failed\":true}"); break;
+      case CURATED_INDEX_DONE: sprintf (wsbuf, "{\"curated_index_done\":true}"); break;
+      case CURATED_PLAYLIST_DONE: sprintf (wsbuf, "{\"curated_playlist_done\":true}"); break;
+      case CURATED_FAILED: sprintf (wsbuf, "{\"curated_failed\":true}"); break;
       #ifdef USE_SD
         case CHANGEMODE:    config.changeMode(config.newConfigMode); return; break;
       #endif
@@ -952,6 +957,93 @@ void vTaskSearchRadioBrowser(void *pvParameters) {
   delete[] search_str;
   search_str = nullptr;
   g_searchTaskHandle = NULL;
+  vTaskDelete(NULL);
+}
+
+void vTaskFetchCuratedIndex(void *pvParameters) {
+  Serial.println("[Curated] Starting curated index fetch");
+  SPIFFS.remove("/www/curated.json");
+  
+  // Check SPIFFS free space
+  size_t freeSpace = SPIFFS.totalBytes() - SPIFFS.usedBytes();
+  if (freeSpace < (FS_REQUIRED_FREE_SPACE * 1024)) {
+    Serial.printf("[Curated] [Error] Not enough free SPIFFS space: %u bytes. Aborting.\n", freeSpace);
+    netserver.requestOnChange(CURATED_FAILED, 0);
+    g_curatedTaskHandle = NULL;
+    vTaskDelete(NULL);
+    return;
+  }
+  
+  ESPFileUpdater curatedFetch(SPIFFS);
+  curatedFetch.setUserAgent(ESPFILEUPDATER_USERAGENT);
+  curatedFetch.setBuffer(SEARCHRESULTS_BUFFER);
+  curatedFetch.setYieldInterval(SEARCHRESULTS_YIELDINTERVAL);
+  const char* localPath = "/www/curated.json";
+  
+  #ifdef CURATED_LISTS_URL
+    String url = String(CURATED_LISTS_URL) + String(CURATED_LISTS_INDEX);
+    Serial.printf("[Curated] Attempting to download index from: %s\n", url.c_str());
+    
+    auto status = curatedFetch.checkAndUpdate(localPath, url, ESPFILEUPDATER_VERBOSE);
+    if (status == ESPFileUpdater::UPDATED) {
+      Serial.println("[Curated] Successfully downloaded curated index");
+      netserver.requestOnChange(CURATED_INDEX_DONE, 0);
+    } else {
+      Serial.println("[Curated] [Error] Failed to download curated index");
+      SPIFFS.remove(localPath);
+      netserver.requestOnChange(CURATED_FAILED, 0);
+    }
+  #else
+    Serial.println("[Curated] [Error] CURATED_LISTS_URL not defined");
+    netserver.requestOnChange(CURATED_FAILED, 0);
+  #endif
+  
+  g_curatedTaskHandle = NULL;
+  vTaskDelete(NULL);
+}
+
+void vTaskFetchCuratedPlaylist(void *pvParameters) {
+  char* filename = (char*)pvParameters;
+  Serial.printf("[Curated] Starting playlist fetch: %s\n", filename);
+  SPIFFS.remove("/www/pl_import.json");
+  
+  // Check SPIFFS free space
+  size_t freeSpace = SPIFFS.totalBytes() - SPIFFS.usedBytes();
+  if (freeSpace < (FS_REQUIRED_FREE_SPACE * 1024)) {
+    Serial.printf("[Curated] [Error] Not enough free SPIFFS space: %u bytes. Aborting.\n", freeSpace);
+    netserver.requestOnChange(CURATED_FAILED, 0);
+    delete[] filename;
+    g_curatedTaskHandle = NULL;
+    vTaskDelete(NULL);
+    return;
+  }
+  
+  ESPFileUpdater playlistFetch(SPIFFS);
+  playlistFetch.setUserAgent(ESPFILEUPDATER_USERAGENT);
+  playlistFetch.setBuffer(SEARCHRESULTS_BUFFER);
+  playlistFetch.setYieldInterval(SEARCHRESULTS_YIELDINTERVAL);
+  const char* localPath = "/www/pl_import.json";
+  
+  #ifdef CURATED_LISTS_URL
+    String url = String(CURATED_LISTS_URL) + String(filename);
+    Serial.printf("[Curated] Attempting to download playlist from: %s\n", url.c_str());
+    
+    auto status = playlistFetch.checkAndUpdate(localPath, url, ESPFILEUPDATER_VERBOSE);
+    if (status == ESPFileUpdater::UPDATED) {
+      Serial.printf("[Curated] Successfully downloaded playlist: %s\n", filename);
+      netserver.requestOnChange(CURATED_PLAYLIST_DONE, 0);
+    } else {
+      Serial.printf("[Curated] [Error] Failed to download playlist: %s\n", filename);
+      SPIFFS.remove(localPath);
+      netserver.requestOnChange(CURATED_FAILED, 0);
+    }
+  #else
+    Serial.println("[Curated] [Error] CURATED_LISTS_URL not defined");
+    netserver.requestOnChange(CURATED_FAILED, 0);
+  #endif
+  
+  delete[] filename;
+  g_curatedTaskHandle = NULL;
   vTaskDelete(NULL);
 }
 
