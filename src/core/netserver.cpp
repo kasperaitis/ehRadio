@@ -1358,7 +1358,11 @@ void handleNotFound(AsyncWebServerRequest * request) {
       (netserver.newVersionAvailable) ? "true" : "false",
       escapedGithubUrl
    );
-    request->send(200, "application/javascript", varjsbuf);
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/javascript", varjsbuf);
+    response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response->addHeader("Pragma", "no-cache");
+    response->addHeader("Expires", "0");
+    request->send(response);
     return;
   }
   if (request->url() == "/curated_variables.js") {
@@ -1382,7 +1386,11 @@ void handleNotFound(AsyncWebServerRequest * request) {
         "var curatedLink=\"\";\n"
       );
     #endif
-    request->send(200, "application/javascript", varjsbuf);
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/javascript", varjsbuf);
+    response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response->addHeader("Pragma", "no-cache");
+    response->addHeader("Expires", "0");
+    request->send(response);
     return;
   }
   if (strcmp(request->url().c_str(), "/settings.html") == 0 || strcmp(request->url().c_str(), "/update.html") == 0 || strcmp(request->url().c_str(), "/ir.html") == 0) {

@@ -8,8 +8,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="icon" type="image/x-icon" href="icon.png">
-  <link rel="stylesheet" title="base" href="theme.css" type="text/css">
-  <link rel="stylesheet" title="base" href="style.css" type="text/css">
+  <link rel="stylesheet" id="themeCSS" href="theme.css" type="text/css">
+  <link rel="stylesheet" id="styleCSS" href="style.css" type="text/css">
   <title>ehRadio - Search</title>
 </head>
 
@@ -131,9 +131,14 @@
   </div>
 </body>
 
-<script type="text/javascript" src="variables.js"></script>
-<script type="text/javascript" src="curated_variables.js"></script>
-<script type="text/javascript" src="playstation.js"></script>
-<script type="text/javascript" src="search.js"></script>
+<script src="variables.js"></script>
+<script src="curated_variables.js"></script>
+<script>
+  var v = '?v=' + radioVersion;
+  document.getElementById('themeCSS').href = 'theme.css' + v;
+  document.getElementById('styleCSS').href = 'style.css' + v;
+  document.write('<script src="playstation.js' + v + '"><\/script>');
+  document.write('<script src="search.js' + v + '"><\/script>');
+</script>
 
 </html>

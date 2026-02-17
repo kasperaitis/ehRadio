@@ -969,7 +969,7 @@ function continueLoading(mode){
       fetch(`player.html?${radioVersion}`).then(response => response.text()).then(player => { 
         getId('content').classList.add('idx');
         getId('content').innerHTML = player; 
-        fetch('logo.svg').then(response => response.text()).then(svg => { 
+        fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => { 
           getId('logo').innerHTML = svg;
           hideSpinner();
         });
@@ -991,7 +991,7 @@ function continueLoading(mode){
       fetch(`options.html?${radioVersion}`).then(response => response.text()).then(options => {
         getId('content').innerHTML = options;
         loadJS(`options.js?${radioVersion}`, () => {
-          fetch('logo.svg').then(response => response.text()).then(svg => { 
+          fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => { 
             getId('logo').innerHTML = svg;
             hideSpinner();
             if (onlineUpdCapable) getId('webboard').classList.add('hidden');
@@ -1021,7 +1021,7 @@ function continueLoading(mode){
         getId('content').classList.add('upd');
         getId('content').innerHTML = updform;
         loadJS(`updform.js?${radioVersion}`, () => {
-          fetch('logo.svg').then(response => response.text()).then(svg => {
+          fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => {
             getId('logo').innerHTML = svg;
             hideSpinner();
             initOnlineUpdateChecker();
@@ -1035,7 +1035,7 @@ function continueLoading(mode){
       fetch(`irrecord.html?${radioVersion}`).then(response => response.text()).then(ircontent => {
         getId('content').innerHTML = ircontent;
         loadJS(`ir.js?${radioVersion}`, () => {
-          fetch('logo.svg').then(response => response.text()).then(svg => {
+          fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => {
             getId('logo').innerHTML = svg;
             initControls();
             hideSpinner();
@@ -1048,7 +1048,7 @@ function continueLoading(mode){
     fetch(`options.html?${radioVersion}`).then(response => response.text()).then(options => {
       getId('content').innerHTML = options;
       loadJS(`options.js?${radioVersion}`, () => {
-        fetch('logo.svg').then(response => response.text()).then(svg => {
+        fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => {
           getId('logo').innerHTML = svg;
           hideSpinner();
         });

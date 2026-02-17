@@ -19,10 +19,11 @@ dst_font = os.path.join(".pio", "libdeps", env_name, "Adafruit GFX Library", "gl
 
 print("\n" + "="*70)
 print("FONT: Replacing font")
-print("="*70 + "\n")
 
 if os.path.exists(src_font) and os.path.exists(dst_font):
     shutil.copyfile(src_font, dst_font)
     print(f"Custom glcdfont_EN.c copied to Adafruit GFX Library for {env_name}.")
 else:
     print(f"Font file or destination not found for {env_name}. Skipping replacement.")
+
+print("="*70 + "\n")

@@ -27,7 +27,7 @@
 static const char* wwwFiles[] = {"curated.js", "dragpl.js", "ir.js", "options.js", "playstation.js", "script.js", "search.js", "updform.js",
                                  "logo.svg", "icon.png", "rb_srvrs.json", "timezones.json", "style.css", "theme.css",
                                  "curated.html", "irrecord.html", "options.html", "search.html", "updform.html",
-                                 "player.html"}; // keep main page at end
+                                 "player.html"}; // keep main page at end (deleted when upgraded, so user sees emptyfs_html)
 static const size_t wwwFilesCount = sizeof(wwwFiles) / sizeof(wwwFiles[0]);
 
 // List of optional data files
