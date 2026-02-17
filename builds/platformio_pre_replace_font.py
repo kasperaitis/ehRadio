@@ -6,9 +6,14 @@ Import("env")
 import shutil
 import os
 
+# Skip font replacement when building filesystem
+build_targets = [str(t) for t in BUILD_TARGETS]
+if "buildfs" in build_targets or "uploadfs" in build_targets:
+    Return()
+
 env_name = env["PIOENV"]
 
-src_font = os.path.join("glcdfont_fix", "glcdfont_EN.c")
+src_font = os.path.join("builds", "glcdfont_EN.c")
 dst_font = os.path.join(".pio", "libdeps", env_name, "Adafruit GFX Library", "glcdfont.c")
 
 

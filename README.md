@@ -22,22 +22,36 @@ Documentation will be improved at some point...
 
 ## ehRadio Version history
 
-### 2026.02.15...?
+### 2026.02.17
   - WebUI greatly improved for mobile and tablet devices
     - automatic checking for new version availability
     - .css files improved
   - Broken playlist editor fixed (sorry!) with major improvements
     - can now import 2 ways: replace or merge
-    - importing of json and csv is done in-browser
+    - importing of json and csv files are done in-browser
     - undo button can undo any changes
     - re-order by dragging stations on mobile browsers
-  - Smart start now always resumes last-played station (even if not playing when powered-off)
-    - minor side-effects
   - Broken search fixed to work with `https` radio-browser servers (using names instead of IPs)
     - fallback server added to defines:
       - `#define RADIO_BROWSER_SERVER "all.api.radio-browser.info"` added
     - as part of this, ESPFileUpdater was updated to handle chunked transfers
     - sort options added (sort by clicks is the default instead of by name)
+  - Curated Lists
+    - uses Releases at [Trip5's webstations](https://github.com/trip5/webstations)
+    - lists can be viewed, individual stations previewed and added (just like search)
+    - lists can be directly imported to the playlist editor with replace or merge
+    - defines in `myoptions.h` can be used to edit sources:
+      - name that appears `#define CURATED_LISTS "Trip5's webstations"`
+      - the link used with the name `#define CURATED_LISTS_LINK "https://github.com/trip5/webstations"`
+      - the base url where playlists can be downloaded `#define CURATED_LISTS_URL "https://github.com/trip5/webstations/releases/latest/download/"`
+      - the json file that is an index of the playlists `#define CURATED_LISTS_INDEX "index.json"`
+      - or disabled with `#define CURATED_LISTS false`
+        - actually any define here will work as long as all others are not defined.
+  - A default playlist can be downloaded on first boot if there is no playlist detected
+    - must be added in `myoptions.h` - there is no default
+    - `#define PLAYLIST_DEFAULT_URL "https://github.com/trip5/webstations/releases/latest/download/trip5-radio-playlist.csv"`
+  - Smart start now always resumes last-played station (even if not playing when powered-off)
+    - minor side-effects
   - Send clicks to Radio Browser API
     - Delay before sending the click `#define RADIO_BROWSER_SEND_CLICK_DELAY 5000`
     - opt out with `#define RADIO_BROWSER_NO_SEND_CLICKS` in `myoptions.h`
@@ -45,8 +59,6 @@ Documentation will be improved at some point...
   - Settings: Tools changed to Danger Zone - with some added warnings
   - SPIFFS clean-up added (after update, unwanted files are purged)
     - added because online flasher does not erase SPIFFS
-  - Minor improvements to CSV importers (can handle files that exceed the usual fields)
-    - server side importer will be used to get playlists online *- not yet included*
   - Minor improvements to code
     - vars set to default value in `.h` file instead of in `.cpp`
     - fixed `.h` framework headers to use `< >` instead of `" "`
