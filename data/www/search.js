@@ -509,6 +509,8 @@ function populateSearchTable(data, afterSearch = false) {
   table.innerHTML = rows;
 }
 
+// SVG icons from https://www.svgviewer.dev/s/474949/play & https://www.svgviewer.dev/s/495943/plus
+
 function quickSearch(genre) {
   document.getElementById('searchType1').value = 'tag';
   document.getElementById('searchInput1').value = genre;

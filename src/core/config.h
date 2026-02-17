@@ -227,9 +227,6 @@ class Config {
     char * stationByNum(uint16_t num);
     void escapeQuotes(const char* input, char* output, size_t maxLen);
     bool parseCSV(const char* line, char* name, char* url, int &ovol);
-    bool parseCSVimport(const char* line, char* name, char* url, int &ovol);
-    bool parseJSON(const char* line, char* name, char* url, int &ovol);
-    void urlToName(const char* url, char* name, size_t maxLen);
     bool parseWsCommand(const char* line, char* cmd, char* val, uint8_t cSize);
     bool parseSsid(const char* line, char* ssid, char* pass);
     bool saveWifi(const char* post);

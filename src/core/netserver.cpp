@@ -491,7 +491,6 @@ void NetServer::loop() {
   }
   websocket.cleanupClients();
   switch (importRequest) {
-    case IMPL:    importPlaylist();  importRequest = IMDONE; break;
     case IMWIFI:  config.importWifi(); importRequest = IMDONE; break;
     default:      break;
   }
@@ -581,106 +580,6 @@ int NetServer::_readPlaylistLine(File &file, char * line, size_t size) {
     if (line[bytesRead-1]=='\r') line[bytesRead-1]=0;
   }
   return bytesRead;
-}
-
-bool NetServer::importPlaylist() {
-  if (config.getMode()==PM_SDCARD) return false;
-  File tempfile = SPIFFS.open(TMP_PATH, "r");
-  if (!tempfile) {
-    return false;
-  }
-  char sName[BUFLEN], sUrl[BUFLEN], linePl[BUFLEN*3];
-  int sOvol;
-  // Read first non-empty line
-  String firstLine;
-  size_t firstPos = tempfile.position();
-  while (tempfile.available()) {
-    _readPlaylistLine(tempfile, linePl, sizeof(linePl)-1);
-    firstLine = String(linePl); firstLine.trim();
-    if (firstLine.length() > 0) break;
-    firstPos = tempfile.position();
-  }
-  tempfile.seek(firstPos); // rewind to first non-empty line
-  // Detect minified JSON array (single line, starts with [)
-  bool isJsonArray = firstLine.startsWith("[");
-  bool foundAny = false;
-  File playlistfile = SPIFFS.open(TMP2_PATH, "w");
-  if (isJsonArray) {
-    // Read the whole file into a String
-    String jsonStr;
-    tempfile.seek(0);
-    while (tempfile.available()) {
-      _readPlaylistLine(tempfile, linePl, sizeof(linePl)-1);
-      jsonStr += String(linePl);
-    }
-    jsonStr.trim();
-    // Remove leading/trailing brackets if present
-    if (jsonStr.startsWith("[")) jsonStr = jsonStr.substring(1);
-    if (jsonStr.endsWith("]")) jsonStr = jsonStr.substring(0, jsonStr.length()-1);
-    // Robustly extract each {...} object using brace counting
-    int len = jsonStr.length();
-    int i = 0;
-    while (i < len) {
-      // Skip whitespace and commas
-      while (i < len && (jsonStr[i] == ' ' || jsonStr[i] == '\n' || jsonStr[i] == '\r' || jsonStr[i] == ',')) i++;
-      if (i >= len) break;
-      if (jsonStr[i] != '{') { i++; continue; }
-      int start = i;
-      int brace = 1;
-      i++;
-      while (i < len && brace > 0) {
-        if (jsonStr[i] == '{') brace++;
-        else if (jsonStr[i] == '}') brace--;
-        i++;
-      }
-      if (brace == 0) {
-        String objStr = jsonStr.substring(start, i);
-        objStr.trim();
-        if (objStr.length() == 0) continue;
-        strncpy(linePl, objStr.c_str(), sizeof(linePl)-1);
-        if (config.parseJSON(linePl, sName, sUrl, sOvol)) {
-          snprintf(linePl, sizeof(linePl)-1, "%s\t%s\t%d", sName, sUrl, sOvol);
-          playlistfile.print(String(linePl) + "\r\n");
-          foundAny = true;
-        }
-      }
-    }
-  } else {
-    // Not a minified array: process line by line
-    tempfile.seek(0);
-    while (tempfile.available()) {
-      _readPlaylistLine(tempfile, linePl, sizeof(linePl)-1);
-      String trimmed = String(linePl); trimmed.trim();
-      if (trimmed.length() == 0 || trimmed == "[" || trimmed == "]" || trimmed == ",") continue;
-      // Only treat as JSON if line starts with '{' and ends with '}'
-      if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-        if (config.parseJSON(linePl, sName, sUrl, sOvol)) {
-          snprintf(linePl, sizeof(linePl)-1, "%s\t%s\t%d", sName, sUrl, sOvol);
-          playlistfile.print(String(linePl) + "\r\n");
-          foundAny = true;
-        }
-      } else {
-        // Only treat as CSV if not JSON
-        if (config.parseCSVimport(linePl, sName, sUrl, sOvol)) {
-          snprintf(linePl, sizeof(linePl)-1, "%s\t%s\t%d", sName, sUrl, sOvol);
-          playlistfile.print(String(linePl) + "\r\n");
-          foundAny = true;
-        }
-      }
-    }
-  }
-  playlistfile.flush();
-  playlistfile.close();
-  tempfile.close();
-  if (foundAny) {
-    SPIFFS.remove(PLAYLIST_PATH);
-    SPIFFS.rename(TMP2_PATH, PLAYLIST_PATH);
-    requestOnChange(PLAYLISTSAVED, 0);
-    return true;
-  }
-  SPIFFS.remove(TMP_PATH);
-  SPIFFS.remove(TMP2_PATH);
-  return false;
 }
 
 void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
@@ -1414,10 +1313,7 @@ void handleNotFound(AsyncWebServerRequest * request) {
   if (request->method() == HTTP_POST) {
     if (request->url()=="/webboard") { request->redirect("/"); return; } // <--post files from /data/www
     if (request->url()=="/upload") { // <--upload playlist.csv or wifi.csv
-      if (request->hasParam("plfile", true, true)) {
-        netserver.importRequest = IMPL;
-        request->send(200);
-      } else if (request->hasParam("wifile", true, true)) {
+      if (request->hasParam("wifile", true, true)) {
         netserver.importRequest = IMWIFI;
         request->send(200);
       } else {

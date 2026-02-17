@@ -3,21 +3,21 @@ let websocket;
 let indexData = [];
 let currentPlaylistData = null;
 let currentPlaylistFile = '';
+let loadedTimeout = null;
 
 window.addEventListener('load', onCuratedLoad);
 
 function onCuratedLoad(event) {
   // Set curated source info if available
   if (typeof curatedName !== 'undefined' && curatedName) {
-    document.getElementById('curatedSource').textContent = curatedName;
     document.getElementById('curatedBy').innerHTML = `<a target="_blank" href="${curatedLink || '#'}">${curatedName}</a>`;
   }
 
   // Event listeners
-  document.getElementById('loadListsBtn').addEventListener('click', loadCuratedIndex);
+  //document.getElementById('loadListsBtn').addEventListener('click', loadCuratedIndex);
   document.getElementById('replaceBtn').addEventListener('click', () => importPlaylist('replace'));
   document.getElementById('mergeBtn').addEventListener('click', () => importPlaylist('merge'));
-  document.getElementById('backToIndexBtn').addEventListener('click', backToIndex);
+  //document.getElementById('backToIndexBtn').addEventListener('click', backToIndex);
   document.getElementById('curateddone').addEventListener('click', () => { window.location.href = '/'; });
 
   // Initialize WebSocket
@@ -71,11 +71,26 @@ function onCuratedWSMessage(event) {
   }
 }
 
-function loadCuratedIndex() {
+function loadCuratedIndex(button) {
+  // Only allow if button is in clickable state
+  const currentState = button.value;
+  if (currentState === 'Loading...' || currentState === 'Loaded') {
+    return; // Do nothing if loading or loaded
+  }
+  
   console.log('[Curated] Requesting index download...');
   console.log('[Curated] WebSocket ready state:', websocket.readyState);
-  showLoadStatus('Downloading curated lists...', false);
-  disableLoadButton();
+  
+  setButtonState('loading');
+  
+  // Show loading spinner in index table
+  const indexTable = document.getElementById('indexTable');
+  indexTable.innerHTML = `
+    <tr style="height: 100%;">
+      <td colspan="3" style="height: 100%; text-align: center; vertical-align: middle;">
+        <span id="loader"></span>
+      </td>
+    </tr>`;
   
   // Send WebSocket command to trigger download
   console.log('[Curated] Sending command: loadindex=');
@@ -92,14 +107,18 @@ function fetchIndex() {
     .then(data => {
       indexData = data || [];
       displayIndex();
-      showLoadStatus('', false);
+      setButtonState('loaded');
+      
+      // After 15 seconds, change to Reload
+      if (loadedTimeout) clearTimeout(loadedTimeout);
+      loadedTimeout = setTimeout(() => {
+        setButtonState('reload');
+      }, 15000);
     })
     .catch(error => {
       console.error('[Curated] Error fetching index:', error);
-      showLoadStatus('Error loading index file', true);
-    })
-    .finally(() => {
-      enableLoadButton();
+      alert('Error loading index file. Please try again.');
+      setButtonState('load');
     });
 }
 
@@ -108,18 +127,22 @@ function displayIndex() {
   indexTable.innerHTML = '';
   
   if (!indexData || indexData.length === 0) {
-    indexTable.innerHTML = '<tr><td colspan="3" class="importantmessage">No playlists available</td></tr>';
-    document.getElementById('indexView').classList.remove('hidden');
+    indexTable.innerHTML = '<tr class="line"><td colspan="3" class="importantmessage">No playlists available</td></tr>';
     return;
   }
   
   indexData.forEach((playlist, idx) => {
     const row = document.createElement('tr');
+    row.className = 'line';
     row.innerHTML = `
-      <td class="station-name">${escapeHtml(playlist.name || 'Unnamed')}</td>
-      <td class="station-genre">${escapeHtml(playlist.total ? playlist.total + ' stations' : '')}</td>
-      <td class="station-actions">
-        <button class="searchbutton" data-index="${idx}" data-action="load">Load</button>
+      <td class="name">${escapeHtml(playlist.name || 'Unnamed')}</td>
+      <td class="info">${escapeHtml(playlist.total ? playlist.total + ' stations' : '')}</td>
+      <td class="add">
+        <button class="searchbutton addtoplaylist" data-index="${idx}" data-action="load">
+          <svg viewBox="0 0 24 24" class="stroke">
+            <path d="m19 14-7 7-7-7m7 7V3"/>
+          </svg>
+        </button>
       </td>
     `;
     indexTable.appendChild(row);
@@ -133,8 +156,6 @@ function displayIndex() {
       loadPlaylist(indexData[index]);
     }
   });
-  
-  document.getElementById('indexView').classList.remove('hidden');
 }
 
 function loadPlaylist(playlist) {
@@ -146,12 +167,20 @@ function loadPlaylist(playlist) {
   currentPlaylistFile = playlist.json;
   console.log('[Curated] Requesting playlist download:', currentPlaylistFile);
   
-  // Hide index, show loading in playlist view
-  document.getElementById('indexView').classList.add('hidden');
-  document.getElementById('playlistView').classList.remove('hidden');
-  document.getElementById('playlistTitle').textContent = 'Loading...';
-  document.getElementById('playlistDescription').textContent = '';
-  document.getElementById('playlistTable').innerHTML = '<tr><td class="importantmessage" colspan="4">Downloading playlist...</td></tr>';
+  // Update section title
+  document.getElementById('playlistSectionTitle').textContent = 'Loading: ' + (playlist.name || 'Playlist');
+  
+  // Show loading spinner in playlist table
+  const playlistTable = document.getElementById('playlistTable');
+  playlistTable.innerHTML = `
+    <tr style="height: 100%;">
+      <td colspan="3" style="height: 100%; text-align: center; vertical-align: middle;">
+        <span id="loader"></span>
+      </td>
+    </tr>`;
+  
+  // Disable import buttons while loading
+  setImportButtonsEnabled(false);
   
   // Send WebSocket command to trigger download
   websocket.send('loadplaylist=' + playlist.json);
@@ -195,51 +224,76 @@ function fetchPlaylist() {
     })
     .catch(error => {
       console.error('[Curated] Error fetching playlist:', error);
-      document.getElementById('playlistTable').innerHTML = '<tr><td class="importantmessage" colspan="4">Error loading playlist file</td></tr>';
+      document.getElementById('playlistTable').innerHTML = '<tr class="line"><td class="importantmessage" colspan="3">Error loading playlist file</td></tr>';
+      document.getElementById('playlistSectionTitle').textContent = 'Error Loading Playlist';
+      setImportButtonsEnabled(false);
     });
 }
 
 function displayPlaylist(data) {
-  document.getElementById('playlistTitle').textContent = data.name || 'Playlist';
-  document.getElementById('playlistDescription').innerHTML = data.description ? `<p>${escapeHtml(data.description)}</p>` : '';
-  
   const playlistTable = document.getElementById('playlistTable');
   playlistTable.innerHTML = '';
   
+  // Update section title
+  document.getElementById('playlistSectionTitle').textContent = data.name + ' (' + data.stations.length + ' stations)';
+  
   const stations = data.stations || [];
   if (stations.length === 0) {
-    playlistTable.innerHTML = '<tr><td colspan="4" class="importantmessage">No stations in this playlist</td></tr>';
+    playlistTable.innerHTML = '<tr class="line"><td colspan="3" class="importantmessage">No stations in this playlist</td></tr>';
+    setImportButtonsEnabled(false);
     return;
   }
   
   stations.forEach((station, idx) => {
     const row = document.createElement('tr');
+    row.className = 'line';
     row.innerHTML = `
-      <td class="station-name">${escapeHtml(station.name || station.url)}</td>
-      <td class="station-url">${escapeHtml(station.url)}</td>
-      <td class="station-actions">
-        <button class="searchbutton" data-index="${idx}" data-action="preview" title="Preview">▶</button>
-      </td>
+      <td class="preview"><button class="searchbutton preview" data-action="preview" data-index="${idx}">
+        <svg viewBox="0 0 52 52" class="fill">
+          <path d="M8,43.7V8.3c0-1,1.3-1.7,2.2-0.9l33.2,17.3c0.8,0.6,0.8,1.9,0,2.5L10.2,44.7C9.3,45.4,8,44.8,8,43.7z"/>
+        </svg>
+      </button></td>
+      <td class="name">${escapeHtml(station.name || station.url)}</td>
+      <td class="add"><button class="searchbutton addtoplaylist" data-action="add" data-index="${idx}">
+        <svg viewBox="0 0 24 24" class="stroke">
+          <path d="M5 12h7m7 0h-7m0 0V5m0 7v7"/>
+        </svg>
+      </button></td>
     `;
     playlistTable.appendChild(row);
   });
+
+  // SVG icons from https://www.svgviewer.dev/s/474949/play & https://www.svgviewer.dev/s/495943/plus & https://www.svgviewer.dev/s/393355/down
   
-  // Add click handler for Preview buttons
+  // Add click handler for both Preview and Add buttons
   playlistTable.addEventListener('click', (event) => {
-    const button = event.target.closest('button[data-action="preview"]');
+    const button = event.target.closest('button[data-action]');
     if (button) {
       const index = parseInt(button.dataset.index);
+      const action = button.dataset.action;
       const station = stations[index];
       if (station && station.url) {
-        // Use playStation function from playstation.js
-        if (typeof playStation === 'function') {
-          playStation(station.url, station.name || station.url, false);
-        } else {
-          console.error('[Curated] playStation function not available');
+        if (action === 'preview') {
+          // Use sendStationAction from playstation.js for preview
+          if (typeof sendStationAction === 'function') {
+            sendStationAction(station.name || station.url, station.url, false);
+          } else {
+            console.error('[Curated] sendStationAction function not available');
+          }
+        } else if (action === 'add') {
+          // Use sendStationAction from playstation.js to add to playlist
+          if (typeof sendStationAction === 'function') {
+            sendStationAction(station.name || station.url, station.url, true);
+          } else {
+            console.error('[Curated] sendStationAction function not available');
+          }
         }
       }
     }
   });
+  
+  // Enable import buttons since we have data
+  setImportButtonsEnabled(true);
 }
 
 function importPlaylist(mode) {
@@ -261,38 +315,33 @@ function importPlaylist(mode) {
   websocket.send('curated_import=' + mode);
 }
 
-function backToIndex() {
-  document.getElementById('playlistView').classList.add('hidden');
-  document.getElementById('indexView').classList.remove('hidden');
-  currentPlaylistData = null;
-  currentPlaylistFile = '';
-}
-
-function showLoadStatus(message, isError) {
-  const statusEl = document.getElementById('loadStatus');
-  if (message) {
-    statusEl.textContent = message;
-    statusEl.classList.remove('hidden');
-    if (isError) {
-      statusEl.style.color = 'red';
-    } else {
-      statusEl.style.color = '';
-    }
-  } else {
-    statusEl.classList.add('hidden');
+// Button state management
+function setButtonState(state) {
+  const btn = document.getElementById('loadListsBtn');
+  switch(state) {
+    case 'load':
+      btn.value = 'Load Index';
+      btn.disabled = false;
+      break;
+    case 'loading':
+      btn.value = 'Loading Index...';
+      btn.disabled = true;
+      break;
+    case 'loaded':
+      btn.value = 'Index Loaded';
+      btn.disabled = true;
+      break;
+    case 'reload':
+      btn.value = 'Reload Index';
+      btn.disabled = false;
+      break;
   }
 }
 
-function disableLoadButton() {
-  const btn = document.getElementById('loadListsBtn');
-  btn.disabled = true;
-  btn.style.opacity = '0.5';
-}
-
-function enableLoadButton() {
-  const btn = document.getElementById('loadListsBtn');
-  btn.disabled = false;
-  btn.style.opacity = '1';
+// Import button management
+function setImportButtonsEnabled(enabled) {
+  document.getElementById('replaceBtn').disabled = !enabled;
+  document.getElementById('mergeBtn').disabled = !enabled;
 }
 
 function escapeHtml(text) {

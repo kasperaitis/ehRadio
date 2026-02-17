@@ -672,8 +672,56 @@ function parseAndAddCSV(content, targetCallback, mode = 'replace') {
           if (ovolIdx === -1) ovol = 0;
         }
       }
+    } else if (/\s{2,}/.test(line)) {
+      // Two-or-more-space-delimited: split by 2+ consecutive spaces
+      const parts = line.split(/\s{2,}/).map(p => p.trim()).filter(p => p);
+      
+      if (parts.length === 1) {
+        // 1 field: URL only
+        if (parts[0].includes('.') && (parts[0].includes('/') || parts[0].includes('://'))) {
+          url = parts[0];
+          name = '';
+          ovol = 0;
+        }
+      } else if (parts.length === 2) {
+        // 2 fields: one is URL, one is name (order does not matter)
+        let urlIdx = -1, nameIdx = -1;
+        for (let i = 0; i < 2; i++) {
+          if (parts[i].includes('.') && (parts[i].includes('/') || parts[i].includes('://'))) {
+            urlIdx = i;
+          } else {
+            nameIdx = i;
+          }
+        }
+        if (urlIdx !== -1 && nameIdx !== -1) {
+          url = parts[urlIdx];
+          name = parts[nameIdx];
+          ovol = 0;
+        }
+      } else if (parts.length >= 3) {
+        // 3+ fields: Find URL (required), name is first non-URL field, rest are ignored
+        let urlIdx = -1;
+        for (let i = 0; i < parts.length; i++) {
+          if (parts[i].includes('.') && (parts[i].includes('/') || parts[i].includes('://'))) {
+            urlIdx = i;
+            break;
+          }
+        }
+        
+        if (urlIdx !== -1) {
+          url = parts[urlIdx];
+          // Name is first field that's not the URL
+          for (let i = 0; i < parts.length; i++) {
+            if (i !== urlIdx && parts[i]) {
+              name = parts[i];
+              break;
+            }
+          }
+          ovol = 0;
+        }
+      }
     } else {
-      // Space-delimited: find URL (contains . and / or ://)
+      // Single-space-delimited: find URL (contains . and / or ://)
       const tokens = line.split(/\s+/);
       let urlIdx = -1;
       
