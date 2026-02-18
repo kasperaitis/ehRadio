@@ -376,18 +376,20 @@
   #define SEARCHRESULTS_YIELDINTERVAL 0 // With a large buffer, skipping is almost eliminated with 0
 #endif
 
-//Below works but will be integrated as a user-config option later...
-//#define HTTP_USER "michael"
-//#define HTTP_PASS "cc159226!"
 
-//#define ESPFILEUPDATER_DEBUG
+/* --- USEFUL OPTIONS --- */
 
+/* --- Need a text pre-processor because your display is printing garbage? --- */
+//#define PRINT_FIX // try to convert all Unicode to ASCII (this is a blunt instrument)
+//#define UTF8_RUS // convert Russian to ASCII
+
+/* --- Hate the idea of your device reporting to Radio Browser API which stations you like? --- */
 //#define RADIO_BROWSER_NO_SEND_CLICKS
 
+/* --- Don't want to see curated lists? --- */
 //#define CURATED_LISTS false
 
 
-/* --- URL SOURCE OVERRIDE --- */
 /* Only use this if you've decided to use your own Github as the source of files */
 /* ...or your firmware is not available from Trip5's Github... sorry! */
 /* Read the notes in the ./builds folder for more detailed information */
@@ -396,6 +398,12 @@
 
 
 /* --- MORE, UNUSED, UNKNOWN, NOTES --- */
+
+//Below works for now but will be integrated as a user-config option later...
+//#define HTTP_USER "michael"
+//#define HTTP_PASS "cc159226!"
+
+//#define ESPFILEUPDATER_DEBUG
 
 //#define IR_PIN                1
 //#define IR_TIMEOUT            80              /*  see kTimeout description in IRremoteESP8266 example https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/IRrecvDumpV2/IRrecvDumpV2.ino */

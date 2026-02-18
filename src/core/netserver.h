@@ -89,7 +89,7 @@ const char index_html[] PROGMEM = R"(
   <meta name="theme-color" content="#eecccc">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="icon" type="image/x-icon" href="icon.png">
+  <link rel="icon" type="image/png" href="icon.png">
   <link rel="stylesheet" href="theme.css" type="text/css" />
   <link rel="stylesheet" href="style.css" type="text/css" />
   <script type="text/javascript" src="variables.js"></script>

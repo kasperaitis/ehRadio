@@ -999,6 +999,9 @@ void getRequiredFiles(void* param) {
     char tryUrl[128];
     for (size_t i = 0; i < wwwFilesCount; i++) {
       display.putRequest(NEWMODE, UPDATING);
+      char progDisp[32];
+      snprintf(progDisp, sizeof(progDisp), LANG::updatingProgress, (float)(i + 1) * 100.0f / wwwFilesCount);
+      display.updateProgress(LANG::updFiles, progDisp);
       const char* fname = wwwFiles[i];
       snprintf(localFileGz, sizeof(localFileGz), "/www/%s.gz", fname);
       snprintf(localFile, sizeof(localFile), "/www/%s", fname);
@@ -1119,7 +1122,7 @@ void startAsyncServices(void* param) {
     config.updateFile(param, "/data/new_ver.txt", CHECKUPDATEURL, CHECKUPDATEURL_TIME, "New version number");
     checkNewVersionFile();
     if (config.store.autoupdate && netserver.newVersionAvailable) {
-      Serial.println("[AutoUpdate] autoupdate enabled and new version detected - starting online update");
+      Serial.println("[AutoUpdate] Autoupdate enabled and new version detected - starting online update");
       startOnlineUpdate();
     }
   #endif

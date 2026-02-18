@@ -2,20 +2,17 @@
 #define printFix_h
 
 #include <Arduino.h>
+#include "../../core/options.h"
 
-char* printFix(const char* src) {
-  
-    #ifndef PRINT_FIX
-      return(src);
-    #endif
-
-    static char buf[BUFLEN];
+inline char* printFix(const char* src, bool uppercase) {
+  static char buf[BUFLEN];
 
     int outIdx = 0;
     const char* p = src;
     while (*p && outIdx < BUFLEN - 1) {
       if ((uint8_t)*p < 0x80) {
-        buf[outIdx++] = *p++;
+        buf[outIdx++] = uppercase ? toupper(*p) : *p;
+        p++;
         continue;
       }
       

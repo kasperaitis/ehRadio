@@ -233,6 +233,12 @@ void Display::_buildPager() {
   if (_metabackground) pages[PG_DIALOG]->addWidget(_metabackground);
   pages[PG_DIALOG]->addWidget(_meta);
   pages[PG_DIALOG]->addWidget(_nums);
+  #ifdef UPDATEURL
+    _updLabel = new TextWidget(apNameConf, 30, false, config.theme.title1, config.theme.background);
+    _updValue = new TextWidget(apPassConf, 30, false, config.theme.clock, config.theme.background);
+    pages[PG_DIALOG]->addWidget(_updLabel);
+    pages[PG_DIALOG]->addWidget(_updValue);
+  #endif
   
   #if !defined(DSP_LCD) && DSP_MODEL!=DSP_NOKIA5110
     pages[PG_DIALOG]->addPage(_footer);
@@ -428,6 +434,13 @@ void Display::putRequest(displayRequestType_e type, int payload) {
   xQueueSend(displayQueue, &request, DSQ_SEND_DELAY);
   #ifdef USE_NEXTION
     nextion.putRequest(request);
+  #endif
+}
+
+void Display::updateProgress(const char* label, const char* value) {
+  #ifdef UPDATEURL
+    if (_updLabel) _updLabel->setText(label);
+    if (_updValue) _updValue->setText(value);
   #endif
 }
 

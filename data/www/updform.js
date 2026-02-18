@@ -5,11 +5,9 @@ function initOnlineUpdateChecker() {
     getId('check_online_update').classList.remove('hidden');
     getId('check_online_update').value = "Check for Online Update";
     getId('check_online_update').disabled = false;
-    getId("update_url").href = "/update.html";
     console.log("Online Update is available");
   } else {
     getId('check_online_update').classList.add('hidden');
-    getId("update_url").href = updateUrl;
     console.log("Online Update not available");
   }
 }
@@ -42,7 +40,6 @@ function checkOnlineUpdate(button) {
       .then(data => {
         console.log("Start update response:", data);
         // Prepare UI: hide form, show status and progress bar
-        getId('updateform').attr('class','hidden');
         const status = getId('uploadstatus');
         
         if(status) status.innerHTML = getId('check_online_update').value;

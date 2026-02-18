@@ -51,6 +51,7 @@ class Display {
     void setContrast();
     bool deepsleep();
     void wakeup();
+    void updateProgress(const char* label, const char* value);
 
     displayMode_e mode() { return _mode; }
     void mode(displayMode_e m) { _mode=m; }
@@ -60,6 +61,9 @@ class Display {
   private:
     ScrollWidget *_meta, *_title1, *_plcurrent, *_weather, *_title2;
     PlayListWidget *_plwidget;
+    #ifdef UPDATEURL
+      TextWidget *_updLabel = nullptr, *_updValue = nullptr;
+    #endif
     BitrateWidget *_fullbitrate;
     FillWidget *_metabackground, *_plbackground;
     SliderWidget *_volbar, *_heapbar;

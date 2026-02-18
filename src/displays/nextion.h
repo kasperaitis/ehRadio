@@ -50,6 +50,7 @@ class Nextion {
     void  setVol(uint8_t vol, bool dialog);
     void  fillVU(uint8_t LC, uint8_t RC);
     char* utf8Rus(char* str, bool uppercase);
+    char* printFix(const char* src);
     void  printClock(struct tm timeinfo);
     void  bitrate(int bpm);
     void  bitratePic(uint8_t pic);

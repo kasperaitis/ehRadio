@@ -20,6 +20,7 @@
 #include "commandhandler.h"
 #include "../displays/dspcore.h"
 #include "../displays/widgets/widgetsconfig.h" //BitrateFormat
+#include "../displays/tools/l10n.h"
 
 //#include <ESPmDNS.h>
 
@@ -1274,6 +1275,9 @@ void startOnlineUpdate() {
               char progMsg[64];
               snprintf(progMsg, sizeof(progMsg), "{\"onlineupdateprogress\":%d}", percent);
               websocket.textAll(progMsg);
+              char progDisp[32];
+              snprintf(progDisp, sizeof(progDisp), LANG::updatingProgress, (float)percent);
+              display.updateProgress(LANG::updFirmware, progDisp);
             }
           }
           if (Update.end(true)) { // end(true) will finish and commit the update

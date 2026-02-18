@@ -22,7 +22,7 @@ Documentation will be improved at some point...
 
 ## ehRadio Version history
 
-### 2026.02.17
+### 2026.02.18
   - WebUI greatly improved for mobile and tablet devices
     - automatic checking for new version availability
     - .css files improved
@@ -65,7 +65,15 @@ Documentation will be improved at some point...
     - most functions now included no-op instead of being blocked by `#ifdef`
   - Optimized declarations in src files
   - More cleanup to various files and folders
+  - `printFix` separated from `utf8Rus`
+    - choose one text pre-processor (others may be added later)
+    - use these if your display prints garbage instead of text
+    - functions added for Nextion (other displays already had both options available)
+    - put one of these in your `myoptions.h`
+      - `#define PRINT_FIX` tries to reduce Unicode characters to ASCII (mostly successfully)
+      - `#define UTF8_RUS` will convert Unicode Russian characters to ASCII
   - Added check for new versions (and will show if available in WebUI)
+  - Visual feedback on display for firmware udpating and getting files
   - Platformio.ini now includes pre- and post-steps to compress www files for SPIFFS
   - more defaults added to `options.h` which can be changed in `myoptions.h`
     - `#define CHECKUPDATEURL_TIME "1 day"`
@@ -73,6 +81,20 @@ Documentation will be improved at some point...
     - `#define RB_SERVERS_CHECKTIME "1 day"`
     - `#define TIME_SYNC_INTERVAL 3600` (if RTC then `86400`)
     - `#define WEATHER_SYNC_INTERVAL 1800` (maybe this should be a configurable setting?)
+  - Thanks to [kasperaitis](https://github.com/kasperaitis) for [PR 42](https://github.com/trip5/ehRadio/pull/42)
+    - Auto Update on Boot option added
+      - will automatically download firmware updates
+      - a second reboot will begin the file downloader
+    - Battery monitoring added
+      - Requires these in `myoptions.h`
+        - `#define BATTERY_PIN`
+        - `#define BATTERY_CHARGE_PIN`
+        - `#define BATTERY_DIVIDER_RATIO`
+        - `#define BATTERY_ADC_REF_MV`
+        - `#define BATTERY_UPDATE_INTERVAL`
+        - `#define BATTERY_SAMPLES`
+      - Check `options.h` for detailed notes
+    - Telnet formatting looks great!
 
 ### 2026.02.06
   - Online Flasher introduced
@@ -80,7 +102,7 @@ Documentation will be improved at some point...
   - Improv mode added to firmware so if Wi-fi doesn't connect, use a WebUI to send Wi-fi information
 
 ### 2026.02.04
-  - Thanks to @kasperaitis for #37
+  - Thanks to [kasperaitis](https://github.com/kasperaitis) for [PR 37](https://github.com/trip5/ehRadio/pull/37)
     - adds support for ES8311 + FM8002E I2C decoder and FT6336 touchscreen on the [ES3C28](https://www.lcdwiki.com/2.8inch_ESP32-S3_Display) ([Aliexpress](https://www.aliexpress.com/item/1005010338765126.html))
     - localization fix: weather now uses `LANG::weatherFmt` and `LANG::wind` instead of hardcoded strings
     - RGB LED (WS2812) can now do visual feedback for player state:
