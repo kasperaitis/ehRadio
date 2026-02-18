@@ -2,8 +2,7 @@ var hostname = window.location.hostname;
 var modesd = false;
 const query = window.location.search;
 const params = new URLSearchParams(query);
-const yoTitle = 'ehRadio';
-let audiopreview=null;
+const Title = 'ehRadio';
 if(params.size>0){
   if(params.has('host')) hostname=params.get('host');
 }
@@ -12,8 +11,6 @@ var wserrcnt = 0;
 var wstimeout;
 var loaded = false;
 var currentItem = 0;
-const localTZjson = 'timezones.json';
-document.addEventListener('DOMContentLoaded', () => { loadTimezones(); });
 window.addEventListener('load', onLoad);
 
 function loadCSS(href){ const link = document.createElement("link"); link.rel = "stylesheet"; link.href = href; document.head.appendChild(link); }
@@ -316,7 +313,7 @@ function handlePlaylistData(fileData) {
   if(!modesd) initPLEditor();
 }
 function generatePlaylist(path){
-  getId('playlist').innerHTML='<div id="progress"><span id="loader"></span></div>';
+  getId('playlist').innerHTML='<div class="plloader"><span class="loader"></span></div>';
   var xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function() {
     if (xhr.readyState == 4) {
@@ -367,9 +364,52 @@ function selectAll(checkbox){
     }
   }
 }
+function clearImportReviewFlags() {
+  if (sessionStorage.getItem('pl_import_review') === 'true') {
+    sessionStorage.removeItem('pl_import_review');
+    sessionStorage.removeItem('pl_import_mode');
+    if (getId('plImportWarning')) getId('plImportWarning').classList.add('hidden');
+  }
+}
+
+function setImportReviewFlags(mode) {
+  sessionStorage.setItem('pl_import_mode', mode);
+  sessionStorage.setItem('pl_import_review', 'true');
+  if (getId('plImportWarning')) getId('plImportWarning').classList.remove('hidden');
+}
+
 function undoPlaylistChanges(){
+  clearImportReviewFlags();
   generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
   uncheckSelectAll();
+}
+
+function loadCuratedForReview(mode) {
+  console.log('[Curated] Loading pl_import.json for review, mode:', mode);
+  
+  // Open the playlist editor
+  if (getId('pleditorwrap').classList.contains('hidden')) {
+    getId('toggleplaylist').click();
+  }
+  
+  // For merge mode, load current playlist first
+  if (mode === 'merge') {
+    generatePlaylist(`http://${hostname}/data/playlist.csv?` + Date.now());
+    // Wait for current playlist to load, then import
+    setTimeout(() => {
+      doPlImportCurated('pl_import.json', mode);
+      // Show warning banner
+      setImportReviewFlags(mode);
+    }, 300);
+  } else {
+    // Replace mode: wait for editor to open and load current playlist first
+    // then clear and import (prevents race condition)
+    setTimeout(() => {
+      doPlImportCurated('pl_import.json', mode);
+      // Show warning banner
+      setImportReviewFlags(mode);
+    }, 400);
+  }
 }
 function plRemove(){
   let items=getId('pleditorcontent').getElementsByTagName('li');
@@ -394,6 +434,7 @@ function plRemove(){
   uncheckSelectAll();
 }
 function submitPlaylist(){
+  clearImportReviewFlags();
   var items=getId("pleditorcontent").getElementsByTagName("li");
   var output="";
   for (var i = 0; i <= items.length - 1; i++) {
@@ -427,6 +468,38 @@ function doPlUpload(finput) {
   xhr.send(formData);
   finput.value = '';
 }
+
+function doPlImportCurated(localPath, mode) {
+  // Load local file from ESP32 filesystem (for curated playlists)
+  const importMode = mode || 'replace';
+  console.log('[doPlImportCurated] Loading local file:', localPath, 'mode:', importMode);
+  fetch(localPath + '?' + Date.now())
+    .then(response => {
+      if (!response.ok) throw new Error('Failed to load ' + localPath);
+      return response.text();
+    })
+    .then(content => {
+      const isJSON = localPath.endsWith('.json');
+      if (importMode === 'replace') {
+        // Clear existing playlist
+        getId('pleditorcontent').innerHTML = '';
+      }
+      if (isJSON) {
+        parseAndAddJSON(content, addStationToEditor, importMode);
+      } else {
+        parseAndAddCSV(content, addStationToEditor, importMode);
+      }
+      uncheckSelectAll();
+    })
+    .catch(error => {
+      console.error('[doPlImportCurated] Error loading file:', error);
+      // Silently clear flags if file doesn't exist (e.g., after fresh flash)
+      sessionStorage.removeItem('pl_import_review');
+      sessionStorage.removeItem('pl_import_mode');
+      if (getId('plImportWarning')) getId('plImportWarning').classList.add('hidden');
+    });
+}
+
 function doPlImport(finput) {
   if (!finput.files || !finput.files[0]) return;
   const file = finput.files[0];
@@ -441,7 +514,6 @@ function doPlImport(finput) {
       // Clear existing playlist
       getId('pleditorcontent').innerHTML = '';
     }
-    
     if (isJSON) {
       parseAndAddJSON(content, addStationToEditor, mode);
     } else {
@@ -451,8 +523,8 @@ function doPlImport(finput) {
     finput.value = '';
     delete window.importMode;
     uncheckSelectAll();
+    setImportReviewFlags(mode);
   };
-  
   reader.readAsText(file);
 }
 
@@ -501,13 +573,10 @@ function parseAndAddJSON(content, targetCallback, mode = 'replace') {
           }
         }
       }
-      
       // Extract and clamp ovol
       const ovol = Math.max(-30, Math.min(30, parseInt(item.ovol || 0)));
-      
       // If no name, generate from URL
       const finalName = name || (url ? urlToName(url) : '');
-      
       // Check for duplicates
       if (url) {
         if (existingURLs.has(url)) {
@@ -519,7 +588,6 @@ function parseAndAddJSON(content, targetCallback, mode = 'replace') {
         }
       }
     });
-    
     if (mode === 'replace') {
       alert(`Import complete: ${addedCount} stations loaded.`);
     } else if (duplicateCount > 0) {
@@ -550,7 +618,6 @@ function parseAndAddCSV(content, targetCallback, mode = 'replace') {
   lines.forEach(line => {
     line = line.trim();
     if (!line) return;
-    
     let name = '', url = '', ovol = 0;
     
     // Try tab-delimited first
@@ -615,8 +682,56 @@ function parseAndAddCSV(content, targetCallback, mode = 'replace') {
           if (ovolIdx === -1) ovol = 0;
         }
       }
+    } else if (/\s{2,}/.test(line)) {
+      // Two-or-more-space-delimited: split by 2+ consecutive spaces
+      const parts = line.split(/\s{2,}/).map(p => p.trim()).filter(p => p);
+      
+      if (parts.length === 1) {
+        // 1 field: URL only
+        if (parts[0].includes('.') && (parts[0].includes('/') || parts[0].includes('://'))) {
+          url = parts[0];
+          name = '';
+          ovol = 0;
+        }
+      } else if (parts.length === 2) {
+        // 2 fields: one is URL, one is name (order does not matter)
+        let urlIdx = -1, nameIdx = -1;
+        for (let i = 0; i < 2; i++) {
+          if (parts[i].includes('.') && (parts[i].includes('/') || parts[i].includes('://'))) {
+            urlIdx = i;
+          } else {
+            nameIdx = i;
+          }
+        }
+        if (urlIdx !== -1 && nameIdx !== -1) {
+          url = parts[urlIdx];
+          name = parts[nameIdx];
+          ovol = 0;
+        }
+      } else if (parts.length >= 3) {
+        // 3+ fields: Find URL (required), name is first non-URL field, rest are ignored
+        let urlIdx = -1;
+        for (let i = 0; i < parts.length; i++) {
+          if (parts[i].includes('.') && (parts[i].includes('/') || parts[i].includes('://'))) {
+            urlIdx = i;
+            break;
+          }
+        }
+        
+        if (urlIdx !== -1) {
+          url = parts[urlIdx];
+          // Name is first field that's not the URL
+          for (let i = 0; i < parts.length; i++) {
+            if (i !== urlIdx && parts[i]) {
+              name = parts[i];
+              break;
+            }
+          }
+          ovol = 0;
+        }
+      }
     } else {
-      // Space-delimited: find URL (contains . and / or ://)
+      // Single-space-delimited: find URL (contains . and / or ://)
       const tokens = line.split(/\s+/);
       let urlIdx = -1;
       
@@ -746,25 +861,31 @@ function exportCurrentPlaylist() {
   URL.revokeObjectURL(link.href);
 }
 /***--- eof playlist ---***/
+let pleditorTimeout = null;
 function toggleTarget(el, id){
   const target = getId(id);
   if(id=='pleditorwrap'){
-    audiopreview.pause();
-    audiopreview.src='';
-    getId('previewinfo').innerHTML='';
+    // Clear any active preview states
+    classEach('pleitem', function(el){ el.classList.remove('active') });
     // If opening editor (not closing), refresh playlist first to ensure fresh data
     if(target && target.classList.contains('hidden')) {
+      // Cancel any pending timeout to prevent race conditions
+      if(pleditorTimeout) { clearTimeout(pleditorTimeout); pleditorTimeout = null; }
       // Don't toggle visibility yet, wait for fresh data
       generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
       // generatePlaylist will call handlePlaylistData, which will call initPLEditor
       // Then we toggle visibility after a brief delay to let data load
-      setTimeout(() => {
-        target.classList.toggle("hidden");
-        getId(target.dataset.target).classList.toggle("active");
+      pleditorTimeout = setTimeout(() => {
+        target.classList.remove("hidden");
+        getId(target.dataset.target).classList.add("active");
+        pleditorTimeout = null;
       }, 200);
       return; // Exit early, don't run the normal toggle below
     }
-    // If closing editor, do it immediately (normal flow below)
+    // If closing editor, cancel any pending timeout and close immediately
+    if(pleditorTimeout) { clearTimeout(pleditorTimeout); pleditorTimeout = null; }
+    // Clear import review flags when closing editor
+    clearImportReviewFlags();
   }
   if(target){
     if(id=='pleditorwrap' && modesd) {
@@ -783,51 +904,6 @@ function checkboxClick(cb, command){
 function sliderInput(sl, command){
   websocket.send(`${command}=${sl.value}`);
   fillSlider(sl);
-}
-function handleWiFiData(fileData) {
-  if (!fileData) return;
-  var lines = fileData.split('\n');
-  for(var i = 0;i < lines.length;i++){
-    let line = lines[i].split('\t');
-    if(line.length==2){
-      getId("ssid"+i).value=line[0].trim();
-      getId("pass"+i).attr('data-pass', line[1].trim());
-    }
-  }
-}
-function getWiFi(path){
-  var xhr = new XMLHttpRequest();
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState == 4) {
-      if (xhr.status == 200) {
-        handleWiFiData(xhr.responseText);
-      } else {
-        handleWiFiData(null);
-      }
-    }
-  };
-  xhr.open("GET", path);
-  xhr.send(null);
-}
-function applyTZ(){
-  websocket.send("tz_name="+getId("tz_name").selectedOptions[0].text);
-  websocket.send("tzposix="+getId("tzposix").value);
-  websocket.send("sntp2="+getId("sntp2").value);
-  websocket.send("sntp1="+getId("sntp1").value);
-}
-function applyMQTT(){
-  websocket.send("mqttenable="+getId("mqttenable").value);
-  websocket.send("mqtthost="+getId("mqtthost").value);
-  websocket.send("mqttport="+getId("mqttport").value);
-  websocket.send("mqttuser="+getId("mqttuser").value);
-  websocket.send("mqttpass="+getId("mqttpass").value);
-  websocket.send("mqtttopic="+getId("mqtttopic").value);
-}
-function rebootSystem(info){
-  getId("settingscontent").innerHTML=`<h2>${info}</h2>`;
-  getId("settingsdone").classList.add("hidden");
-  getId("navigation").classList.add("hidden");
-  setTimeout(function(){ window.location.href=`http://${hostname}/`; }, 5000);
 }
 function submitWiFi(){
   var output="";
@@ -877,52 +953,43 @@ function toggleShuffle(){
   el.classList.toggle('active');
   websocket.send("shuffle="+el.classList.contains('active'));
 }
-function previewInfo(text, url='', error=false){
-  const previewinfo=getId('previewinfo');
-  previewinfo.classList.remove('error');
-  if(url!='') previewinfo.innerHTML=`${text} <a href="${url}" target="_blank">${url}</a>`;
-  else previewinfo.innerHTML=`${text}`;
-  if(error) previewinfo.classList.add('error');
-}
-const PREVIEW_TIMEOUT = 3000;
 function playPreview(root) {
-  const streamUrl=root.getElementsByClassName('pleurl')[0].value;
-  if(root.hasClass('active')){ root.classList.remove('active'); audiopreview.pause(); previewInfo('Stop playback:', streamUrl); return; }
-  classEach('pleitem', function(el){ el.classList.remove('active') });
-  if(streamUrl=='' || !audiopreview) { previewInfo("No streams available.", '', true); return; }
-  previewInfo('Attempting to play:', streamUrl);
-  audiopreview.src = streamUrl;
-  audiopreview.load();
-  let isTimeout = false;
-  const timeout = setTimeout(() => { isTimeout = true; previewInfo("Connection timeout", streamUrl, true); root.classList.remove('active'); audiopreview.pause(); return; }, PREVIEW_TIMEOUT);
-  const onCanPlay = () => { if (!isTimeout) { clearTimeout(timeout); previewInfo('Playback', streamUrl); root.classList.add('active'); audiopreview.play().catch(err => { previewInfo("Playback error:", streamUrl, true); root.classList.remove('active'); return; }); }  };
-  const onError = () => { if (!isTimeout) { clearTimeout(timeout); root.classList.remove('active'); previewInfo("Error loading stream:", streamUrl, true); return; } };
-  audiopreview.addEventListener("canplay", onCanPlay, { once: true });
-  audiopreview.addEventListener("error", onError, { once: true });
+  const streamUrl = root.getElementsByClassName('pleurl')[0].value;
+  const stationName = root.getElementsByClassName('plename')[0].value;
+  
+  // Send preview request to device
+  if(streamUrl=='') { console.error("No stream URL available."); return; }
+  
+  sendStationAction(stationName, streamUrl, false);
 }
 function continueLoading(mode){
   if(typeof mode === 'undefined' || loaded) return;
   if(mode=="player"){
     const pathname = window.location.pathname;
     if(['/','/index.html'].includes(pathname)){
-      document.title = `${yoTitle} - Player`;
+      document.title = `${Title} - Player`;
       fetch(`player.html?${radioVersion}`).then(response => response.text()).then(player => { 
         getId('content').classList.add('idx');
         getId('content').innerHTML = player; 
-        fetch('logo.svg').then(response => response.text()).then(svg => { 
+        fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => { 
           getId('logo').innerHTML = svg;
           hideSpinner();
-          audiopreview=getId('audiopreview');
         });
         getId("version").innerText=`${radioVersion}`;
         if (newVerAvailable) getId('update_available').classList.remove('hidden');
         document.querySelectorAll('input[type="range"]').forEach(sl => { fillSlider(sl); });
         websocket.send('getindex=1');
+        // Check if we need to load curated playlist for review
+        if (sessionStorage.getItem('pl_import_review') === 'true') {
+          const mode = sessionStorage.getItem('pl_import_mode') || 'replace';
+          console.log('[Curated] Loading playlist for review, mode:', mode);
+          setTimeout(() => loadCuratedForReview(mode), 200);
+        }
         //generatePlaylist(`http://${hostname}/data/playlist.csv`+"?"+new Date().getTime());
       });
     }
     if(pathname=='/settings.html'){
-      document.title = `${yoTitle} - Settings`;
+      document.title = `${Title} - Settings`;
       fetch(`options.html?${radioVersion}`).then(response => response.text()).then(options => {
         getId('content').innerHTML = options; 
         fetch('logo.svg').then(response => response.text()).then(svg => { 
@@ -942,7 +1009,6 @@ function continueLoading(mode){
         websocket.send('getweather=1');
         websocket.send('getmqtt=1');
         websocket.send('getcontrols=1');
-        websocket.send('getbattery=1');
         getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
         websocket.send('getactive=1');
         classEach("reset", function(el){ el.innerHTML='<svg viewBox="0 0 16 16" class="fill"><path d="M8 3v5a36.973 36.973 0 0 1-2.324-1.166A44.09 44.09 0 0 1 3.417 5.5a52.149 52.149 0 0 1 2.26-1.32A43.18 43.18 0 0 1 8 3z"/><path d="M7 5v1h4.5C12.894 6 14 7.106 14 8.5S12.894 11 11.5 11H1v1h10.5c1.93 0 3.5-1.57 3.5-3.5S13.43 5 11.5 5h-4z"/></svg>'; });
@@ -950,24 +1016,26 @@ function continueLoading(mode){
       });
     }
     if(pathname=='/update.html'){
-      document.title = `${yoTitle} - Update`;
+      document.title = `${Title} - Update`;
       fetch(`updform.html?${radioVersion}`).then(response => response.text()).then(updform => {
         getId('content').classList.add('upd');
-        getId('content').innerHTML = updform; 
-        fetch('logo.svg').then(response => response.text()).then(svg => { 
-          getId('logo').innerHTML = svg;
-          hideSpinner();
-          initOnlineUpdateChecker();
+        getId('content').innerHTML = updform;
+        loadJS(`updform.js?${radioVersion}`, () => {
+          fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => {
+            getId('logo').innerHTML = svg;
+            hideSpinner();
+            initOnlineUpdateChecker();
+          });
         });
         getId("version").innerText=`${radioVersion}`;
       });
     }
     if(pathname=='/ir.html'){
-      document.title = `${yoTitle} - IR Recorder`;
+      document.title = `${Title} - IR Recorder`;
       fetch(`irrecord.html?${radioVersion}`).then(response => response.text()).then(ircontent => {
-        getId('content').innerHTML = ircontent; 
+        getId('content').innerHTML = ircontent;
         loadJS(`ir.js?${radioVersion}`, () => {
-          fetch('logo.svg').then(response => response.text()).then(svg => { 
+          fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => {
             getId('logo').innerHTML = svg;
             initControls();
             hideSpinner();
@@ -978,14 +1046,16 @@ function continueLoading(mode){
     }
   }else{ // AP mode
     fetch(`options.html?${radioVersion}`).then(response => response.text()).then(options => {
-      getId('content').innerHTML = options; 
-      fetch('logo.svg').then(response => response.text()).then(svg => { 
-        getId('logo').innerHTML = svg;
-        hideSpinner();
+      getId('content').innerHTML = options;
+      loadJS(`options.js?${radioVersion}`, () => {
+        fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => {
+          getId('logo').innerHTML = svg;
+          hideSpinner();
+        });
+        getId("version").innerText=`${radioVersion}`;
+        getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
+        websocket.send('getactive=1');
       });
-      getId("version").innerText=`${radioVersion}`;
-      getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
-      websocket.send('getactive=1');
     });
   }
   document.body.addEventListener('click', (event) => {
@@ -1015,14 +1085,7 @@ function continueLoading(mode){
           case "webboard": window.location.href=`http://${hostname}/webboard`; break;
           case "setupir": window.location.href=`http://${hostname}/ir.html`; break;
           case "search": window.location.href=`http://${hostname}/search.html`; break;
-          case "applyweather":
-            let key=getId("wkey").value;
-            if(key!=""){
-              websocket.send("lat="+getId("wlat").value);
-              websocket.send("lon="+getId("wlon").value);
-              websocket.send("key="+key);
-            }
-            break;
+          case "applyweather": applyWeather(); break;
           case "applytz": applyTZ(); break;
           case "applymqtt": applyMQTT(); break;
           case "wifiexport": window.open(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime()); break;
@@ -1151,170 +1214,4 @@ function abortHandler(event) {
   getId('check_online_update').classList.remove('hidden');
 }
 
-/** ONLINE UPDATE CHECKER **/
-function initOnlineUpdateChecker() {
-  if (onlineUpdCapable) {
-    getId('check_online_update').classList.remove('hidden');
-    getId('check_online_update').value = "Check for Online Update";
-    getId('check_online_update').disabled = false;
-    getId("update_url").href = "/update.html";
-    console.log("Online Update is available");
-  } else {
-    getId('check_online_update').classList.add('hidden');
-    getId("update_url").href = updateUrl;
-    console.log("Online Update not available");
-  }
-}
 
-function checkOnlineUpdate(button) {
-  if (button.value === "Check for Online Update") {
-    console.log("Checking for online update");
-    button.value = "Checking...";
-    button.disabled = true;
-    fetch('/onlineupdatecheck')
-      .then(response => response.text())
-      .then(data => {
-        console.log("Check update response:", data);
-        // The server will send WebSocket messages with the actual results so just wait
-      })
-      .catch(error => {
-        console.error("Error checking for updates:", error);
-        button.value = "Check for Online Update";
-        button.disabled = false;
-      });
-  } else if (button.value.startsWith("Update to")) {
-    console.log("Starting online update via HTTP");
-    // Show and reset progress bar
-    const bar = getId('updateprogress');
-    if (bar) { bar.hidden = false; bar.value = 0; }
-
-    button.disabled = true;
-    fetch('/onlineupdatestart')
-      .then(response => response.text())
-      .then(data => {
-        console.log("Start update response:", data);
-        // Prepare UI: hide form, show status and progress bar
-        getId('updateform').attr('class','hidden');
-        const status = getId('uploadstatus');
-        
-        if(status) status.innerHTML = getId('check_online_update').value;
-
-        getId("uploadstatus").innerHTML = "Starting online update...";
-        getId('updateform').classList.add('hidden');
-        getId("updateprogress").value = 0;
-        getId('updateprogress').hidden=false;
-        getId('update_cancel_button').hidden=true;
-        getId('check_online_update').classList.add('hidden');
-        // WebSocket messages will drive progress
-      })
-      .catch(error => {
-        console.error("Error starting update:", error);
-        button.value = "Check for Online Update";
-        button.disabled = false;
-        getId("uploadstatus").innerHTML = "Error starting online update";
-        getId('updateform').classList.remove('hidden');
-        getId('updateprogress').hidden=true;
-        getId("updateprogress").value = 0;
-        getId('update_cancel_button').hidden=false;
-        getId('check_online_update').classList.remove('hidden');
-      });
-  }
-}
-
-/** TIMEZONES **/
-let timezoneData = null;
-async function loadTimezones() {
-  try {
-    const response = await fetch(localTZjson);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    timezoneData = await response.json();
-    populateTZDropdown(timezoneData);
-  } catch (err) {
-    console.error("Failed to load local timezones:", err);
-  }
-}
-function populateTZDropdown(zones) {
-  const select = getId('tz_name');
-  const input = getId('tzposix');
-  if (!select || !input) {
-    return;
-  }
-  select.innerHTML = '';
-  input.readOnly = true;
-  Object.entries(zones).forEach(([zone, posix]) => {
-    const option = document.createElement('option');
-    option.value = posix;
-    option.textContent = zone.length > 60 ? zone.substring(0, 57) + '...' : zone;
-    select.appendChild(option);
-  });
-  // Handle dropdown changes
-  select.addEventListener('change', () => {
-    input.value = select.value;
-  });
-}
-
-/** TOOLS AKA DANGERZONE **/
-function showDangerConfirm(buttonId) {
-  hideDangerConfirm();
-  const btn = getId(buttonId);
-  if(btn) btn.classList.remove('hidden');
-}
-
-function hideDangerConfirm() {
-  const btns = ['dz_reboot', 'dz_format', 'dz_reset'];
-  btns.forEach(id => {
-    const btn = getId(id);
-    if(btn) btn.classList.add('hidden');
-  });
-}
-
-function checkDangerZone() {
-  const sw1 = getId('dangerzone_sw1');
-  const sw2 = getId('dangerzone_sw2');
-  const sw3 = getId('dangerzone_sw3');
-  if(!sw1 || !sw2 || !sw3) return;
-  
-  const allChecked = sw1.classList.contains('checked') && 
-                     sw2.classList.contains('checked') && 
-                     sw3.classList.contains('checked');
-  
-  const dangerzone = getId('dangerzone');
-  const txt = getId('dangerzone_txt');
-  
-  if(allChecked) {
-    if(dangerzone) dangerzone.classList.remove('hidden');
-    if(txt) {
-      const replacement = txt.getAttribute('replacement');
-      if(replacement) txt.textContent = replacement;
-    }
-  } else {
-    if(dangerzone) dangerzone.classList.add('hidden');
-    if(txt) txt.textContent = 'Turn on all switches to unlock';
-  }
-}
-
-function toggleDangerZoneSwitch(switchId) {
-  const sw = getId(switchId);
-  if(!sw) return;
-  sw.classList.toggle('checked');
-  hideDangerConfirm();
-  checkDangerZone();
-}
-
-function initDangerZone() {
-  const switches = ['dangerzone_sw1', 'dangerzone_sw2', 'dangerzone_sw3'];
-  switches.forEach(id => {
-    const sw = getId(id);
-    if(sw) sw.classList.remove('checked');
-  });
-  
-  const txt = getId('dangerzone_txt');
-  if(txt) txt.textContent = 'Turn on all switches to unlock';
-  
-  const dangerzone = getId('dangerzone');
-  if(dangerzone) dangerzone.classList.add('hidden');
-  
-  hideDangerConfirm();
-}

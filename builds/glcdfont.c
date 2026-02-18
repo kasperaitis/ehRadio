@@ -1,3 +1,5 @@
+// Actually unsure of this one... it is from yoRadio v0.8.988 2023... Cyrillic support?
+
 // This is the 'classic' fixed-space bitmap font for Adafruit_GFX since 1.0.
 // See gfxfont.h for newer custom bitmap font info.
 

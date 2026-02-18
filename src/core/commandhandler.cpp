@@ -162,6 +162,63 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
     return true;
   }
   
+  /*********************************************/
+  /************** CURATED PLAYLISTS ************/
+  /*********************************************/
+  if (strEquals(command, "loadindex")) {
+    extern TaskHandle_t g_curatedTaskHandle;
+    if (g_curatedTaskHandle == NULL) {
+      xTaskCreate(vTaskFetchCuratedIndex, "curatedIndex", 8192, NULL, 5, &g_curatedTaskHandle);
+    }
+    return true;
+  }
+  
+  if (strEquals(command, "loadplaylist")) {
+    extern TaskHandle_t g_curatedTaskHandle;
+    if (g_curatedTaskHandle == NULL) {
+      char* filename = new char[strlen(value) + 1];
+      strcpy(filename, value);
+      xTaskCreate(vTaskFetchCuratedPlaylist, "curatedPlaylist", 8192, filename, 5, &g_curatedTaskHandle);
+    }
+    return true;
+  }
+  
+  if (strEquals(command, "curated_import")) {
+    // Import the downloaded playlist file (pl_import.json)
+    // Value is "replace" or "merge"
+    // This prepares the file for review but doesn't save permanently yet
+    bool isReplace = (strcmp(value, "replace") == 0);
+    
+    // Copy pl_import.json to tmp_pl for editing
+    if (SPIFFS.exists("/www/pl_import.json")) {
+      SPIFFS.remove(TMP_PATH);
+      File src = SPIFFS.open("/www/pl_import.json", "r");
+      File dst = SPIFFS.open(TMP_PATH, "w");
+      if (src && dst) {
+        uint8_t buffer[512];
+        while (src.available()) {
+          size_t len = src.read(buffer, sizeof(buffer));
+          dst.write(buffer, len);
+        }
+        src.close();
+        dst.close();
+        
+        Serial.printf("[Curated] Prepared playlist for review (mode: %s)\n", value);
+        // Send signal to frontend to open editor with this file
+        char msgbuf[64];
+        snprintf(msgbuf, sizeof(msgbuf), "{\"curated_ready\":true,\"mode\":\"%s\"}", value);
+        websocket.text(cid, msgbuf);
+      } else {
+        Serial.println("[Curated] Failed to prepare playlist");
+        websocket.text(cid, "{\"curated_failed\":true}");
+      }
+    } else {
+      Serial.println("[Curated] pl_import.json not found");
+      websocket.text(cid, "{\"curated_failed\":true}");
+    }
+    return true;
+  }
+  
   return false;
 }
 

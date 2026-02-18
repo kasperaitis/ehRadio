@@ -9,6 +9,14 @@ let searchStartTime = 0;  // track when a search is initiated
 
 window.addEventListener('load', onSearchLoad);
 
+// Unhide 'searchtitle2' if curatedLists is true (for curated.html)
+window.addEventListener('DOMContentLoaded', function() {
+  if (typeof curatedLists !== 'undefined' && curatedLists === true) {
+    var el = document.querySelector('.searchtitle2');
+    if (el) el.classList.remove('hidden');
+  }
+});
+
 function onSearchLoad(event) {
   // Centralized event listeners
   document.getElementById('searchdone').addEventListener('click', () => { window.location.href = '/'; });
@@ -41,9 +49,9 @@ function onSearchLoad(event) {
       const index = button.dataset.index;
       const action = button.dataset.action;
       if (action === 'preview') {
-        sendStationAction(index, false);
+        handleStationAction(index, false);
       } else if (action === 'add') {
-        sendStationAction(index, true);
+        handleStationAction(index, true);
       }
     }
   });
@@ -325,7 +333,7 @@ function fetchSearchResults(showLoadingMsg, retries = 5, delay = 300) {
   })
   .then(data => {
     stationArr = Array.isArray(data) ? data : [];
-    populateSearchTable(stationArr);
+    populateSearchTable(stationArr, true);
     updateSearchPageDisplay();
     setSearchButtonsDisabled(false);
   })
@@ -457,12 +465,13 @@ function searchStations(isPageNav = false) {
   });
 }
 
-function populateSearchTable(data) {
+function populateSearchTable(data, afterSearch = false) {
   const table = document.getElementById('stationsTable');
   table.innerHTML = "";
   if (!data || data.length === 0) {
-    table.innerHTML = '<tr><td class="importantmessage" colspan="4">Try searching.</td></tr>';
-    hideSearchPageNav();
+    const message = afterSearch ? 'No results found. Try a different search.' : 'Try searching.';
+    table.innerHTML = `<tr><td class="importantmessage" colspan="4">${message}</td></tr>`;
+    hideSearchPageNav(); //
     return;
   }
   const rows = data.map((station, i) => {
@@ -500,6 +509,8 @@ function populateSearchTable(data) {
   table.innerHTML = rows;
 }
 
+// SVG icons from https://www.svgviewer.dev/s/474949/play & https://www.svgviewer.dev/s/495943/plus
+
 function quickSearch(genre) {
   document.getElementById('searchType1').value = 'tag';
   document.getElementById('searchInput1').value = genre;
@@ -516,7 +527,7 @@ function quickSearch(genre) {
   searchStations();
 }
 
-function sendStationAction(inx, addtoplaylist) {
+function handleStationAction(inx, addtoplaylist) {
   const station = stationArr[inx];
   if (!station) {
     console.error('Invalid station index:', inx);
@@ -524,22 +535,5 @@ function sendStationAction(inx, addtoplaylist) {
   }
   const name = station.name;
   const url = station.url_resolved || station.url;
-  const label = addtoplaylist ? "Added to playlist: " : "Preview: ";
-  const formData = new URLSearchParams();
-  formData.append('name', name);
-  formData.append('url', url);
-  formData.append('addtoplaylist', addtoplaylist);
-  fetch('/search', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: formData
-  })
-  .then(response => {
-    if (!response.ok) throw new Error('Action failed');
-    return response.text();
-  })
-  .then(responseText => {
-    console.log(label + name, 'Response:', responseText);
-  })
-  .catch(error => console.error('Error sending station action:', error));
+  sendStationAction(name, url, addtoplaylist);
 }

@@ -7,15 +7,18 @@
   <meta name="theme-color" content="#e3d25f">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABABAMAAABYR2ztAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAB5QTFRFyAwCAAAAyAwCyAwCyAwCyAwCyAwCyAwCyAwCyAwCS0TDwgAAAAp0Uk5T/wAM4Cq8mkZ/ZYZ9vz0AAAIWSURBVHichZXBb9MwFMY/YZLC0W5puluddWp2i9YWbbdFSidxC9uoOLYDUe22DoTgloGQdmTAhf8W20ldk9nOu9S1f+p73/eeXdBGJI3vaALfMz/A0js/EOHIDwzQ8QMvEPqBUxDuBZbAxgf0UmDlA/oAzn3AjQA6PqAUQOgC9kT5hQACseY2oH/JGWRwGk1twIC8HVXA6PeVDYgAooD7wvDCAHrYRWYDWGEF+u/1+kafPzdk9sj1VtNSAzuvYojtk/pLqQHtVTSDaDDqLKcaeFpXdZaGECMCslZZ9jXwugLOUkwhhkyEmtShBlRD2WexeqiBDvtjAk8kMJd94VAjAHIoWtQ1U8QsVXprABe4lNXUsaGHs4NKL+hevUk2GiBcuFpUckATLX6ugfijdgyGwalevdkZAkO9JaSKgQ9ABjkn7ghFCpZ6gE4bcCSBwgOs5Mj9bAOG7nPxFMAcxUfxjBq9sEUgf8Hrw7QlhZJJI7cRQaZu1oETOK+unrOKY14BTi+/bS9vcmGvgOvb3bPVObsyrr8tyS3fAqP8i+W8fpLB8q+OGl9+WEgVS4eCqozrWyS+gRIzB/rKN1HBL1lk4jqeLKpesNJ+TuLaarpPJhNLKVNt1PhTnsupIJNFefxDoeG7WboyH1JWBn/Xecy7d9K3RTpl2ZibAI0r47oP6mO81g8p/T+Gm8bGo7/FViBrAea8sfEPiURzVU+EBKkAAAAASUVORK5CYII=">
-  <link rel="stylesheet" title="base" href="theme.css" type="text/css">
-  <link rel="stylesheet" title="base" href="style.css" type="text/css">
+  <link rel="icon" type="image/x-icon" href="icon.png">
+  <link rel="stylesheet" id="themeCSS" href="theme.css" type="text/css">
+  <link rel="stylesheet" id="styleCSS" href="style.css" type="text/css">
   <title>ehRadio - Search</title>
 </head>
 
 <body>
   <div id="searchcontent">
-    <h2 class="searchtitle">Search</h2>
+    <div id="searchheader">
+      <h2 class="searchtitle1">Search</h2>
+      <h2 class="searchtitle2 hidden"><a href="curated.html">Curated Lists</a></h2>
+    </div>
     <div class="quicksearches">
       <table class="quicksearchtable">
         <tr>
@@ -63,7 +66,6 @@
       </div>
       <div id="searchRow1" class="search-row">
         <button class="searchbutton search plus" id="addSearchRowBtn" title="Add search criteria">
-          <!--https://www.svgviewer.dev/s/473138/minus-->
           <svg viewBox="0 0 24 24" class="stroke">
             <path d="M5 12h7m7 0h-7m0 0V5m0 7v7" />
           </svg>
@@ -78,6 +80,8 @@
         <input type="text" class="searchtextinput" id="searchInput1" placeholder="Enter search term">
         <button class="searchbutton search" id="searchBtn" disabled>Search</button>
       </div>
+      
+      <!-- SVG icons from https://www.svgviewer.dev/s/495943/plus & https://www.svgviewer.dev/s/473138/minus -->
       <div id="searchRow2" class="search-row hidden">
         <button class="searchbutton search minus" id="removeSearchRowBtn2" data-row="2" title="Remove search criteria">
           <svg viewBox="0 0 24 24" class="stroke">
@@ -122,10 +126,19 @@
       <span class="hidden" id="pageDisplay">Page 1</span>
       <button class="searchbutton hidden" id="nextSearchPageBtn">&rarr;</button>
     </div>
-    <div class="searchbutton" data-name="searchdone" id="searchdone">done</div>
+    <div class="fb" data-name="searchdone" id="searchdone">done</div>
     <div id="copy">Search by <a target="_blank" href="https://radio-browser.info/">RadioBrowser</a> &mdash; Problem? Check <a target="_blank" href="https://api.radio-browser.info/net">the status</a></div>
   </div>
 </body>
-<script src="search.js"></script>
+
+<script src="variables.js"></script>
+<script src="curated_variables.js"></script>
+<script>
+  var v = '?v=' + radioVersion;
+  document.getElementById('themeCSS').href = 'theme.css' + v;
+  document.getElementById('styleCSS').href = 'style.css' + v;
+  document.write('<script src="playstation.js' + v + '"><\/script>');
+  document.write('<script src="search.js' + v + '"><\/script>');
+</script>
 
 </html>

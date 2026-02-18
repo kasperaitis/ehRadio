@@ -3,6 +3,7 @@
 #include <SPIFFS.h>
 #include <Update.h>
 #include <ESPmDNS.h>
+#include <esp_task_wdt.h>
 #include "config.h"
 #include "netserver.h"
 #include <ArduinoJson.h>
@@ -59,10 +60,12 @@
   #define DBGVB(...)
 #endif
 
-// Global list for radio-browser servers to persist across searches
+// Global list for Radio-Browser servers to persist across searches
 String rb_servers[20];
 // For the search task
 TaskHandle_t g_searchTaskHandle = NULL;
+// For the curated playlists task
+TaskHandle_t g_curatedTaskHandle = NULL;
 #define FS_REQUIRED_FREE_SPACE 150 // in KB - must be minimum x1.5 of the limit_per_page in search.js (100)
 
 //#define CORS_DEBUG //Enable CORS policy: 'Access-Control-Allow-Origin' (for testing)
@@ -127,36 +130,46 @@ void handleSearchPost(AsyncWebServerRequest *request) {
   sUrl.trim();
   if (sName.length() >= sizeof(config.station.name)) sName = sName.substring(0, sizeof(config.station.name) - 1);
   if (sUrl.length() >= sizeof(config.station.url)) sUrl = sUrl.substring(0, sizeof(config.station.url) - 1);
+  player.sendCommand({PR_STOP, 0}); // Stop current playback
+  
+  // Check for duplicate URL in playlist (for both preview and add)
+  bool found = false;
+  int foundIdx = 0;
+  auto normalizeUrl = [](const String& url) -> String {
+      String u = url;
+      u.trim();
+      if (u.startsWith("http://")) u = u.substring(7);
+      else if (u.startsWith("https://")) u = u.substring(8);
+      u.trim();
+      return u;
+      };
+  String normNewUrl = normalizeUrl(sUrl);
+  uint16_t cs = config.playlistLength();
+  for (int i = 1; i <= cs; ++i) {
+    config.loadStation(i);
+    String existingUrl = String(config.station.url);
+    String normExistingUrl = normalizeUrl(existingUrl);
+    if (normExistingUrl.equalsIgnoreCase(normNewUrl)) {
+      found = true;
+      foundIdx = i;
+      break;
+    }
+    // Reset watchdog every 5 iterations to prevent timeout
+    if (i % 5 == 0) esp_task_wdt_reset();
+  }
+  
   if (!addtoplaylist) { // This is a preview
-    config.loadStation(0); // Load into temporary station slot
-    launchPlaybackTask(sUrl, sName);
-    netserver.requestOnChange(GETINDEX, 0);
-    request->send(200, "text/plain", "PREVIEW");
+    if (found) { // URL exists in playlist, play that station
+      player.sendCommand({PR_PLAY, (uint16_t)foundIdx});
+      request->send(200, "text/plain", "EXISTING");
+    } else { // URL not in playlist, preview in slot 0
+      config.loadStation(0); // Load into temporary station slot
+      launchPlaybackTask(sUrl, sName);
+      netserver.requestOnChange(GETINDEX, 0);
+      request->send(200, "text/plain", "PREVIEW");
+    }
   } else { // This is add to playlist
     int sOvol = 0;
-    // Check for duplicate URL before adding
-    bool found = false;
-    int foundIdx = 0;
-    auto normalizeUrl = [](const String& url) -> String {
-        String u = url;
-        u.trim();
-        if (u.startsWith("http://")) u = u.substring(7);
-        else if (u.startsWith("https://")) u = u.substring(8);
-        u.trim();
-        return u;
-        };
-    String normNewUrl = normalizeUrl(sUrl);
-    uint16_t cs = config.playlistLength();
-    for (int i = 1; i <= cs; ++i) {
-      config.loadStation(i);
-      String existingUrl = String(config.station.url);
-      String normExistingUrl = normalizeUrl(existingUrl);
-      if (normExistingUrl.equalsIgnoreCase(normNewUrl)) {
-        found = true;
-        foundIdx = i;
-        break;
-      }
-    }
     if (found) { // play the slot if it already exists
       player.sendCommand({PR_PLAY, (uint16_t)foundIdx});
       request->send(200, "text/plain", "DUPLICATE");
@@ -165,8 +178,10 @@ void handleSearchPost(AsyncWebServerRequest *request) {
       if (playlistfile) {
         playlistfile.printf("%s\t%s\t%d\r\n", sName.c_str(), sUrl.c_str(), sOvol);
         playlistfile.close();
+        esp_task_wdt_reset(); // Reset watchdog before heavy operations
         uint16_t newIdx = cs + 1;
         config.indexPlaylist();
+        esp_task_wdt_reset(); // Reset watchdog between operations
         config.initPlaylist();
         player.sendCommand({PR_PLAY, newIdx});
         netserver.requestOnChange(PLAYLISTSAVED, 0);
@@ -362,10 +377,10 @@ void NetServer::processQueue() {
         }
       //case STARTUP:       sprintf (wsbuf, "{\"command\":\"startup\", \"payload\": {\"mode\":\"%s\", \"version\":\"%s\"}}", network.status == CONNECTED ? "player" : "ap", RADIOVERSION); break;
       case GETINDEX:      {
-          requestOnChange(STATION, clientId); 
-          requestOnChange(TITLE, clientId); 
-          requestOnChange(VOLUME, clientId); 
-          requestOnChange(EQUALIZER, clientId); 
+          requestOnChange(STATION, clientId);
+          requestOnChange(TITLE, clientId);
+          requestOnChange(VOLUME, clientId);
+          requestOnChange(EQUALIZER, clientId);
           requestOnChange(BALANCE, clientId); 
           requestOnChange(BITRATE, clientId); 
           requestOnChange(MODE, clientId); 
@@ -408,13 +423,13 @@ void NetServer::processQueue() {
                                   config.store.tz_name,
                                   config.store.tzposix,
                                   config.store.sntp1,
-                                  config.store.sntp2); 
+                                  config.store.sntp2);
                                   break;
       case GETWEATHER:    sprintf (wsbuf, "{\"wen\":%d,\"wlat\":\"%s\",\"wlon\":\"%s\",\"wkey\":\"%s\"}",
                                   config.store.showweather,
                                   config.store.weatherlat,
                                   config.store.weatherlon,
-                                  config.store.weatherkey); 
+                                  config.store.weatherkey);
                                   break;
       case GETMQTT:       sprintf (wsbuf, "{\"mqttenable\":%d,\"mqtthost\":\"%s\",\"mqttport\":\"%d\",\"mqttuser\":\"%s\",\"mqttpass\":\"%s\",\"mqtttopic\":\"%s\"}",
                                   config.store.mqttenable,
@@ -422,13 +437,13 @@ void NetServer::processQueue() {
                                   config.store.mqttport,
                                   config.store.mqttuser,
                                   config.store.mqttpass,
-                                  config.store.mqtttopic); 
+                                  config.store.mqtttopic);
                                   break;
       case GETCONTROLS:   sprintf (wsbuf, "{\"vols\":%d,\"enca\":%d,\"irtl\":%d,\"skipup\":%d}",
                                   config.store.volsteps,
                                   config.store.encacc,
                                   config.store.irtlp,
-                                  config.store.skipPlaylistUpDown); 
+                                  config.store.skipPlaylistUpDown);
                                   break;
       case DSPON:         sprintf (wsbuf, "{\"dspontrue\":%d}", 1); break;
       case STATION:       requestOnChange(STATIONNAME, clientId); requestOnChange(ITEM, clientId); break;
@@ -471,6 +486,9 @@ void NetServer::processQueue() {
       case GETPLAYERMODE: sprintf (wsbuf, "{\"playermode\": \"%s\"}", config.getMode()==PM_SDCARD?"modesd":"modeweb"); break;
       case SEARCH_DONE:   sprintf (wsbuf, "{\"search_done\":true}"); break;
       case SEARCH_FAILED: sprintf (wsbuf, "{\"search_failed\":true}"); break;
+      case CURATED_INDEX_DONE: sprintf (wsbuf, "{\"curated_index_done\":true}"); break;
+      case CURATED_PLAYLIST_DONE: sprintf (wsbuf, "{\"curated_playlist_done\":true}"); break;
+      case CURATED_FAILED: sprintf (wsbuf, "{\"curated_failed\":true}"); break;
       #ifdef USE_SD
         case CHANGEMODE:    config.changeMode(config.newConfigMode); return; break;
       #endif
@@ -497,7 +515,6 @@ void NetServer::loop() {
   }
   websocket.cleanupClients();
   switch (importRequest) {
-    case IMPL:    importPlaylist();  importRequest = IMDONE; break;
     case IMWIFI:  config.importWifi(); importRequest = IMDONE; break;
     default:      break;
   }
@@ -596,106 +613,6 @@ int NetServer::_readPlaylistLine(File &file, char * line, size_t size) {
     if (line[bytesRead-1]=='\r') line[bytesRead-1]=0;
   }
   return bytesRead;
-}
-
-bool NetServer::importPlaylist() {
-  if (config.getMode()==PM_SDCARD) return false;
-  File tempfile = SPIFFS.open(TMP_PATH, "r");
-  if (!tempfile) {
-    return false;
-  }
-  char sName[BUFLEN], sUrl[BUFLEN], linePl[BUFLEN*3];
-  int sOvol;
-  // Read first non-empty line
-  String firstLine;
-  size_t firstPos = tempfile.position();
-  while (tempfile.available()) {
-    _readPlaylistLine(tempfile, linePl, sizeof(linePl)-1);
-    firstLine = String(linePl); firstLine.trim();
-    if (firstLine.length() > 0) break;
-    firstPos = tempfile.position();
-  }
-  tempfile.seek(firstPos); // rewind to first non-empty line
-  // Detect minified JSON array (single line, starts with [)
-  bool isJsonArray = firstLine.startsWith("[");
-  bool foundAny = false;
-  File playlistfile = SPIFFS.open(TMP2_PATH, "w");
-  if (isJsonArray) {
-    // Read the whole file into a String
-    String jsonStr;
-    tempfile.seek(0);
-    while (tempfile.available()) {
-      _readPlaylistLine(tempfile, linePl, sizeof(linePl)-1);
-      jsonStr += String(linePl);
-    }
-    jsonStr.trim();
-    // Remove leading/trailing brackets if present
-    if (jsonStr.startsWith("[")) jsonStr = jsonStr.substring(1);
-    if (jsonStr.endsWith("]")) jsonStr = jsonStr.substring(0, jsonStr.length()-1);
-    // Robustly extract each {...} object using brace counting
-    int len = jsonStr.length();
-    int i = 0;
-    while (i < len) {
-      // Skip whitespace and commas
-      while (i < len && (jsonStr[i] == ' ' || jsonStr[i] == '\n' || jsonStr[i] == '\r' || jsonStr[i] == ',')) i++;
-      if (i >= len) break;
-      if (jsonStr[i] != '{') { i++; continue; }
-      int start = i;
-      int brace = 1;
-      i++;
-      while (i < len && brace > 0) {
-        if (jsonStr[i] == '{') brace++;
-        else if (jsonStr[i] == '}') brace--;
-        i++;
-      }
-      if (brace == 0) {
-        String objStr = jsonStr.substring(start, i);
-        objStr.trim();
-        if (objStr.length() == 0) continue;
-        strncpy(linePl, objStr.c_str(), sizeof(linePl)-1);
-        if (config.parseJSON(linePl, sName, sUrl, sOvol)) {
-          snprintf(linePl, sizeof(linePl)-1, "%s\t%s\t%d", sName, sUrl, sOvol);
-          playlistfile.print(String(linePl) + "\r\n");
-          foundAny = true;
-        }
-      }
-    }
-  } else {
-    // Not a minified array: process line by line
-    tempfile.seek(0);
-    while (tempfile.available()) {
-      _readPlaylistLine(tempfile, linePl, sizeof(linePl)-1);
-      String trimmed = String(linePl); trimmed.trim();
-      if (trimmed.length() == 0 || trimmed == "[" || trimmed == "]" || trimmed == ",") continue;
-      // Only treat as JSON if line starts with '{' and ends with '}'
-      if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-        if (config.parseJSON(linePl, sName, sUrl, sOvol)) {
-          snprintf(linePl, sizeof(linePl)-1, "%s\t%s\t%d", sName, sUrl, sOvol);
-          playlistfile.print(String(linePl) + "\r\n");
-          foundAny = true;
-        }
-      } else {
-        // Only treat as CSV if not JSON
-        if (config.parseCSVimport(linePl, sName, sUrl, sOvol)) {
-          snprintf(linePl, sizeof(linePl)-1, "%s\t%s\t%d", sName, sUrl, sOvol);
-          playlistfile.print(String(linePl) + "\r\n");
-          foundAny = true;
-        }
-      }
-    }
-  }
-  playlistfile.flush();
-  playlistfile.close();
-  tempfile.close();
-  if (foundAny) {
-    SPIFFS.remove(PLAYLIST_PATH);
-    SPIFFS.rename(TMP2_PATH, PLAYLIST_PATH);
-    requestOnChange(PLAYLISTSAVED, 0);
-    return true;
-  }
-  SPIFFS.remove(TMP_PATH);
-  SPIFFS.remove(TMP2_PATH);
-  return false;
 }
 
 void NetServer::requestOnChange(requestType_e request, uint8_t clientId) {
@@ -848,7 +765,7 @@ useHostname:
 
 void vTaskSearchRadioBrowser(void *pvParameters) {
   char* search_str = (char*)pvParameters;
-  Serial.printf("[Search] Starting radio browser search. Search: %s\n", search_str);
+  Serial.printf("[Search] Starting Radio Browser search. Search: %s\n", search_str);
   SPIFFS.remove("/www/searchresults.json");
   // Check SPIFFS free space
   size_t freeSpace = SPIFFS.totalBytes() - SPIFFS.usedBytes();
@@ -976,6 +893,93 @@ void vTaskSearchRadioBrowser(void *pvParameters) {
   delete[] search_str;
   search_str = nullptr;
   g_searchTaskHandle = NULL;
+  vTaskDelete(NULL);
+}
+
+void vTaskFetchCuratedIndex(void *pvParameters) {
+  Serial.println("[Curated] Starting curated index fetch");
+  SPIFFS.remove("/www/curated.json");
+  
+  // Check SPIFFS free space
+  size_t freeSpace = SPIFFS.totalBytes() - SPIFFS.usedBytes();
+  if (freeSpace < (FS_REQUIRED_FREE_SPACE * 1024)) {
+    Serial.printf("[Curated] [Error] Not enough free SPIFFS space: %u bytes. Aborting.\n", freeSpace);
+    netserver.requestOnChange(CURATED_FAILED, 0);
+    g_curatedTaskHandle = NULL;
+    vTaskDelete(NULL);
+    return;
+  }
+  
+  ESPFileUpdater curatedFetch(SPIFFS);
+  curatedFetch.setUserAgent(ESPFILEUPDATER_USERAGENT);
+  curatedFetch.setBuffer(SEARCHRESULTS_BUFFER);
+  curatedFetch.setYieldInterval(SEARCHRESULTS_YIELDINTERVAL);
+  const char* localPath = "/www/curated.json";
+  
+  #ifdef CURATED_LISTS_URL
+    String url = String(CURATED_LISTS_URL) + String(CURATED_LISTS_INDEX);
+    Serial.printf("[Curated] Attempting to download index from: %s\n", url.c_str());
+    
+    auto status = curatedFetch.checkAndUpdate(localPath, url, ESPFILEUPDATER_VERBOSE);
+    if (status == ESPFileUpdater::UPDATED) {
+      Serial.println("[Curated] Successfully downloaded curated index");
+      netserver.requestOnChange(CURATED_INDEX_DONE, 0);
+    } else {
+      Serial.println("[Curated] [Error] Failed to download curated index");
+      SPIFFS.remove(localPath);
+      netserver.requestOnChange(CURATED_FAILED, 0);
+    }
+  #else
+    Serial.println("[Curated] [Error] CURATED_LISTS_URL not defined");
+    netserver.requestOnChange(CURATED_FAILED, 0);
+  #endif
+  
+  g_curatedTaskHandle = NULL;
+  vTaskDelete(NULL);
+}
+
+void vTaskFetchCuratedPlaylist(void *pvParameters) {
+  char* filename = (char*)pvParameters;
+  Serial.printf("[Curated] Starting playlist fetch: %s\n", filename);
+  SPIFFS.remove("/www/pl_import.json");
+  
+  // Check SPIFFS free space
+  size_t freeSpace = SPIFFS.totalBytes() - SPIFFS.usedBytes();
+  if (freeSpace < (FS_REQUIRED_FREE_SPACE * 1024)) {
+    Serial.printf("[Curated] [Error] Not enough free SPIFFS space: %u bytes. Aborting.\n", freeSpace);
+    netserver.requestOnChange(CURATED_FAILED, 0);
+    delete[] filename;
+    g_curatedTaskHandle = NULL;
+    vTaskDelete(NULL);
+    return;
+  }
+  
+  ESPFileUpdater playlistFetch(SPIFFS);
+  playlistFetch.setUserAgent(ESPFILEUPDATER_USERAGENT);
+  playlistFetch.setBuffer(SEARCHRESULTS_BUFFER);
+  playlistFetch.setYieldInterval(SEARCHRESULTS_YIELDINTERVAL);
+  const char* localPath = "/www/pl_import.json";
+  
+  #ifdef CURATED_LISTS_URL
+    String url = String(CURATED_LISTS_URL) + String(filename);
+    Serial.printf("[Curated] Attempting to download playlist from: %s\n", url.c_str());
+    
+    auto status = playlistFetch.checkAndUpdate(localPath, url, ESPFILEUPDATER_VERBOSE);
+    if (status == ESPFileUpdater::UPDATED) {
+      Serial.printf("[Curated] Successfully downloaded playlist: %s\n", filename);
+      netserver.requestOnChange(CURATED_PLAYLIST_DONE, 0);
+    } else {
+      Serial.printf("[Curated] [Error] Failed to download playlist: %s\n", filename);
+      SPIFFS.remove(localPath);
+      netserver.requestOnChange(CURATED_FAILED, 0);
+    }
+  #else
+    Serial.println("[Curated] [Error] CURATED_LISTS_URL not defined");
+    netserver.requestOnChange(CURATED_FAILED, 0);
+  #endif
+  
+  delete[] filename;
+  g_curatedTaskHandle = NULL;
   vTaskDelete(NULL);
 }
 
@@ -1346,10 +1350,7 @@ void handleNotFound(AsyncWebServerRequest * request) {
   if (request->method() == HTTP_POST) {
     if (request->url()=="/webboard") { request->redirect("/"); return; } // <--post files from /data/www
     if (request->url()=="/upload") { // <--upload playlist.csv or wifi.csv
-      if (request->hasParam("plfile", true, true)) {
-        netserver.importRequest = IMPL;
-        request->send(200);
-      } else if (request->hasParam("wifile", true, true)) {
+      if (request->hasParam("wifile", true, true)) {
         netserver.importRequest = IMWIFI;
         request->send(200);
       } else {
@@ -1372,6 +1373,10 @@ void handleNotFound(AsyncWebServerRequest * request) {
   }
   if (request->url() == "/variables.js") {
     char varjsbuf[BUFLEN*2];
+    char escapedRadioVersion[BUFLEN];
+    config.escapeQuotes(RADIOVERSION, escapedRadioVersion, sizeof(escapedRadioVersion));
+    char escapedGithubUrl[BUFLEN];
+    config.escapeQuotes(GITHUBURL, escapedGithubUrl, sizeof(escapedGithubUrl));
     snprintf(varjsbuf, sizeof(varjsbuf),
       "var radioVersion='%s';\n"
       "var formAction='%s';\n"
@@ -1379,7 +1384,7 @@ void handleNotFound(AsyncWebServerRequest * request) {
       "var onlineUpdCapable=%s;\n"
       "var newVerAvailable=%s;\n"
       "var updateUrl='%s';\n",
-      RADIOVERSION,
+      escapedRadioVersion,
       (network.status == CONNECTED && config.wwwFilesExist) ? "webboard" : "",
       (network.status == CONNECTED) ? "player" : "ap",
       #ifdef UPDATEURL
@@ -1388,9 +1393,41 @@ void handleNotFound(AsyncWebServerRequest * request) {
         "false",
       #endif
       (netserver.newVersionAvailable) ? "true" : "false",
-      GITHUBURL
+      escapedGithubUrl
    );
-    request->send(200, "application/javascript", varjsbuf);
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/javascript", varjsbuf);
+    response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response->addHeader("Pragma", "no-cache");
+    response->addHeader("Expires", "0");
+    request->send(response);
+    return;
+  }
+  if (request->url() == "/curated_variables.js") {
+    char varjsbuf[BUFLEN];
+    #ifdef CURATED_LISTS
+      char escapedName[BUFLEN];
+      config.escapeQuotes(CURATED_LISTS, escapedName, sizeof(escapedName));
+      char escapedLink[BUFLEN];
+      config.escapeQuotes(CURATED_LISTS_LINK, escapedLink, sizeof(escapedLink));
+      snprintf(varjsbuf, sizeof(varjsbuf),
+        "var curatedLists=true;\n"
+        "var curatedName=\"%s\";\n"
+        "var curatedLink=\"%s\";\n",
+        escapedName,
+        escapedLink
+      );
+    #else
+      snprintf(varjsbuf, sizeof(varjsbuf),
+        "var curatedLists=false;\n"
+        "var curatedName=\"\";\n"
+        "var curatedLink=\"\";\n"
+      );
+    #endif
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/javascript", varjsbuf);
+    response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response->addHeader("Pragma", "no-cache");
+    response->addHeader("Expires", "0");
+    request->send(response);
     return;
   }
   if (strcmp(request->url().c_str(), "/settings.html") == 0 || strcmp(request->url().c_str(), "/update.html") == 0 || strcmp(request->url().c_str(), "/ir.html") == 0) {
