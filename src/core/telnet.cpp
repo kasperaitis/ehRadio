@@ -301,86 +301,88 @@ void Telnet::on_input(const char* str, uint8_t clientId) {
       player.stepVol(true);
       goto show_prompt;
     }
-    // Battery status commands
-    if (strcmp(str, "cli.batt now") == 0 || strcmp(str, "batt now") == 0 || strcmp(str, "battery now") == 0) {
-      // Force an immediate ADC read so CLI reports the latest values.
-      battery_recalc_now();
-    }
-    if (strcmp(str, "cli.batt") == 0 || strcmp(str, "batt") == 0 || strcmp(str, "battery") == 0 ||
-        strcmp(str, "cli.batt now") == 0 || strcmp(str, "batt now") == 0 || strcmp(str, "battery now") == 0) {
-      // If 'now' was requested we already did battery_recalc_now(), otherwise we use cached readings.
-      BatteryStatus b = battery_get_status();
-      char status_line[256];  // Increased buffer for extended charging info with peak/trough/rate
-      battery_format_status_line(b, status_line, sizeof(status_line), true);
-      printf(clientId, "%s\r\n", status_line);
-      goto show_prompt;
-    }
-
-    // Calibration helper: compute suggested BATTERY_ADC_REF_MV from a measured millivolt value
-    int meas_mv;
-    // Support: 'calbatt <mV>' to compute and save a new ADC ref, or 'calbatt reset' to clear saved value
-    if (strcmp(str, "calbatt reset") == 0 || strcmp(str, "cal.batt reset") == 0) {
-      config.saveValue(&config.store.battery_adc_ref_mv, (uint16_t)0);
-      printf(clientId, "##CLI.CALIB#: Reset saved battery ADC ref (will use compile-time default)\r\n");
-      goto show_prompt;
-    }
-    if (sscanf(str, "calbatt %d", &meas_mv) == 1 || sscanf(str, "cal.batt %d", &meas_mv) == 1) {
-      // Validate measured voltage is in valid Li-Po range
-      if (meas_mv < 2500 || meas_mv > 4500) {
-        printf(clientId, "##CLI.CALIB#: measured voltage %dmV out of valid range (2500-4500mV)\r\n", meas_mv);
+    #if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
+      // Battery status commands
+      if (strcmp(str, "cli.batt now") == 0 || strcmp(str, "batt now") == 0 || strcmp(str, "battery now") == 0) {
+        // Force an immediate ADC read so CLI reports the latest values.
+        battery_recalc_now();
+      }
+      if (strcmp(str, "cli.batt") == 0 || strcmp(str, "batt") == 0 || strcmp(str, "battery") == 0 ||
+          strcmp(str, "cli.batt now") == 0 || strcmp(str, "batt now") == 0 || strcmp(str, "battery now") == 0) {
+        // If 'now' was requested we already did battery_recalc_now(), otherwise we use cached readings.
+        BatteryStatus b = battery_get_status();
+        char status_line[256];  // Increased buffer for extended charging info with peak/trough/rate
+        battery_format_status_line(b, status_line, sizeof(status_line), true);
+        printf(clientId, "%s\r\n", status_line);
         goto show_prompt;
       }
-      BatteryStatus b = battery_get_status();
-      if (!b.valid) {
-        printf(clientId, "##CLI.CALIB#: battery not detected\r\n");
+  
+      // Calibration helper: compute suggested BATTERY_ADC_REF_MV from a measured millivolt value
+      int meas_mv;
+      // Support: 'calbatt <mV>' to compute and save a new ADC ref, or 'calbatt reset' to clear saved value
+      if (strcmp(str, "calbatt reset") == 0 || strcmp(str, "cal.batt reset") == 0) {
+        config.saveValue(&config.store.battery_adc_ref_mv, (uint16_t)0);
+        printf(clientId, "##CLI.CALIB#: Reset saved battery ADC ref (will use compile-time default)\r\n");
         goto show_prompt;
       }
-      if (b.voltage_mv == 0) {
-        printf(clientId, "##CLI.CALIB#: cannot calibrate (firmware voltage 0)\r\n");
+      if (sscanf(str, "calbatt %d", &meas_mv) == 1 || sscanf(str, "cal.batt %d", &meas_mv) == 1) {
+        // Validate measured voltage is in valid Li-Po range
+        if (meas_mv < 2500 || meas_mv > 4500) {
+          printf(clientId, "##CLI.CALIB#: measured voltage %dmV out of valid range (2500-4500mV)\r\n", meas_mv);
+          goto show_prompt;
+        }
+        BatteryStatus b = battery_get_status();
+        if (!b.valid) {
+          printf(clientId, "##CLI.CALIB#: battery not detected\r\n");
+          goto show_prompt;
+        }
+        if (b.voltage_mv == 0) {
+          printf(clientId, "##CLI.CALIB#: cannot calibrate (firmware voltage 0)\r\n");
+          goto show_prompt;
+        }
+        // Sanity check: if measured and firmware values differ by more than 50%, warn user
+        int32_t diff_pct = abs((int32_t)meas_mv - (int32_t)b.voltage_mv) * 100 / b.voltage_mv;
+        if (diff_pct > 50) {
+          printf(clientId, "##CLI.CALIB#: Warning: measured %dmV differs from firmware %dmV by %ld%%. Verify multimeter reading.\r\n", meas_mv, b.voltage_mv, (long)diff_pct);
+        }
+        // Calculate ratio and suggested ADC ref (linear scaling)
+        // Note: b.voltage_mv already checked for zero above
+        double ratio = ((double)meas_mv) / ((double)b.voltage_mv);
+        // Sanity check for unreasonable ratio (should be close to 1.0)
+        if (ratio < 0.5 || ratio > 2.0) {
+          printf(clientId, "##CLI.CALIB#: Computed ratio %.2f is unreasonable. Check multimeter reading.\r\n", ratio);
+          goto show_prompt;
+        }
+        uint32_t curr_ref = (uint32_t)(config.store.battery_adc_ref_mv ? config.store.battery_adc_ref_mv : BATTERY_ADC_REF_MV);
+        uint32_t suggested_ref = (uint32_t)( (double)curr_ref * ratio + 0.5 );
+        // Validate computed reference is in valid range
+        if (suggested_ref < 2000 || suggested_ref > 4000) {
+          printf(clientId, "##CLI.CALIB#: Computed ref %u out of valid range (2000-4000mV). Check multimeter reading.\r\n", (unsigned)suggested_ref);
+          goto show_prompt;
+        }
+        uint16_t newref = (uint16_t)suggested_ref;
+        // Persist to config and save
+        config.saveValue(&config.store.battery_adc_ref_mv, newref);
+        // Recalculate immediately so 'batt' reflects saved value
+        battery_recalc_now();
+        BatteryStatus nb = battery_get_status();
+        printf(clientId, "##CLI.CALIB#: Saved BATTERY_ADC_REF_MV=%u to prefs; new firmware Volt=%dmV, %d%%\r\n", newref, nb.voltage_mv, nb.percentage);
         goto show_prompt;
       }
-      // Sanity check: if measured and firmware values differ by more than 50%, warn user
-      int32_t diff_pct = abs((int32_t)meas_mv - (int32_t)b.voltage_mv) * 100 / b.voltage_mv;
-      if (diff_pct > 50) {
-        printf(clientId, "##CLI.CALIB#: Warning: measured %dmV differs from firmware %dmV by %ld%%. Verify multimeter reading.\r\n", meas_mv, b.voltage_mv, (long)diff_pct);
-      }
-      // Calculate ratio and suggested ADC ref (linear scaling)
-      // Note: b.voltage_mv already checked for zero above
-      double ratio = ((double)meas_mv) / ((double)b.voltage_mv);
-      // Sanity check for unreasonable ratio (should be close to 1.0)
-      if (ratio < 0.5 || ratio > 2.0) {
-        printf(clientId, "##CLI.CALIB#: Computed ratio %.2f is unreasonable. Check multimeter reading.\r\n", ratio);
+  
+      if (strcmp(str, "calbatt") == 0 || strcmp(str, "cal.batt") == 0) {
+        BatteryStatus b = battery_get_status();
+        uint32_t saved = (uint32_t)config.store.battery_adc_ref_mv;
+        uint32_t effective = saved ? saved : (uint32_t)BATTERY_ADC_REF_MV;
+        if (!b.valid) {
+          printf(clientId, "##CLI.CALIB#: battery not detected\r\n");
+        } else {
+          printf(clientId, "##CLI.CALIB#: current firmware Volt=%dmV, saved_ref=%u, effective_ref=%u. Run 'calbatt <measured_mV>' to compute and save a new ADC ref.\r\n", b.voltage_mv, (unsigned)saved, (unsigned)effective);
+        }
         goto show_prompt;
       }
-      uint32_t curr_ref = (uint32_t)(config.store.battery_adc_ref_mv ? config.store.battery_adc_ref_mv : BATTERY_ADC_REF_MV);
-      uint32_t suggested_ref = (uint32_t)( (double)curr_ref * ratio + 0.5 );
-      // Validate computed reference is in valid range
-      if (suggested_ref < 2000 || suggested_ref > 4000) {
-        printf(clientId, "##CLI.CALIB#: Computed ref %u out of valid range (2000-4000mV). Check multimeter reading.\r\n", (unsigned)suggested_ref);
-        goto show_prompt;
-      }
-      uint16_t newref = (uint16_t)suggested_ref;
-      // Persist to config and save
-      config.saveValue(&config.store.battery_adc_ref_mv, newref);
-      // Recalculate immediately so 'batt' reflects saved value
-      battery_recalc_now();
-      BatteryStatus nb = battery_get_status();
-      printf(clientId, "##CLI.CALIB#: Saved BATTERY_ADC_REF_MV=%u to prefs; new firmware Volt=%dmV, %d%%\r\n", newref, nb.voltage_mv, nb.percentage);
-      goto show_prompt;
-    }
-
-    if (strcmp(str, "calbatt") == 0 || strcmp(str, "cal.batt") == 0) {
-      BatteryStatus b = battery_get_status();
-      uint32_t saved = (uint32_t)config.store.battery_adc_ref_mv;
-      uint32_t effective = saved ? saved : (uint32_t)BATTERY_ADC_REF_MV;
-      if (!b.valid) {
-        printf(clientId, "##CLI.CALIB#: battery not detected\r\n");
-      } else {
-        printf(clientId, "##CLI.CALIB#: current firmware Volt=%dmV, saved_ref=%u, effective_ref=%u. Run 'calbatt <measured_mV>' to compute and save a new ADC ref.\r\n", b.voltage_mv, (unsigned)saved, (unsigned)effective);
-      }
-      goto show_prompt;
-    }
-
+    #endif //#if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
+  
     if (strcmp(str, "sys.date") == 0 || strcmp(str, "date") == 0 || strcmp(str, "time") == 0) {
       network.requestTimeSync(true, clientId > MAX_TLN_CLIENTS?clientId:0);
       goto show_prompt;
