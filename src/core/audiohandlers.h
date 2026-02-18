@@ -23,7 +23,7 @@ void audio_info(const char *info) {
     player.setError(info);
     
   }
-  char* ici; char b[64]={0};  // Increased buffer to safely hold bitrate string
+  char* ici; char b[BUFLEN/2]={0};  // Increased buffer to safely hold bitrate string
   if ((ici = strstr(info, "BitRate: ")) != NULL) {
     strlcpy(b, ici + 9, sizeof(b));
     audio_bitrate(b);

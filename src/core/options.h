@@ -543,6 +543,23 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   #define USE_OTA false
 #endif
 
+#ifndef AP_SSID
+  #define AP_SSID "ehRadio"
+#endif
+#ifdef AP_PASSWORD
+  #if (AP_PASSWORD)[0] == '\0' // if it's empty, undefine
+    #undef AP_PASSWORD
+  #endif
+#endif
+#ifndef BUFLEN
+  #define BUFLEN 170 // seems safe... a lot of multipliers exist in the code...
+#endif
+
+//#define OTA_PASS "myotapassword12345"
+//#define HTTP_USER "user"
+//#define HTTP_PASS "password"
+
+
 /*           BATTERY              */
 #ifndef BATTERY_PIN
   #define BATTERY_PIN           255      /* GPIO pin for battery voltage ADC reading */
@@ -604,22 +621,6 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef BATTERY_CRITICAL_THRESHOLD
   #define BATTERY_CRITICAL_THRESHOLD 5   /* Critical battery threshold (percentage, 0-100) */
 #endif
-
-#ifndef AP_SSID
-  #define AP_SSID "ehRadio"
-#endif
-#ifdef AP_PASSWORD
-  #if (AP_PASSWORD)[0] == '\0' // if it's empty, undefine
-    #undef AP_PASSWORD
-  #endif
-#endif
-#ifndef BUFLEN
-  #define BUFLEN 170 // seems safe... a lot of multipliers exist in the code...
-#endif
-
-//#define OTA_PASS "myotapassword12345"
-//#define HTTP_USER "user"
-//#define HTTP_PASS "password"
 
 /*     SOURCE OF UPDATE FILES     */
 /* only used if FIRMWARE is defined as it is in Trip5's automatic Github builds */

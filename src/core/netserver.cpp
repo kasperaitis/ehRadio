@@ -534,7 +534,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
      * NUL byte in the provided buffer. Copy into a local, NUL-terminated
      * stack buffer and parse that instead to avoid heap corruption.
      */
-    char payload[BUFLEN * 2];
+    char payload[BUFLEN*2];
     size_t payloadLen = (len < sizeof(payload) - 1) ? len : (sizeof(payload) - 1);
     memcpy(payload, data, payloadLen);
     payload[payloadLen] = '\0';
@@ -584,7 +584,7 @@ void NetServer::onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t client
 }
 
 void NetServer::getPlaylist(uint8_t clientId) {
-  char buf[200] = {0};  // Increased buffer for IPv6 or longer paths
+  char buf[BUFLEN*2] = {0};  // Increased buffer for IPv6 or longer paths
   sprintf(buf, "{\"file\": \"http://%s%s\"}", WiFi.localIP().toString().c_str(), PLAYLIST_PATH);
   if (clientId == 0) { websocket.textAll(buf); } else { websocket.text(clientId, buf); }
 }
@@ -1216,7 +1216,7 @@ void checkForOnlineUpdate() {
         websocket.textAll("{\"onlineupdateerror\": \"Remote RADIOVERSION not found\"}");
         return;
       }
-      char msgBuf[256];  // Increased buffer for longer version strings
+      char msgBuf[BUFLEN*2];
       if (remoteVer != String(RADIOVERSION)) {
         snprintf(msgBuf, sizeof(msgBuf), "{\"onlineupdateavailable\":true,\"remoteVersion\":\"%s\"}", remoteVer.c_str());
       } else {

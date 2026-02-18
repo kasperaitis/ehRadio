@@ -95,7 +95,7 @@ input[type=range] {
 #playernav .modeitem { display: none; }
 #playernav.sd .modeitem { display: flex; }
 #sdposvals { display: flex; justify-content: space-between; height: 26px; align-items: end; padding: 0 8px; position: relative; }
-#info { display: flex; width: 100%; flex-wrap: wrap; justify-content: space-around; align-items: center; font-size: 14px; margin: 10px 0; color: var(--main-hl-color); }
+#info { display: flex; width: 100%; height: 22px; justify-content: space-around; align-items: center; font-size: 14px; margin: 10px 0; color: var(--main-hl-color); }
 /* Scope info styling to the main info bar only (battery will be on its own row) */
 #info > .infoitem { display: flex; align-items: center; justify-content: center; min-width: 110px; padding: 0 6px; font-size: 14px; color: var(--main-hl-color); }
 /* Battery sits on its own centered row beneath the top info items */

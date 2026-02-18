@@ -62,8 +62,8 @@ const char * const         numtxtFmt    PROGMEM = "%d";
 const char * const           rssiFmt    PROGMEM = "WiFi %d";
 const char * const          iptxtFmt    PROGMEM = "\010 %s";
 const char * const         voltxtFmt    PROGMEM = "\023\025%d";
-const char * const  batteryLowFmt       PROGMEM = " %d%%";       // Low battery format (marker inserted by display code)
-const char * const  batteryPlainFmt     PROGMEM = " %d%%";       // Plain percent
+const char * const     batteryLowFmt    PROGMEM = " %d%%";       // Low battery format (marker inserted by display code)
+const char * const   batteryPlainFmt    PROGMEM = " %d%%";       // Plain percent
 /* Battery range formats (0-25%, 25-75%, 75-100%) - customizable per display */
 // Single-byte custom glyphs for battery ranges (font must include these codes)
 // - These are single-byte codes placed in your font: dec251..253 (octal \373..\375).
