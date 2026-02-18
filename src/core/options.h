@@ -559,7 +559,6 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 //#define HTTP_USER "user"
 //#define HTTP_PASS "password"
 
-
 /*           BATTERY              */
 #ifndef BATTERY_PIN
   #define BATTERY_PIN           255      /* GPIO pin for battery voltage ADC reading */

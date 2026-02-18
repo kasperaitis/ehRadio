@@ -538,10 +538,10 @@ void Display::loop() {
         }
         case DSPRSSI: if (_rssi) { _setRSSI(request.payload); } if (_heapbar && config.store.audioinfo) _heapbar->setValue(player.isRunning()?player.inBufferFilled():0); break;
         #if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
-        case DSPBATTERY: {
-          if(_battery) _updateBattery();
-          break;
-        }
+          case DSPBATTERY: {
+            if(_battery) _updateBattery();
+            break;
+          }
         #endif
         case PSTART: _layoutChange(true);   break;
         case PSTOP:  _layoutChange(false);  break;
@@ -586,70 +586,69 @@ void Display::_setRSSI(int rssi) {
 }
 
 #if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
-void Display::_updateBattery() {
-  if(_battery) {
-    BatteryStatus bat = battery_get_status();
-    if(!bat.valid && battery_is_initialized()) {
-      battery_recalc_now();
-      bat = battery_get_status();
-    }
-    if(battery_is_initialized() || bat.valid) {
-      const char *baseFmt;
-      if(bat.percentage < 25) baseFmt = batteryRangeLowFmt;
-      else if(bat.percentage < 75) baseFmt = batteryRangeMidFmt;
-      else baseFmt = batteryRangeHighFmt;
-      
-      char buf[48];
-      snprintf(buf, sizeof(buf), baseFmt, bat.percentage);
-      
-      // Insert warning marker before numeric percentage (so it appears after the icon)
-      // Only show single exclamation on LOW battery; critical state triggers deep-sleep so
-      // an explicit visual critical marker is unnecessary.
-      if(bat.low_battery) {
-        const char *mark = "!";
-        char *p = buf;
-        while(*p && !isdigit((unsigned char)*p)) p++; // find start of digits
-        if(*p) {
-          size_t len = strlen(buf);
-          size_t mlen = strlen(mark);
-          if(len + mlen < sizeof(buf)) {
-            memmove(p + mlen, p, len - (p - buf) + 1); // include null
-            memcpy(p, mark, mlen);
+  void Display::_updateBattery() {
+    if(_battery) {
+      BatteryStatus bat = battery_get_status();
+      if(!bat.valid && battery_is_initialized()) {
+        battery_recalc_now();
+        bat = battery_get_status();
+      }
+      if(battery_is_initialized() || bat.valid) {
+        const char *baseFmt;
+        if(bat.percentage < 25) baseFmt = batteryRangeLowFmt;
+        else if(bat.percentage < 75) baseFmt = batteryRangeMidFmt;
+        else baseFmt = batteryRangeHighFmt;
+        char buf[48];
+        snprintf(buf, sizeof(buf), baseFmt, bat.percentage);
+
+        // Insert warning marker before numeric percentage (so it appears after the icon)
+        // Only show single exclamation on LOW battery; critical state triggers deep-sleep so
+        // an explicit visual critical marker is unnecessary.
+        if(bat.low_battery) {
+          const char *mark = "!";
+          char *p = buf;
+          while(*p && !isdigit((unsigned char)*p)) p++; // find start of digits
+          if(*p) {
+            size_t len = strlen(buf);
+            size_t mlen = strlen(mark);
+            if(len + mlen < sizeof(buf)) {
+              memmove(p + mlen, p, len - (p - buf) + 1); // include null
+              memcpy(p, mark, mlen);
+            } else {
+              /* append safely to avoid overflow */
+              strncat(buf, mark, sizeof(buf) - strlen(buf) - 1);
+            }
           } else {
             /* append safely to avoid overflow */
             strncat(buf, mark, sizeof(buf) - strlen(buf) - 1);
           }
-        } else {
-          /* append safely to avoid overflow */
-          strncat(buf, mark, sizeof(buf) - strlen(buf) - 1);
         }
-      }
 
-      /* Add charging/discharging icon prefix before the battery icon if available.
-         Icons are single-byte glyphs in `glcdfont.c`:
-           - decimal 24 (octal \030) => charging icon
-           - decimal 25 (octal \031) => discharging icon
-         Use inferred flags when a charge pin isn't present. */
-      const char *chg_prefix = NULL;
-      if (bat.charging || bat.charging_inferred) chg_prefix = "\030"; /* dec24 */
-      else if (bat.discharging_inferred) chg_prefix = "\031"; /* dec25 */
-      if (chg_prefix) {
-        /* Insert prefix glyph then a 2-pixel spacer control char (0x1E) before the battery text. */
-        size_t len = strlen(buf);
-        size_t plen = strlen(chg_prefix);
-        if (len + plen + 1 < sizeof(buf)) {
-          memmove(buf + plen + 1, buf, len + 1); /* include null */
-          memcpy(buf, chg_prefix, plen);
-          buf[plen] = '\x1E'; /* 2-pixel spacer */
+        /* Add charging/discharging icon prefix before the battery icon if available.
+           Icons are single-byte glyphs in `glcdfont.c`:
+             - decimal 24 (octal \030) => charging icon
+             - decimal 25 (octal \031) => discharging icon
+           Use inferred flags when a charge pin isn't present. */
+        const char *chg_prefix = NULL;
+        if (bat.charging || bat.charging_inferred) chg_prefix = "\030"; /* dec24 */
+        else if (bat.discharging_inferred) chg_prefix = "\031"; /* dec25 */
+        if (chg_prefix) {
+          /* Insert prefix glyph then a 2-pixel spacer control char (0x1E) before the battery text. */
+          size_t len = strlen(buf);
+          size_t plen = strlen(chg_prefix);
+          if (len + plen + 1 < sizeof(buf)) {
+            memmove(buf + plen + 1, buf, len + 1); /* include null */
+            memcpy(buf, chg_prefix, plen);
+            buf[plen] = '\x1E'; /* 2-pixel spacer */
+          }
         }
+
+        _battery->setText(buf);
+      } else {
+        _battery->setText("");
       }
-      
-      _battery->setText(buf);
-    } else {
-      _battery->setText("");
     }
   }
-}
 #endif
 
 void Display::_station() {

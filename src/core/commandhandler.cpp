@@ -45,9 +45,8 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "dspon"))     { config.setDspOn(atoi(value)!=0); return true; }
   if (strEquals(command, "dim"))       { int d=atoi(value); config.store.brightness = (uint8_t)(d < 0 ? 0 : (d > 100 ? 100 : d)); config.setBrightness(true); return true; }
   if (strEquals(command, "clearspiffs")) { config.spiffsCleanup(); config.saveValue(&config.store.play_mode, static_cast<uint8_t>(PM_WEB)); return true; }
-  /*********************************************/
-  /****************** WEBSOCKET ****************/
-  /*********************************************/
+  
+  /* Websockets */
   if (strEquals(command, "getindex"))  { netserver.requestOnChange(GETINDEX, cid); return true; }
   
   if (strEquals(command, "getsystem"))  { netserver.requestOnChange(GETSYSTEM, cid); return true; }
@@ -130,6 +129,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
     websocket.text(cid, buf); delay(500); ESP.restart();
     return true;
   }
+
   /* Battery calibration: compute ADC reference from measured voltage (like telnet calbatt) */
   if (strEquals(command, "battref")) { 
     int meas_mv = atoi(value);
@@ -162,9 +162,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
     return true;
   }
   
-  /*********************************************/
-  /************** CURATED PLAYLISTS ************/
-  /*********************************************/
+  /* Curated Playlists Handling */
   if (strEquals(command, "loadindex")) {
     extern TaskHandle_t g_curatedTaskHandle;
     if (g_curatedTaskHandle == NULL) {
@@ -172,7 +170,6 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
     }
     return true;
   }
-  
   if (strEquals(command, "loadplaylist")) {
     extern TaskHandle_t g_curatedTaskHandle;
     if (g_curatedTaskHandle == NULL) {
@@ -182,13 +179,11 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
     }
     return true;
   }
-  
   if (strEquals(command, "curated_import")) {
     // Import the downloaded playlist file (pl_import.json)
     // Value is "replace" or "merge"
     // This prepares the file for review but doesn't save permanently yet
     bool isReplace = (strcmp(value, "replace") == 0);
-    
     // Copy pl_import.json to tmp_pl for editing
     if (SPIFFS.exists("/www/pl_import.json")) {
       SPIFFS.remove(TMP_PATH);
@@ -202,7 +197,6 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
         }
         src.close();
         dst.close();
-        
         Serial.printf("[Curated] Prepared playlist for review (mode: %s)\n", value);
         // Send signal to frontend to open editor with this file
         char msgbuf[64];
@@ -218,7 +212,8 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
     }
     return true;
   }
-  
+
+/* end of commandHandler */
   return false;
 }
 
