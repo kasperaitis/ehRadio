@@ -249,9 +249,19 @@ function setupElement(id,value){
     }
     if(element.classList.contains("text")){
       element.innerText=value;
+      // Auto-show/hide battery info row when battery text is set/cleared
+      if (element.id === 'battery') {
+        const wrap = getId('batteryinfo');
+        if (wrap) {
+          if (value === "" || value === null) wrap.classList.add('hidden'); else wrap.classList.remove('hidden');
+        }
+      }
     }
     if(element.type==='text' || element.type==='number' || element.type==='password'){
-      element.value=value;
+      // Skip battref - it's now a calibration input for measured voltage, not ADC reference
+      if (element.id !== 'battref') {
+        element.value=value;
+      }
     }
     if(element.type==='range'){
       element.value=value;
@@ -1090,6 +1100,7 @@ function continueLoading(mode){
           case "reset":  websocket.send("reset=1");  rebootSystem('Reset settings. Rebooting...'); break;
           case "shuffle": toggleShuffle(); break;
           case "rebootmdns": websocket.send(`mdnsname=${getId('mdns').value}`); websocket.send("rebootmdns=1"); break;
+          case "savebattref": websocket.send(`battref=${getId('battref').value}`); break;
           default: break;
         }
       }else{

@@ -69,7 +69,7 @@ class Display {
     NumWidget *_nums;
     ClockWidget *_clock;
     Page *_boot;
-    TextWidget *_bootstring, *_volip, *_voltxt, *_rssi, *_bitrate;
+    TextWidget *_bootstring, *_volip, *_voltxt, *_battery, *_rssi, *_bitrate;
     Ticker _returnTicker;
     bool _locked = false;
     uint8_t _bootStep = 0;
@@ -78,6 +78,9 @@ class Display {
     void _showDialog(const char *title);
     void _setReturnTicker(uint8_t time_s);
     void _swichMode(displayMode_e newmode);
+    #if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
+      void _updateBattery();
+    #endif
 };
 
 #else
