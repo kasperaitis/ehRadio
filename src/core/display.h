@@ -116,6 +116,7 @@ class Display {
     void unlock() {}
     uint16_t width() { return 0; }
     uint16_t height() { return 0; }
+    void updateProgress(const char* label, const char* value) {}
   private:
     void _createDspTask();
 };

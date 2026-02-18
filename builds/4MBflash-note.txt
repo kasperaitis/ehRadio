@@ -6,3 +6,6 @@ board = esp32dev
 framework = arduino
 
 board_build.partitions = 4MBflash.csv
+
+Please note this is untested.  SPIFFS is awfully small and things like
+Search and Curated Lists may not function correctly...
