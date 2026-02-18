@@ -605,7 +605,7 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   #define BATTERY_PRESENT_MIN_MV 3000    /* Minimum battery voltage (mV) considered present (single-cell LiPo) */
 #endif
 #ifndef BATTERY_PRESENT_MAX_MV
-  #define BATTERY_PRESENT_MAX_MV 4200    /* Maximum battery voltage (mV) considered present (single-cell LiPo) */
+  #define BATTERY_PRESENT_MAX_MV 4300    /* Maximum battery voltage (mV) considered present (single-cell LiPo) */
 #endif
 /* Battery discharge curve defaults (mV -> percent). */
 #ifndef BATTERY_CURVE_MV
