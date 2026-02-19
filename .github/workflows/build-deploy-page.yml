@@ -6,7 +6,7 @@ on:
     types:
       - completed
   push:
-    branches: [ '**' ]
+    branches: [ 'ehradio' ]
   workflow_dispatch:
 
 permissions:
