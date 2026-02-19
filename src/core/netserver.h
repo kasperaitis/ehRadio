@@ -66,12 +66,12 @@ input[type=text],input[type=password]{width:170px;background:#272727;color:#eecc
 document.wifiform.action = `/${formAction}`;
 if (playMode === 'player') {
 document.getElementById("wupload").classList.add("hidden");
-if (onlineupdatecapable) {
+if (onlineUpdCapable) {
 document.getElementById('downloader').classList.remove("hidden");
 document.getElementById('uploader').classList.add("hidden");
 setTimeout(() => { window.location.reload(true); }, 10000);
 }
-} else if (onlineupdatecapable) {
+} else if (onlineUpdCapable) {
 document.getElementById('credtitle').classList.remove("hidden");
 document.getElementById('credtitle-x').classList.add("hidden");
 document.getElementById('uploader').classList.add("hidden");
