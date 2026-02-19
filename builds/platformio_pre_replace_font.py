@@ -8,9 +8,9 @@ import os
 
 env_name = env["PIOENV"]
 
-# Only replace font when building filesystem
+# Only replace font during a regular build (skip for filesystem builds)
 build_targets = [str(t) for t in BUILD_TARGETS]
-if "buildfs" not in build_targets and "uploadfs" not in build_targets:
+if "buildfs" in build_targets or "uploadfs" in build_targets:
     Return()
 
 src_font = os.path.join("builds", "glcdfont_EN.c")

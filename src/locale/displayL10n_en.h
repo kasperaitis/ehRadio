@@ -79,7 +79,7 @@ const char        apSettFmt[]    PROGMEM = "CONNECT & OPEN HTTP://%s/";
 
 #ifdef UPDATEURL
   const char      updFirmware[]    PROGMEM = "Updating Firmware";
-  const char         updFiles[]    PROGMEM = "Updating Required Files";
+  const char         updFiles[]    PROGMEM = "Updating Files";
 #endif
 
 #if EXT_WEATHER

@@ -235,7 +235,14 @@ void Display::_buildPager() {
   pages[PG_DIALOG]->addWidget(_nums);
   #ifdef UPDATEURL
     _updLabel = new TextWidget(apNameConf, 30, false, config.theme.title1, config.theme.background);
-    _updValue = new TextWidget(apPassConf, 30, false, config.theme.clock, config.theme.background);
+    // compute how many bar chars fit in the value widget
+    {
+      uint8_t ts = apPassConf.textsize > 0 ? apPassConf.textsize : 1;
+      uint16_t widgetPx = dsp.width() - apPassConf.left;
+      int chars = (int)(widgetPx / (CHARWIDTH * ts));
+      _updBarWidth = (chars < 2) ? 2 : (chars > 64) ? 64 : chars;
+    }
+    _updValue = new TextWidget(apPassConf, (uint16_t)(_updBarWidth + 2), false, config.theme.clock, config.theme.background);
     pages[PG_DIALOG]->addWidget(_updLabel);
     pages[PG_DIALOG]->addWidget(_updValue);
   #endif
@@ -396,7 +403,7 @@ void Display::_swichMode(displayMode_e newmode) {
     _nums->setText(config.store.volume, numtxtFmt);
   }
   if (newmode == LOST)      _showDialog(LANG::const_DlgLost);
-  if (newmode == UPDATING)  _showDialog(LANG::const_DlgUpdate);
+  if (newmode == UPDATING)  { _showDialog(LANG::const_DlgUpdate); _updFirstCall = true; }
   if (newmode == SLEEPING)  _showDialog("SLEEPING");
   if (newmode == SDCHANGE)  _showDialog(LANG::const_waitForSD);
   if (newmode == INFO || newmode == SETTINGS || newmode == TIMEZONE || newmode == WIFI) _showDialog(LANG::const_DlgNextion);
@@ -437,10 +444,24 @@ void Display::putRequest(displayRequestType_e type, int payload) {
   #endif
 }
 
-void Display::updateProgress(const char* label, const char* value) {
+void Display::updateProgress(const char* label, float progress) {
   #ifdef UPDATEURL
+    if (_updFirstCall) {
+      _updFirstCall = false;
+      delay(50); // allow display task to process NEWMODE/UPDATING queue item before drawing
+    }
     if (_updLabel) _updLabel->setText(label);
-    if (_updValue) _updValue->setText(value);
+    if (_updValue) {
+      int bars = (int)(progress * _updBarWidth + 0.5f);
+      if (bars < 0) bars = 0;
+      if (bars > _updBarWidth) bars = _updBarWidth;
+      const char barChar = '\x10'; // play icon is progress
+      char buf[68];
+      memset(buf, barChar, bars);
+      memset(buf + bars, ' ', _updBarWidth - bars); // empty space is empty space
+      buf[_updBarWidth] = '\0';
+      _updValue->setText(buf);
+    }
   #endif
 }
 

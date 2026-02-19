@@ -997,13 +997,9 @@ void getRequiredFiles(void* param) {
     char localFile[64];
     char tryFile[64];
     char tryUrl[128];
+    display.putRequest(NEWMODE, UPDATING);
     for (size_t i = 0; i < wwwFilesCount; i++) {
-      display.putRequest(NEWMODE, UPDATING);
-      char progDisp[14];
-      int pct = (int)((float)(i + 1) * 100.0f / wwwFilesCount);
-      int bars = pct / 10;
-      snprintf(progDisp, sizeof(progDisp), "[%.*s%.*s]", bars, "==========", 10 - bars, "          ");
-      display.updateProgress(LANG::updFiles, progDisp);
+      display.updateProgress(LANG::updFiles, (float)(i + 1) / (float)wwwFilesCount);
       const char* fname = wwwFiles[i];
       snprintf(localFileGz, sizeof(localFileGz), "/www/%s.gz", fname);
       snprintf(localFile, sizeof(localFile), "/www/%s", fname);

@@ -75,8 +75,9 @@ def compress_and_hide_originals(source, target, env):
     print("="*70)
     
     # Second pass: move originals outside data directory
-    print("\nMoving original files out of data/www (only .gz and files excluded from compression will be in SPIFFS)...")
+    print("\nMoving original files out of data/www (only .gz and files excluded from compression will be in SPIFFS):")
     hidden_count = 0
+    moved_names = []
     for pattern in patterns:
         for file_path in sorted(data_dir.glob(pattern)):
             if file_path.name in exclude:
@@ -89,9 +90,10 @@ def compress_and_hide_originals(source, target, env):
                     backup_path.unlink()
                 shutil.move(str(file_path), str(backup_path))
                 hidden_count += 1
-                print(f"  → {file_path.name} moved to backup")
+                moved_names.append(f"→ {file_path.name}")
     
-    print(f"\nMoved: {hidden_count} original files to {TEMP_BACKUP_DIR}")
+    print(" ".join(moved_names))
+    print(f"Moved {hidden_count} original files to {TEMP_BACKUP_DIR}")
     print(f"SPIFFS will contain ONLY .gz files (and excluded files)")
     print("="*70 + "\n")
 
@@ -111,9 +113,6 @@ if any_fs_target:
         print("="*70 + "\n")
     
     # Run compression now at init time
-    print("\n" + "="*70)
-    print("INIT: Running compression now (before build starts)")
-    print("="*70 + "\n")
     compress_and_hide_originals(None, None, env)
 
 # Note: NOT using AddPreAction here because we run compression at init time instead

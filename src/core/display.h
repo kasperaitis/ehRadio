@@ -51,7 +51,7 @@ class Display {
     void setContrast();
     bool deepsleep();
     void wakeup();
-    void updateProgress(const char* label, const char* value);
+    void updateProgress(const char* label, float progress);
 
     displayMode_e mode() { return _mode; }
     void mode(displayMode_e m) { _mode=m; }
@@ -63,6 +63,8 @@ class Display {
     PlayListWidget *_plwidget;
     #ifdef UPDATEURL
       TextWidget *_updLabel = nullptr, *_updValue = nullptr;
+      bool _updFirstCall = true;
+      int _updBarWidth = 10;
     #endif
     BitrateWidget *_fullbitrate;
     FillWidget *_metabackground, *_plbackground;
@@ -116,7 +118,7 @@ class Display {
     void unlock() {}
     uint16_t width() { return 0; }
     uint16_t height() { return 0; }
-    void updateProgress(const char* label, const char* value) {}
+    void updateProgress(const char* label, float progress) {}
   private:
     void _createDspTask();
 };
