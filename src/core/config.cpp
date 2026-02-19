@@ -1112,10 +1112,6 @@ void Config::updateFile(void* param, const char* localFile, const char* onlineFi
 }
 
 void startAsyncServices(void* param) {
-  #ifdef PLAYLIST_DEFAULT_URL
-    if (!SPIFFS.exists("/data/playlist.csv")) config.updateFile(param, "/data/playlist.csv", PLAYLIST_DEFAULT_URL, "", "Default playlist");
-  #endif
-  fixPlaylistFileEnding(); // playlist.csv MUST have a line-feed at end (can happen easily by uploading a file)
   #ifdef UPDATEURL
     config.updateFile(param, "/data/new_ver.txt", CHECKUPDATEURL, CHECKUPDATEURL_TIME, "New version number");
     checkNewVersionFile();
@@ -1124,6 +1120,13 @@ void startAsyncServices(void* param) {
       startOnlineUpdate();
     }
   #endif
+  #ifdef PLAYLIST_DEFAULT_URL
+    if (!SPIFFS.exists("/data/playlist.csv")) {
+      config.updateFile(param, "/data/playlist.csv", PLAYLIST_DEFAULT_URL, "", "Default playlist");
+      if (SPIFFS.exists("/data/playlist.csv")) netserver.requestOnChange(PLAYLISTSAVED, 0);
+    }
+  #endif
+  fixPlaylistFileEnding(); // playlist.csv MUST have a line-feed at end (can happen easily by uploading a file)
   config.updateFile(param, "/www/timezones.json.gz", TIMEZONES_JSON_URL, TIMEZONES_JSON_CHECKTIME, "Timezones database file");
   config.updateFile(param, "/www/rb_srvrs.json", RADIO_BROWSER_SERVERS_URL, RB_SERVERS_CHECKTIME, "Radio Browser servers list");
   cleanStaleSearchResults();
