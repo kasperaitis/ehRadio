@@ -14,25 +14,30 @@ def restore_and_cleanup(source, target, env):
     data_dir = Path("data/www")
 
     # Delete all .gz files from data/www
-    print("\nDeleting all .gz files from data/www...")
+    print("\nDeleting all .gz files from data/www:")
     deleted_count = 0
+    deleted_names = []
     for gz_file in sorted(data_dir.glob("*.gz")):
         gz_file.unlink()
         deleted_count += 1
-        print(f"  ✗ {gz_file.name} deleted")
+        deleted_names.append(f"✗ {gz_file.name}")
     
-    print("-"*70)
+    print(" ".join(deleted_names))
     print(f"Deleted: {deleted_count} .gz files")
     
     # Restore original files from backup
     restored_count = 0
     if TEMP_BACKUP_DIR.exists():
-        print("\nRestoring original files to data/www...")
+        print("\nRestoring original files to data/www:")
+        restored_names = []
         for backup_file in sorted(TEMP_BACKUP_DIR.glob("*")):
             dest_path = data_dir / backup_file.name
             shutil.move(str(backup_file), str(dest_path))
             restored_count += 1
-            print(f"  ← {backup_file.name} restored")
+            restored_names.append(f"← {backup_file.name}")
+        
+        print(" ".join(restored_names))
+        print(f"Restored: {restored_count} files")
         
         # Remove temp backup directory
         try:
@@ -44,7 +49,6 @@ def restore_and_cleanup(source, target, env):
         print(f"No backup directory found at {TEMP_BACKUP_DIR}")
     
     print("-"*70)
-    print(f"Restored: {restored_count} files")
     print(f"data/www now contains only original source files")
     print("="*70 + "\n")
 

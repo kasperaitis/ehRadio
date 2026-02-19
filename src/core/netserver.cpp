@@ -1275,9 +1275,7 @@ void startOnlineUpdate() {
               char progMsg[64];
               snprintf(progMsg, sizeof(progMsg), "{\"onlineupdateprogress\":%d}", percent);
               websocket.textAll(progMsg);
-              char progDisp[32];
-              snprintf(progDisp, sizeof(progDisp), LANG::updatingProgress, (float)percent);
-              display.updateProgress(LANG::updFirmware, progDisp);
+              display.updateProgress(LANG::updFirmware, (float)written / (float)contentLength);
             }
           }
           if (Update.end(true)) { // end(true) will finish and commit the update

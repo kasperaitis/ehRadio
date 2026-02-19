@@ -75,6 +75,10 @@ const char        apNameTxt[]    PROGMEM = "ТОЧКА ДОСТУПА";
 #endif
 const char       bootstrFmt[]    PROGMEM = "Соединяюсь с %s";
 const char        apSettFmt[]    PROGMEM = "ПОДКЛЮЧИТЕСЬ И ОТКРЫТЬТЕ HTTP://%s/";
+#ifdef UPDATEURL
+  const char      updFirmware[]    PROGMEM = "Обновление прошивки";
+  const char         updFiles[]    PROGMEM = "Обновление файлов";
+#endif
 #if EXT_WEATHER
 const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 ощущается: %.1f\011C \007 давление: %d мм \007 влажность: %s%% \007 ветер: %.1f м/с [%s]";
 #else
