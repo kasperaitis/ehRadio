@@ -3,7 +3,7 @@ name: Update timezones.json Automatically
 on:
   push:
     branches:
-      - ehradio
+      - dev
   workflow_dispatch:
 
 jobs:

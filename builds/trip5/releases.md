@@ -5,11 +5,11 @@
   - you will need a firmware file appropriate to your build (see below)
   - depending on your board, choose the appropriate `board_*_bootloader.bin` and `board_*_partitions.bin`
   - for most ESP32s, use:
-    - `esptool --chip esp32 --port com14 --baud 460800 write_flash -z 0x1000 board_esp32_bootloader.bin 0x8000 board_esp32_partitions.bin 0x10000 board_esp32.bin`
-    - to include spiffs, add this to the above command: `0x390000 board_esp32_spiffs.bin`
+    - `esptool --chip esp32 --port com14 --baud 460800 write_flash -z 0x1000 esp32_bootloader.bin 0x8000 esp32_partitions.bin 0x10000 [firmware.bin]`
+    - to include spiffs, add this to the above command: `0x390000 esp32_spiffs.bin`
   - for ESP32-S3s (like the ESP32-S3-N16R8) use:
-    - `esptool --chip esp32s3 --port com14 --baud 460800 write_flash -z 0x0000 board_esp32_s3_n16r8_bootloader.bin 0x8000 board_esp32_s3_n16r8_partitions.bin 0x10000 board_esp32_s3_n16r8.bin`
-    - to include spiffs, add this to the above command: `0x670000 board_esp32_s3_n16r8_spiffs.bin`
+    - `esptool --chip esp32s3 --port com8 --baud 460800 write_flash -z 0x0000 esp32_s3_n16r8_bootloader.bin 0x8000 esp32_s3_n16r8_partitions.bin 0x10000 [firmware.bin]`
+    - to include spiffs, add this to the above command: `0x670000 esp32_s3_n16r8_spiffs.bin`
 ## Boards
   - each of the pre-built board binaries have pre-set hardware configurations, they cannot be changed
   - to view pin usage, click the link and scroll down then click preview
