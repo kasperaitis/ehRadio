@@ -51,6 +51,7 @@ class Display {
     void setContrast();
     bool deepsleep();
     void wakeup();
+    void updateProgress(const char* label, const char* value);
 
     displayMode_e mode() { return _mode; }
     void mode(displayMode_e m) { _mode=m; }
@@ -60,6 +61,9 @@ class Display {
   private:
     ScrollWidget *_meta, *_title1, *_plcurrent, *_weather, *_title2;
     PlayListWidget *_plwidget;
+    #ifdef UPDATEURL
+      TextWidget *_updLabel = nullptr, *_updValue = nullptr;
+    #endif
     BitrateWidget *_fullbitrate;
     FillWidget *_metabackground, *_plbackground;
     SliderWidget *_volbar, *_heapbar;
@@ -69,7 +73,7 @@ class Display {
     NumWidget *_nums;
     ClockWidget *_clock;
     Page *_boot;
-    TextWidget *_bootstring, *_volip, *_voltxt, *_rssi, *_bitrate;
+    TextWidget *_bootstring, *_volip, *_voltxt, *_battery, *_rssi, *_bitrate;
     Ticker _returnTicker;
     bool _locked = false;
     uint8_t _bootStep = 0;
@@ -78,6 +82,9 @@ class Display {
     void _showDialog(const char *title);
     void _setReturnTicker(uint8_t time_s);
     void _swichMode(displayMode_e newmode);
+    #if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
+      void _updateBattery();
+    #endif
 };
 
 #else

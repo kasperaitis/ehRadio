@@ -159,8 +159,8 @@ void loopControls() {
   #endif
 }
 
-void encodersLoop(AiEsp32RotaryEncoder *enc, bool first) {
-  #if ENC_BTNL!=255 || ENC2_BTNL!=255
+#if (ENC_BTNL!=255 && ENC_BTNR!=255) || (ENC2_BTNL!=255 && ENC2_BTNR!=255)
+  void encodersLoop(AiEsp32RotaryEncoder *enc, bool first) {
     if (network.status != CONNECTED && network.status!=SDREADY) return;
     if (display.mode()==LOST) return;
     int8_t encoderDelta = enc->encoderChanged();
@@ -192,8 +192,8 @@ void encodersLoop(AiEsp32RotaryEncoder *enc, bool first) {
       }
     #endif //#if defined(DUMMYDISPLAY) && !defined(USE_NEXTION)
     }
-  #endif //#if ENC_BTNL!=255 || ENC2_BTNL!=255
-}
+  }
+#endif //#if (ENC_BTNL!=255 && ENC_BTNR!=255) || (ENC2_BTNL!=255 && ENC2_BTNR!=255)
 
 void encoder1Loop() {
   #if ENC_BTNL!=255

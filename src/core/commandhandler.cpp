@@ -8,7 +8,7 @@
 #include "controls.h"
 #include "network.h"
 #include "mqtt.h"
-
+#include "core/battery.h"
 #if DSP_MODEL==DSP_DUMMY
   #define DUMMYDISPLAY
 #endif
@@ -45,9 +45,8 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "dspon"))     { config.setDspOn(atoi(value)!=0); return true; }
   if (strEquals(command, "dim"))       { int d=atoi(value); config.store.brightness = (uint8_t)(d < 0 ? 0 : (d > 100 ? 100 : d)); config.setBrightness(true); return true; }
   if (strEquals(command, "clearspiffs")) { config.spiffsCleanup(); config.saveValue(&config.store.play_mode, static_cast<uint8_t>(PM_WEB)); return true; }
-  /*********************************************/
-  /****************** WEBSOCKET ****************/
-  /*********************************************/
+  
+  /* Websockets */
   if (strEquals(command, "getindex"))  { netserver.requestOnChange(GETINDEX, cid); return true; }
   
   if (strEquals(command, "getsystem"))  { netserver.requestOnChange(GETSYSTEM, cid); return true; }
@@ -57,6 +56,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "getweather")) { netserver.requestOnChange(GETWEATHER, cid); return true; }
   if (strEquals(command, "getmqtt"))    { netserver.requestOnChange(GETMQTT, cid); return true; }
   if (strEquals(command, "getactive"))  { netserver.requestOnChange(GETACTIVE, cid); return true; }
+  if (strEquals(command, "getbattery"))  { netserver.requestOnChange(GETBATTERY, cid); return true; }
   if (strEquals(command, "newmode"))    { config.newConfigMode = atoi(value); netserver.requestOnChange(CHANGEMODE, cid); return true; }
   
   if (strEquals(command, "invertdisplay")) { config.saveValue(&config.store.invertdisplay, static_cast<bool>(atoi(value))); display.invert(); return true; }
@@ -116,6 +116,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "reset"))  { config.resetSystem(value, cid); return true; }
   
   if (strEquals(command, "smartstart")) { bool ss = (atoi(value) != 0); config.setSmartStart(ss); return true; }
+  if (strEquals(command, "autoupdate")) { config.saveValue(&config.store.autoupdate, static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "audioinfo")) { config.saveValue(&config.store.audioinfo, static_cast<bool>(atoi(value))); display.putRequest(AUDIOINFO); return true; }
   if (strEquals(command, "vumeter"))   { config.saveValue(&config.store.vumeter, static_cast<bool>(atoi(value))); display.putRequest(SHOWVUMETER); return true; }
   if (strEquals(command, "wifiscan"))  { config.saveValue(&config.store.wifiscanbest, static_cast<bool>(atoi(value))); return true; }
@@ -128,10 +129,40 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
     websocket.text(cid, buf); delay(500); ESP.restart();
     return true;
   }
+
+  /* Battery calibration: compute ADC reference from measured voltage (like telnet calbatt) */
+  if (strEquals(command, "battref")) { 
+    int meas_mv = atoi(value);
+    // Validate measured voltage is in valid Li-Po range
+    if (meas_mv >= 2500 && meas_mv <= 4500) {
+      BatteryStatus b = battery_get_status();
+      if (b.valid && b.voltage_mv > 0) {
+        // Calculate ratio and suggested ADC ref (linear scaling)
+        double ratio = ((double)meas_mv) / ((double)b.voltage_mv);
+        // Sanity check for unreasonable ratio (should be close to 1.0)
+        if (ratio >= 0.5 && ratio <= 2.0) {
+          uint32_t curr_ref = (uint32_t)(config.store.battery_adc_ref_mv ? config.store.battery_adc_ref_mv : BATTERY_ADC_REF_MV);
+          uint32_t suggested_ref = (uint32_t)((double)curr_ref * ratio + 0.5);
+          // Validate computed reference is in valid range
+          if (suggested_ref >= 2000 && suggested_ref <= 4000) {
+            uint16_t newref = (uint16_t)suggested_ref;
+            config.saveValue(&config.store.battery_adc_ref_mv, newref);
+            // Recalculate immediately and notify client
+            battery_recalc_now();
+            netserver.requestOnChange(GETBATTERY, cid);
+          }
+        }
+      }
+    }
+    return true; 
+  }
+  if (strEquals(command, "battrecalc")) {
+    battery_recalc_now();
+    netserver.requestOnChange(GETBATTERY, cid);
+    return true;
+  }
   
-  /*********************************************/
-  /************** CURATED PLAYLISTS ************/
-  /*********************************************/
+  /* Curated Playlists Handling */
   if (strEquals(command, "loadindex")) {
     extern TaskHandle_t g_curatedTaskHandle;
     if (g_curatedTaskHandle == NULL) {
@@ -139,7 +170,6 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
     }
     return true;
   }
-  
   if (strEquals(command, "loadplaylist")) {
     extern TaskHandle_t g_curatedTaskHandle;
     if (g_curatedTaskHandle == NULL) {
@@ -149,13 +179,11 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
     }
     return true;
   }
-  
   if (strEquals(command, "curated_import")) {
     // Import the downloaded playlist file (pl_import.json)
     // Value is "replace" or "merge"
     // This prepares the file for review but doesn't save permanently yet
     bool isReplace = (strcmp(value, "replace") == 0);
-    
     // Copy pl_import.json to tmp_pl for editing
     if (SPIFFS.exists("/www/pl_import.json")) {
       SPIFFS.remove(TMP_PATH);
@@ -169,7 +197,6 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
         }
         src.close();
         dst.close();
-        
         Serial.printf("[Curated] Prepared playlist for review (mode: %s)\n", value);
         // Send signal to frontend to open editor with this file
         char msgbuf[64];
@@ -185,7 +212,8 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
     }
     return true;
   }
-  
+
+/* end of commandHandler */
   return false;
 }
 

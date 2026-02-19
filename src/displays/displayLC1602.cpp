@@ -3,6 +3,7 @@
 #include "dspcore.h"
 #include <WiFi.h>
 #include "../core/config.h"
+#include "tools/prepText.h"
 
 #ifndef SCREEN_ADDRESS
   #define SCREEN_ADDRESS 0x27 ///< See datasheet for Address or scan it https://create.arduino.cc/projecthub/abdularbi17/how-to-scan-i2c-address-in-arduino-eaadda
@@ -13,15 +14,15 @@ DspCore::DspCore(): DSP_INIT {}
 void DspCore::apScreen() {
   clear();
   setCursor(0,0);
-  print(utf8Rus(const_lcdApMode, false));
+  print(prepText(const_lcdApMode, false));
   setCursor(0,1);
   print(config.ipToStr(WiFi.softAPIP()));
 #ifdef LCD_2004
   setCursor(0, 2);
-  print(utf8Rus(const_lcdApName, false));
+  print(prepText(const_lcdApName, false));
   print(apSsid);
   setCursor(0, 3);
-  print(utf8Rus(const_lcdApPass, false));
+  print(prepText(const_lcdApPass, false));
   print(apPassword);
 #endif
 }

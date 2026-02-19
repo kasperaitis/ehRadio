@@ -13,6 +13,9 @@
 #include "../displays/widgets/widgets.h"
 #include "../displays/widgets/pages.h"
 #include "../displays/tools/l10n.h"
+#if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
+  #include "battery.h"
+#endif
 
 Display display;
 #ifdef USE_NEXTION
@@ -195,6 +198,9 @@ void Display::_buildPager() {
   #ifndef HIDE_RSSI
     _rssi = new TextWidget(rssiConf, 20, false, config.theme.rssi, config.theme.background);
   #endif
+  #if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
+    _battery = new TextWidget(batteryConf, 10, false, config.theme.ip, config.theme.background);
+  #endif
   _nums->init(numConf, 10, false, config.theme.digit, config.theme.background);
   #ifndef HIDE_WEATHER
     _weather = new ScrollWidget("\007", weatherConf, config.theme.weather, config.theme.background);
@@ -203,6 +209,7 @@ void Display::_buildPager() {
   if (_volbar)   _footer->addWidget(_volbar);
   if (_voltxt)   _footer->addWidget(_voltxt);
   if (_volip)    _footer->addWidget(_volip);
+  if (_battery)  _footer->addWidget( _battery);
   if (_rssi)     _footer->addWidget(_rssi);
   if (_heapbar)  _footer->addWidget(_heapbar);
   
@@ -226,6 +233,12 @@ void Display::_buildPager() {
   if (_metabackground) pages[PG_DIALOG]->addWidget(_metabackground);
   pages[PG_DIALOG]->addWidget(_meta);
   pages[PG_DIALOG]->addWidget(_nums);
+  #ifdef UPDATEURL
+    _updLabel = new TextWidget(apNameConf, 30, false, config.theme.title1, config.theme.background);
+    _updValue = new TextWidget(apPassConf, 30, false, config.theme.clock, config.theme.background);
+    pages[PG_DIALOG]->addWidget(_updLabel);
+    pages[PG_DIALOG]->addWidget(_updValue);
+  #endif
   
   #if !defined(DSP_LCD) && DSP_MODEL!=DSP_NOKIA5110
     pages[PG_DIALOG]->addPage(_footer);
@@ -304,6 +317,9 @@ void Display::_start() {
   if (_rssi)     _setRSSI(WiFi.RSSI());
   #ifndef HIDE_IP
     if (_volip) _volip->setText(config.ipToStr(WiFi.localIP()), iptxtFmt);
+  #endif
+  #if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
+    if(_battery) _updateBattery();
   #endif
   _pager->setPage(pages[PG_PLAYER]);
   _volume();
@@ -421,6 +437,13 @@ void Display::putRequest(displayRequestType_e type, int payload) {
   #endif
 }
 
+void Display::updateProgress(const char* label, const char* value) {
+  #ifdef UPDATEURL
+    if (_updLabel) _updLabel->setText(label);
+    if (_updValue) _updValue->setText(value);
+  #endif
+}
+
 void Display::_layoutChange(bool played) {
   if (config.store.vumeter && _vuwidget) {
     if (played) {
@@ -527,6 +550,12 @@ void Display::loop() {
           break;
         }
         case DSPRSSI: if (_rssi) { _setRSSI(request.payload); } if (_heapbar && config.store.audioinfo) _heapbar->setValue(player.isRunning()?player.inBufferFilled():0); break;
+        #if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
+          case DSPBATTERY: {
+            if(_battery) _updateBattery();
+            break;
+          }
+        #endif
         case PSTART: _layoutChange(true);   break;
         case PSTOP:  _layoutChange(false);  break;
         case DSP_START: _start();  break;
@@ -568,6 +597,72 @@ void Display::_setRSSI(int rssi) {
   if (rssi <  rssi_steps[3] || rssi >=  0) strlcpy(rssiG, "\001\002", 3);
   _rssi->setText(rssiG);
 }
+
+#if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
+  void Display::_updateBattery() {
+    if(_battery) {
+      BatteryStatus bat = battery_get_status();
+      if(!bat.valid && battery_is_initialized()) {
+        battery_recalc_now();
+        bat = battery_get_status();
+      }
+      if(battery_is_initialized() || bat.valid) {
+        const char *baseFmt;
+        if(bat.percentage < 25) baseFmt = batteryRangeLowFmt;
+        else if(bat.percentage < 75) baseFmt = batteryRangeMidFmt;
+        else baseFmt = batteryRangeHighFmt;
+        char buf[48];
+        snprintf(buf, sizeof(buf), baseFmt, bat.percentage);
+
+        // Insert warning marker before numeric percentage (so it appears after the icon)
+        // Only show single exclamation on LOW battery; critical state triggers deep-sleep so
+        // an explicit visual critical marker is unnecessary.
+        if(bat.low_battery) {
+          const char *mark = "!";
+          char *p = buf;
+          while(*p && !isdigit((unsigned char)*p)) p++; // find start of digits
+          if(*p) {
+            size_t len = strlen(buf);
+            size_t mlen = strlen(mark);
+            if(len + mlen < sizeof(buf)) {
+              memmove(p + mlen, p, len - (p - buf) + 1); // include null
+              memcpy(p, mark, mlen);
+            } else {
+              /* append safely to avoid overflow */
+              strncat(buf, mark, sizeof(buf) - strlen(buf) - 1);
+            }
+          } else {
+            /* append safely to avoid overflow */
+            strncat(buf, mark, sizeof(buf) - strlen(buf) - 1);
+          }
+        }
+
+        /* Add charging/discharging icon prefix before the battery icon if available.
+           Icons are single-byte glyphs in `glcdfont.c`:
+             - decimal 24 (octal \030) => charging icon
+             - decimal 25 (octal \031) => discharging icon
+           Use inferred flags when a charge pin isn't present. */
+        const char *chg_prefix = NULL;
+        if (bat.charging || bat.charging_inferred) chg_prefix = "\030"; /* dec24 */
+        else if (bat.discharging_inferred) chg_prefix = "\031"; /* dec25 */
+        if (chg_prefix) {
+          /* Insert prefix glyph then a 2-pixel spacer control char (0x1E) before the battery text. */
+          size_t len = strlen(buf);
+          size_t plen = strlen(chg_prefix);
+          if (len + plen + 1 < sizeof(buf)) {
+            memmove(buf + plen + 1, buf, len + 1); /* include null */
+            memcpy(buf, chg_prefix, plen);
+            buf[plen] = '\x1E'; /* 2-pixel spacer */
+          }
+        }
+
+        _battery->setText(buf);
+      } else {
+        _battery->setText("");
+      }
+    }
+  }
+#endif
 
 void Display::_station() {
   _meta->setAlign(metaConf.widget.align);

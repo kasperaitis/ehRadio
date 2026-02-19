@@ -8,6 +8,7 @@
 #include "../../core/config.h"
 #include "../tools/l10n.h"
 #include "../tools/psframebuffer.h"
+#include "../tools/prepText.h"
 
 /************************
       FILL WIDGET
@@ -59,8 +60,15 @@ void TextWidget::init(WidgetConfig wconf, uint16_t buffsize, bool uppercase, uin
 }
 
 void TextWidget::setText(const char* txt) {
-  strlcpy(_text, utf8Rus(txt, _uppercase), _buffsize);
-  _textwidth = strlen(_text) * _charWidth;
+  strlcpy(_text, prepText(txt, _uppercase), _buffsize);
+  /* Compute width accounting for special in-text pixel spacer (0x1E) which counts as 2 pixels
+     and otherwise each character occupies _charWidth pixels. */
+  uint16_t w = 0;
+  for (const char *p = _text; *p; ++p) {
+    if ((unsigned char)*p == 0x1E) w += 2; /* 2-pixel spacer */
+    else w += _charWidth;
+  }
+  _textwidth = w;
   if (strcmp(_oldtext, _text) == 0) return;
   if (_active) dsp.fillRect(_oldleft == 0 ? _realLeft() : min(_oldleft, _realLeft()),  _config.top, max(_oldtextwidth, _textwidth), _textheight, _bgcolor);
   _oldtextwidth = _textwidth;
@@ -92,10 +100,24 @@ uint16_t TextWidget::_realLeft(bool w_fb) {
 void TextWidget::_draw() {
   if(!_active) return;
   dsp.setTextColor(_fgcolor, _bgcolor);
-  dsp.setCursor(_realLeft(), _config.top);
   dsp.setFont();
   dsp.setTextSize(_config.textsize);
-  dsp.print(_text);
+
+  /* Render characters one-by-one so we can honor special in-text pixel spacers (0x1E = 2px). */
+  uint16_t x = _realLeft();
+  dsp.setCursor(x, _config.top);
+  for (const char *p = _text; *p; ++p) {
+    unsigned char ch = (unsigned char)*p;
+    if (ch == 0x1E) { /* 2-pixel spacer */
+      x += 2;
+      dsp.setCursor(x, _config.top);
+      continue;
+    }
+    dsp.setCursor(x, _config.top);
+    dsp.write(ch);
+    x += _charWidth;
+  }
+
   strlcpy(_oldtext, _text, _buffsize);
 }
 
@@ -153,7 +175,7 @@ bool ScrollWidget::_checkIsScrollNeeded() {
 }
 
 void ScrollWidget::setText(const char* txt) {
-  strlcpy(_text, utf8Rus(txt, _uppercase), _buffsize - 1);
+  strlcpy(_text, prepText(txt, _uppercase), _buffsize - 1);
   if (strcmp(_oldtext, _text) == 0) return;
   _textwidth = strlen(_text) * _charWidth;
   _x = _fb->ready()?0:_config.left;
@@ -711,9 +733,9 @@ void ClockWidget::_getTimeBounds() {
           gfx.setTextSize(_superfont);
           gfx.setCursor(_linesleft+_space+1, _top()-CHARHEIGHT * _superfont);
           gfx.setTextColor(config.theme.dow, config.theme.background);
-          gfx.print(utf8Rus(LANG::dow[network.timeinfo.tm_wday], false));
+          gfx.print(prepText(LANG::dow[network.timeinfo.tm_wday], false));
           sprintf(_tmp, "%2d %s %d", network.timeinfo.tm_mday,LANG::mnths[network.timeinfo.tm_mon], network.timeinfo.tm_year+1900);
-          strlcpy(_datebuf, utf8Rus(_tmp, true), sizeof(_datebuf));
+          strlcpy(_datebuf, prepText(_tmp, true), sizeof(_datebuf));
           uint16_t _datewidth = strlen(_datebuf) * CHARWIDTH*_dateheight;
           gfx.setTextSize(_dateheight);
           #if DSP_MODEL==DSP_GC9A01A
@@ -963,7 +985,7 @@ uint8_t PlayListWidget::_fillPlMenu(int from, uint8_t count) {
       dsp.setCursor(TFT_FRAMEWDT, _plYStart + pos * _plItemHeight);
       dsp.fillRect(0, _plYStart + pos * _plItemHeight - 1, dsp.width(), _plItemHeight - 2, config.theme.background);
       Serial.println(item);
-      dsp.print(utf8Rus(item, true));
+      dsp.print(prepText(item, true));
     }
   }
 #else //#ifndef DSP_LCD
@@ -973,7 +995,7 @@ uint8_t PlayListWidget::_fillPlMenu(int from, uint8_t count) {
     } else {
       dsp.setCursor(1, pos);
       char tmp[dsp.width()] = {0};
-      strlcpy(tmp, utf8Rus(item, true), dsp.width());
+      strlcpy(tmp, prepText(item, true), dsp.width());
       dsp.print(tmp);
     }
   }

@@ -376,13 +376,13 @@ void Nextion::audioinfo(const char* info){
 void Nextion::bootString(const char* bs) {
   char buf[50] = { 0 };
   strlcpy(buf, bs, 50);
-  putcmd("boot.bootstring.txt", utf8Rus(buf, false));
+  putcmd("boot.bootstring.txt", prepText(buf, false));
 }
 
 void Nextion::newNameset(const char* meta){
   char newnameset[59] = { 0 };
   strlcpy(newnameset, meta, 59);
-  putcmd("player.meta.txt", utf8Rus(newnameset, true));
+  putcmd("player.meta.txt", prepText(newnameset, true));
 }
 
 void Nextion::setVol(uint8_t vol, bool dialog){
@@ -410,8 +410,8 @@ void Nextion::newTitle(const char* title){
       strlcpy(ttl, title, 50);
       sng[0] = '\0';
     }
-    putcmd("player.title1.txt", utf8Rus(ttl, true));
-    putcmd("player.title2.txt", utf8Rus(sng, true));
+    putcmd("player.title1.txt", prepText(ttl, true));
+    putcmd("player.title2.txt", prepText(sng, true));
   }
 }
 
@@ -421,7 +421,7 @@ void Nextion::printClock(struct tm timeinfo){
   putcmd(timeStringBuff);
   putcmdf("player.secText.txt=\"%02d\"", timeinfo.tm_sec);
   snprintf(timeStringBuff, sizeof(timeStringBuff), "player.dateText.txt=\"%s, %d %s %d\"", LANG::dowf[timeinfo.tm_wday], timeinfo.tm_mday, LANG::mnths[timeinfo.tm_mon], timeinfo.tm_year+1900);
-  putcmd(utf8Rus(timeStringBuff, false));
+  putcmd(prepText(timeStringBuff, false));
   if(mode==TIMEZONE) localTime(network.timeinfo);
   if(mode==INFO)     rssi();
 }
@@ -434,7 +434,7 @@ void Nextion::localTime(struct tm timeinfo){
 
 void Nextion::printPLitem(uint8_t pos, const char* item){
   char cmd[60]={0};
-  snprintf(cmd, sizeof(cmd) - 1, "t%d.txt=\"%s\"", pos, nextion.utf8Rus((char*)item, true));
+  snprintf(cmd, sizeof(cmd) - 1, "t%d.txt=\"%s\"", pos, prepText(item, true));
   putcmd(cmd);
 }
 
@@ -490,7 +490,7 @@ void Nextion::drawPlaylist(uint16_t currentPlItem){
 }
 
 void Nextion::drawNextStationNum(uint16_t num) {//dialog
-  putcmd("dialog.title.txt", utf8Rus(config.stationByNum(num), true));
+  putcmd("dialog.title.txt", prepText(config.stationByNum(num), true));
   putcmd("dialog.text.txt", num, true);
   _volDelay = millis();
 }
@@ -541,6 +541,153 @@ void Nextion::sleep(void) {
 void Nextion::wake(void) { 
   putcmd("sleep=0");
 }
+
+char* Nextion::prepText(const char* str, bool uppercase) {
+#ifdef PRINT_FIX
+  return printFix(str, uppercase);
+#elif defined(UTF8_RUS)
+  return utf8Rus((char*)str, uppercase);
+#else
+  static char buf[BUFLEN];
+  int i = 0;
+  for (; i < BUFLEN - 1 && str[i]; i++) {
+    buf[i] = uppercase ? toupper(str[i]) : str[i];
+  }
+  buf[i] = 0;
+  return buf;
+#endif
+}
+
+char* Nextion::printFix(const char* src, bool uppercase) {
+  static char buf[BUFLEN];
+
+    int outIdx = 0;
+    const char* p = src;
+    while (*p && outIdx < BUFLEN - 1) {
+      if ((uint8_t)*p < 0x80) {
+        buf[outIdx++] = uppercase ? toupper(*p) : *p;
+        p++;
+        continue;
+      }
+      
+      uint8_t first = (uint8_t)*p;
+      uint8_t second = (uint8_t)*(p + 1);
+
+      // Handle 3-byte UTF-8 sequences
+      if (first >= 0xE0 && first <= 0xEF) {
+        uint8_t third = (uint8_t)*(p + 2);
+        bool processed = false;
+        // Ellipsis
+        if (first == 0xE2 && second == 0x80 && third == 0xA6) {
+          buf[outIdx++] = '.';
+          buf[outIdx++] = '.';
+          buf[outIdx++] = '.';
+          processed = true;
+        }
+        // Trademark
+        if (first == 0xE2 && second == 0x84 && third == 0xA2) {
+          buf[outIdx++] = 'T';
+          buf[outIdx++] = 'M';
+          processed = true;
+        }
+        
+        if(processed) {
+          p += 3;
+        } else {
+          buf[outIdx++] = ' '; // Replace with space if unknown
+          p += 3;
+        }
+        continue;
+      }
+
+      // Handle 2-byte UTF-8 sequences
+      if (first >= 0xC2 && first <= 0xDF) {
+        bool processed = false;
+        if (first == 0xC3) {
+          processed = true;
+          switch (second) {
+            case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: buf[outIdx++] = 'A'; break; // ÀÁÂÃÄÅ
+            case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: buf[outIdx++] = 'a'; break; // àáâãäå
+            case 0x86: buf[outIdx++] = 'A'; buf[outIdx++] = 'E'; break; // Æ
+            case 0xA6: buf[outIdx++] = 'a'; buf[outIdx++] = 'e'; break; // æ
+            case 0x88: case 0x89: case 0x8A: case 0x8B: buf[outIdx++] = 'E'; break; // ÈÉÊË
+            case 0xA8: case 0xA9: case 0xAA: case 0xAB: buf[outIdx++] = 'e'; break; // èéêë
+            case 0x8C: case 0x8D: case 0x8E: case 0x8F: buf[outIdx++] = 'I'; break; // ÌÍÎÏ
+            case 0xAC: case 0xAD: case 0xAE: case 0xAF: buf[outIdx++] = 'i'; break; // ìíîï
+            case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: case 0x98: buf[outIdx++] = 'O'; break; // ÒÓÔÕÖØ
+            case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB8: buf[outIdx++] = 'o'; break; // òóôõöø
+            case 0x99: case 0x9A: case 0x9B: case 0x9C: buf[outIdx++] = 'U'; break; // ÙÚÛÜ
+            case 0xB9: case 0xBA: case 0xBB: case 0xBC: buf[outIdx++] = 'u'; break; // ùúûü
+            case 0x87: buf[outIdx++] = 'C'; break; // Ç
+            case 0xA7: buf[outIdx++] = 'c'; break; // ç
+            case 0x91: buf[outIdx++] = 'N'; break; // Ñ
+            case 0xB1: buf[outIdx++] = 'n'; break; // ñ
+            case 0x9D: buf[outIdx++] = 'Y'; break; // Ý
+            case 0xBD: case 0xBF: buf[outIdx++] = 'y'; break; // ýÿ
+            case 0x9F: buf[outIdx++] = 's'; buf[outIdx++] = 's'; break; // ß
+            default: processed = false; break;
+          }
+        }
+        if (!processed && (first == 0xD0 || first == 0xD1)) {
+          uint32_t codepoint = 0;
+          codepoint = (first & 0x1f) << 6 | (second & 0x3f);
+          if(codepoint > 0x400){
+            buf[outIdx++]=(uint8_t)(codepoint - 0x360);
+            processed = true;
+          }
+        }
+        if (!processed && first == 0xC5) {
+            processed = true;
+            switch(second) {
+                case 0x92: buf[outIdx++] = 'O'; buf[outIdx++] = 'E'; break; // Œ
+                case 0x93: buf[outIdx++] = 'o'; buf[outIdx++] = 'e'; break; // œ
+                default: processed = false; break;
+            }
+        }
+        if (!processed && first == 0xC2) {
+          processed = true;
+          switch (second) {
+            case 0xAB: buf[outIdx++] = '"'; break; // «
+            case 0xBB: buf[outIdx++] = '"'; break; // »
+            case 0xA9: buf[outIdx++] = '('; buf[outIdx++] = 'c'; buf[outIdx++] = ')'; break; // ©
+            case 0xAE: buf[outIdx++] = '('; buf[outIdx++] = 'R'; buf[outIdx++] = ')'; break; // ®
+            case 0x9D: buf[outIdx++] = '['; break; // [ multiplication sign
+            case 0x9E: buf[outIdx++] = ' '; break; // non-breaking space
+            case 0x9F: buf[outIdx++] = ']'; break; // ] division sign
+            case 0xA0: buf[outIdx++] = '|'; break; // ¦ broken bar
+            case 0xA1: buf[outIdx++] = '!'; break; // ¡ inverted exclamation mark
+            case 0xA2: buf[outIdx++] = 'c'; break; // ¢ cent sign
+            case 0xA3: buf[outIdx++] = '#'; break; // £ pound sign
+            case 0x96: buf[outIdx++] = '-'; break; // – en dash
+            case 0x97: buf[outIdx++] = '-'; break; // — em dash
+            case 0x91: buf[outIdx++] = '\''; break; // ‘ left single quotation mark
+            case 0x92: buf[outIdx++] = '\''; break; // ’ right single quotation mark
+            case 0x93: buf[outIdx++] = '"'; break; // “ left double quotation mark
+            case 0x94: buf[outIdx++] = '"'; break; // ” right double quotation mark
+            case 0xBF: buf[outIdx++] = '?'; break; // ¿ inverted question mark
+            default: processed = false; break;
+          }
+        }
+        
+        if(processed) {
+          p += 2;
+        } else {
+          buf[outIdx++] = ' '; // Replace with space if unknown
+          p += 2;
+        }
+        continue;
+      }
+      
+      // Fallback for other multi-byte characters
+      buf[outIdx++] = ' ';
+      while ((uint8_t)*p >= 0x80) {
+        p++;
+      }
+    }
+    buf[outIdx] = '\0';
+    return buf;
+}
+
 /*
   По мотивам https://forum.amperka.ru/threads/%D0%94%D0%B8%D1%81%D0%BF%D0%BB%D0%B5%D0%B9-nextion-%D0%B0%D0%B7%D1%8B-arduino-esp8266.9204/page-18#post-173442
 */

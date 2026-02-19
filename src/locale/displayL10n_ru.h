@@ -78,7 +78,7 @@ const char        apSettFmt[]    PROGMEM = "ПОДКЛЮЧИТЕСЬ И ОТКР
 #if EXT_WEATHER
 const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 ощущается: %.1f\011C \007 давление: %d мм \007 влажность: %s%% \007 ветер: %.1f м/с [%s]";
 #else
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 давление: %d mm \007 влажность: %s%%";
+const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 давление: %d гПа \007 влажность: %s%%"; /*Trip5 Note: I'm not Russian, I don't use OpenWeather - this used to be мм but I think it's probably гПа */
 #endif
 const char     weatherUnits[]    PROGMEM = "metric";   /* standard, metric, imperial */
 const char      weatherLang[]    PROGMEM = "ru";       /* https://openweathermap.org/current#multi */

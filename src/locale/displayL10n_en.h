@@ -76,10 +76,17 @@ const char        apNameTxt[]    PROGMEM = "AP NAME";
 
 const char       bootstrFmt[]    PROGMEM = "Wi-fi: %s";
 const char        apSettFmt[]    PROGMEM = "CONNECT & OPEN HTTP://%s/";
+
+#ifdef UPDATEURL
+  const char      updFirmware[]    PROGMEM = "Updating Firmware";
+  const char         updFiles[]    PROGMEM = "Updating Required Files";
+  const char updatingProgress[]    PROGMEM = "Progress %.1f %%";
+#endif
+
 #if EXT_WEATHER
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 feels like: %.1f\011C \007 pressure: %d мм \007 humidity: %s%% \007 wind: %.1f m/s [%s]";
+const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 feels like: %.1f\011C \007 pressure: %d hPa \007 humidity: %s%% \007 wind: %.1f m/s [%s]";
 #else
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 pressure: %d mm \007 humidity: %s%%";
+const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 pressure: %d hPa \007 humidity: %s%%"; /*Trip5 Note: I don't use OpenWeather - this used to be мм but I think it's probably hPa */
 #endif
 const char     weatherUnits[]    PROGMEM = "metric";   /* standard, metric, imperial */
 const char      weatherLang[]    PROGMEM = "en";       /* https://openweathermap.org/current#multi */

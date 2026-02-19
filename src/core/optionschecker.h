@@ -14,7 +14,11 @@
 #endif
 
 #if !(defined(ARDUINO_ESP32_DEV) || defined(ARDUINO_ESP32S3_DEV) || defined(ARDUINO_ESP32C3_DEV))
-#  error ONLY MODULES "ESP32 Dev Module", "ESP32 Wrover Module" AND "ESP32 S3 Dev Module" ARE SUPPORTED. PLEASE SELECT ONE OF THEM IN THE MENU >> TOOLS >> BOARD
+#  error ONLY MODULES "ESP32 Dev Module", "ESP32 Wrover Module" AND "ESP32 S3 Dev Module" ARE SUPPORTED. PLEASE SELECT ONE OF THEM
+#endif
+
+#if (defined(PRINT_FIX) && defined(UTF8_RUS) )
+#  error BOTH PRINT_FIX AND UTF8_RUS ARE DEFINED.  ONLY ONE TEXT PREPROCESSOR WILL WORK.  Check it in myoptions.h
 #endif
 
 #endif

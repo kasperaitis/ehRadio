@@ -101,7 +101,7 @@ void Player::setError(const char *e) {
   strlcpy(_plError, e, PLERR_LN);
   if (hasError()) {
     config.setTitle(_plError);
-    telnet.printf("##ERROR#:\t%s\n", e);
+    telnet.printf("##ERROR#:\t%s\r\n", e);
   }
 }
 
@@ -264,7 +264,7 @@ void Player::_play(uint16_t stationId) {
     if (player_on_start_play) player_on_start_play();
     pm.on_start_play();
   } else {
-    telnet.printf("##ERROR#:\tError connecting to %s\n", config.station.url);
+    telnet.printf("##ERROR#:\tError connecting to %s\r\n", config.station.url);
     SET_PLAY_ERROR("Error connecting to %s", config.station.url);
     _stop(true);
   };
@@ -297,7 +297,7 @@ void Player::playUrl(const char* url) {
     if (player_on_start_play) player_on_start_play();
     pm.on_start_play();
   } else {
-    telnet.printf("##ERROR#:\tError connecting to %s\n", url);
+    telnet.printf("##ERROR#:\tError connecting to %s\r\n", url);
     SET_PLAY_ERROR("Error connecting to %s", url);
     _stop(true);
   }
