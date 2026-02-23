@@ -17,7 +17,7 @@ I may drop support for certain components like Nextion.
 
 If you have issues it may help to also check yoRadio documentation.  The hardware implementations should still be 100% compatible.
 
-Documentation will be improved at some point...
+Documentation will be improved at some point... Until then, check this page and [yoRadio](https://github.com/e2002/yoradio) documentation.
 
 
 ## ehRadio Version history
