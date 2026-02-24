@@ -4388,6 +4388,17 @@ void Audio::showstreamtitle(const char* ml) {
         }
         else sTit = strdup(ml);
 
+        /* Quick-ignore common placeholder titles (e.g. StreamTitle='-' or empty) before further processing */
+        {
+          uint8_t _pos_tmp = 12;
+          if (sTit[_pos_tmp] == '\'') _pos_tmp++;
+          char* _tp = sTit + _pos_tmp;
+          while(*_tp == ' ' || *_tp == '\t' || *_tp == '\r' || *_tp == '\n') _tp++;
+          size_t _tlen = strlen(_tp);
+          if (_tlen > 0 && _tp[_tlen - 1] == '\'') _tp[_tlen - 1] = '\0';
+          if (_tp[0] == '\0' || (_tp[0] == '-' && _tp[1] == '\0')) { x_ps_free(&sTit); return; }
+        }
+
         while(i < strlen(sTit)) {
             hash += sTit[i] * i + 1;
             i++;

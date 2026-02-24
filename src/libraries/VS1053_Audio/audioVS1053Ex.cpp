@@ -918,12 +918,30 @@ void Audio::showstreamtitle(const char* ml) {
 
         if(m_streamTitleHash != hash) {
             m_streamTitleHash = hash;
-//            AUDIO_INFO("%s", sTit);
-           AUDIO_INFO("%.*s", m_ibuffSize, sTit);
+
             uint8_t pos = 12;                                                 // remove "StreamTitle="
             if(sTit[pos] == '\'') pos++;                                      // remove leading  \'
-            if(sTit[strlen(sTit) - 1] == '\'') sTit[strlen(sTit) - 1] = '\0'; // remove trailing \'
-            if(audio_showstreamtitle) audio_showstreamtitle(sTit + pos);
+            size_t sLen = strlen(sTit);
+            if (sLen > 0 && sTit[sLen - 1] == '\'') sTit[sLen - 1] = '\0'; // remove trailing \'
+
+            /* Trim and ignore placeholder titles such as "-" or empty strings.
+               Remembering the hash prevents repeated placeholder logging. */
+            char* titlePtr = sTit + pos;
+            while(*titlePtr == ' ' || *titlePtr == '\t' || *titlePtr == '\r' || *titlePtr == '\n') titlePtr++;
+            char* endp = titlePtr + strlen(titlePtr);
+            if (endp > titlePtr) {
+                endp--;
+                while(endp >= titlePtr && (*endp == ' ' || *endp == '\t' || *endp == '\r' || *endp == '\n')) { *endp = '\0'; if (endp == titlePtr) break; endp--; }
+            }
+
+            if (titlePtr[0] == '\0' || (titlePtr[0] == '-' && titlePtr[1] == '\0')) {
+                #ifdef AUDIO_DEBUG
+                  AUDIO_INFO("StreamTitle ignored (placeholder): '%s'", titlePtr);
+                #endif
+            } else {
+                AUDIO_INFO("%.*s", m_ibuffSize, sTit);
+                if(audio_showstreamtitle) audio_showstreamtitle(titlePtr);
+            }
         }
         x_ps_free(&sTit);
     }
