@@ -93,7 +93,7 @@ void setup() {
   if (config.getMode()==PM_SDCARD) player.initHeaders(config.station.url);
   player.lockOutput=false;
   if (config.store.smartstart) {  // If smart start is enabled
-    //delay(99);
+    delay(1000);  // Allow DNS/TCP/SSL stack to stabilize after WiFi connect (esp. after soft restart)
     uint16_t stn = config.lastStation();
     if (stn > 0) {  // Only play if there's a valid station
       player.sendCommand({PR_PLAY, stn});

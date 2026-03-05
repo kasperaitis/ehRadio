@@ -72,7 +72,7 @@
     #define RGB_LED_PIN   42
   #endif
   #ifndef RGB_LED_ORDER
-    #define RGB_LED_ORDER GRB
+    #define RGB_LED_ORDER NEO_GRB
   #endif
 #elif defined(BOARD_ESP32_S3_N16R8)
   //#define LED_BUILTIN         48          /* S3 RGB LED probably default in board def 48 */
@@ -88,13 +88,11 @@
 #if defined(ESP32_S3_TRIP5_SH1106_PCM_REMOTE) || defined(ESP32_S3_TRIP5_SH1106_PCM_1BUTTON) ||\
     defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS)
   #define DSP_MODEL       DSP_SH1106      /* Regular OLED - platformio.ini */
-  #define PRINT_FIX
   #define I2C_SDA         42
   #define I2C_SCL         41
 #endif
 #if defined(ESP32_S3_TRIP5_SSD1306X32_PCM_1BUTTON)
   #define DSP_MODEL       DSP_SSD1306x32  /* Tiny OLED */
-  #define PRINT_FIX
   #define I2C_SDA         42
   #define I2C_SCL         41
 #endif
@@ -103,7 +101,6 @@
 /* When using SPI Displays, trying to use same SPI MOSI, SCK, MISO as VS1053 doesn't work */
 #if defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON)
   #define DSP_MODEL       DSP_ILI9488     /* Big Display */
-  #define PRINT_FIX
   #define BIG_BOOT_LOGO
   #define SCREEN_INVERT true
   #define TFT_DC          10
@@ -121,7 +118,6 @@
   //#define DTYPE           INITR_REDTAB        /* add for Red Tab */
   //#define DTYPE           INITR_144GREENTAB   /* add for 1.44" Green Tab */
   //#define DTYPE           INITR_MINI160x80    /* add for 0.96" Mini 160x80 */
-  #define PRINT_FIX
   #define TFT_DC          10
   #define TFT_CS          9
   #define BRIGHTNESS_PIN  4       /* Red Smaller TFT doesn't have brightness control so leave commented? use unused pin? or 255? */
@@ -129,7 +125,6 @@
 #endif
 #if defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define DSP_MODEL       DSP_ILI9341
-  #define PRINT_FIX
   #define SCREEN_INVERT true
   #define TFT_CS          10
   #define TFT_DC          46
@@ -411,7 +406,7 @@
 //#define ROTATE_90 /* rotates 90 degrees? */
 
 /* Extras: unused in all */
-//#define L10N_LANGUAGE EN
+//#define L10N_LANGUAGE en_US
 //#define IR_PIN 4
 
 /* Does this get carried to SD Lib and allow Exfat? */

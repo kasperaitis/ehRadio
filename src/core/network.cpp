@@ -180,7 +180,10 @@ void MyNetwork::WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info) {
     } else {
       network.lostPlaying = player.isRunning();
       if (network.lostPlaying) { player.lockOutput = true; player.sendCommand({PR_STOP, 0}); }
-      display.putRequest(NEWMODE, LOST);
+      // when we're in the middle of an update, keep the UPDATING dialog active
+      if (display.mode() != UPDATING) {
+        display.putRequest(NEWMODE, LOST);
+      }
     }
   }
   network.beginReconnect = true;
@@ -394,24 +397,9 @@ void MyNetwork::begin() {
 void MyNetwork::loopImprov() {
   if (!improv) return;
   improv->handleSerial();
-  
-  unsigned long now = millis();
-  if (now - lastImprovBroadcast > 2000) {
-    lastImprovBroadcast = now;
-    // Determine state: 0x02=Authorized/Ready, 0x03=Provisioning/Busy, 0x04=Provisioned/Connected
-    uint8_t state = 0x02;
-    if (WiFi.status() == WL_CONNECTED) {
-      state = 0x04;
-    } else if (status != SOFT_AP && config.ssidsCount > 0) {
-      state = 0x03;
-    }
-    
-    uint8_t heartbeat[] = {'I', 'M', 'P', 'R', 'O', 'V', 0x01, 0x01, 0x01, state, 0x00};
-    uint8_t checksum = 0;
-    for (int i = 0; i < 10; i++) checksum += heartbeat[i];
-    heartbeat[10] = checksum;
-    Serial.write(heartbeat, sizeof(heartbeat));
-  }
+  // Note: periodic IMPROV heartbeat broadcast was removed — the Improv
+  // protocol state is driven by the host-side tool; unsolicited broadcasts
+  // caused false provisioning prompts on some platforms.
 }
 
 static Ticker improvRebootTicker;

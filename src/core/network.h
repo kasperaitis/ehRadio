@@ -35,7 +35,6 @@ class MyNetwork {
     void requestWeatherSync();
   private:
     Ticker rtimer;
-    unsigned long lastImprovBroadcast = 0;
     static void WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info);
     static void WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info);
 };

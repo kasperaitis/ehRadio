@@ -203,6 +203,16 @@ bool NetServer::begin(bool quiet) {
   webserver.on("/", HTTP_ANY, handleIndex);
   webserver.on("/search", HTTP_GET, handleSearch);
   webserver.on("/search", HTTP_POST, handleSearchPost);
+
+  // Captive portal detection — redirect probes from iOS, Android, Windows to the web UI
+  auto captiveRedirect = [](AsyncWebServerRequest *request) { request->redirect("/"); };
+  webserver.on("/hotspot-detect.html", HTTP_GET, captiveRedirect);          // iOS / macOS
+  webserver.on("/library/test/success.html", HTTP_GET, captiveRedirect);    // iOS / macOS (older)
+  webserver.on("/generate_204", HTTP_GET, captiveRedirect);                 // Android
+  webserver.on("/gen_204", HTTP_GET, captiveRedirect);                      // Android (older)
+  webserver.on("/ncsi.txt", HTTP_GET, captiveRedirect);                     // Windows
+  webserver.on("/connecttest.txt", HTTP_GET, captiveRedirect);              // Windows
+
   webserver.onNotFound(handleNotFound);
   webserver.onFileUpload(handleUpload);
 
@@ -310,12 +320,12 @@ const char *getFormat(BitrateFormat _format) {
   switch (_format) {
     case BF_MP3:  return "MP3";
     case BF_AAC:  return "AAC";
-    case BF_FLAC: return "FLC";
+    case BF_FLAC: return "FLAC";
     case BF_OGG:  return "OGG";
     case BF_WAV:  return "WAV";
-    case BF_VOR:  return "VOR";
-    case BF_OPU:  return "OPU";
-    default:      return "bitrate";
+    case BF_VOR:  return "VORBIS";
+    case BF_OPU:  return "OPUS";
+    default:      return "";   // no codec info
   }
 }
 
@@ -1385,7 +1395,8 @@ void handleNotFound(AsyncWebServerRequest * request) {
       "var playMode='%s';\n"
       "var onlineUpdCapable=%s;\n"
       "var newVerAvailable=%s;\n"
-      "var updateUrl='%s';\n",
+      "var updateUrl='%s';\n"
+      "var uiLang=%d;\n",
       escapedRadioVersion,
       (network.status == CONNECTED && config.wwwFilesExist) ? "webboard" : "",
       (network.status == CONNECTED) ? "player" : "ap",
@@ -1395,7 +1406,8 @@ void handleNotFound(AsyncWebServerRequest * request) {
         "false",
       #endif
       (netserver.newVersionAvailable) ? "true" : "false",
-      escapedGithubUrl
+      escapedGithubUrl,
+      L10N_WEBUI_LANGUAGE
    );
     AsyncWebServerResponse *response = request->beginResponse(200, "application/javascript", varjsbuf);
     response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");

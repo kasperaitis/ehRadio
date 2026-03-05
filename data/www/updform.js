@@ -3,7 +3,7 @@
 function initOnlineUpdateChecker() {
   if (onlineUpdCapable) {
     getId('check_online_update').classList.remove('hidden');
-    getId('check_online_update').value = "Check for Online Update";
+    getId('check_online_update').value = t('btn_check_online');
     getId('check_online_update').disabled = false;
     console.log("Online Update is available");
   } else {
@@ -13,9 +13,9 @@ function initOnlineUpdateChecker() {
 }
 
 function checkOnlineUpdate(button) {
-  if (button.value === "Check for Online Update") {
+  if (button.value === t('btn_check_online')) {
     console.log("Checking for online update");
-    button.value = "Checking...";
+    button.value = t('lbl_checking');
     button.disabled = true;
     fetch('/onlineupdatecheck')
       .then(response => response.text())
@@ -25,7 +25,7 @@ function checkOnlineUpdate(button) {
       })
       .catch(error => {
         console.error("Error checking for updates:", error);
-        button.value = "Check for Online Update";
+        button.value = t('btn_check_online');
         button.disabled = false;
       });
   } else if (button.value.startsWith("Update to")) {
@@ -44,7 +44,7 @@ function checkOnlineUpdate(button) {
         
         if(status) status.innerHTML = getId('check_online_update').value;
 
-        getId("uploadstatus").innerHTML = "Starting online update...";
+        getId("uploadstatus").innerHTML = t('lbl_starting_online_update');
         getId('updateform').classList.add('hidden');
         getId("updateprogress").value = 0;
         getId('updateprogress').hidden=false;
@@ -54,9 +54,9 @@ function checkOnlineUpdate(button) {
       })
       .catch(error => {
         console.error("Error starting update:", error);
-        button.value = "Check for Online Update";
+        button.value = t('btn_check_online');
         button.disabled = false;
-        getId("uploadstatus").innerHTML = "Error starting online update";
+        getId("uploadstatus").innerHTML = t('lbl_error_starting_online_update');
         getId('updateform').classList.remove('hidden');
         getId('updateprogress').hidden=true;
         getId("updateprogress").value = 0;

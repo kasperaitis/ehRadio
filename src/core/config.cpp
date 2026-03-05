@@ -9,6 +9,7 @@
 #include "telnet.h"
 #include "rtcsupport.h"
 #include "../displays/tools/l10n.h"
+#include "../displays/tools/utf8_common.h"
 #ifdef USE_SD
   #include "sdmanager.h"
 #endif
@@ -533,6 +534,10 @@ void Config::setShuffle(bool sn) {
   if (store.sdshuffle) player.next();
 }
 
+// runtime language/codepage helpers removed -- language is fixed
+// at compile-time via L10N_LANGUAGE/CP in options.h. The corresponding
+// configuration fields and setters have been stripped.
+
 void Config::saveIR() {
   #if IR_PIN!=255
     ircodes.ir_set = 4224;
@@ -586,11 +591,27 @@ uint8_t Config::setLastSSID(uint8_t val) {
   return store.lastSSID;
 }
 
+// Helper: remove trailing CR/LF and trim leading/trailing whitespace from a C string
+static void strip_whitespace(char *s) {
+  if (!s) return;
+  // Trim trailing CR/LF and any trailing whitespace
+  size_t len = strlen(s);
+  while (len > 0 && (s[len-1] == '\r' || s[len-1] == '\n' || isspace((unsigned char)s[len-1]))) {
+    s[--len] = '\0';
+  }
+  // Trim leading whitespace
+  char *start = s;
+  while (*start && isspace((unsigned char)*start)) start++;
+  if (start != s) memmove(s, start, strlen(start) + 1);
+}
+
 void Config::setTitle(const char* title) {
   vuThreshold = 0;
+  // Keep native UTF-8 title (single source of truth for WebUI/CLI)
   memset(config.station.title, 0, BUFLEN);
   strlcpy(config.station.title, title, BUFLEN);
   u8fix(config.station.title);
+  strip_whitespace(config.station.title);
   netserver.requestOnChange(TITLE, 0);
   netserver.loop();
   display.putRequest(NEWTITLE);
@@ -599,8 +620,9 @@ void Config::setTitle(const char* title) {
 void Config::setStation(const char* station) {
   memset(config.station.name, 0, BUFLEN);
   strlcpy(config.station.name, station, BUFLEN);
-  u8fix(config.station.title);
-}
+  u8fix(config.station.name);
+  strip_whitespace(config.station.name);
+}  
 
 void Config::indexPlaylist() {
   File playlist = SPIFFS.open(PLAYLIST_PATH, "r");
@@ -911,11 +933,18 @@ void Config::purgeUnwantedFiles() {
     String path = file.path();
     bool keep = false;
     if (path.startsWith("/www/")) {
-      String name = path.substring(5);
-      for (size_t i = 0; i < wwwFilesCount; i++) {
-        if (name == String(wwwFiles[i]) || name == String(wwwFiles[i]) + ".gz") {
-          keep = true;
-          break;
+      // never purge our localized JSON files – the build system places them
+      // under /www/locale/.  If a new language is added at runtime we don’t
+      // want the purge routine to remove it every boot.
+      if (path.startsWith("/www/locale/")) {
+        keep = true;
+      } else {
+        String name = path.substring(5);
+        for (size_t i = 0; i < wwwFilesCount; i++) {
+          if (name == String(wwwFiles[i]) || name == String(wwwFiles[i]) + ".gz") {
+            keep = true;
+            break;
+          }
         }
       }
     } else if (path.startsWith("/data/")) {
@@ -997,6 +1026,12 @@ void getRequiredFiles(void* param) {
     char localFile[64];
     char tryFile[64];
     char tryUrl[128];
+    const int MAX_FAILS = 5;          // abort after this many *consecutive* download failures
+                                       // Note: a 404 for a custom-build file counts as a failure
+                                       // too; if you maintain custom web assets set this higher
+                                       // or define DISABLE_ESPFILEUPDATER in myoptions.h
+    int failCount = 0;
+
     display.putRequest(NEWMODE, UPDATING);
     for (size_t i = 0; i < wwwFilesCount; i++) {
       display.updateProgress(LANG::updFiles, (float)(i + 1) / (float)wwwFilesCount);
@@ -1005,6 +1040,7 @@ void getRequiredFiles(void* param) {
       snprintf(localFile, sizeof(localFile), "/www/%s", fname);
       if (SPIFFS.exists(localFileGz)) SPIFFS.remove(localFileGz);
       if (SPIFFS.exists(localFile)) SPIFFS.remove(localFile);
+      bool success = false;
       for (size_t j = 0; j < 2; j++) {
         if (j == 0) { // Try compressed first
           snprintf(tryFile, sizeof(tryFile), "%s", localFileGz);
@@ -1023,11 +1059,25 @@ void getRequiredFiles(void* param) {
        );
         if (result == ESPFileUpdater::UPDATED) {
           Serial.printf("[ESPFileUpdater: %s] Download completed.\n", tryFile);
+          success = true;
           break; // Exit inner loop on success
         } else {
           if (j == 0) Serial.printf("[ESPFileUpdater: %s] Download failed. Will retry for uncompressed file.\n", tryFile);
           if (j == 1) Serial.printf("[ESPFileUpdater: %s] Download failed. No online file available. Are you running a custom version?\n", tryFile);
         }
+      }
+      if (!success) {
+        failCount++;
+        if (failCount >= MAX_FAILS) {
+          // give up and show update‑failed message briefly before returning to lost dialog
+          display.updateProgress(LANG::updFailed, 0.0f);
+          delay(2000);
+          display.putRequest(NEWMODE, LOST);
+          return;
+        }
+      } else {
+        // reset consecutive failure counter
+        failCount = 0;
       }
     }
     // Delete any files in /www that are not in the wwwFiles list
@@ -1135,6 +1185,7 @@ void startAsyncServices(void* param) {
 
 void Config::startAsyncServicesButWait() {
   if (WiFi.status() != WL_CONNECTED) return;
+#ifndef DISABLE_ESPFILEUPDATER
   ESPFileUpdater* updater = nullptr;
   updater = new ESPFileUpdater(SPIFFS);
   updater->setMaxSize(1024);
@@ -1146,6 +1197,7 @@ void Config::startAsyncServicesButWait() {
   } else {
     xTaskCreate(startAsyncServices, "startAsyncServices", 8192, updater, 2, NULL);
   }
+#endif
 }
 
 void Config::bootInfo() {

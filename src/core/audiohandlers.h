@@ -7,7 +7,11 @@
 
 void audio_info(const char *info) {
   if (player.lockOutput) return;
-  if (config.store.audioinfo) telnet.printf("##AUDIO.INFO#: %s\r\n", info);
+  if (config.store.audioinfo) {
+    // Skip empty StreamTitle='' — emitted by library when switching streams
+    if (strcmp(info, "StreamTitle=''") != 0)
+      telnet.printf("##AUDIO.INFO#: %s\r\n", info);
+  }
   #ifdef USE_NEXTION
     nextion.audioinfo(info);
   #endif
@@ -42,14 +46,27 @@ void audio_bitrate(const char *info)
 }
 
 bool printable(const char *info) {
-  if (L10N_LANGUAGE!=RU) return true;
-  bool p = true;
-  for (int c = 0; c < strlen(info); c++)
-  {
-    if ((uint8_t)info[c] > 0x7e || (uint8_t)info[c] < 0x20) p = false;
+  // only reject empty strings or embedded C0 control codes (whitespace
+  // such as newline, carriage return, tab or the 0x1E pixel‑spacer are
+  // allowed).  Our font and transliterator already cover ASCII, Latin‑1,
+  // and Cyrillic glyphs, so let the display layer decide how to render
+  // high‑bit characters.
+  if (!info || *info == '\0') return false;
+
+  const unsigned char *p = (const unsigned char*)info;
+  while (*p) {
+    if (*p >= 0x20) {           // printable ASCII or any high‑bit byte
+      ++p;
+      continue;
+    }
+    if (*p == '\r' || *p == '\n' || *p == '\t') { // common whitespace
+      ++p;
+      continue;
+    }
+    // control code found -> not printable
+    return false;
   }
-  if (!p) p = (uint8_t)info[0] >= 0xC2 && (uint8_t)info[1] >= 0x80 && (uint8_t)info[1] <= 0xBF;
-  return p;
+  return true;
 }
 
 void audio_showstation(const char *info) {
@@ -76,6 +93,7 @@ void audio_error(const char *info) {
 }
 
 void audio_id3artist(const char *info) {
+  if (config.getMode() != PM_SDCARD) return; // web/HLS: don't overwrite station name from ID3 artist tag
   if (printable(info)) config.setStation(info);
   display.putRequest(NEWSTATION);
   netserver.requestOnChange(STATION, 0);
@@ -103,7 +121,8 @@ void audio_id3album(const char *info) {
 }
 
 void audio_id3title(const char *info) {
-  audio_id3album(info);
+  if (player.lockOutput) return;
+  if (printable(info)) config.setTitle(info);
 }
 
 void audio_beginSDread() {

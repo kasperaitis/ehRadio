@@ -13,6 +13,63 @@ var loaded = false;
 var currentItem = 0;
 window.addEventListener('load', onLoad);
 
+/* i18n -- uiLang is the raw language index from variables.js (0=English/fallback) */
+var i18n = {};
+var _langCodes = ['en_US','be_BY','bg_BG','bs_BA','cs_CZ','da_DK','de_DE','el_GR','en_US','es_ES','et_EE','fi_FI','fr_FR','hr_HR','hu_HU','is_IS','kk_KZ','ky_KG','lt_LT','lv_LV','me_ME','mk_MK','mn_MN','nl_NL','no_NO','pl_PL','pt_PT','ro_RO','ru_RU','sk_SK','sl_SI','sr_RS','sv_SE','tg_TJ','tr_TR','uk_UA','uz_UZ'];
+
+// bitrate/codec display state
+var currentCodec = '';
+var currentBitrate = 0;
+function updateBitinfo(){
+  var txt = '';
+  if(currentCodec) txt += currentCodec + ' ';
+  if(currentBitrate) txt += currentBitrate + t('unit_kbits');
+  if(!txt) txt = t('lbl_no_codec');
+  var bi = getId('bitinfo'); if(bi) bi.textContent = txt;
+}
+
+var _uiLangCode = (typeof uiLang !== 'undefined' && uiLang > 0 && uiLang < _langCodes.length) ? _langCodes[uiLang] : 'en_US';
+// language JSON loading logic. Files on the device are simply named
+// `<lang>.json` (e.g. ru_RU.json).
+var localePromise = fetch('locale/' + _uiLangCode + '.json?' + (typeof radioVersion !== 'undefined' ? radioVersion : ''))
+      .then(function(r){ return r.ok ? r.json() : Promise.reject('not-ok'); })
+      .then(function(data){ i18n = data; })
+      .catch(function(){
+          // Primary fetch failed — try English as fallback (unless we already tried it)
+          if (_uiLangCode !== 'en_US') {
+            fetch('locale/en_US.json?' + (typeof radioVersion !== 'undefined' ? radioVersion : ''))
+              .then(function(r){ return r.ok ? r.json() : {}; })
+              .then(function(data){ i18n = data; })
+              .catch(function(){ i18n = {}; });
+          } else {
+            i18n = {};
+          }
+      });
+function t(key) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  var s = (i18n && i18n[key]) ? i18n[key] : key;
+  args.forEach(function(a, i){ s = s.replace('{' + i + '}', a); });
+  return s;
+}
+function applyI18n(root) {
+  (root || document).querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.dataset.i18n;
+    var val = i18n[key];
+    if (!val) return;
+    if (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) {
+      el.value = val;
+    } else if (el.tagName === 'INPUT' && el.placeholder !== undefined) {
+      el.placeholder = val;
+    } else {
+      el.textContent = val;
+    }
+  });
+
+  // update knob on/off labels via CSS variables (must be quoted for `content:` property)
+  document.documentElement.style.setProperty('--knob-off', '"' + t('lbl_off') + '"');
+  document.documentElement.style.setProperty('--knob-on', '"' + t('lbl_on') + '"');
+}
+
 function loadCSS(href){ const link = document.createElement("link"); link.rel = "stylesheet"; link.href = href; document.head.appendChild(link); }
 function loadJS(src, callback){ const script = document.createElement("script"); script.src = src; script.type = "text/javascript"; script.async = true; script.onload = callback; document.head.appendChild(script); }
 
@@ -67,10 +124,10 @@ function onMessage(event) {
       const btn = getId('check_online_update');
       if(btn) {
         if(data.onlineupdateavailable) {
-          btn.value = "Update to " + data.remoteVersion;
+          btn.value = t('msg_update_to', data.remoteVersion);
           btn.disabled = false;
         } else {
-          btn.value = "No Update Available";
+          btn.value = t('msg_no_update');
           btn.disabled = true;
         }
       }
@@ -78,7 +135,7 @@ function onMessage(event) {
     if(typeof data.onlineupdateerror !== 'undefined') {
       const btn = getId('check_online_update');
       if(btn) {
-        btn.value = "Error: " + data.onlineupdateerror;
+        btn.value = t('msg_update_error', data.onlineupdateerror);
         btn.disabled = true;
       }
     }
@@ -88,9 +145,9 @@ function onMessage(event) {
         bar.hidden = false;
         bar.value = data.onlineupdateprogress;
         const status = getId('uploadstatus');
-        if(status) status.innerHTML = "OTA Update: " + data.onlineupdateprogress +  "%&nbsp;&nbsp;downloaded&nbsp;&nbsp;|&nbsp;&nbsp;please wait...";
+        if(status) status.textContent = t('msg_ota_progress', data.onlineupdateprogress);
         if (data.onlineupdateprogress >= 100) {
-          getId("uploadstatus").innerHTML = "OTA Update Complete. Radio will reboot, update files, and reboot again. This will take 1 or 2 minutes.";
+          getId("uploadstatus").textContent = t('msg_ota_complete');
           rebootingProgress(60);
         }
       }
@@ -105,7 +162,7 @@ function onMessage(event) {
     /*end online update*/
     
     if(typeof data.redirect !== 'undefined'){
-      getId("mdnsnamerow").innerHTML=`<h3 style="line-height: 37px;color: #aaa; margin: 0 auto;">redirecting to ${data.redirect}</h3>`;
+      getId("mdnsnamerow").innerHTML=`<h3 style="line-height: 37px;color: #aaa; margin: 0 auto;">${t('msg_redirecting', data.redirect)}</h3>`;
       setTimeout(function(){ window.location.href=data.redirect; }, 4000);
       return;
     }
@@ -182,6 +239,17 @@ function onMessage(event) {
     }
     if(typeof data.payload !== 'undefined'){
       data.payload.forEach(item=> {
+        // battery string comes from server in English; translate labels/status to UI language
+        if(item.id === 'battery' && typeof item.value === 'string'){
+          var m = /volt: (\d+)mV, percentage: (\d+)%?, status: (.+)/.exec(item.value);
+          if(m){
+            var volt = m[1], perc = m[2], stat = m[3].trim().toLowerCase();
+            var statKey = 'st_batt_' + stat;
+            item.value = t('lbl_batt_volt') + ': ' + volt + 'mV, ' +
+                         t('lbl_batt_percentage') + ': ' + perc + '%, ' +
+                         t('lbl_batt_status') + ': ' + t(statKey);
+          }
+        }
         setupElement(item.id, item.value);
       });
     }else{
@@ -237,6 +305,17 @@ function fillSlider(sl){
   sl.style.background = 'linear-gradient(to right, var(--accent-dark) 0%,  var(--accent-dark) ' + value + '%, var(--odd-bg-color) ' + value + '%, var(--odd-bg-color) 100%)';
 }
 function setupElement(id,value){
+  // handle bitrate/codec specially
+  if(id === 'fmt'){
+    currentCodec = value || '';
+    updateBitinfo();
+    return;
+  }
+  if(id === 'bitrate'){
+    currentBitrate = parseInt(value) || 0;
+    updateBitinfo();
+    return;
+  }
   const element = getId(id);
   if(element){
     if(element.classList.contains("checkbox")){
@@ -266,6 +345,9 @@ function setupElement(id,value){
     if(element.type==='range'){
       element.value=value;
       fillSlider(element);
+    }
+    if(element.tagName==='SELECT'){
+      element.value=String(value);
     }
   }
 }
@@ -420,7 +502,7 @@ function plRemove(){
     }
   }
   if(pass.length==0) {
-    alert('Choose something first');
+    alert(t('msg_choose_first'));
     return;
   }
   for (var i = 0; i < pass.length; i++)
@@ -589,12 +671,12 @@ function parseAndAddJSON(content, targetCallback, mode = 'replace') {
       }
     });
     if (mode === 'replace') {
-      alert(`Import complete: ${addedCount} stations loaded.`);
+      alert(t('msg_import_replace', addedCount));
     } else if (duplicateCount > 0) {
-      alert(`Import complete: ${addedCount} stations added, ${duplicateCount} duplicates skipped.`);
+      alert(t('msg_import_merge', addedCount, duplicateCount));
     }
   } catch(e) {
-    alert('Invalid JSON format: ' + e.message);
+    alert(t('msg_invalid_json', e.message));
   }
 }
 
@@ -790,9 +872,9 @@ function parseAndAddCSV(content, targetCallback, mode = 'replace') {
   });
   
   if (mode === 'replace') {
-    alert(`Import complete: ${addedCount} stations loaded.`);
+    alert(t('msg_import_replace', addedCount));
   } else if (duplicateCount > 0) {
-    alert(`Import complete: ${addedCount} stations added, ${duplicateCount} duplicates skipped.`);
+    alert(t('msg_import_merge', addedCount, duplicateCount));
   }
 }
 
@@ -829,7 +911,7 @@ function triggerImport(mode) {
 function exportCurrentPlaylist() {
   const items = getId('pleditorcontent').getElementsByTagName('li');
   if (items.length === 0) {
-    alert('Playlist is empty, nothing to export.');
+    alert(t('msg_pl_empty'));
     return;
   }
   
@@ -841,7 +923,7 @@ function exportCurrentPlaylist() {
     const ovol = inputs[3].value;  // pleovol
     
     if (name === '' || url === '') {
-      alert(`Station ${i+1} is missing name or URL. Please fill in all fields before exporting.`);
+      alert(t('msg_pl_missing', i+1));
       return;
     }
     
@@ -926,7 +1008,7 @@ function submitWiFi(){
     xhr.open("POST",`http://${hostname}/upload`,true);
     xhr.send(formData);
     fileuploadinput.value = '';
-    getId("settingscontent").innerHTML="<h2>Settings saved. Rebooting...</h2>";
+    getId("settingscontent").innerHTML='<h2>'+t('msg_settings_saved')+'</h2>';
     getId("settingsdone").classList.add("hidden");
     getId("navigation").classList.add("hidden");
     setTimeout(function(){ window.location.href=`http://${hostname}/`; }, 10000);
@@ -979,6 +1061,7 @@ function continueLoading(mode){
         if (newVerAvailable) getId('update_available').classList.remove('hidden');
         document.querySelectorAll('input[type="range"]').forEach(sl => { fillSlider(sl); });
         websocket.send('getindex=1');
+        localePromise.then(function(){ applyI18n(); });
         // Check if we need to load curated playlist for review
         if (sessionStorage.getItem('pl_import_review') === 'true') {
           const mode = sessionStorage.getItem('pl_import_mode') || 'replace';
@@ -1015,6 +1098,7 @@ function continueLoading(mode){
           websocket.send('getbattery=1');
           classEach("reset", function(el){ el.innerHTML='<svg viewBox="0 0 16 16" class="fill"><path d="M8 3v5a36.973 36.973 0 0 1-2.324-1.166A44.09 44.09 0 0 1 3.417 5.5a52.149 52.149 0 0 1 2.26-1.32A43.18 43.18 0 0 1 8 3z"/><path d="M7 5v1h4.5C12.894 6 14 7.106 14 8.5S12.894 11 11.5 11H1v1h10.5c1.93 0 3.5-1.57 3.5-3.5S13.43 5 11.5 5h-4z"/></svg>'; });
           initDangerZone();
+          localePromise.then(function(){ applyI18n(); });
         });
       });
     }
@@ -1031,6 +1115,7 @@ function continueLoading(mode){
           });
         });
         getId("version").innerText=`${radioVersion}`;
+        localePromise.then(function(){ applyI18n(); });
       });
     }
     if(pathname=='/ir.html'){
@@ -1045,6 +1130,7 @@ function continueLoading(mode){
           });
         });
         getId("version").innerText=`${radioVersion}`;
+        localePromise.then(function(){ applyI18n(); });
       });
     }
   }else{ // AP mode
@@ -1058,6 +1144,7 @@ function continueLoading(mode){
         getId("version").innerText=`${radioVersion}`;
         getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
         websocket.send('getactive=1');
+        localePromise.then(function(){ applyI18n(); });
       });
     });
   }
@@ -1096,9 +1183,9 @@ function continueLoading(mode){
           case "confirm-reboot": showDangerConfirm('dz_reboot'); break;
           case "confirm-format": showDangerConfirm('dz_format'); break;
           case "confirm-reset": showDangerConfirm('dz_reset'); break;
-          case "reboot": websocket.send("reboot=1"); rebootSystem('Rebooting...'); break;
-          case "format": websocket.send("format=1"); rebootSystem('Format SPIFFS. Rebooting...'); break;
-          case "reset":  websocket.send("reset=1");  rebootSystem('Reset settings. Rebooting...'); break;
+          case "reboot": websocket.send("reboot=1"); rebootSystem(t('msg_rebooting')); break;
+          case "format": websocket.send("format=1"); rebootSystem(t('msg_format_reboot')); break;
+          case "reset":  websocket.send("reset=1");  rebootSystem(t('msg_reset_reboot')); break;
           case "shuffle": toggleShuffle(); break;
           case "rebootmdns": websocket.send(`mdnsname=${getId('mdns').value}`); websocket.send("rebootmdns=1"); break;
           case "savebattref": websocket.send(`battref=${getId('battref').value}`); break;
@@ -1126,6 +1213,16 @@ function continueLoading(mode){
       if(target.type==='range') sliderInput(target, command);  //<-- range
       else websocket.send(`${command}=${target.value}`);       //<-- other
       event.preventDefault(); event.stopPropagation();
+    }
+  });
+  document.body.addEventListener('change', (event) => {
+    const target = event.target;
+    if (target.tagName === 'SELECT') {
+      const command = target.dataset.command;
+      if (command) {
+        websocket.send(`${command}=${target.value}`);
+        event.preventDefault(); event.stopPropagation();
+      }
     }
   });
   document.body.addEventListener('mousewheel', (event) => {
@@ -1170,15 +1267,15 @@ function doUpdate(el) {
     xhr.open("POST",`http://${hostname}/update`,true);
     xhr.send(formData);
   }else{
-    alert('Choose something first');
+    alert(t('msg_choose_first'));
   }
 }
 function progressHandler(event) {
   var percent = (event.loaded / event.total) * 100;
-  getId("uploadstatus").innerHTML = Math.round(percent) + "%&nbsp;&nbsp;uploaded&nbsp;&nbsp;|&nbsp;&nbsp;please wait...";
+  getId("uploadstatus").textContent = t('msg_upload_pct', Math.round(percent));
   getId("updateprogress").value = Math.round(percent);
   if (percent >= 100) {
-    getId("uploadstatus").innerHTML = "Please wait, writing file to filesystem";
+    getId("uploadstatus").textContent = t('msg_upload_writing');
   }
 }
 var rebootTimer;
@@ -1199,21 +1296,21 @@ function rebootingProgress(waitSeconds) {
 }
 function completeHandler(event) {
   if(uploadWithError) return;
-  getId("uploadstatus").innerHTML = "Upload Complete, rebooting...";
+  getId("uploadstatus").textContent = t('msg_upload_complete');
   rebootingProgress(7);
 }
 function errorHandler(event) {
   getId('updateform').classList.remove('hidden');
   getId('updateprogress').hidden=true;
   getId("updateprogress").value = 0;
-  getId("status").innerHTML = "Upload Failed";
+  getId("status").textContent = t('msg_upload_failed');
   getId('check_online_update').classList.remove('hidden');
 }
 function abortHandler(event) {
   getId('updateform').classList.remove('hidden');
   getId('updateprogress').hidden=true;
   getId("updateprogress").value = 0;
-  getId("status").innerHTML = "Upload Aborted";
+  getId("status").textContent = t('msg_upload_aborted');
   getId('check_online_update').classList.remove('hidden');
 }
 

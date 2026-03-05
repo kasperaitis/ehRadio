@@ -11,7 +11,7 @@ The connection tables are located here https://github.com/e2002/yoradio#connecti
 ********************************************************/
 //#define LED_BUILTIN     255               /*  Onboard LED Pin (turn OFF by default) */
 //#define LED_INVERT      false             /*  Invert Onboard LED? */
-#define L10N_LANGUAGE     EN                /*  Language (EN, RU). More info in yoRadio/locale/displayL10n_(en|ru).h  */
+#define L10N_LANGUAGE     en_US             /*  Locale code (en_US, ru_RU, etc). More info in src/locale/ and src/displays/tools/l10n.h  */
 
 /*  DSP_MODEL. See description/available values in https://github.com/e2002/yoradio/wiki/Available-display-models  */
 /*  This option is required. Use DSP_DUMMY if no display is connected */
