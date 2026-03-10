@@ -116,7 +116,7 @@ function submitWiFi(){
     xhr.open("POST",`http://${hostname}/upload`,true);
     xhr.send(formData);
     fileuploadinput.value = '';
-    getId("settingscontent").innerHTML="<h2>Settings saved. Rebooting...</h2>";
+  getId("settingscontent").innerHTML='<h2>'+t('msg_settings_saved')+'</h2>';
     getId("settingsdone").classList.add("hidden");
     getId("navigation").classList.add("hidden");
     setTimeout(function(){ window.location.href=`http://${hostname}/`; }, 10000);
@@ -161,13 +161,10 @@ function checkDangerZone() {
   
   if(allChecked) {
     if(dangerzone) dangerzone.classList.remove('hidden');
-    if(txt) {
-      const replacement = txt.getAttribute('replacement');
-      if(replacement) txt.textContent = replacement;
-    }
+    if(txt) txt.textContent = t('lbl_dz_careful');
   } else {
     if(dangerzone) dangerzone.classList.add('hidden');
-    if(txt) txt.textContent = 'Turn on all switches to unlock';
+    if(txt) txt.textContent = t('lbl_dz_unlock');
   }
 }
 
@@ -187,7 +184,7 @@ function initDangerZone() {
   });
   
   const txt = getId('dangerzone_txt');
-  if(txt) txt.textContent = 'Turn on all switches to unlock';
+  if(txt) txt.textContent = t('lbl_dz_unlock');
   
   const dangerzone = getId('dangerzone');
   if(dangerzone) dangerzone.classList.add('hidden');

@@ -6,6 +6,8 @@
     Copy this file to locale/displayL10n_custom.h
     and modify it
 *************************************************************************************/
+// Language: Russian
+// IETF BCP 47: "ru-RU"
 const char mon[] PROGMEM = "пн";
 const char tue[] PROGMEM = "вт";
 const char wed[] PROGMEM = "ср";
@@ -35,19 +37,19 @@ const char octt[] PROGMEM = "октября";
 const char nov[] PROGMEM = "ноября";
 const char decc[] PROGMEM = "декабря";
 
-const char wn_N[]      PROGMEM = "СЕВ";
+const char wn_N[]      PROGMEM = "СЕВЕР";
 const char wn_NNE[]    PROGMEM = "ССВ";
 const char wn_NE[]     PROGMEM = "СВ";
 const char wn_ENE[]    PROGMEM = "ВСВ";
-const char wn_E[]      PROGMEM = "ВОСТ";
+const char wn_E[]      PROGMEM = "ВОСТОК";
 const char wn_ESE[]    PROGMEM = "ВЮВ";
 const char wn_SE[]     PROGMEM = "ЮВ";
 const char wn_SSE[]    PROGMEM = "ЮЮВ";
-const char wn_S[]      PROGMEM = "ЮЖ";
+const char wn_S[]      PROGMEM = "ЮГ";
 const char wn_SSW[]    PROGMEM = "ЮЮЗ";
 const char wn_SW[]     PROGMEM = "ЮЗ";
 const char wn_WSW[]    PROGMEM = "ЗЮЗ";
-const char wn_W[]      PROGMEM = "ЗАП";
+const char wn_W[]      PROGMEM = "ЗАПАД";
 const char wn_WNW[]    PROGMEM = "ЗСЗ";
 const char wn_NW[]     PROGMEM = "СЗ";
 const char wn_NNW[]    PROGMEM = "ССЗ";
@@ -74,13 +76,16 @@ const char        apNameTxt[]    PROGMEM = "ТОЧКА ДОСТУПА";
   const char        apPassTxt[]    PROGMEM = "НЕТ ПАРОЛЯ";
 #endif
 const char       bootstrFmt[]    PROGMEM = "Соединяюсь с %s";
-const char        apSettFmt[]    PROGMEM = "ПОДКЛЮЧИТЕСЬ И ОТКРЫТЬТЕ HTTP://%s/";
+const char        apSettFmt[]    PROGMEM = "ПОДКЛЮЧИТЕСЬ И ОТКРОЙТЕ HTTP://%s/";
+
 #ifdef UPDATEURL
   const char      updFirmware[]    PROGMEM = "Обновление прошивки";
   const char         updFiles[]    PROGMEM = "Обновление файлов";
+  const char        updFailed[]    PROGMEM = "Обновление не удалось";
 #endif
+
 #if EXT_WEATHER
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 ощущается: %.1f\011C \007 давление: %d мм \007 влажность: %s%% \007 ветер: %.1f м/с [%s]";
+const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 ощущается: %.1f\011C \007 давление: %d гПа \007 влажность: %s%% \007 ветер: %.1f м/с [%s]";
 #else
 const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 давление: %d гПа \007 влажность: %s%%"; /*Trip5 Note: I'm not Russian, I don't use OpenWeather - this used to be мм but I think it's probably гПа */
 #endif
@@ -88,3 +93,4 @@ const char     weatherUnits[]    PROGMEM = "metric";   /* standard, metric, impe
 const char      weatherLang[]    PROGMEM = "ru";       /* https://openweathermap.org/current#multi */
 
 #endif
+

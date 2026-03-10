@@ -49,10 +49,10 @@ input[type=range] {
   content: ''; display: inline-block; height: 18px; width: 18px; background: var(--accent-color); border-radius: 9px; 
   box-shadow: 0 0 6px #000; margin-top: 2px; margin-left: 2px; 
 }
-.checkbox .knob::after { content: 'OFF'; position: absolute; color: var(--main-text-color); font-size: 10px; font-weight: bold; left: 22px; top: 0px; }
+.checkbox .knob::after { content: var(--knob-off, 'OFF'); position: absolute; color: var(--main-text-color); font-size: 10px; font-weight: bold; text-transform: uppercase; line-height: 1; left: 22px; top: 50%; transform: translateY(-50%); }
 .checkbox.checked .knob { background: var(--accent-dark); }
 .checkbox.checked .knob::before{ margin-left: 26px; }
-.checkbox.checked .knob::after{ content: 'ON'; color: var(--accent-text-color); left: 5px; font-size: 10px; }
+.checkbox.checked .knob::after{ content: var(--knob-on, 'ON'); color: var(--accent-text-color); left: 5px; font-size: 10px; text-transform: uppercase; line-height: 1; top: 50%; transform: translateY(-50%); }
 
 /* PAGE */
 #content { height: 100%; margin: 0 auto; position: relative; max-width: 580px; display: flex; flex-direction: column; padding: 10px 20px 14px 20px; }
@@ -107,7 +107,7 @@ input[type=range] {
 #playerwrap.playing #modestopped { display: none; }
 #playerwrap.playing #bitinfo { opacity: 1; }
 .formbuttons { display: flex; flex-wrap: wrap; justify-content: space-around; max-width: 100%; width: 100%; margin: 0 auto; margin-top: 20px; }
-.fb { padding: 8px 22px; font-size: 18px; border: var(--accent-color) 2px solid; font-weight: normal; border-radius: 20px; cursor: pointer; 
+.fb { padding: 8px 22px; font-size: 16px; border: var(--accent-color) 2px solid; font-weight: normal; border-radius: 20px; cursor: pointer; 
       text-align: center; min-width: 100px; margin-left: 8px; margin-right: 8px; text-transform: uppercase; color: var(--accent-color); background: var(--odd-bg-color); }
 .fb:hover, .fb.hl { background: var(--accent-dark); color: var(--accent-text-color); text-decoration: none; }
 .fb.done { margin-left: calc(50%); transform: translateX(-50%); margin-top: 20px; margin-bottom: 10px; max-width: 140px; }
