@@ -38,7 +38,7 @@
     #define RGB_LED_PIN   42
   #endif
   #ifndef RGB_LED_ORDER
-    #define RGB_LED_ORDER GRB
+    #define RGB_LED_ORDER NEO_GRB
   #endif
 #elif defined(BOARD_ESP32_S3_N16R8)
   //#define LED_BUILTIN         48          /* S3 RGB LED probably default in board def 48 */
@@ -58,7 +58,6 @@
 /* When using SPI Displays, trying to use same SPI MOSI, SCK, MISO as VS1053 doesn't work */
 #if defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define DSP_MODEL       DSP_ILI9341
-  #define PRINT_FIX
   #define SCREEN_INVERT true
   #define TFT_CS          10
   #define TFT_DC          46
@@ -95,6 +94,8 @@
   #ifndef ES8311_MAX_I2S
     #define ES8311_MAX_I2S 180
   #endif
+  /* force mono audio for this board */
+  #define PLAYER_FORCE_MONO true
   #define VS1053_CS       255     /* set to 255 to disable VS1053 */
 #endif
 
@@ -201,20 +202,31 @@
   #define VOLUME_STEPS    5
 #endif
 
+/* --- LANGUAGE --- */
+
+/* Locale codes: be_BY(Belarusian), bg_BG(Bulgarian), bs_BA(Bosnian), cs_CZ(Czech), da_DK(Danish), de_DE(German), el_GR(Greek), en_CA(Canadian English), en_US(English), es_ES(Spanish), et_EE(Estonian), fi_FI(Finnish), fr_CA(Canadian French), fr_FR(French), hr_HR(Croatian), hu_HU(Hungarian), is_IS(Icelandic), kk_KZ(Kazakh), ky_KG(Kyrgyz), lt_LT(Lithuanian), lv_LV(Latvian), me_ME(Montenegrin), mk_MK(Macedonian), mn_MN(Mongolian), nl_NL(Dutch), no_NO(Norwegian), pl_PL(Polish), pt_PT(Portuguese), ro_RO(Romanian), ru_RU(Russian), sk_SK(Slovak), sl_SI(Slovenian), sr_RS(Serbian), sv_SE(Swedish), tg_TJ(Tajik), tr_TR(Turkish), uk_UA(Ukrainian), uz_UZ(Uzbek) */
+#define L10N_LANGUAGE     lt_LT
+
+/* Optional: set a different language for the WebUI only.  If omitted the UI will use the same value as L10N_LANGUAGE. */
+//#define L10N_WEBUI_LANGUAGE en_US
+
+/* Codepage for display glyph mapping: choose L10N_CP_LATIN or L10N_CP_CYRILLIC */
+//#define L10N_CODEPAGE L10N_CP_LATIN
 
 /* --- SYSTEM OVERRIDES --- */
 
 #if defined (BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
   #define LOOP_TASK_STACK_SIZE 8  /* Compiler default is 8KB but seems safe on ESP32-S3 to increase to 16KB for audio decoding + concurrent tasks */
   #define CONFIG_ASYNC_TCP_QUEUE_SIZE 32
-#elif defined (BOARD_ESP32_S3_N16R8) ||\
-      defined(ESP32_S3_KASPERAITIS_ES3C28P)
+#elif defined (BOARD_ESP32_S3_N16R8) || defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define LOOP_TASK_STACK_SIZE 16  /* Compiler default is 8KB but seems safe on ESP32-S3 to increase to 16KB for audio decoding + concurrent tasks / 8KB is safe when using a VS1053 decoder */
   #define CONFIG_ASYNC_TCP_QUEUE_SIZE 64
   #define SEARCHRESULTS_BUFFER 1024*32 // 32KB matches chunk sizes from radio-browser.info but likely only good for ESP32-S3
   #define SEARCHRESULTS_YIELDINTERVAL 0 // With a large buffer, skipping is almost eliminated with 0
-#endif
 
+  /* Disable automatic runtime downloads from GitHub (ESPFileUpdater) for this board only. */
+  //#define DISABLE_ESPFILEUPDATER
+#endif
 
 /* --- URL SOURCE OVERRIDE --- */
 /* Only use this if you've decided to use your own Github as the source of files */

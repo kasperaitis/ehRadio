@@ -2,18 +2,14 @@
 
 #if defined(RGB_LED_PIN) && (RGB_LED_PIN!=255) // ============================== Everything ignored if not defined ==============================
 
-#include <FastLED.h>
+#include <Adafruit_NeoPixel.h>
 
 #ifndef RGB_LED_ORDER
-  #define RGB_LED_ORDER GRB
-#endif
-
-#ifndef RGB_LED_CLASS
-  #define RGB_LED_CLASS WS2812B
+  #define RGB_LED_ORDER NEO_GRB
 #endif
 
 #define NUM_RGB_LEDS 1
-static CRGB leds[NUM_RGB_LEDS];
+static Adafruit_NeoPixel strip(NUM_RGB_LEDS, RGB_LED_PIN, RGB_LED_ORDER + NEO_KHZ800);
 static uint8_t flashCount = 0;
 static unsigned long lastFlash = 0;
 static bool _rgb_inited = false;
@@ -29,8 +25,9 @@ static rgb_state_e _state = RGB_OFF;
 
 void rgbled_init() {
   #if defined(RGB_LED_PIN) && (RGB_LED_PIN!=255)
-    FastLED.addLeds<RGB_LED_CLASS, RGB_LED_PIN, RGB_LED_ORDER>(leds, NUM_RGB_LEDS);
-    FastLED.setBrightness(64);
+    strip.begin();
+    strip.setBrightness(64);
+    strip.show();
     _rgb_inited = true;
   #endif
 }
@@ -38,8 +35,8 @@ void rgbled_init() {
 bool rgbled_is_initialized() { return _rgb_inited; }
 
 void rgbled_set(uint8_t r, uint8_t g, uint8_t b) {
-  leds[0] = CRGB(r, g, b);
-  FastLED.show();
+  strip.setPixelColor(0, strip.Color(r, g, b));
+  strip.show();
 }
 
 void rgbled_playing() {
@@ -63,7 +60,7 @@ void rgbled_loop() {
   if (flashCount > 0) {
     if (millis() - lastFlash > 150) {
       // toggle between off and blue
-      if (leds[0]) rgbled_set(0,0,0); else rgbled_set(0,0,128);
+      if (strip.getPixelColor(0) != 0) rgbled_set(0,0,0); else rgbled_set(0,0,128);
       lastFlash = millis();
       flashCount--;
       // when finished, restore color to current state

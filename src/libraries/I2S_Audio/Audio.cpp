@@ -793,8 +793,6 @@ bool Audio::httpPrint(const char* host) {
     strcat(rqh, "Accept-Encoding: identity;q=1,*;q=0\r\n");
     strcat(rqh, "Connection: keep-alive\r\n\r\n");
 
-    AUDIO_INFO("connect to: \"%s\"", host);
-
     if(!_client->connected()) {
          if(m_f_ssl) { _client = static_cast<WiFiClient*>(&clientsecure); if(m_f_ssl && port == 80) port = 443;}
          else        { _client = static_cast<WiFiClient*>(&client); }
@@ -1136,7 +1134,7 @@ void Audio::showID3Tag(const char* tag, const char* value) {
     if(!strcmp(tag, "TSI")) sprintf(m_chbuf, "Size: %s", value);
     if(!strcmp(tag, "TSS")) sprintf(m_chbuf, "Software/hardware and settings used for encoding: %s", value);
     if(!strcmp(tag, "TT1")) sprintf(m_chbuf, "Content group description: %s", value);
-    if(!strcmp(tag, "TT2")) { sprintf(m_chbuf, "Title/Songname/Content description: %s", value); if(audio_id3album) audio_id3album(value); }
+    if(!strcmp(tag, "TT2")) { sprintf(m_chbuf, "Title/Songname/Content description: %s", value); if(audio_id3title) audio_id3title(value); }
     if(!strcmp(tag, "TT3")) sprintf(m_chbuf, "Subtitle/Description refinement: %s", value);
     if(!strcmp(tag, "TXT")) sprintf(m_chbuf, "Lyricist/text writer: %s", value);
     if(!strcmp(tag, "TXX")) sprintf(m_chbuf, "User defined text information frame: %s", value);
@@ -1166,7 +1164,7 @@ void Audio::showID3Tag(const char* tag, const char* value) {
     if(!strcmp(tag, "TEXT")) sprintf(m_chbuf, "Lyricist: %s", value);
     if(!strcmp(tag, "TIME")) sprintf(m_chbuf, "Time: %s", value);
     if(!strcmp(tag, "TIT1")) sprintf(m_chbuf, "Grouping: %s", value);
-    if(!strcmp(tag, "TIT2")) { sprintf(m_chbuf, "Title: %s", value); if(audio_id3album) audio_id3album(value); }
+    if(!strcmp(tag, "TIT2")) { sprintf(m_chbuf, "Title: %s", value); if(audio_id3title) audio_id3title(value); }
     if(!strcmp(tag, "TIT3")) sprintf(m_chbuf, "Subtitle: %s", value);
     if(!strcmp(tag, "TLAN")) sprintf(m_chbuf, "Language: %s", value);
     if(!strcmp(tag, "TLEN")) sprintf(m_chbuf, "Length (ms): %s", value);
@@ -2472,6 +2470,12 @@ void Audio::playChunk() {
 
     while(validSamples) {
         *sample = m_outBuff + i;
+        // if mono is forced, apply mix before the VU meter reads the data
+        if(m_f_forceMono && m_channels == 2){
+            int32_t xy = ((*sample)[RIGHTCHANNEL] + (*sample)[LEFTCHANNEL]) / 2;
+            (*sample)[RIGHTCHANNEL] = (int16_t)xy;
+            (*sample)[LEFTCHANNEL]  = (int16_t)xy;
+        }
         computeVUlevel(*sample);
 
         //---------- Filterchain, can commented out if not used-------------
@@ -2486,11 +2490,6 @@ void Audio::playChunk() {
             IIR_filterChain2(*sample);
         }
         //------------------------------------------------------------------
-        if(m_f_forceMono && m_channels == 2){
-            int32_t xy = ((*sample)[RIGHTCHANNEL] + (*sample)[LEFTCHANNEL]) / 2;
-            (*sample)[RIGHTCHANNEL] = (int16_t)xy;
-            (*sample)[LEFTCHANNEL]  = (int16_t)xy;
-        }
         Gain(*sample);
 
         if(m_f_internalDAC) {
@@ -2607,7 +2606,7 @@ void Audio::loop() {
                     m_dataMode = HTTP_RESPONSE_HEADER;
                 }
                 else { // host == NULL means connect to m3u8 URL
-                    if(m_lastM3U8host) {connecttohost(m_lastM3U8host);}
+                    if(m_lastM3U8host) {httpPrint(m_lastM3U8host);}
                     else               {httpPrint(m_lastHost);} 		// if url has no first redirection
                     m_dataMode = HTTP_RESPONSE_HEADER; 	// we have a new playlist now
                 }
@@ -2882,6 +2881,7 @@ const char* Audio::parsePlaylist_M3U8() {
             if(startsWith(m_playlistContent[i], "##")) continue;
             if(startsWith(m_playlistContent[i], "#EXT-X-INDEPENDENT-SEGMENTS")) continue;
             if(startsWith(m_playlistContent[i], "#EXT-X-PROGRAM-DATE-TIME:")) continue;
+            if(startsWith(m_playlistContent[i], "#") && !startsWith(m_playlistContent[i], "#EXTINF")) continue; // skip unrecognized directives (e.g. #ENCODER:, #EXT-X-MEDIA-SEQUENCE:, etc.)
 
             if(!f_mediaSeq_found) {
                 xMedSeq = m3u8_findMediaSeqInURL();
@@ -4390,6 +4390,7 @@ void Audio::showstreamtitle(const char* ml) {
 
         /* Quick-ignore common placeholder titles (e.g. StreamTitle='-' or empty) before further processing */
         {
+          if (!sTit || strlen(sTit) <= 12) { x_ps_free(&sTit); return; }
           uint8_t _pos_tmp = 12;
           if (sTit[_pos_tmp] == '\'') _pos_tmp++;
           char* _tp = sTit + _pos_tmp;

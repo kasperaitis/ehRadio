@@ -2,6 +2,7 @@
 #define display_h
 #include "common.h"
 #include <Ticker.h>
+#include "../displays/widgets/widgetsconfig.h"  // needed for WidgetConfig type
 
 #if DSP_MODEL==DSP_DUMMY
 #define DUMMYDISPLAY
@@ -63,6 +64,7 @@ class Display {
     PlayListWidget *_plwidget;
     #ifdef UPDATEURL
       TextWidget *_updLabel = nullptr, *_updValue = nullptr;
+      WidgetConfig _updConf;           // keep a copy of the label's configuration
       bool _updFirstCall = true;
       int _updBarWidth = 10;
     #endif

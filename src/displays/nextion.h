@@ -49,8 +49,10 @@ class Nextion {
     void  newNameset(const char* meta);
     void  setVol(uint8_t vol, bool dialog);
     void  fillVU(uint8_t LC, uint8_t RC);
-    char* utf8Rus(char* str, bool uppercase);
-    char* printFix(const char* src);
+    // Nextion-specific UTF-8 -> Nextion single-byte encoding converter
+    // This uses the Nextion/Windows-1251 offset method and is specific to
+    // Nextion displays. Use the global `utf8To()` for other display types.
+    char* utf8ToNextion(const char* str, bool uppercase);
     void  printClock(struct tm timeinfo);
     void  bitrate(int bpm);
     void  bitratePic(uint8_t pic);

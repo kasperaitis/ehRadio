@@ -244,7 +244,15 @@ void Player::_play(uint16_t stationId) {
   } else {
     config.saveValue(&config.store.play_mode, static_cast<uint8_t>(PM_WEB));
   }
-  if (config.getMode()==PM_WEB) isConnected=connecttohost(config.station.url);
+  if (config.getMode()==PM_WEB) {
+    isConnected=connecttohost(config.station.url);
+    if (!isConnected) {
+      // Retry once after a brief delay — covers boot-time transient failures
+      // (DNS not ready / TCP stack not fully up immediately after WiFi join)
+      vTaskDelay(pdMS_TO_TICKS(1500));
+      isConnected=connecttohost(config.station.url);
+    }
+  }
   if (isConnected) {
   //if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,config.sdResumePos==0?_resumeFilePos:config.sdResumePos-player.sd_min)) {
     _status = PLAYING;
