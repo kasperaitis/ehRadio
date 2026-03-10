@@ -22,6 +22,13 @@ Documentation will be improved at some point... Until then, check this page and 
 
 ## ehRadio Version history
 
+### 2026.02.xx
+
+  - Thanks to [kasperaitis](https://github.com/kasperaitis) for [PR 50](https://github.com/trip5/ehRadio/pull/50)
+    - Ignore placeholder stream titles
+    - improved battery handling
+
+
 ### 2026.02.18
   - WebUI greatly improved for mobile and tablet devices
     - automatic checking for new version availability
