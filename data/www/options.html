@@ -2,15 +2,15 @@
     </div>
     <h2 class="pagetitle" data-i18n="ttl_settings">Settings</h2>
     <div class="navigation group group_system hidden" id="navigation">
-      <div class="navitem group group_system hidden" data-target="group_system" data-i18n="nav_system">system</div>
-      <div class="navitem group group_battery hidden" data-target="group_battery" data-i18n="nav_battery">battery</div>
-      <div class="navitem group group_display group_nextion hidden" data-target="group_display" data-i18n="nav_screen">screen</div>
-      <div class="navitem group group_controls hidden" data-target="group_controls" data-i18n="nav_controls">controls</div>
-      <div class="navitem group group_timezone hidden" data-target="group_timezone" data-i18n="nav_timezone">timezone</div>
-      <div class="navitem group group_wifi hidden" data-target="group_wifi" data-i18n="nav_wifi">wifi</div>
-      <div class="navitem group group_weather hidden" data-target="group_weather" data-i18n="nav_weather">weather</div>
-      <div class="navitem group group_mqtt hidden" data-target="group_mqtt" data-i18n="nav_mqtt">mqtt</div>
-      <div class="navitem group group_system hidden" data-target="group_tools" data-i18n="nav_tools">tools</div>
+      <div class="navitem group group_system hidden" data-target="group_system" data-i18n="title_system">System</div>
+      <div class="navitem group group_battery hidden" data-target="group_battery" data-i18n="title_battery">Battery</div>
+      <div class="navitem group group_display group_nextion hidden" data-target="group_display" data-i18n="title_screen">Screen</div>
+      <div class="navitem group group_controls hidden" data-target="group_controls" data-i18n="title_controls">Controls</div>
+      <div class="navitem group group_locale hidden" data-target="group_locale" data-i18n="title_locale">Locale</div>
+      <div class="navitem group group_wifi hidden" data-target="group_wifi" data-i18n="title_wifi">Wi-Fi</div>
+      <div class="navitem group group_weather hidden" data-target="group_weather" data-i18n="title_weather">Weather</div>
+      <div class="navitem group group_mqtt hidden" data-target="group_mqtt" data-i18n="title_mqtt">MQTT</div>
+      <!-- <div class="navitem group group_system hidden" data-target="group_tools" data-i18n="nav_tools">!</div> -->
     </div>
     <div id="settingswrap">
       <div id="settingscontent">
@@ -34,7 +34,7 @@
           </div>
           <div class="flex-row">
             <div class="inputwrap center">
-              <span class="inputtitle" data-i18n="lbl_wifi_scan">Scan for Best Wi-fi on Boot</span>
+              <span class="inputtitle" data-i18n="lbl_wifi_scan">Scan for Best Wi-Fi on Boot</span>
               <div class="checkbox" id="wifiscan" data-command="wifiscan"><div class="knob"></div></div>
             </div>
             <div class="inputwrap center">
@@ -67,7 +67,11 @@
           <div class="title"><span data-i18n="title_battery">Battery</span></div>
           <div class="reset" data-name="battery" title="reset"></div>
           <div class="flex-row center" style="padding-bottom: 10;">
-            <div class="infoitem" id="batteryinfo"><span id="battery" class="text"></span></div>
+            <div class="infoitem" id="batteryinfo">
+              <span data-i18n="lbl_batt_volt">Voltage</span>: <span id="battery_volt" class="text"></span>mV, 
+              <span data-i18n="lbl_batt_percentage">Percentage</span>: <span id="battery_perc" class="text"></span>%, 
+              <span data-i18n="lbl_batt_status">Status</span>: <span id="battery_status" class="text"></span>
+            </div>
           </div>
           <div class="flex-row" id="battrefrow">
             <div class="inputwrap">
@@ -171,8 +175,14 @@
             </div>
           </div>
           <div class="flex-row group group_touch hidden">
-            <div class="checkbox" id="tsf" data-command="fliptouch"><div class="knob"></div><span data-i18n="lbl_flip_touch">Flip touch</span></div>
-            <div class="checkbox" id="tsd" data-command="dbgtouch"><div class="knob"></div><span data-i18n="lbl_debug_touch">Debug touch</span></div>
+            <div class="inputwrap center">
+              <span class="inputtitle" data-i18n="lbl_flip_touch">Flip touch</span>
+              <div class="checkbox" id="tsf" data-command="fliptouch"><div class="knob"></div></div>
+            </div>
+            <div class="inputwrap center">
+              <span class="inputtitle" data-i18n="lbl_debug_touch">Debug touch</span>
+              <div class="checkbox" id="tsd" data-command="dbgtouch"><div class="knob"></div></div>
+            </div>
           </div>
           <div class="flex-row group group_encoder hidden">
             <div class="inputwrap">
@@ -198,10 +208,22 @@
             <div class="fb local" data-command="setupir" data-i18n="btn_ir_recorder">IR Recorder</div>
           </div>
         </section>
-        <a name="timezone"></a>
-        <section class="group group_timezone hidden" id="group_timezone">
-          <div class="title"><span data-i18n="title_timezone">Timezone</span></div>
-          <div class="reset" data-name="timezone" title="reset"></div>
+        <a name="locale"></a>
+        <section class="group group_locale hidden" id="group_locale">
+          <div class="title"><span data-i18n="title_locale">Locale</span></div>
+          <div class="reset" data-name="locale" title="reset"></div>
+          <div class="flex-row">
+            <div class="inputwrap">
+              <span class="inputtitle" data-i18n="lbl_webui_locale">WebUI Locale</span>
+              <select type="text" id="locale_webui" name="locale_webui">
+                <option value="">Locales Load Here</option>
+              </select>
+            </div>
+            <div class="inputwrap">
+              <span class="inputtitle" data-i18n="lbl_display_locale">Display Locale</span>
+              <input type="text" id="locale_disp" name="locale_disp" maxlength="50" readonly="readonly" />
+            </div>
+          </div>
           <div class="flex-row">
             <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_select_tz">Select Time Zone</span>
@@ -225,7 +247,7 @@
             </div>
           </div>
           <div class="flex-row last">
-            <div class="fb hl local" data-command="applytz" data-i18n="btn_apply">Apply</div>
+            <div class="fb hl local" data-command="applylocale" data-i18n="btn_apply">Apply</div>
           </div>
         </section>
         <a name="wifi"></a>
@@ -283,7 +305,7 @@
           </div>
           <div class="flex-row last">
             <input id="file-upload" type="file" accept=".txt, .csv" hidden/>
-            <div class="fb local group group_system hidden" data-command="wifiexport" data-i18n="btn_wifi_export">Export</div>
+            <div class="fb local group group_system hidden" data-command="wifiexport" data-i18n="btn_export">Export</div>
             <div class="fb hl local" data-command="wifiupload" data-i18n="btn_save_reboot">Save &amp; Reboot</div>
           </div>
         </section>
@@ -291,8 +313,11 @@
         <section class="group group_weather hidden" id="group_weather">
           <div class="title"><span data-i18n="title_weather">Weather</span></div>
           <div class="reset" data-name="weather" title="reset"></div>
-          <div class="flex-row center">
-            <div class="checkbox" id="wen" data-command="showweather"><div class="knob"></div><span data-i18n="lbl_show_weather">show weather</span></div>
+          <div class="flex-row group group_touch hidden">
+            <div class="inputwrap center">
+              <span class="inputtitle" data-i18n="lbl_show_weather">Show Weather</span>
+              <div class="checkbox" id="wen" data-command="showweather"><div class="knob"></div></div>
+            </div>
           </div>
           <div class="flex-row">
             <div class="inputwrap">

@@ -25,12 +25,12 @@ static inline bool shouldPreserveChar(uint8_t first, uint8_t second) {
   if (first < 0xC2 || first > 0xDF) return false;
   uint16_t cp = ((first & 0x1F) << 6) | (second & 0x3F);
 
-#if (L10N_CODEPAGE==L10N_CP_LATIN)
+#ifdef L10N_CP_LATIN
   for (uint16_t i = 0; i < LATIN_PRESERVE_SIZE; i++)
     if (pgm_read_word(&LATIN_PRESERVE[i]) == cp) return true;
   return false;
 
-#elif (L10N_CODEPAGE==L10N_CP_CYRILLIC)
+#elif defined(L10N_CP_CYRILLIC)
   // Preserve the main Cyrillic block U+0410..U+044F (А..я) which maps to
   // dedicated GLCD glyph slots; additional non-contiguous Cyrillic letters
   // that the font provides are listed in CYRILLIC_PRESERVE and checked below.
@@ -121,7 +121,7 @@ static inline char* utf8ToAscii(const char* src) {
         bool processed = false;
         if (shouldPreserveChar(first, second)) {
         if (outIdx + 2 <= BUFLEN - 1) {
-#if (L10N_CODEPAGE == L10N_CP_CYRILLIC)
+#ifdef L10N_CP_CYRILLIC
           // Convert preserved lowercase Cyrillic (U+0430..U+044F) to uppercase
           // (U+0410..U+042F) so preserved glyphs render as uppercase on GLCD
           uint16_t cp = ((first & 0x1F) << 6) | (second & 0x3F);
@@ -141,11 +141,11 @@ static inline char* utf8ToAscii(const char* src) {
 #endif
         }
         p += 2; continue; }
-        #if (L10N_CODEPAGE == L10N_CP_CYRILLIC) || (L10N_CODEPAGE == L10N_CP_LATIN)
-        if (!processed && (first == 0xD0 || first == 0xD1)) {
-          char tr = transliterateCyrillic(first, second);
-          if (tr && outIdx < BUFLEN - 1) { buf[outIdx++] = (char)toupper((unsigned char)tr); processed = true; }
-        }
+        #if defined(L10N_CP_CYRILLIC) || defined(L10N_CP_LATIN)
+          if (!processed && (first == 0xD0 || first == 0xD1)) {
+            char tr = transliterateCyrillic(first, second);
+            if (tr && outIdx < BUFLEN - 1) { buf[outIdx++] = (char)toupper((unsigned char)tr); processed = true; }
+          }
         #endif
         if (!processed) {
           for (uint16_t i = 0; i < LATIN_MAP_SIZE; i++) {
@@ -174,7 +174,7 @@ static inline char* u8transliterate(const char* src) {
 // sequences or 0 when not a Cyrillic transliteration target. Implemented using
 // the shared `CYRILLIC_MAP` table above for single-source-of-truth behavior.
 static inline char transliterateCyrillic(uint8_t first, uint8_t second) {
-#if (L10N_CODEPAGE == L10N_CP_CYRILLIC) || (L10N_CODEPAGE == L10N_CP_LATIN)
+#if defined(L10N_CP_CYRILLIC) || defined(L10N_CP_LATIN)
   if (!(first == 0xD0 || first == 0xD1)) return 0;
   uint16_t code = ((first & 0x1F) << 6) | (second & 0x3F);
   for (uint8_t i = 0; i < CYRILLIC_MAP_SIZE; i++) {

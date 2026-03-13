@@ -82,13 +82,13 @@ const char        apSettFmt[]    PROGMEM = "CONNECT & OPEN HTTP://%s/";
 #ifdef UPDATEURL
   const char      updFirmware[]    PROGMEM = "Updating Firmware";
   const char         updFiles[]    PROGMEM = "Updating Files";
-  const char        updFailed[]    PROGMEM = "Update failed";
+  const char        updFailed[]    PROGMEM = "Update Failed";
 #endif
 
 #if EXT_WEATHER
 const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 feels like: %.1f\011C \007 pressure: %d hPa \007 humidity: %s%% \007 wind: %.1f m/s [%s]";
 #else
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 pressure: %d hPa \007 humidity: %s%%"; /*Trip5 Note: I don't use OpenWeather - this used to be мм but I think it's probably hPa */
+const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 pressure: %d hPa \007 humidity: %s%%"; /*Trip5 Note: I don't use OpenWeather - this used to be ΠΌΠΌ but I think it's probably hPa */
 #endif
 const char     weatherUnits[]    PROGMEM = "metric";   /* standard, metric, imperial */
 const char      weatherLang[]    PROGMEM = "en";       /* https://openweathermap.org/current#multi */

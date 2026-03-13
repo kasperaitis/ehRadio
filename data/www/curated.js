@@ -127,7 +127,7 @@ function displayIndex() {
   indexTable.innerHTML = '';
   
   if (!indexData || indexData.length === 0) {
-    indexTable.innerHTML = '<tr class="line"><td colspan="3" class="importantmessage">No playlists available</td></tr>';
+    indexTable.innerHTML = '<tr class="line"><td colspan="3" class="importantmessage">' + t('msg_no_playlists', 'No playlists available') + '</td></tr>';
     return;
   }
   
@@ -135,8 +135,8 @@ function displayIndex() {
     const row = document.createElement('tr');
     row.className = 'line';
     row.innerHTML = `
-      <td class="name">${escapeHtml(playlist.name || 'Unnamed')}</td>
-      <td class="info">${escapeHtml(playlist.total ? playlist.total + ' stations' : '')}</td>
+      <td class="name">${escapeHtml(playlist.name || t('lbl_unnamed', 'Unnamed'))}</td>
+      <td class="info">${escapeHtml(playlist.total ? playlist.total + ' ' + t('unit_stations', 'stations') : '')}</td>
       <td class="add">
         <button class="searchbutton addtoplaylist" data-index="${idx}" data-action="load">
           <svg viewBox="0 0 24 24" class="stroke">
@@ -168,7 +168,7 @@ function loadPlaylist(playlist) {
   console.log('[Curated] Requesting playlist download:', currentPlaylistFile);
   
   // Update section title
-  document.getElementById('playlistSectionTitle').textContent = 'Loading: ' + (playlist.name || 'Playlist');
+  document.getElementById('playlistSectionTitle').textContent = t('msg_loading', 'Loading') + ': ' + (playlist.name || t('lbl_unnamed', 'Unnamed'));
   
   // Show loading spinner in playlist table
   const playlistTable = document.getElementById('playlistTable');
@@ -224,8 +224,8 @@ function fetchPlaylist() {
     })
     .catch(error => {
       console.error('[Curated] Error fetching playlist:', error);
-      document.getElementById('playlistTable').innerHTML = '<tr class="line"><td class="importantmessage" colspan="3">Error loading playlist file</td></tr>';
-      document.getElementById('playlistSectionTitle').textContent = 'Error Loading Playlist';
+      document.getElementById('playlistTable').innerHTML = '<tr class="line"><td class="importantmessage" colspan="3">' + t('msg_error_loading_playlist', 'Error loading playlist') + '</td></tr>';
+      document.getElementById('playlistSectionTitle').textContent = t('msg_error_loading_playlist', 'Error loading playlist');
       setImportButtonsEnabled(false);
     });
 }
@@ -235,11 +235,11 @@ function displayPlaylist(data) {
   playlistTable.innerHTML = '';
   
   // Update section title
-  document.getElementById('playlistSectionTitle').textContent = data.name + ' (' + data.stations.length + ' stations)';
+  document.getElementById('playlistSectionTitle').textContent = data.name + ' (' + data.stations.length + ' ' + t('unit_stations', 'stations') + ')';
   
   const stations = data.stations || [];
   if (stations.length === 0) {
-    playlistTable.innerHTML = '<tr class="line"><td colspan="3" class="importantmessage">No stations in this playlist</td></tr>';
+    playlistTable.innerHTML = '<tr class="line"><td colspan="3" class="importantmessage">' + t('msg_no_stations_in_playlist', 'No stations in this playlist') + '</td></tr>';
     setImportButtonsEnabled(false);
     return;
   }

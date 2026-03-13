@@ -13,41 +13,42 @@ var loaded = false;
 var currentItem = 0;
 window.addEventListener('load', onLoad);
 
-/* i18n -- uiLang is the raw language index from variables.js (0=English/fallback) */
-var i18n = {};
-var _langCodes = ['en_US','be_BY','bg_BG','bs_BA','cs_CZ','da_DK','de_DE','el_GR','en_US','es_ES','et_EE','fi_FI','fr_FR','hr_HR','hu_HU','is_IS','kk_KZ','ky_KG','lt_LT','lv_LV','me_ME','mk_MK','mn_MN','nl_NL','no_NO','pl_PL','pt_PT','ro_RO','ru_RU','sk_SK','sl_SI','sr_RS','sv_SE','tg_TJ','tr_TR','uk_UA','uz_UZ'];
-
 // bitrate/codec display state
 var currentCodec = '';
 var currentBitrate = 0;
 function updateBitinfo(){
   var txt = '';
   if(currentCodec) txt += currentCodec + ' ';
-  if(currentBitrate) txt += currentBitrate + t('unit_kbits');
-  if(!txt) txt = t('lbl_no_codec');
+  if(currentBitrate) txt += currentBitrate + t('unit_kbits', 'kBits');
+  if(!txt) txt = t('lbl_no_codec', 'no codec');
   var bi = getId('bitinfo'); if(bi) bi.textContent = txt;
 }
 
-var _uiLangCode = (typeof uiLang !== 'undefined' && uiLang > 0 && uiLang < _langCodes.length) ? _langCodes[uiLang] : 'en_US';
-// language JSON loading logic. Files on the device are simply named
-// `<lang>.json` (e.g. ru_RU.json).
-var localePromise = fetch('locale/' + _uiLangCode + '.json?' + (typeof radioVersion !== 'undefined' ? radioVersion : ''))
+// Try to fetch locale.json... if not exist, use hardcoded HTML text
+var localePromise = Promise.resolve();
+if (typeof uiLang !== 'undefined') {
+  localePromise = fetch('locale.json?' + (typeof radioVersion !== 'undefined' ? radioVersion : ''))
       .then(function(r){ return r.ok ? r.json() : Promise.reject('not-ok'); })
-      .then(function(data){ i18n = data; })
+      .then(function(data){ 
+          i18n = data;
+          applyI18n(); // Apply translations to initial page content
+          return data;
+      })
       .catch(function(){
-          // Primary fetch failed — try English as fallback (unless we already tried it)
-          if (_uiLangCode !== 'en_US') {
-            fetch('locale/en_US.json?' + (typeof radioVersion !== 'undefined' ? radioVersion : ''))
-              .then(function(r){ return r.ok ? r.json() : {}; })
-              .then(function(data){ i18n = data; })
-              .catch(function(){ i18n = {}; });
-          } else {
-            i18n = {};
-          }
+          console.warn('Failed to load locale.json, using hardcoded HTML text');
+          i18n = {};
+          return {}; // Return empty object so Promise still resolves
       });
-function t(key) {
-  var args = Array.prototype.slice.call(arguments, 1);
-  var s = (i18n && i18n[key]) ? i18n[key] : key;
+}
+function t(key, defaultText) {
+  // If only key provided, use old behavior (for backward compatibility)
+  if (arguments.length === 1) {
+    var s = (i18n && i18n[key]) ? i18n[key] : key;
+    return s;
+  }
+  // With defaultText provided: use translation or fallback to English
+  var args = Array.prototype.slice.call(arguments, 2);
+  var s = (i18n && i18n[key]) ? i18n[key] : (defaultText || key);
   args.forEach(function(a, i){ s = s.replace('{' + i + '}', a); });
   return s;
 }
@@ -66,8 +67,8 @@ function applyI18n(root) {
   });
 
   // update knob on/off labels via CSS variables (must be quoted for `content:` property)
-  document.documentElement.style.setProperty('--knob-off', '"' + t('lbl_off') + '"');
-  document.documentElement.style.setProperty('--knob-on', '"' + t('lbl_on') + '"');
+  document.documentElement.style.setProperty('--knob-off', '"' + t('lbl_off', 'Off') + '"');
+  document.documentElement.style.setProperty('--knob-on', '"' + t('lbl_on', 'On') + '"');
 }
 
 function loadCSS(href){ const link = document.createElement("link"); link.rel = "stylesheet"; link.href = href; document.head.appendChild(link); }
@@ -124,10 +125,10 @@ function onMessage(event) {
       const btn = getId('check_online_update');
       if(btn) {
         if(data.onlineupdateavailable) {
-          btn.value = t('msg_update_to', data.remoteVersion);
+          btn.value = t('msg_update_to', 'Update to {0}', data.remoteVersion);
           btn.disabled = false;
         } else {
-          btn.value = t('msg_no_update');
+          btn.value = t('msg_no_update', 'No Update Available');
           btn.disabled = true;
         }
       }
@@ -135,7 +136,7 @@ function onMessage(event) {
     if(typeof data.onlineupdateerror !== 'undefined') {
       const btn = getId('check_online_update');
       if(btn) {
-        btn.value = t('msg_update_error', data.onlineupdateerror);
+        btn.value = t('msg_update_error', 'Error: {0}', data.onlineupdateerror);
         btn.disabled = true;
       }
     }
@@ -145,9 +146,9 @@ function onMessage(event) {
         bar.hidden = false;
         bar.value = data.onlineupdateprogress;
         const status = getId('uploadstatus');
-        if(status) status.textContent = t('msg_ota_progress', data.onlineupdateprogress);
+        if(status) status.textContent = t('msg_ota_progress', 'OTA Update: {0}% downloaded | please wait...', data.onlineupdateprogress);
         if (data.onlineupdateprogress >= 100) {
-          getId("uploadstatus").textContent = t('msg_ota_complete');
+          getId("uploadstatus").textContent = t('msg_ota_complete', 'OTA Update Complete. Radio will reboot, update files, and reboot again. This will take 1 or 2 minutes.');
           rebootingProgress(60);
         }
       }
@@ -162,7 +163,7 @@ function onMessage(event) {
     /*end online update*/
     
     if(typeof data.redirect !== 'undefined'){
-      getId("mdnsnamerow").innerHTML=`<h3 style="line-height: 37px;color: #aaa; margin: 0 auto;">${t('msg_redirecting', data.redirect)}</h3>`;
+      getId("mdnsnamerow").innerHTML=`<h3 style="line-height: 37px;color: #aaa; margin: 0 auto;">${t('msg_redirecting', 'redirecting to {0}', data.redirect)}</h3>`;
       setTimeout(function(){ window.location.href=data.redirect; }, 4000);
       return;
     }
@@ -220,7 +221,10 @@ function onMessage(event) {
         populateTZDropdown(timezoneData);
       }
       
-      if (select && input) {
+      // If timezoneData not loaded yet, store for later application
+      if (!timezoneData) {
+        pendingTZData = { tz_name: data.tz_name, tzposix: data.tzposix };
+      } else if (select && input) {
         const i = [...select.options].findIndex(opt => opt.text === data.tz_name);
         if (i !== -1) {
           select.selectedIndex = i;
@@ -235,20 +239,76 @@ function onMessage(event) {
       }
       if (document.getElementById("sntp2")) document.getElementById("sntp2").value=data.sntp2;
       if (document.getElementById("sntp1")) document.getElementById("sntp1").value=data.sntp1;
+      
+      // Store locale data for pending application after locales.json loads
+      if (data.locale_webui && data.locale_disp) {
+        pendingLocaleData = { locale_webui: data.locale_webui, locale_disp: data.locale_disp };
+        
+        // If localesData already loaded, apply immediately
+        if (localesData) {
+          applyPendingLocaleData();
+        }
+      }
+      return;
+    }
+    
+    /* Locale update completed - reload page to load new translations */
+    if(typeof data.locale_updated !== 'undefined'){
+      console.log('[Locale] Update successful, reloading page...');
+      setTimeout(function(){ window.location.reload(); }, 1000);
+      return;
+    }
+    
+    /* Locale update failed - show error message */
+    if(typeof data.locale_update_failed !== 'undefined'){
+      console.error('[Locale] Update failed');
+      const select = getId('locale_webui');
+      const display = getId('locale_disp');
+      
+      if (display) {
+        display.value = 'Download failed';
+      }
+      
+      setTimeout(function(){ 
+        // Restore both dropdown and display field after error message
+        // Restore dropdown selection to original
+        if (select && window.originalLocaleWebui) {
+          const i = [...select.options].findIndex(opt => opt.value === window.originalLocaleWebui);
+          if (i !== -1) {
+            select.selectedIndex = i;
+          }
+        }
+        
+        // Restore display field to original
+        if (display && window.originalLocaleDisp) {
+          display.value = window.originalLocaleDisp;
+        }
+      }, 3000);
       return;
     }
     if(typeof data.payload !== 'undefined'){
       data.payload.forEach(item=> {
-        // battery string comes from server in English; translate labels/status to UI language
+        // battery string: parse and fill separate elements (labels in HTML with data-i18n)
         if(item.id === 'battery' && typeof item.value === 'string'){
           var m = /volt: (\d+)mV, percentage: (\d+)%?, status: (.+)/.exec(item.value);
           if(m){
-            var volt = m[1], perc = m[2], stat = m[3].trim().toLowerCase();
-            var statKey = 'st_batt_' + stat;
-            item.value = t('lbl_batt_volt') + ': ' + volt + 'mV, ' +
-                         t('lbl_batt_percentage') + ': ' + perc + '%, ' +
-                         t('lbl_batt_status') + ': ' + t(statKey);
+            var volt = m[1], perc = m[2], stat = m[3].trim();
+            var statKey = 'st_batt_' + stat.toLowerCase();
+            
+            setupElement('battery_volt', volt);
+            setupElement('battery_perc', perc);
+            
+            var statusEl = getId('battery_status');
+            if(statusEl) {
+              statusEl.textContent = t(statKey);
+              statusEl.dataset.i18n = statKey;
+            }
+            
+            // Show battery info wrapper
+            const wrap = getId('batteryinfo');
+            if (wrap) wrap.classList.remove('hidden');
           }
+          return; // Skip normal setupElement for 'battery' id
         }
         setupElement(item.id, item.value);
       });
@@ -328,13 +388,6 @@ function setupElement(id,value){
     }
     if(element.classList.contains("text")){
       element.innerText=value;
-      // Auto-show/hide battery info row when battery text is set/cleared
-      if (element.id === 'battery') {
-        const wrap = getId('batteryinfo');
-        if (wrap) {
-          if (value === "" || value === null) wrap.classList.add('hidden'); else wrap.classList.remove('hidden');
-        }
-      }
     }
     if(element.type==='text' || element.type==='number' || element.type==='password'){
       // Skip battref - it's now a calibration input for measured voltage, not ADC reference
@@ -502,7 +555,7 @@ function plRemove(){
     }
   }
   if(pass.length==0) {
-    alert(t('msg_choose_first'));
+    alert(t('msg_choose_first', 'Choose something first'));
     return;
   }
   for (var i = 0; i < pass.length; i++)
@@ -671,12 +724,12 @@ function parseAndAddJSON(content, targetCallback, mode = 'replace') {
       }
     });
     if (mode === 'replace') {
-      alert(t('msg_import_replace', addedCount));
+      alert(t('msg_import_replace', 'Import complete: {0} stations loaded.', addedCount));
     } else if (duplicateCount > 0) {
-      alert(t('msg_import_merge', addedCount, duplicateCount));
+      alert(t('msg_import_merge', 'Import complete: {0} stations added, {1} duplicates skipped.', addedCount, duplicateCount));
     }
   } catch(e) {
-    alert(t('msg_invalid_json', e.message));
+    alert(t('msg_invalid_json', 'Invalid JSON format: {0}', e.message));
   }
 }
 
@@ -872,9 +925,9 @@ function parseAndAddCSV(content, targetCallback, mode = 'replace') {
   });
   
   if (mode === 'replace') {
-    alert(t('msg_import_replace', addedCount));
+    alert(t('msg_import_replace', 'Import complete: {0} stations loaded.', addedCount));
   } else if (duplicateCount > 0) {
-    alert(t('msg_import_merge', addedCount, duplicateCount));
+    alert(t('msg_import_merge', 'Import complete: {0} stations added, {1} duplicates skipped.', addedCount, duplicateCount));
   }
 }
 
@@ -911,7 +964,7 @@ function triggerImport(mode) {
 function exportCurrentPlaylist() {
   const items = getId('pleditorcontent').getElementsByTagName('li');
   if (items.length === 0) {
-    alert(t('msg_pl_empty'));
+    alert(t('msg_pl_empty', 'Playlist is empty, nothing to export.'));
     return;
   }
   
@@ -923,7 +976,7 @@ function exportCurrentPlaylist() {
     const ovol = inputs[3].value;  // pleovol
     
     if (name === '' || url === '') {
-      alert(t('msg_pl_missing', i+1));
+      alert(t('msg_pl_missing', 'Station {0} is missing name or URL. Please fill in all fields before exporting.', i+1));
       return;
     }
     
@@ -1008,7 +1061,7 @@ function submitWiFi(){
     xhr.open("POST",`http://${hostname}/upload`,true);
     xhr.send(formData);
     fileuploadinput.value = '';
-    getId("settingscontent").innerHTML='<h2>'+t('msg_settings_saved')+'</h2>';
+    getId("settingscontent").innerHTML='<h2>'+t('msg_settings_saved', 'Settings saved. Rebooting...')+'</h2>';
     getId("settingsdone").classList.add("hidden");
     getId("navigation").classList.add("hidden");
     setTimeout(function(){ window.location.href=`http://${hostname}/`; }, 10000);
@@ -1089,7 +1142,7 @@ function continueLoading(mode){
           }
           websocket.send('getsystem=1');
           websocket.send('getscreen=1');
-          websocket.send('gettimezone=1');
+          websocket.send('getlocale=1');
           websocket.send('getweather=1');
           websocket.send('getmqtt=1');
           websocket.send('getcontrols=1');
@@ -1177,15 +1230,16 @@ function continueLoading(mode){
           case "search": window.location.href=`http://${hostname}/search.html`; break;
           case "applyweather": applyWeather(); break;
           case "applytz": applyTZ(); break;
+          case "applylocale": applyLocale(); break;
           case "applymqtt": applyMQTT(); break;
           case "wifiexport": window.open(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime()); break;
           case "wifiupload": submitWiFi(); break;
           case "confirm-reboot": showDangerConfirm('dz_reboot'); break;
           case "confirm-format": showDangerConfirm('dz_format'); break;
           case "confirm-reset": showDangerConfirm('dz_reset'); break;
-          case "reboot": websocket.send("reboot=1"); rebootSystem(t('msg_rebooting')); break;
-          case "format": websocket.send("format=1"); rebootSystem(t('msg_format_reboot')); break;
-          case "reset":  websocket.send("reset=1");  rebootSystem(t('msg_reset_reboot')); break;
+          case "reboot": websocket.send("reboot=1"); rebootSystem(t('msg_rebooting', 'Rebooting...')); break;
+          case "format": websocket.send("format=1"); rebootSystem(t('msg_format_reboot', 'Format SPIFFS. Rebooting...')); break;
+          case "reset":  websocket.send("reset=1");  rebootSystem(t('msg_reset_reboot', 'Reset settings. Rebooting...')); break;
           case "shuffle": toggleShuffle(); break;
           case "rebootmdns": websocket.send(`mdnsname=${getId('mdns').value}`); websocket.send("rebootmdns=1"); break;
           case "savebattref": websocket.send(`battref=${getId('battref').value}`); break;
@@ -1267,15 +1321,15 @@ function doUpdate(el) {
     xhr.open("POST",`http://${hostname}/update`,true);
     xhr.send(formData);
   }else{
-    alert(t('msg_choose_first'));
+    alert(t('msg_choose_first', 'Choose something first'));
   }
 }
 function progressHandler(event) {
   var percent = (event.loaded / event.total) * 100;
-  getId("uploadstatus").textContent = t('msg_upload_pct', Math.round(percent));
+  getId("uploadstatus").textContent = t('msg_upload_pct', '{0}% uploaded | please wait...', Math.round(percent));
   getId("updateprogress").value = Math.round(percent);
   if (percent >= 100) {
-    getId("uploadstatus").textContent = t('msg_upload_writing');
+    getId("uploadstatus").textContent = t('msg_upload_writing', 'Please wait, writing file to filesystem');
   }
 }
 var rebootTimer;
@@ -1296,21 +1350,21 @@ function rebootingProgress(waitSeconds) {
 }
 function completeHandler(event) {
   if(uploadWithError) return;
-  getId("uploadstatus").textContent = t('msg_upload_complete');
+  getId("uploadstatus").textContent = t('msg_upload_complete', 'Upload Complete, rebooting...');
   rebootingProgress(7);
 }
 function errorHandler(event) {
   getId('updateform').classList.remove('hidden');
   getId('updateprogress').hidden=true;
   getId("updateprogress").value = 0;
-  getId("status").textContent = t('msg_upload_failed');
+  getId("status").textContent = t('msg_upload_failed', 'Upload Failed');
   getId('check_online_update').classList.remove('hidden');
 }
 function abortHandler(event) {
   getId('updateform').classList.remove('hidden');
   getId('updateprogress').hidden=true;
   getId("updateprogress").value = 0;
-  getId("status").textContent = t('msg_upload_aborted');
+  getId("status").textContent = t('msg_upload_aborted', 'Upload Aborted');
   getId('check_online_update').classList.remove('hidden');
 }
 

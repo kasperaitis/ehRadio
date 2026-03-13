@@ -20,7 +20,7 @@
 #include "commandhandler.h"
 #include "../displays/dspcore.h"
 #include "../displays/widgets/widgetsconfig.h" //BitrateFormat
-#include "../displays/tools/l10n.h"
+#include "locale.h"
 
 //#include <ESPmDNS.h>
 
@@ -94,6 +94,26 @@ char* updateError() {
   static char ret[140] = {0};
   sprintf(ret, "Update failed with error (%d)<br /> %s", (int)Update.getError(), Update.errorString());
   return ret;
+}
+
+void handleDynamicLocale(AsyncWebServerRequest *request) {
+  // Dynamically serve the locale file based on config.store.locale_webui
+  // Requested as /locale.json or /locale.json.gz, served from /{locale_code}.json[.gz]
+  char localeFile[64];
+  const char* requestPath = request->url().c_str();
+  bool isGzipped = strstr(requestPath, ".gz") != NULL;
+  
+  if (isGzipped) {
+    snprintf(localeFile, sizeof(localeFile), "/www/%s.json.gz", config.store.locale_webui);
+  } else {
+    snprintf(localeFile, sizeof(localeFile), "/www/%s.json", config.store.locale_webui);
+  }
+  
+  if (SPIFFS.exists(localeFile)) {
+    request->send(SPIFFS, localeFile, isGzipped ? "application/json" : "application/json", false, NULL);
+  } else {
+    request->send(404, "text/plain", "Locale file not found");
+  }
 }
 
 void handleSearch(AsyncWebServerRequest *request) {
@@ -201,6 +221,8 @@ bool NetServer::begin(bool quiet) {
   while(nsQueue==NULL) {;}
 
   webserver.on("/", HTTP_ANY, handleIndex);
+  webserver.on("/locale.json", HTTP_GET, handleDynamicLocale);
+  webserver.on("/locale.json.gz", HTTP_GET, handleDynamicLocale);
   webserver.on("/search", HTTP_GET, handleSearch);
   webserver.on("/search", HTTP_POST, handleSearchPost);
 
@@ -213,10 +235,9 @@ bool NetServer::begin(bool quiet) {
   webserver.on("/ncsi.txt", HTTP_GET, captiveRedirect);                     // Windows
   webserver.on("/connecttest.txt", HTTP_GET, captiveRedirect);              // Windows
 
+  webserver.serveStatic("/", SPIFFS, "/www/").setCacheControl("max-age=3600");
   webserver.onNotFound(handleNotFound);
   webserver.onFileUpload(handleUpload);
-
-  webserver.serveStatic("/", SPIFFS, "/www/").setCacheControl("max-age=3600");
   #ifdef CORS_DEBUG
     DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Origin"), F("*"));
     DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Headers"), F("content-type"));
@@ -321,20 +342,18 @@ const char *getFormat(BitrateFormat _format) {
     case BF_MP3:  return "MP3";
     case BF_AAC:  return "AAC";
     case BF_FLAC: return "FLAC";
-    case BF_OGG:  return "OGG";
     case BF_WAV:  return "WAV";
-    case BF_VOR:  return "VORBIS";
+    case BF_VOR:  return "OGG";
     case BF_OPU:  return "OPUS";
     default:      return "";   // no codec info
   }
 }
 
-char wsbuf[BUFLEN * 2];
 void NetServer::processQueue() {
   if (nsQueue==NULL) return;
   nsRequestParams_t request;
   if (xQueueReceive(nsQueue, &request, NS_QUEUE_TICKS)) {
-    memset(wsbuf, 0, BUFLEN * 2);
+    char wsbuf[BUFLEN * 2] = {0};
     uint8_t clientId = request.clientId;
     switch (request.type) {
       case PLAYLIST:        getPlaylist(clientId); break;
@@ -376,7 +395,7 @@ void NetServer::processQueue() {
             if (DSP_CAN_FLIPPED || dbgact)                      act += F("\"group_tft\",");
             if (TS_MODEL != TS_MODEL_UNDEFINED || dbgact)       act += F("\"group_touch\",");
             if (DSP_MODEL == DSP_NOKIA5110)                     act += F("\"group_nokia\",");
-                                                                act += F("\"group_timezone\",");
+                                                                act += F("\"group_locale\",");
             if (SHOW_WEATHER || dbgact)                         act += F("\"group_weather\",");
                                                                 act += F("\"group_controls\",");
             if (ENC_BTNL != 255 || ENC2_BTNL != 255 || dbgact)  act += F("\"group_encoder\",");
@@ -430,7 +449,9 @@ void NetServer::processQueue() {
                                   config.store.volumepage,
                                   config.store.clock12);
                                   break;
-      case GETTIMEZONE:   sprintf (wsbuf, "{\"tz_name\":\"%s\",\"tzposix\":\"%s\",\"sntp1\":\"%s\",\"sntp2\":\"%s\"}",
+      case GETLOCALE:     sprintf (wsbuf, "{\"locale_webui\":\"%s\",\"locale_disp\":\"%s\",\"tz_name\":\"%s\",\"tzposix\":\"%s\",\"sntp1\":\"%s\",\"sntp2\":\"%s\"}",
+                                  config.store.locale_webui,
+                                  DSP_LOCALE,
                                   config.store.tz_name,
                                   config.store.tzposix,
                                   config.store.sntp1,
@@ -460,7 +481,7 @@ void NetServer::processQueue() {
       case STATION:       requestOnChange(STATIONNAME, clientId); requestOnChange(ITEM, clientId); break;
       case STATIONNAME:   sprintf (wsbuf, "{\"payload\":[{\"id\":\"nameset\", \"value\": \"%s\"}]}", config.station.name); break;
       case ITEM:          sprintf (wsbuf, "{\"current\": %d}", config.lastStation()); break;
-      case TITLE:         sprintf (wsbuf, "{\"payload\":[{\"id\":\"meta\", \"value\": \"%s\"}]}", config.station.title); telnet.printf("##CLI.META#: %s\r\n> ", config.station.title); break;
+      case TITLE:         sprintf (wsbuf, "{\"payload\":[{\"id\":\"meta\", \"value\": \"%s\"}]}", config.station.title); telnet.printf("##CLI.META#: %s\r\n", config.station.title); break;
       case VOLUME:        sprintf (wsbuf, "{\"payload\":[{\"id\":\"volume\", \"value\": %d}]}", config.store.volume); telnet.printf("##CLI.VOL#: %d\r\n", config.store.volume); break;
       case NRSSI:         sprintf (wsbuf, "{\"payload\":[{\"id\":\"rssi\", \"value\": %d}]}", rssi); /*rssi = 255;*/ break;
       case SDPOS:         sprintf (wsbuf, "{\"sdpos\": %d,\"sdend\": %d,\"sdtpos\": %d,\"sdtend\": %d}",
@@ -1395,8 +1416,7 @@ void handleNotFound(AsyncWebServerRequest * request) {
       "var playMode='%s';\n"
       "var onlineUpdCapable=%s;\n"
       "var newVerAvailable=%s;\n"
-      "var updateUrl='%s';\n"
-      "var uiLang=%d;\n",
+      "var updateUrl='%s';\n",
       escapedRadioVersion,
       (network.status == CONNECTED && config.wwwFilesExist) ? "webboard" : "",
       (network.status == CONNECTED) ? "player" : "ap",
@@ -1406,8 +1426,7 @@ void handleNotFound(AsyncWebServerRequest * request) {
         "false",
       #endif
       (netserver.newVersionAvailable) ? "true" : "false",
-      escapedGithubUrl,
-      L10N_WEBUI_LANGUAGE
+      escapedGithubUrl
    );
     AsyncWebServerResponse *response = request->beginResponse(200, "application/javascript", varjsbuf);
     response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");

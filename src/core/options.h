@@ -525,80 +525,6 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   #define COLOR_BITRATE           231, 211,  90
 #endif
 
-/*      Language Default EN       */
-#define be_BY    1   // Belarusian
-#define bg_BG    2   // Bulgarian
-#define bs_BA    3   // Bosnian
-#define cs_CZ    4   // Czech
-#define da_DK    5   // Danish
-#define de_DE    6   // German
-#define el_GR    7   // Greek
-#define en_US    8   // English
-#define es_ES    9   // Spanish
-#define et_EE    10  // Estonian
-#define fi_FI    11  // Finnish
-#define fr_FR    12  // French
-#define hr_HR    13  // Croatian
-#define hu_HU    14  // Hungarian
-#define is_IS    15  // Icelandic
-#define kk_KZ    16  // Kazakh
-#define ky_KG    17  // Kyrgyz
-#define lt_LT    18  // Lithuanian
-#define lv_LV    19  // Latvian
-#define me_ME    20  // Montenegrin
-#define mk_MK    21  // Macedonian
-#define mn_MN    22  // Mongolian
-#define nl_NL    23  // Dutch
-#define no_NO    24  // Norwegian
-#define pl_PL    25  // Polish
-#define pt_PT    26  // Portuguese
-#define ro_RO    27  // Romanian
-#define ru_RU    28  // Russian
-#define sk_SK    29  // Slovak
-#define sl_SI    30  // Slovenian
-#define sr_RS    31  // Serbian
-#define sv_SE    32  // Swedish
-#define tg_TJ    33  // Tajik
-#define tr_TR    34  // Turkish
-#define uk_UA    35  // Ukrainian
-#define uz_UZ    36  // Uzbek
-
-// Convenience predicate: true for languages that use the Cyrillic script.
-// Keep in sync with the auto-detect block for L10N_CODEPAGE below and
-// with Config::setLanguage() in config.cpp.
-#define IS_CYRILLIC_LANG(id) ( \
-  (id)==ru_RU || (id)==uk_UA || (id)==be_BY || (id)==bg_BG || \
-  (id)==mk_MK || (id)==sr_RS || (id)==me_ME || (id)==uz_UZ || \
-  (id)==kk_KZ || (id)==tg_TJ || (id)==ky_KG || (id)==mn_MN )
-
-/* WebUI language override ============================================ */
-/*
- * You can optionally set `L10N_WEBUI_LANGUAGE` in myoptions.h to force the
- * web interface to use a different locale than the firmware display text.
- * When undefined the value simply falls back to `L10N_LANGUAGE` so existing
- * configurations behave exactly as they always have.
- */
-#ifndef L10N_WEBUI_LANGUAGE
-  #define L10N_WEBUI_LANGUAGE L10N_LANGUAGE
-#endif
-
-#ifndef L10N_LANGUAGE
-  #define L10N_LANGUAGE en_US
-#endif
-
-#define L10N_CP_LATIN 1
-#define L10N_CP_CYRILLIC 2
-
-// Define L10N_CODEPAGE in your myoptions.h to force codepage.
-#ifndef L10N_CODEPAGE
-  // Auto-default to Cyrillic for typical Cyrillic languages (RU, UK, BE, BG, MK, SR, ME, UZ, KK, TG, KY, MN)
-  #if IS_CYRILLIC_LANG(L10N_LANGUAGE)
-    #define L10N_CODEPAGE L10N_CP_CYRILLIC
-  #else
-    #define L10N_CODEPAGE L10N_CP_LATIN
-  #endif
-#endif
-
 /*        SYSTEM DEFAULTS         */
 #ifndef SCREENSAVERSTARTUPDELAY
   #define SCREENSAVERSTARTUPDELAY 5
@@ -622,6 +548,7 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   #define BUFLEN 170 // seems safe... a lot of multipliers exist in the code...
 #endif
 
+/* This bit will actually do something but needs to be handled a different way (configurable would be better!) */
 //#define OTA_PASS "myotapassword12345"
 //#define HTTP_USER "user"
 //#define HTTP_PASS "password"
@@ -693,6 +620,9 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef GITHUBURL
   #define GITHUBURL "https://github.com/trip5/ehradio" // used by the ESPFileUpdater in BrowserClient (and in URLs below)
 #endif
+#ifdef DISABLE_ESPFILEUPDATER // if this is defined, disables online updates
+  #undef FILESURL
+#endif
 #ifdef FIRMWARE
   #ifndef FILESURL
     #define FILESURL GITHUBURL "/releases/download/" RADIOVERSION "/" // + FILE for SPIFFS files (this version)
@@ -752,7 +682,6 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
     #undef CURATED_LISTS_INDEX
   #endif
 #endif
-
 
 /*    RADIO BROWSER API SERVER    */
 /* Used as fallback for search and primary for sending clicks */

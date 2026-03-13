@@ -22,11 +22,23 @@ Documentation will be improved at some point... Until then, check this page and 
 
 ## ehRadio Version history
 
-### 2026.02.xx
+### 2026.03.15
 
   - Thanks to [kasperaitis](https://github.com/kasperaitis) for [PR 50](https://github.com/trip5/ehRadio/pull/50)
     - Ignore placeholder stream titles
     - improved battery handling
+  - Also: [PR 51](https://github.com/trip5/ehRadio/pull/51)
+    - good work on multi-locale options for display!
+    - glyph tools (more characters are always good)
+    - began multi-locale support of WebUI
+  - WebUI now dynamically configurable (if online update capable)
+    - translations may not be good... report issues or open a PR!
+  - Configure the display language with something like `#define DSP_LANGUAGE_de_DE` in `myoptions.h`
+    - see the available options by checking `displayL10n_*.h` files in `locale` folder 
+  - Configure the default webUI language with `#define WEBUI_LANGUAGE_STRING "de_DE"` in `myoptions.h`
+    - sets a default WebUI locale different than the display - check locale/webui folder .json files (user-configurable)
+  - 
+
 
 
 ### 2026.02.18
@@ -1074,7 +1086,7 @@ or -> **!!! a [full update](#update-over-web-interface) with Sketch data upload 
 - added the ability to display the weather on all displays except LCD1602
 - examples of plug-ins related to displaying information on the display are outdated and no longer work. The examples have been removed from the examples/plugins folder.
 - the structure of the project files has been changed so that I don’t know what.
-- localization of information displayed on the display (rus, en). Option L10N_LANGUAGE (EN by default. see examples/myoptions.h for details)
+- localization of information displayed on the display (rus, en). Option DSP_LANGUAGE (EN by default. see examples/myoptions.h for details)
 - changes in mytheme.h . Added colors COLOR_STATION_BG, COLOR_STATION_FILL, COLOR_BITRATE
 - optimization, refactoring
 - bugs fixes

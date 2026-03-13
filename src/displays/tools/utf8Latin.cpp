@@ -186,10 +186,14 @@ char* utf8Latin(const char* str, bool uppercase) {
     }
 
     // Handle valid 2-byte UTF-8 sequences that weren't mapped above
-    // Skip both bytes to prevent corruption
+    // Use the shared utf8ToAscii() helper for fallback transliteration
     if (b1 >= 0xC2 && b1 <= 0xDF && str[r + 1]) {
-      // Unknown 2-byte sequence: replace with space and skip both bytes
-      out[w++] = ' ';
+      uint8_t b2 = (uint8_t)str[r + 1];
+      char seq[3] = {(char)b1, (char)b2, 0};
+      char* tr = utf8ToAscii(seq);
+      for (char* p = tr; *p && w < BUFLEN - 1; ++p) {
+        out[w++] = uppercase ? toupper((unsigned char)*p) : *p;
+      }
       r += 2;
       continue;
     }

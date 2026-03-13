@@ -125,7 +125,7 @@
 #endif
 #if defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define DSP_MODEL       DSP_ILI9341
-  #define SCREEN_INVERT true
+  #define SCREEN_INVERT   true
   #define TFT_CS          10
   #define TFT_DC          46
   #define TFT_RST         -1
@@ -137,6 +137,16 @@
   #define TFT_MISO        13
   #define BRIGHTNESS_PIN  TFT_BL
 #endif
+
+/* --- LANGUAGE --- */
+/* Locale codes: be_BY(Belarusian), bg_BG(Bulgarian), bs_BA(Bosnian), cs_CZ(Czech), da_DK(Danish), de_DE(German), el_GR(Greek), en_CA(Canadian English), en_US(English), es_ES(Spanish), et_EE(Estonian), fi_FI(Finnish), fr_CA(Canadian French), fr_FR(French), hr_HR(Croatian), hu_HU(Hungarian), is_IS(Icelandic), kk_KZ(Kazakh), ky_KG(Kyrgyz), lt_LT(Lithuanian), lv_LV(Latvian), me_ME(Montenegrin), mk_MK(Macedonian), mn_MN(Mongolian), nl_NL(Dutch), no_NO(Norwegian), pl_PL(Polish), pt_PT(Portuguese), ro_RO(Romanian), ru_RU(Russian), sk_SK(Slovak), sl_SI(Slovenian), sr_RS(Serbian), sv_SE(Swedish), tg_TJ(Tajik), tr_TR(Turkish), uk_UA(Ukrainian), uz_UZ(Uzbek) */
+// #define DSP_LANGUAGE_lt_LT
+
+/* Optional: set a different language for the WebUI only.  If omitted the UI will use the same value as DSP_LANGUAGE.  Also, this will still be changeable in the WebUI */
+//#define WEBUI_LANGUAGE_en_US
+
+/* Codepage for display glyph mapping: L10N_CP_LATIN or L10N_CP_CYRILLIC */
+/* This is now auto-detected based on DSP_LANGUAGE, but can be overridden if needed */
 
 
 /* --- AUDIO DECODER --- */
@@ -339,6 +349,7 @@
   #define MQTT_ENABLE
   #define PLAYLIST_DEFAULT_URL "https://github.com/trip5/webstations/releases/latest/download/trip5-radio-playlist.csv" /* can be CSV or JSON */
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
+  #define DSP_LANGUAGE_lt_LT
   #define SMART_START true
   #define SHOW_AUDIO_INFO true
   #define SS_PLAYING true
@@ -391,8 +402,13 @@
 
 //#define GITHUBURL "https://github.com/kasperaitis/ehradio" // used by the radio to update firmware and files...
 
+/* Disable automatic runtime downloads from GitHub (ESPFileUpdater) for this board only. */
+//#define DISABLE_ESPFILEUPDATER
 
 /* --- MORE, UNUSED, UNKNOWN, NOTES --- */
+
+//#define DSP_LANGUAGE_de_DE // sets the display language - see the available options by checking `displayL10n_*.h` files in `locale` folder 
+//#define WEBUI_LANGUAGE_STRING "de_DE" // can set a default WebUI locale different than the display - check locale/webui folder .json files (user-configurable)
 
 //Below works for now but will be integrated as a user-config option later...
 //#define HTTP_USER "michael"
@@ -406,7 +422,6 @@
 //#define ROTATE_90 /* rotates 90 degrees? */
 
 /* Extras: unused in all */
-//#define L10N_LANGUAGE en_US
 //#define IR_PIN 4
 
 /* Does this get carried to SD Lib and allow Exfat? */

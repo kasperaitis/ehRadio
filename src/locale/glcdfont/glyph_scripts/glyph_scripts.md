@@ -1,7 +1,7 @@
 # Developer Scripts
 
 This project includes two helper utilities (Python 3) for working with the
-5x7 `glcdfont` font used by the esp32 player.  They are primarily intended for
+5x7 `glcdfont` font used by ehRadio.  They are primarily intended for
 maintainers who need to inspect or tweak individual glyphs or compare
 variant fonts.
 

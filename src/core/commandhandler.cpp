@@ -51,7 +51,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   
   if (strEquals(command, "getsystem"))  { netserver.requestOnChange(GETSYSTEM, cid); return true; }
   if (strEquals(command, "getscreen"))  { netserver.requestOnChange(GETSCREEN, cid); return true; }
-  if (strEquals(command, "gettimezone")) { netserver.requestOnChange(GETTIMEZONE, cid); return true; }
+  if (strEquals(command, "getlocale")) { netserver.requestOnChange(GETLOCALE, cid); return true; }
   if (strEquals(command, "getcontrols")) { netserver.requestOnChange(GETCONTROLS, cid); return true; }
   if (strEquals(command, "getweather")) { netserver.requestOnChange(GETWEATHER, cid); return true; }
   if (strEquals(command, "getmqtt"))    { netserver.requestOnChange(GETMQTT, cid); return true; }
@@ -76,6 +76,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "screensaverplayingtimeout")) { config.setScreensaverPlayingTimeout(static_cast<uint16_t>(atoi(value))); return true; }
   if (strEquals(command, "screensaverplayingblank"))  { config.setScreensaverPlayingBlank(static_cast<bool>(atoi(value))); return true; }
   
+  if (strEquals(command, "locale_webui")) { config.updateLocaleFileAsync(value, cid); return true; }
   if (strEquals(command, "tz_name")) { config.saveValue(config.store.tz_name, value, sizeof(config.store.tz_name), false); return true; }
   if (strEquals(command, "tzposix")) { config.saveValue(config.store.tzposix, value, sizeof(config.store.tzposix), false); network.forceTimeSync = true; network.requestTimeSync(true); return true; }
   if (strEquals(command, "sntp2"))  { config.saveValue(config.store.sntp2, value, sizeof(config.store.sntp2), false); return true; }

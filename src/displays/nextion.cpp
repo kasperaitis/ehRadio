@@ -11,7 +11,7 @@
 #include "../core/netserver.h"
 #include "../core/network.h"
 #include "../core/timekeeper.h"
-#include "tools/l10n.h"
+#include "../core/locale.h"
 
 #ifndef CORE_STACK_SIZE
   #define CORE_STACK_SIZE  1024*3

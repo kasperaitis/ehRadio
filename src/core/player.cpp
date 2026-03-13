@@ -6,7 +6,7 @@
 #include "sdmanager.h"
 #include "netserver.h"
 #include "network.h"
-#include "../displays/tools/l10n.h"
+#include "locale.h"
 #include "../pluginsManager/pluginsManager.h"
 #ifdef USE_ES8311
   #include "../libraries/ES8311_Audio/es8311.h"

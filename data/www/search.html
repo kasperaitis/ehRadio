@@ -57,7 +57,7 @@
     </div> <!-- end of quick searches -->
     <div id="searches">
       <div class="sort-row">
-        <span data-i18n="lbl_sort">Sort:</span>
+        <span data-i18n="lbl_sort">Sort</span>
         <label for="order_name"><input type="radio" id="order_name" name="sortorder" value="name" /><span data-i18n="sort_name">Name</span></label>
         <label for="order_clickcount"><input type="radio" id="order_clickcount" name="sortorder" value="clickcount" checked /><span data-i18n="sort_clicks">Clicks</span></label>
         <label for="order_votes"><input type="radio" id="order_votes" name="sortorder" value="votes" /><span data-i18n="sort_votes">Votes</span></label>
@@ -133,25 +133,11 @@
 
 <script src="variables.js"></script>
 <script src="curated_variables.js"></script>
-<!-- simple i18n loader copied from script.js -->
-<script>
-var i18n = {};
-var _langCodes = ['en_US','be_BY','bg_BG','bs_BA','cs_CZ','da_DK','de_DE','el_GR','en_US','es_ES','et_EE','fi_FI','fr_FR','hr_HR','hu_HU','is_IS','kk_KZ','ky_KG','lt_LT','lv_LV','me_ME','mk_MK','mn_MN','nl_NL','no_NO','pl_PL','pt_PT','ro_RO','ru_RU','sk_SK','sl_SI','sr_RS','sv_SE','tg_TJ','tr_TR','uk_UA','uz_UZ'];
-var _uiLangCode = (typeof uiLang !== 'undefined' && uiLang > 0 && uiLang < _langCodes.length) ? _langCodes[uiLang] : 'en_US';
-var localePromise = (_uiLangCode !== 'en_US')
-  ? fetch('locale/' + _uiLangCode + '.json?' + (typeof radioVersion !== 'undefined' ? radioVersion : ''))
-      .then(function(r){ return r.ok ? r.json() : {}; })
-      .then(function(data){ i18n = data; })
-      .catch(function(){})
-  : Promise.resolve();
-function t(key) { var args = Array.prototype.slice.call(arguments, 1); var s = (i18n && i18n[key]) ? i18n[key] : key; args.forEach(function(a, i){ s = s.replace('{' + i + '}', a); }); return s; }
-function applyI18n(root) { (root || document).querySelectorAll('[data-i18n]').forEach(function(el) { var key = el.dataset.i18n; var val = i18n[key]; if (!val) return; if (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) { el.value = val; } else if (el.tagName === 'INPUT' && el.placeholder !== undefined) { el.placeholder = val; } else { el.textContent = val; } }); document.documentElement.style.setProperty('--knob-off', '"' + t('lbl_off') + '"'); document.documentElement.style.setProperty('--knob-on', '"' + t('lbl_on') + '"'); }
-localePromise.then(function(){ applyI18n(); });
-</script>
 <script>
   var v = '?v=' + radioVersion;
   document.getElementById('themeCSS').href = 'theme.css' + v;
   document.getElementById('styleCSS').href = 'style.css' + v;
+  document.write('<script src="locale.js' + v + '"><\/script>');
   document.write('<script src="playstation.js' + v + '"><\/script>');
   document.write('<script src="search.js' + v + '"><\/script>');
 </script>

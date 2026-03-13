@@ -6,7 +6,7 @@
 #include "../../core/player.h"    //  for VU widget
 #include "../../core/network.h"   //  for Clock widget
 #include "../../core/config.h"
-#include "../tools/l10n.h"
+#include "../../core/locale.h"
 #include "../tools/psframebuffer.h"
 
 /************************
@@ -895,9 +895,8 @@ void BitrateWidget::_draw(){
     case BF_MP3:  dsp.print("MP3"); break;
     case BF_AAC:  dsp.print("AAC"); break;
     case BF_FLAC: dsp.print("FLC"); break;
-    case BF_OGG:  dsp.print("OGG"); break;
     case BF_WAV:  dsp.print("WAV"); break;
-    case BF_VOR:  dsp.print("VOR"); break;
+    case BF_VOR:  dsp.print("OGG"); break;
     case BF_OPU:  dsp.print("OPU"); break;
     default:                        break;
   }

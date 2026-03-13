@@ -19,7 +19,7 @@ void audio_info(const char *info) {
   if (strstr(info, "format is aac")  != NULL) { config.setBitrateFormat(BF_AAC); display.putRequest(DBITRATE); }
   if (strstr(info, "format is flac") != NULL) { config.setBitrateFormat(BF_FLAC); display.putRequest(DBITRATE); }
   if (strstr(info, "format is wav")  != NULL) { config.setBitrateFormat(BF_WAV); display.putRequest(DBITRATE); }
-  if (strstr(info, "format is ogg")  != NULL) { config.setBitrateFormat(BF_OGG); display.putRequest(DBITRATE); }
+  if (strstr(info, "format is ogg")  != NULL) { config.setBitrateFormat(BF_VOR); display.putRequest(DBITRATE); }
   if (strstr(info, "format is vorbis")  != NULL) { config.setBitrateFormat(BF_VOR); display.putRequest(DBITRATE); }
   if (strstr(info, "format is opus")  != NULL) { config.setBitrateFormat(BF_OPU); display.putRequest(DBITRATE); }
   if (strstr(info, "skip metadata") != NULL) config.setTitle(config.station.name);

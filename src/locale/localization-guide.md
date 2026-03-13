@@ -8,7 +8,7 @@ This document explains the full localization pipeline: how a language selection 
 
 1. [Overview](#overview)
 2. [Configuration Cascade](#configuration-cascade)
-3. [Picking a Language — `L10N_LANGUAGE`](#picking-a-language--l10n_language)
+3. [Picking a Language — `DSP_LANGUAGE`](#picking-a-language--DSP_LANGUAGE)
 4. [Codepages — `L10N_CODEPAGE`](#codepages--l10n_codepage)
 5. [Locale Files (`displayL10n_*.h`)](#locale-files-displayl10n_h)
 6. [The Include Chain (`l10n.h`)](#the-include-chain-l10nh)
@@ -54,56 +54,15 @@ Language selection is **compile‑time only**.
 
 ---
 
-## Picking a Language — `L10N_LANGUAGE`
+## Picking a Language — `DSP_LANGUAGE`
 
 In `myoptions.h`, set:
 
 ```cpp
-#define L10N_LANGUAGE ru_RU
+#define DSP_LANGUAGE ru_RU
 ```
 
-The language tokens are numeric constants defined in `src/core/options.h`:
-
-| Token | # | Language |
-|---|:---:|---|
-| `be_BY` | 1 | Belarusian |
-| `bg_BG` | 2 | Bulgarian |
-| `bs_BA` | 3 | Bosnian |
-| `cs_CZ` | 4 | Czech |
-| `da_DK` | 5 | Danish |
-| `de_DE` | 6 | German |
-| `el_GR` | 7 | Greek |
-| `en_US` | 8 | English — **default** |
-| `es_ES` | 9 | Spanish |
-| `et_EE` | 10 | Estonian |
-| `fi_FI` | 11 | Finnish |
-| `fr_FR` | 12 | French |
-| `hr_HR` | 13 | Croatian |
-| `hu_HU` | 14 | Hungarian |
-| `is_IS` | 15 | Icelandic |
-| `kk_KZ` | 16 | Kazakh |
-| `ky_KG` | 17 | Kyrgyz |
-| `lt_LT` | 18 | Lithuanian |
-| `lv_LV` | 19 | Latvian |
-| `me_ME` | 20 | Montenegrin |
-| `mk_MK` | 21 | Macedonian |
-| `mn_MN` | 22 | Mongolian |
-| `nl_NL` | 23 | Dutch |
-| `no_NO` | 24 | Norwegian |
-| `pl_PL` | 25 | Polish |
-| `pt_PT` | 26 | Portuguese |
-| `ro_RO` | 27 | Romanian |
-| `ru_RU` | 28 | Russian |
-| `sk_SK` | 29 | Slovak |
-| `sl_SI` | 30 | Slovenian |
-| `sr_RS` | 31 | Serbian |
-| `sv_SE` | 32 | Swedish |
-| `tg_TJ` | 33 | Tajik |
-| `tr_TR` | 34 | Turkish |
-| `uk_UA` | 35 | Ukrainian |
-| `uz_UZ` | 36 | Uzbek |
-
-If `L10N_LANGUAGE` is not defined, it defaults to `en_US`.
+If `DSP_LANGUAGE` is not defined, it defaults to `en_US`.
 
 ---
 
@@ -118,7 +77,7 @@ The codepage controls **which extended character set is baked into the GLCD font
 
 ### Auto-detection
 
-You do **not** need to set `L10N_CODEPAGE` manually. The preprocessor in `options.h` automatically selects the correct codepage based on `L10N_LANGUAGE`:
+You do **not** need to set `L10N_CODEPAGE` manually. The preprocessor in `options.h` automatically selects the correct codepage based on `DSP_LANGUAGE`:
 
 - Cyrillic is automatically selected for: `ru_RU`, `uk_UA`, `be_BY`, `bg_BG`, `mk_MK`, `sr_RS`, `me_ME`, `uz_UZ`, `kk_KZ`, `tg_TJ`, `ky_KG`, `mn_MN`
 - All other languages default to `L10N_CP_LATIN`
@@ -159,8 +118,8 @@ Every locale file defines the same set of `PROGMEM` string constants placed in t
 | Constant group | Example values |
 |---|---|
 | Short day names | `mon`, `tue`, `wed`, `thu`, `fri`, `sat`, `sun` |
-| Full day names | `monf`, `tuef`, `wedf`, … |
-| Month names | `jan`, `feb`, `mar`, … `decc` |
+| Full day names | `monday`, `tuesday`, `wednesday`, … |
+| Month names | `jan`, `feb`, `mar`, … `dec` |
 | Wind direction strings | `wn_N`, `wn_NE`, `wn_E`, … `wn_NNW` |
 | Weather condition labels | `wc_thunder`, `wc_rain`, `wc_snow`, `wc_clear`, etc. |
 | OpenWeather language code | `weatherLang[]` — the API lang parameter sent to OpenWeather |
@@ -173,7 +132,7 @@ All strings are stored in flash (`PROGMEM`) to conserve RAM on the ESP32.
 
 `src/displays/tools/l10n.h` is the single include point for locale strings. It:
 
-1. Checks `L10N_LANGUAGE` with an `#if / #elif` ladder and sets `L10N_PATH` to the matching locale file path.
+1. Checks `DSP_LANGUAGE` with an `#if / #elif` ladder and sets `L10N_PATH` to the matching locale file path.
 2. Checks whether `src/locale/displayL10n_custom.h` exists — if so, it is included **instead** of the auto-selected locale file (see [Custom Locale Override](#custom-locale-override)).
 3. Wraps everything inside `namespace LANG { ... }` so locale strings don't pollute the global namespace.
 
@@ -191,7 +150,7 @@ src/locale/displayL10n_custom.h
 
 This file, if present, completely replaces the auto-selected locale — the compiler will not include the standard `displayL10n_*.h` at all. Copy the locale you want to base yours on and edit from there.
 
-This file is `.gitignore`-friendly (not committed) and persists across project updates.
+Add it to your `.gitignore` so it will persist across project updates.
 
 ---
 
@@ -403,10 +362,10 @@ If OpenWeather does not support a particular language, the locale falls back to 
 
 8. **Add a WebUI locale JSON file** in `src/locale/webui/`. Copy `src/locale/webui/en_US.json` as a template, rename it to `{code}.json`, and translate all values. The build script (`platformio_pre_gzip_www.py`) always deploys **both the selected language’s JSON and `en_US.json`** into `data/www/locale/` during the SPIFFS build, removing any stale files from previous builds. See [WebUI i18n](#webui-i18n) for the key reference.
 
-9. **Set `L10N_LANGUAGE`** in `myoptions.h` and build.
-   *Optionally* also define `L10N_WEBUI_LANGUAGE` if you want the
+9. **Set `DSP_LANGUAGE`** in `myoptions.h` and build.
+   *Optionally* also define `WEBUI_LANGUAGE` if you want the
    WebUI to use a different locale than the display firmware.  If this
-   macro is omitted the web interface simply inherits `L10N_LANGUAGE`.
+   macro is omitted the web interface simply inherits `DSP_LANGUAGE`.
 ---
 
 ## WebUI i18n
@@ -415,13 +374,13 @@ The WebUI served over Wi-Fi has its own runtime translation layer that operates 
 
 ### How it works
 
-1. **Language detection** — `variables.js` (injected by the firmware) exposes `uiLang` as the same integer index used by `L10N_LANGUAGE`. On page load, `script.js` maps this to a full BCP-47 code via `_langCodes[]` and fetches `/locale/{code}.json` from the device filesystem. For English (`uiLang == 0` or `en_US`) the fetch is skipped and built-in defaults are used.
+1. **Language detection** — `variables.js` (injected by the firmware) exposes `uiLang` as the same integer index used by `DSP_LANGUAGE`. On page load, `script.js` maps this to a full BCP-47 code via `_langCodes[]` and fetches `/locale/{code}.json` from the device filesystem. For English (`uiLang == 0` or `en_US`) the fetch is skipped and built-in defaults are used.
 
     > **Note:** the WebUI language is only controllable at compile time.
 > The firmware injects an integer (`uiLang`) that determines which JSON
 > file the browser attempts to load. Historically this value was equal to
-> `L10N_LANGUAGE`, but it can now be overridden by defining
-> `L10N_WEBUI_LANGUAGE` in `myoptions.h`. Omitting the override keeps the
+> `DSP_LANGUAGE`, but it can now be overridden by defining
+> `WEBUI_LANGUAGE` in `myoptions.h`. Omitting the override keeps the
 > old behaviour. Regardless of the setting, any new WebUI language still
 > requires a corresponding JSON file in `src/locale/webui/` and a rebuild
 > of the filesystem image.

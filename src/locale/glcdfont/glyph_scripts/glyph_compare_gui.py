@@ -23,8 +23,8 @@ from datetime import datetime
 import os
 import math
 
-DEFAULT_LEFT  = Path(__file__).parent.parent / 'src' / 'locale' / 'glcdfont' / 'glcdfont_Latin.c'
-DEFAULT_RIGHT = Path(__file__).parent.parent / 'src' / 'locale' / 'glcdfont' / 'glcdfont_Cyrillic.c'
+DEFAULT_LEFT  = Path(__file__).parent.parent / 'glcdfont_Latin.c'
+DEFAULT_RIGHT = Path(__file__).parent.parent / 'glcdfont_Cyrillic.c'
 
 ARRAY_RE = re.compile(r"static const unsigned char font\[\] PROGMEM = \{([\s\S]*?)\};")
 

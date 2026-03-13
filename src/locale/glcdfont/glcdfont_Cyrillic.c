@@ -10,8 +10,7 @@
 // Only uppercase glyphs are stored — the UTF-8 layer maps lowercase codepoints
 // to the corresponding uppercase slot before rendering.
 // See src/locale/glcdfont/glcdfont_Cyrillic.md for the full glyph index table.
-// Activated automatically when L10N_CODEPAGE == L10N_CP_CYRILLIC by
-// builds/platformio_pre_replace_font.py at build time.
+// Activated automatically when L10N_CP_CYRILLIC is defined at build time.
 
 #ifndef FONT5X7_H
 #define FONT5X7_H

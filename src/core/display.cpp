@@ -12,7 +12,7 @@
 #include "../displays/dspcore.h"
 #include "../displays/widgets/widgets.h"
 #include "../displays/widgets/pages.h"
-#include "../displays/tools/l10n.h"
+#include "locale.h"
 #if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
   #include "battery.h"
 #endif

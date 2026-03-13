@@ -99,7 +99,7 @@ void setup() {
       player.sendCommand({PR_PLAY, stn});
     }
   }
-  config.startAsyncServicesButWait();
+  config.startupServices();
   pm.on_end_setup();
 }
 

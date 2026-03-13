@@ -69,6 +69,7 @@
   #define TFT_SCLK        12
   #define TFT_MISO        13
   #define BRIGHTNESS_PIN  TFT_BL
+  #define DSP_LANGUAGE    lt_LT
 #endif
 
 
@@ -201,17 +202,6 @@
   #define SHOW_VU_METER   true
   #define VOLUME_STEPS    5
 #endif
-
-/* --- LANGUAGE --- */
-
-/* Locale codes: be_BY(Belarusian), bg_BG(Bulgarian), bs_BA(Bosnian), cs_CZ(Czech), da_DK(Danish), de_DE(German), el_GR(Greek), en_CA(Canadian English), en_US(English), es_ES(Spanish), et_EE(Estonian), fi_FI(Finnish), fr_CA(Canadian French), fr_FR(French), hr_HR(Croatian), hu_HU(Hungarian), is_IS(Icelandic), kk_KZ(Kazakh), ky_KG(Kyrgyz), lt_LT(Lithuanian), lv_LV(Latvian), me_ME(Montenegrin), mk_MK(Macedonian), mn_MN(Mongolian), nl_NL(Dutch), no_NO(Norwegian), pl_PL(Polish), pt_PT(Portuguese), ro_RO(Romanian), ru_RU(Russian), sk_SK(Slovak), sl_SI(Slovenian), sr_RS(Serbian), sv_SE(Swedish), tg_TJ(Tajik), tr_TR(Turkish), uk_UA(Ukrainian), uz_UZ(Uzbek) */
-#define L10N_LANGUAGE     lt_LT
-
-/* Optional: set a different language for the WebUI only.  If omitted the UI will use the same value as L10N_LANGUAGE. */
-//#define L10N_WEBUI_LANGUAGE en_US
-
-/* Codepage for display glyph mapping: choose L10N_CP_LATIN or L10N_CP_CYRILLIC */
-//#define L10N_CODEPAGE L10N_CP_LATIN
 
 /* --- SYSTEM OVERRIDES --- */
 

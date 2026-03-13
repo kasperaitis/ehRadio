@@ -35,7 +35,7 @@ from datetime import datetime
 FONT_ARRAY_RE = re.compile(r"static\s+const\s+unsigned\s+char\s+font\[\]\s+PROGMEM\s*=\s*\{([\s\S]*?)\};")
 HEX_RE = re.compile(r"0x[0-9A-Fa-f]{1,2}")
 
-DEFAULT_FONT = Path('glcdfont/glcdfont_LT.c')
+DEFAULT_FONT = Path(__file__).parent.parent / 'glcdfont_Latin.c'
 
 # Lithuanian mapping: character -> font index used in this project's glcdfont_LT
 LT_UTF_MAP = {

@@ -36,77 +36,199 @@ def compress_file(source_path):
         return False
 
 def _get_selected_lang_code():
-    """Return the full BCP-47 WebUI JSON code for the active language.
-
-    The previously hard‑wired value followed L10N_LANGUAGE, but after
-    adding ``L10N_WEBUI_LANGUAGE`` we must read that first and fall back
-    to the normal language token.  English is treated as a special case
-    because the JS layer uses built‑in defaults and does not need a file.
-
-    Resolution order:
-      1. myoptions.h  — #define L10N_WEBUI_LANGUAGE xx_XX
-      2. myoptions.h  — #define L10N_LANGUAGE      xx_XX
-      3. src/core/options.h — same two patterns (fallback)
-      4. 'en_US' if nothing found (no JSON needed for English)
-    """
     import re
-    # two patterns for the two macros, search WEBUI first
-    pat_webui = re.compile(r'^\s*#define\s+L10N_WEBUI_LANGUAGE\s+(\w+)', re.MULTILINE)
-    pat_lang  = re.compile(r'^\s*#define\s+L10N_LANGUAGE\s+(\w+)', re.MULTILINE)
-
-    for candidate in ("myoptions.h", "src/core/options.h"):
+    
+    # Get active build flags from environment
+    # Import env from parent scope
+    try:
+        from SCons.Script import Import
+        Import("env")
+        
+        active_defines = set()
+        cpp_defines = env.get("CPPDEFINES", [])
+        for item in cpp_defines:
+            if isinstance(item, str):
+                active_defines.add(item.split("=")[0])
+            elif isinstance(item, tuple) and len(item) >= 1:
+                active_defines.add(item[0])
+        
+        # Fallback: derive from environment name
+        env_name = env.get("PIOENV", "")
+        if env_name:
+            active_defines.add(env_name.upper())
+    except:
+        active_defines = set()
+    
+    # Helper to find DSP_LANGUAGE or WEBUI_LANGUAGE flag pattern: #define DSP_LANGUAGE_lt_LT or #define WEBUI_LANGUAGE_lt_LT
+    def _find_language_flag(path, prefix="DSP_LANGUAGE"):
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                in_active_block = True
+                if_depth = 0
+                block_stack = []
+                
+                # Read file and handle line continuations
+                lines = []
+                temp_line = ""
+                for raw_line in fh:
+                    if raw_line.rstrip().endswith('\\'):
+                        temp_line += raw_line.rstrip()[:-1] + " "  # Remove \ and add space
+                    else:
+                        lines.append(temp_line + raw_line)
+                        temp_line = ""
+                
+                for ln in lines:
+                    ln_stripped = ln.strip()
+                    
+                    # Track #if defined(...) blocks (simple or OR'd)
+                    if re.match(r"#\s*if\s+", ln_stripped):
+                        # Extract all defined(FLAG) patterns
+                        flags = re.findall(r"defined\((\w+)\)", ln_stripped)
+                        if flags:
+                            # Block is active if ANY flag matches
+                            is_active = any(flag in active_defines for flag in flags)
+                            if_depth += 1
+                            block_stack.append((if_depth, is_active))
+                            in_active_block = is_active
+                            continue
+                        else:
+                            # Complex #if without defined() - treat as inactive
+                            if_depth += 1
+                            block_stack.append((if_depth, False))
+                            in_active_block = False
+                            continue
+                        
+                    # Track #ifdef
+                    ifdef_match = re.match(r"#\s*ifdef\s+(\w+)", ln_stripped)
+                    if ifdef_match:
+                        flag = ifdef_match.group(1)
+                        is_active = flag in active_defines
+                        if_depth += 1
+                        block_stack.append((if_depth, is_active))
+                        in_active_block = is_active
+                        continue
+                    
+                    # Track #elif defined(...)
+                    if re.match(r"#\s*elif\s+", ln_stripped):
+                        flags = re.findall(r"defined\((\w+)\)", ln_stripped)
+                        if flags and block_stack:
+                            # Pop previous block at same depth, evaluate new condition
+                            block_stack.pop()
+                            if_depth = max(1, if_depth)
+                            is_active = any(flag in active_defines for flag in flags)
+                            block_stack.append((if_depth, is_active))
+                            in_active_block = is_active
+                            continue
+                    
+                    # Track #else
+                    if re.match(r"#\s*else", ln_stripped):
+                        if block_stack:
+                            # Pop previous block, invert its condition
+                            old_depth, old_active = block_stack.pop()
+                            is_active = not old_active
+                            block_stack.append((old_depth, is_active))
+                            in_active_block = is_active
+                            continue
+                        
+                    # Track #endif
+                    if re.match(r"#\s*endif", ln_stripped):
+                        if block_stack:
+                            block_stack.pop()
+                            if_depth = max(0, if_depth - 1)
+                            in_active_block = block_stack[-1][1] if block_stack else True
+                        continue
+                    
+                    # Look for DSP_LANGUAGE_xx_XX or WEBUI_LANGUAGE_xx_XX pattern
+                    if in_active_block:
+                        m = re.match(r'\s*#\s*define\s+' + prefix + r'_([a-zA-Z]{2}_[a-zA-Z]{2})', ln)
+                        if m:
+                            return m.group(1)
+        except Exception:
+            pass
+        return None
+    
+    # Look for WEBUI_LANGUAGE_xx_XX first, then fall back to DSP_LANGUAGE_xx_XX
+    lang_source = None
+    macro_used = None
+    for candidate in ("myoptions.h",):
         p = Path(candidate)
         if not p.exists():
             continue
-        text = p.read_text(encoding="utf-8", errors="ignore")
-        m = pat_webui.search(text)
-        if m:
-            return m.group(1)
-        m = pat_lang.search(text)
-        if m:
-            return m.group(1)
+        # Try WEBUI_LANGUAGE flag first
+        result = _find_language_flag(str(p), "WEBUI_LANGUAGE")
+        if result:
+            lang_source = candidate
+            macro_used = "WEBUI_LANGUAGE"
+            return result, lang_source, macro_used
+        # Fall back to DSP_LANGUAGE flag
+        result = _find_language_flag(str(p), "DSP_LANGUAGE")
+        if result:
+            lang_source = candidate
+            macro_used = "DSP_LANGUAGE"
+            return result, lang_source, macro_used
 
-    return "en_US"  # fallback default
+    return "en_US", None, None  # fallback default
 
 
 def deploy_locale_json(source, target, env):
     """Copy the chosen WebUI language JSON into the SPIFFS source tree.
 
     The language code is derived via :pyfunc:`_get_selected_lang_code`, which
-    reads ``L10N_WEBUI_LANGUAGE`` if defined or falls back to
-    ``L10N_LANGUAGE``.  The selected file plus ``en_US.json`` (JS fallback)
-    are copied from ``src/locale/webui/`` into ``data/www/locale/``.  Any
-    other JSON files already present are treated as stale and deleted.
+    reads ``WEBUI_LANGUAGE`` if defined or falls back to
+    ``DSP_LANGUAGE``.  If English (``en_US``), no file is copied since the
+    JS layer uses built-in defaults from ``language.json``.  Otherwise, the
+    selected locale JSON is copied from ``src/locale/webui/{code}.json`` to
+    ``data/www/lang_{code}.json``.  Any stale ``lang_*.json`` files are
+    removed.
     """
-    lang_code = _get_selected_lang_code()
+    lang_code, lang_source, macro_used = _get_selected_lang_code()
+    
+    # Debug output for language detection
+    if lang_source:
+        source_name = os.path.basename(lang_source) if lang_source else "unknown"
+        print(f"  [locale] Detected {macro_used}={lang_code} from {source_name}")
+    else:
+        print(f"  [locale] No language defined, using default {lang_code}")
 
-    locale_dst = Path("data/www/locale")
-    locale_dst.mkdir(parents=True, exist_ok=True)
+    www_dir = Path("data/www")
     locale_src = Path("src/locale/webui")
 
-    # Determine which files we need on device
-    needed = {"en_US"}  # always deploy English as JS fallback
-    if not lang_code.startswith("en"):
-        needed.add(lang_code)
+    # Remove stale locale files (pattern: xx_XX.json where x is a letter)
+    import re
+    locale_pattern = re.compile(r'^[a-z]{2}_[A-Z]{2}\.json$')
+    for old_file in www_dir.glob("*.json"):
+        if locale_pattern.match(old_file.name):
+            old_file.unlink()
+            print(f"  [locale] removed stale {old_file.name}")
 
-    # Remove stale JSON files that are no longer needed
-    for stale in locale_dst.glob("*.json"):
-        if stale.stem not in needed:
-            stale.unlink()
-            print(f"  [locale] removed stale {stale.name}")
-
-    # Deploy each needed JSON
-    for code in sorted(needed):
-        json_file = locale_src / f"{code}.json"
-        if not json_file.exists():
-            print(f"  [locale] WARNING: {json_file} not found — skipping")
-            continue
-        dest = locale_dst / f"{code}.json"
-        if not dest.exists() or json_file.stat().st_mtime > dest.stat().st_mtime:
-            shutil.copy2(str(json_file), str(dest))
-            print(f"  [locale] {json_file} -> {dest}")
-        else:
-            print(f"  [locale] {dest} already up-to-date")
+    # Copy the selected language file with its original name
+    json_file = locale_src / f"{lang_code}.json"
+    
+    # Read HARDCODED_WEBUI_LOCALE from locale.h
+    hardcoded_locale = "en_US"  # default fallback
+    locale_h_path = Path("src/core/locale.h")
+    if locale_h_path.exists():
+        with open(locale_h_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                match = re.match(r'\s*#\s*define\s+HARDCODED_WEBUI_LOCALE\s+"([^"]+)"', line)
+                if match:
+                    hardcoded_locale = match.group(1)
+                    break
+    
+    # Skip if selected language matches hardcoded locale (hardcoded HTML text will be used)
+    if lang_code == hardcoded_locale:
+        print(f"  [locale] No translation file needed ({lang_code} uses hardcoded HTML text)")
+        return
+    
+    if not json_file.exists():
+        print(f"  [locale] Translation file not found: {json_file}")
+        print(f"  [locale] Skipping locale deployment")
+        return
+    
+    dest = www_dir / f"{lang_code}.json"
+    shutil.copy2(str(json_file), str(dest))
+    print(f"  [locale] {json_file} -> {dest}")
+    print(f"  [locale] WebUI locale deployed for {lang_code}")
 
 
 def compress_and_hide_originals(source, target, env):
@@ -116,7 +238,7 @@ def compress_and_hide_originals(source, target, env):
     print("="*70)
 
     # Stage locale JSON files before compression pass
-    print("\nDeploying locale JSON files:")
+    print("\nDeploying locale JSON file:")
     deploy_locale_json(source, target, env)
     
     data_dir = Path("data/www")
@@ -124,18 +246,21 @@ def compress_and_hide_originals(source, target, env):
         print(f"Warning: {data_dir} does not exist, skipping compression")
         return
     
-    # Create temp backup directory
+    # Clear and recreate temp backup directory to ensure clean state
+    if TEMP_BACKUP_DIR.exists():
+        shutil.rmtree(TEMP_BACKUP_DIR)
     TEMP_BACKUP_DIR.mkdir(parents=True, exist_ok=True)
     
     # Files to exclude from compression (by filename, any directory)
     exclude = ["rb_srvrs.json"]
     # Subdirectories to exclude from compression — files are kept as plain files in SPIFFS
     # (avoids ESPAsyncWebServer gzip+subdirectory edge cases for small files)
-    exclude_dirs = ["locale"]
+    exclude_dirs = []
     
     compressed_count = 0
     skipped_count = 0
     
+    print("\nGzipping files:")
     # First pass: compress all files recursively
     for file_path in sorted(data_dir.rglob("*")):
         if not file_path.is_file():

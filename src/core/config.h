@@ -6,6 +6,7 @@
 #include <SPI.h>
 #include <SPIFFS.h>
 #include <Preferences.h>
+#include "locale.h"
 #include "../displays/widgets/widgetsconfig.h"
 
 #define ESPFILEUPDATER_USERAGENT "ehradio/" RADIOVERSION "(" GITHUBURL ")"  // used as a user-agent string for downloading with ESPFileUpdater
@@ -18,7 +19,6 @@
 #define PLAYLIST_PATH     "/data/playlist.csv"
 #define SSIDS_PATH        "/data/wifi.csv"
 #define TMP_PATH          "/data/tmpfile.txt"
-#define TMP2_PATH         "/data/tmpfile2.txt"
 #define INDEX_PATH        "/data/index.dat"
 #define PLAYLIST_SD_PATH  "/data/playlistsd.csv"
 #define INDEX_SD_PATH     "/data/indexsd.dat"
@@ -38,9 +38,9 @@ enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 void u8fix(char *src);
 void cleanStaleSearchResults();
 void fixPlaylistFileEnding();
-void getRequiredFiles(void* param);
+void getRequiredFiles();
 void checkNewVersionFile();
-void startAsyncServices(void* param);
+void startupServicesAsync(void* param);
 
 struct theme_t {
   uint16_t background;
@@ -115,6 +115,7 @@ struct config_t // specify defaults here (and macros in options.h) (defaults are
   uint16_t  battery_adc_ref_mv = BATTERY_ADC_REF_MV;
   bool      skipPlaylistUpDown = ONE_CLICK_SWITCH;
   uint8_t   irtlp = IR_TOLERANCE;
+  char      locale_webui[10] = WEBUI_LOCALE;
   char      tz_name[70] = TIMEZONE_NAME;
   char      tzposix[70] = TIMEZONE_POSIX;
   char      sntp1[35] = SNTP_1;
@@ -243,7 +244,9 @@ class Config {
     void purgeUnwantedFiles();
     void deleteMainwwwFile();
     void updateFile(void* param, const char* localFile, const char* onlineFile, const char* updatePeriod, const char* simpleName);
-    void startAsyncServicesButWait();
+    void startupServices();
+    void updateLocaleFile();
+    bool updateLocaleFileAsync(const char* localeCode, uint8_t clientId);
     void bootInfo();
     void deleteOldKeys();
     void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }

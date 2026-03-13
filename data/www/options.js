@@ -1,10 +1,31 @@
 // Options/Settings page specific functions
 
 const localTZjson = 'timezones.json';
+const localLocalesJson = 'locales.json';
 let timezoneData = null;
+let localesData = null;
+let pendingTZData = null; // Store WebSocket data if it arrives before timezones load
+let pendingLocaleData = null; // Store WebSocket data if it arrives before locales load
 
-// Load timezones on DOM ready
-document.addEventListener('DOMContentLoaded', () => { loadTimezones(); });
+// Store original locale globally so error handler in script.js can access it
+if (typeof window.originalLocaleWebui === 'undefined') {
+  window.originalLocaleWebui = null;
+}
+if (typeof window.originalLocaleDisp === 'undefined') {
+  window.originalLocaleDisp = null;
+}
+
+// Load timezones and locales - handle both immediate and deferred execution
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    loadTimezones();
+    loadLocales();
+  });
+} else {
+  // DOM already loaded (script loaded dynamically)
+  loadTimezones();
+  loadLocales();
+}
 
 /** TIMEZONES **/
 async function loadTimezones() {
@@ -15,6 +36,11 @@ async function loadTimezones() {
     }
     timezoneData = await response.json();
     populateTZDropdown(timezoneData);
+    
+    // If WebSocket data arrived before timezones loaded, apply it now
+    if (pendingTZData) {
+      applyPendingTZData();
+    }
   } catch (err) {
     console.error("Failed to load local timezones:", err);
   }
@@ -40,11 +66,148 @@ function populateTZDropdown(zones) {
   });
 }
 
+function applyPendingTZData() {
+  if (!pendingTZData) return;
+  const select = document.getElementById("tz_name");
+  const input = document.getElementById("tzposix");
+  
+  if (select && input) {
+    const i = [...select.options].findIndex(opt => opt.text === pendingTZData.tz_name);
+    if (i !== -1) {
+      select.selectedIndex = i;
+      input.value = select.options[i].value;
+    } else {
+      const fallbackOption = new Option(pendingTZData.tz_name, pendingTZData.tzposix, true, true);
+      select.appendChild(fallbackOption);
+      select.selectedIndex = select.options.length - 1;
+      input.value = pendingTZData.tzposix;
+    }
+  }
+  pendingTZData = null;
+}
+
 function applyTZ(){
+  sendTimezoneAndNTP();
+}
+
+/** LOCALES **/
+async function loadLocales() {
+  try {
+    const response = await fetch(localLocalesJson);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    localesData = await response.json();
+    populateLocaleDropdown(localesData);
+    
+    // If WebSocket data arrived before locales loaded, apply it now
+    if (pendingLocaleData) {
+      applyPendingLocaleData();
+    }
+  } catch (err) {
+    console.error("Failed to load locales:", err);
+  }
+}
+
+function populateLocaleDropdown(locales) {
+  const select = getId('locale_webui');
+  if (!select) return;
+  
+  select.innerHTML = '';
+  
+  // Check if online update capable (defined in variables.js)
+  const canUpdate = typeof onlineUpdCapable !== 'undefined' && onlineUpdCapable;
+  
+  if (!canUpdate && pendingLocaleData) {
+    // Can't update - only show current locale
+    const code = pendingLocaleData.locale_webui;
+    const name = locales[code] || code;
+    const option = document.createElement('option');
+    option.value = code;
+    option.textContent = `${code}: ${name}`;
+    select.appendChild(option);
+    select.disabled = true;
+    return;
+  }
+  
+  // Populate all locales
+  Object.entries(locales).sort().forEach(([code, name]) => {
+    const option = document.createElement('option');
+    option.value = code;
+    option.textContent = `${code}: ${name}`;
+    select.appendChild(option);
+  });
+}
+
+function applyPendingLocaleData() {
+  if (!pendingLocaleData) return;
+  
+  const select = getId('locale_webui');
+  const display = getId('locale_disp');
+  
+  // Set WebUI locale dropdown
+  if (select && localesData) {
+    const code = pendingLocaleData.locale_webui;
+    window.originalLocaleWebui = code; // Store original value globally to detect changes
+    const i = [...select.options].findIndex(opt => opt.value === code);
+    if (i !== -1) {
+      select.selectedIndex = i;
+    } else {
+      // Locale not in list - add it as fallback
+      const name = localesData[code] || code;
+      const option = new Option(`${code}: ${name}`, code, true, true);
+      select.appendChild(option);
+      select.selectedIndex = select.options.length - 1;
+    }
+  }
+  
+  // Format display locale field nicely
+  if (display && localesData) {
+    const dispCode = pendingLocaleData.locale_disp;
+    // Try to extract just the locale code (e.g., "lt_LT" from longer string)
+    const match = dispCode.match(/([a-z]{2}_[A-Z]{2})/);
+    const code = match ? match[1] : dispCode;
+    const name = localesData[code] || dispCode;
+    const displayValue = `${code}: ${name}`;
+    display.value = displayValue;
+    window.originalLocaleDisp = displayValue; // Store original display value globally
+  }
+  
+  pendingLocaleData = null;
+}
+
+function sendTimezoneAndNTP() {
   websocket.send("tz_name="+getId("tz_name").selectedOptions[0].text);
   websocket.send("tzposix="+getId("tzposix").value);
   websocket.send("sntp2="+getId("sntp2").value);
   websocket.send("sntp1="+getId("sntp1").value);
+}
+
+function applyLocale(){
+  const select = getId('locale_webui');
+  if (!select || !select.value) return;
+  
+  const selectedCode = select.value;
+  const selectedName = select.selectedOptions[0].textContent;
+  
+  // Check if locale actually changed
+  const localeChanged = (selectedCode !== window.originalLocaleWebui);
+  
+  if (localeChanged) {
+    // Show downloading message
+    const display = getId('locale_disp');
+    if (display) {
+      display.value = 'Downloading...';
+    }
+    
+    console.log(`[Locale] Requesting locale change to ${selectedCode}`);
+    websocket.send("locale_webui=" + selectedCode);
+  } else {
+    console.log(`[Locale] Locale unchanged (${selectedCode}), skipping download`);
+  }
+  
+  // Always apply timezone/NTP settings
+  sendTimezoneAndNTP();
 }
 
 /** MQTT **/
@@ -116,7 +279,7 @@ function submitWiFi(){
     xhr.open("POST",`http://${hostname}/upload`,true);
     xhr.send(formData);
     fileuploadinput.value = '';
-  getId("settingscontent").innerHTML='<h2>'+t('msg_settings_saved')+'</h2>';
+  getId("settingscontent").innerHTML='<h2>'+t('msg_settings_saved', 'Settings saved. Rebooting...')+'</h2>';
     getId("settingsdone").classList.add("hidden");
     getId("navigation").classList.add("hidden");
     setTimeout(function(){ window.location.href=`http://${hostname}/`; }, 10000);
@@ -161,10 +324,10 @@ function checkDangerZone() {
   
   if(allChecked) {
     if(dangerzone) dangerzone.classList.remove('hidden');
-    if(txt) txt.textContent = t('lbl_dz_careful');
+    if(txt) txt.textContent = t('lbl_dz_careful', 'Be Careful!');
   } else {
     if(dangerzone) dangerzone.classList.add('hidden');
-    if(txt) txt.textContent = t('lbl_dz_unlock');
+    if(txt) txt.textContent = t('lbl_dz_unlock', 'Turn on all switches to unlock');
   }
 }
 
@@ -184,7 +347,7 @@ function initDangerZone() {
   });
   
   const txt = getId('dangerzone_txt');
-  if(txt) txt.textContent = t('lbl_dz_unlock');
+  if(txt) txt.textContent = t('lbl_dz_unlock', 'Turn on all switches to unlock');
   
   const dangerzone = getId('dangerzone');
   if(dangerzone) dangerzone.classList.add('hidden');

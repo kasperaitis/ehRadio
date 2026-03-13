@@ -169,7 +169,6 @@ input[type=range] {
 .navitem:hover { text-decoration: underline; color: var(--accent-color); }
 section { border: var(--section-border) 1px solid; border-radius: 10px; box-sizing: border-box; padding: 20px 20px 30px 20px; margin: 10px 0 30px 0; width: 100%; 
   background-image: linear-gradient(var(--main-bg-color), var(--section-gradient)); position: relative; scroll-margin-top: 20px; }
-section.group_weather { margin-bottom: 10px; }
 section .title { width: auto; margin-top: -34px; padding: 4px 0 30px 0; color: #aaa; text-align: center; }
 section .title span { padding: 4px 8px; background: var(--main-bg-color); font-weight: bold; font-size: 18px; text-transform: uppercase; }
 #settingscontent { display: flex; align-items: center; flex-direction: column; flex: 1; padding: 20px 12px 0 0; position: relative; }

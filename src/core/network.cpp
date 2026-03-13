@@ -11,7 +11,7 @@
 #include "mqtt.h"
 #include "../pluginsManager/pluginsManager.h"
 #include <DNSServer.h>
-#include "../displays/tools/l10n.h"
+#include "locale.h"
 #include <ImprovWiFiLibrary.h>
 
 #ifndef WIFI_ATTEMPTS
