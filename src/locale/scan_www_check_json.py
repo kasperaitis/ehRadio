@@ -297,6 +297,11 @@ def get_sort_priority(key):
     - First element: category priority (lower = earlier)
     - Second element: the key itself for alphabetical sorting within category
     """
+    # Special handling for exact metadata keys (always at top)
+    if key in ('locale_code', 'locale', 'locale_en'):
+        metadata_order = {'locale_code': 0, 'locale': 1, 'locale_en': 2}
+        return (-1, metadata_order[key])  # -1 ensures these come before all prefixes
+    
     prefixes = [
         'locale_',   # 0
         'title_',    # 1
