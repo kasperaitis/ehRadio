@@ -4,8 +4,8 @@ Sync WebUI Translation Text Script
 Scans HTML and JS files in data/www/ and replaces translatable text with values 
 from a locale JSON file.
 
-For HTML: Updates text in elements with data-i18n attributes
-For JS: Updates default text in t('key', 'default') function calls
+For HTML: Updates text in elements with data-i18n attributes (text content, placeholder, value, title, alt)
+For JS: Updates default text in t('key', 'default', ...) function calls
 
 Usage:
   python hardcode_locale_to_webui.py [locale_code] [--dry-run]
@@ -20,62 +20,6 @@ import json
 import re
 import sys
 from pathlib import Path
-from html.parser import HTMLParser
-
-class TranslationSyncer(HTMLParser):
-    """HTML parser that tracks and updates text based on data-i18n attributes"""
-    
-    def __init__(self, translations):
-        super().__init__()
-        self.translations = translations
-        self.output = []
-        self.current_i18n_key = None
-        self.pending_text_replacement = False
-        
-    def handle_starttag(self, tag, attrs):
-        # Reconstruct the tag
-        attrs_dict = dict(attrs)
-        attrs_str = ''.join(f' {k}="{v}"' for k, v in attrs)
-        
-        # Check if this tag has data-i18n attribute
-        if 'data-i18n' in attrs_dict:
-            self.current_i18n_key = attrs_dict['data-i18n']
-            self.pending_text_replacement = True
-        else:
-            self.current_i18n_key = None
-            self.pending_text_replacement = False
-            
-        self.output.append(f'<{tag}{attrs_str}>')
-    
-    def handle_endtag(self, tag):
-        self.output.append(f'</{tag}>')
-        self.current_i18n_key = None
-        self.pending_text_replacement = False
-    
-    def handle_startendtag(self, tag, attrs):
-        attrs_str = ''.join(f' {k}="{v}"' for k, v in attrs)
-        self.output.append(f'<{tag}{attrs_str} />')
-    
-    def handle_data(self, data):
-        # If we're inside a tag with data-i18n, replace the text
-        if self.pending_text_replacement and self.current_i18n_key:
-            if self.current_i18n_key in self.translations:
-                # Replace with translation value
-                self.output.append(self.translations[self.current_i18n_key])
-                self.pending_text_replacement = False  # Only replace once per tag
-                return
-        
-        # Otherwise keep original data
-        self.output.append(data)
-    
-    def handle_comment(self, data):
-        self.output.append(f'<!--{data}-->')
-    
-    def handle_decl(self, decl):
-        self.output.append(f'<!{decl}>')
-    
-    def get_output(self):
-        return ''.join(self.output)
 
 
 def load_translations(locale_code):
@@ -87,113 +31,235 @@ def load_translations(locale_code):
         sys.exit(1)
     
     with open(locale_path, 'r', encoding='utf-8') as f:
-        # Handle potential BOM
         content = f.read()
-        if content.startswith('\ufeff'):
+        if content.startswith('\ufeff'):  # Remove BOM if present
             content = content[1:]
         return json.loads(content)
 
 
 def sync_html_file(html_path, translations, dry_run=False):
     """Sync a single HTML file with translations"""
-    print(f"\nProcessing: {html_path.name}")
-    
     with open(html_path, 'r', encoding='utf-8') as f:
-        original_content = f.read()
+        content = f.read()
     
-    # Use regex to find and replace text in elements with data-i18n
-    # Pattern: finds opening tag with data-i18n, captures the key, then replaces inner text
-    def replace_translation(match):
-        i18n_key = match.group(1)
-        tag_content = match.group(2)
-        closing_tag = match.group(3)
+    original_content = content
+    fields_updated = 0  # Fields where text differs (actual changes)
+    fields_found = 0    # All translatable fields detected
+    keys_used = set()
+    keys_found = set()
+    
+    # Pattern 1a: data-i18n="key">text</tag>
+    def replace_text_content(match):
+        nonlocal fields_updated, fields_found
+        key = match.group(1)
+        old_text = match.group(2)
+        closing = match.group(3)
         
-        if i18n_key in translations:
-            translation = translations[i18n_key]
-            # Keep the tag structure, just replace the text
-            return f'data-i18n="{i18n_key}">{translation}{closing_tag}'
-        else:
-            # No translation found, keep original
-            return match.group(0).replace('data-i18n="', '')
+        if key in translations:
+            fields_found += 1
+            keys_found.add(key)
+            new_text = translations[key]
+            if old_text.strip() != new_text:
+                fields_updated += 1
+                keys_used.add(key)
+                return f'data-i18n="{key}">{new_text}{closing}'
+        
+        return match.group(0)
     
-    # Pattern explanation:
-    # data-i18n="([^"]+)"  - captures the i18n key
-    # >([^<]*)             - captures text content between tags (non-greedy)
-    # (</)                 - captures the closing tag start
-    pattern = r'data-i18n="([^"]+)">([^<]*?)(<\/)'
+    content = re.sub(r'data-i18n="([^"]+)">([^<]*?)(<\/)', replace_text_content, content)
     
-    updated_content = re.sub(pattern, replace_translation, original_content)
+    # Pattern 1b/1c: placeholder attribute (bidirectional)
+    def replace_placeholder_di18n_first(match):
+        nonlocal fields_updated, fields_found
+        key = match.group(1)
+        old_text = match.group(2)
+        
+        if key in translations:
+            fields_found += 1
+            keys_found.add(key)
+            new_text = translations[key]
+            if old_text != new_text:
+                fields_updated += 1
+                keys_used.add(key)
+                # Replace just the placeholder value, preserve everything else
+                return match.group(0).replace(f'placeholder="{old_text}"', f'placeholder="{new_text}"')
+        
+        return match.group(0)
     
-    if updated_content == original_content:
-        print(f"  → No changes needed")
-        return False
+    def replace_placeholder_ph_first(match):
+        nonlocal fields_updated, fields_found
+        old_text = match.group(1)
+        key = match.group(2)
+        
+        if key in translations:
+            fields_found += 1
+            keys_found.add(key)
+            new_text = translations[key]
+            if old_text != new_text:
+                fields_updated += 1
+                keys_used.add(key)
+                return match.group(0).replace(f'placeholder="{old_text}"', f'placeholder="{new_text}"')
+        
+        return match.group(0)
     
-    if dry_run:
-        print(f"  → Would update (dry run)")
-        return True
+    content = re.sub(r'data-i18n="([^"]+)"[^>]*placeholder="([^"]+)"', replace_placeholder_di18n_first, content)
+    content = re.sub(r'placeholder="([^"]+)"[^>]*data-i18n="([^"]+)"', replace_placeholder_ph_first, content)
     
-    # Write updated content
-    with open(html_path, 'w', encoding='utf-8') as f:
-        f.write(updated_content)
+    # Pattern 1d/1e: value attribute (bidirectional)
+    def replace_value_di18n_first(match):
+        nonlocal fields_updated, fields_found
+        key = match.group(1)
+        old_text = match.group(2)
+        
+        if key in translations:
+            fields_found += 1
+            keys_found.add(key)
+            new_text = translations[key]
+            if old_text != new_text:
+                fields_updated += 1
+                keys_used.add(key)
+                return match.group(0).replace(f'value="{old_text}"', f'value="{new_text}"')
+        
+        return match.group(0)
     
-    print(f"  → Updated!")
-    return True
+    def replace_value_val_first(match):
+        nonlocal fields_updated, fields_found
+        old_text = match.group(1)
+        key = match.group(2)
+        
+        if key in translations:
+            fields_found += 1
+            keys_found.add(key)
+            new_text = translations[key]
+            if old_text != new_text:
+                fields_updated += 1
+                keys_used.add(key)
+                return match.group(0).replace(f'value="{old_text}"', f'value="{new_text}"')
+        
+        return match.group(0)
+    
+    content = re.sub(r'data-i18n="([^"]+)"[^>]*value="([^"]+)"', replace_value_di18n_first, content)
+    content = re.sub(r'value="([^"]+)"[^>]*data-i18n="([^"]+)"', replace_value_val_first, content)
+    
+    # Pattern 1f/1g: title attribute (bidirectional)
+    def replace_title_di18n_first(match):
+        nonlocal fields_updated, fields_found
+        key = match.group(1)
+        old_text = match.group(2)
+        
+        if key in translations:
+            fields_found += 1
+            keys_found.add(key)
+            new_text = translations[key]
+            if old_text != new_text:
+                fields_updated += 1
+                keys_used.add(key)
+                return match.group(0).replace(f'title="{old_text}"', f'title="{new_text}"')
+        
+        return match.group(0)
+    
+    def replace_title_ttl_first(match):
+        nonlocal fields_updated, fields_found
+        old_text = match.group(1)
+        key = match.group(2)
+        
+        if key in translations:
+            fields_found += 1
+            keys_found.add(key)
+            new_text = translations[key]
+            if old_text != new_text:
+                fields_updated += 1
+                keys_used.add(key)
+                return match.group(0).replace(f'title="{old_text}"', f'title="{new_text}"')
+        
+        return match.group(0)
+    
+    content = re.sub(r'data-i18n="([^"]+)"[^>]*title="([^"]+)"', replace_title_di18n_first, content)
+    content = re.sub(r'title="([^"]+)"[^>]*data-i18n="([^"]+)"', replace_title_ttl_first, content)
+    
+    # Pattern 1h/1i: alt attribute (bidirectional)
+    def replace_alt_di18n_first(match):
+        nonlocal fields_updated, fields_found
+        key = match.group(1)
+        old_text = match.group(2)
+        
+        if key in translations:
+            fields_found += 1
+            keys_found.add(key)
+            new_text = translations[key]
+            if old_text != new_text:
+                fields_updated += 1
+                keys_used.add(key)
+                return match.group(0).replace(f'alt="{old_text}"', f'alt="{new_text}"')
+        
+        return match.group(0)
+    
+    def replace_alt_alt_first(match):
+        nonlocal fields_updated, fields_found
+        old_text = match.group(1)
+        key = match.group(2)
+        
+        if key in translations:
+            fields_found += 1
+            keys_found.add(key)
+            new_text = translations[key]
+            if old_text != new_text:
+                fields_updated += 1
+                keys_used.add(key)
+                return match.group(0).replace(f'alt="{old_text}"', f'alt="{new_text}"')
+        
+        return match.group(0)
+    
+    content = re.sub(r'data-i18n="([^"]+)"[^>]*alt="([^"]+)"', replace_alt_di18n_first, content)
+    content = re.sub(r'alt="([^"]+)"[^>]*data-i18n="([^"]+)"', replace_alt_alt_first, content)
+    
+    return content, fields_found, len(keys_found), fields_updated, len(keys_used), content != original_content
 
 
 def sync_js_file(js_path, translations, dry_run=False):
     """Sync a single JS file with translations"""
-    print(f"\nProcessing: {js_path.name}")
-    
     with open(js_path, 'r', encoding='utf-8') as f:
-        original_content = f.read()
+        content = f.read()
     
-    # Pattern to match t('key', 'Default Text') or t("key", "Default Text")
-    # We need to replace the default text with the translation
+    original_content = content
+    fields_updated = 0
+    fields_found = 0
+    keys_used = set()
+    keys_found = set()
+    
+    # Pattern: t('key', 'Default Text', ...) with optional additional parameters
     def replace_t_function(match):
-        quote_char = match.group(1)  # Either ' or "
+        nonlocal fields_updated, fields_found
+        quote_char = match.group(1)
         key = match.group(2)
-        default_text = match.group(4)  # Current default text
+        old_text = match.group(3)
+        rest = match.group(4) or ''  # Optional additional parameters
         
         if key in translations:
-            translation = translations[key]
-            # Escape quotes in translation to match the quote character used
+            fields_found += 1
+            keys_found.add(key)
+            new_text = translations[key]
+            # Escape quotes in translation
             if quote_char == "'":
-                translation = translation.replace("'", "\\'")
+                new_text_escaped = new_text.replace("\\", "\\\\").replace("'", "\\'")
             else:
-                translation = translation.replace('"', '\\"')
-            return f"t({quote_char}{key}{quote_char}, {quote_char}{translation}{quote_char})"
-        else:
-            # No translation found, keep original
-            return match.group(0)
+                new_text_escaped = new_text.replace("\\", "\\\\").replace('"', '\\"')
+            
+            if old_text != new_text:
+                fields_updated += 1
+                keys_used.add(key)
+                if rest:
+                    return f"t({quote_char}{key}{quote_char}, {quote_char}{new_text_escaped}{quote_char}{rest})"
+                else:
+                    return f"t({quote_char}{key}{quote_char}, {quote_char}{new_text_escaped}{quote_char})"
+        
+        return match.group(0)
     
-    # Pattern explanation:
-    # t\(                    - literal t(
-    # (['"])                 - capture quote character (group 1)
-    # ([^'"]+)               - capture the key (group 2)
-    # \1                     - same quote character as group 1
-    # ,\s*                   - comma and optional whitespace
-    # (['"])                 - capture quote character for default (group 3)
-    # ((?:[^'"]|\\.)*)       - capture default text, handling escaped quotes (group 4)
-    # \3                     - same quote character as group 3
-    # \)                     - literal )
-    pattern = r"t\((['\"])([^'\"]+)\1,\s*(['\"])((?:[^'\"]|\\.)*)\3\)"
+    # Pattern: t('key', 'text', optional_params)
+    pattern = r"\bt\((['\"])([^'\"]+)\1,\s*(['\"])([^'\"]*)\3((?:\s*,\s*[^)]+)?\))"
+    content = re.sub(pattern, replace_t_function, content)
     
-    updated_content = re.sub(pattern, replace_t_function, original_content)
-    
-    if updated_content == original_content:
-        print(f"  → No changes needed")
-        return False
-    
-    if dry_run:
-        print(f"  → Would update (dry run)")
-        return True
-    
-    # Write updated content
-    with open(js_path, 'w', encoding='utf-8') as f:
-        f.write(updated_content)
-    
-    print(f"  → Updated!")
-    return True
+    return content, fields_found, len(keys_found), fields_updated, len(keys_used), content != original_content
 
 
 def main():
@@ -204,11 +270,11 @@ def main():
     locale_args = [arg for arg in sys.argv[1:] if arg != '--dry-run']
     locale_code = locale_args[0] if locale_args else 'en_US'
     
-    print(f"{'[DRY RUN] ' if dry_run else ''}Syncing HTML files with locale: {locale_code}")
+    print(f"{'[DRY RUN] ' if dry_run else ''}Syncing HTML/JS files with locale: {locale_code}")
     
     # Load translations
     translations = load_translations(locale_code)
-    print(f"Loaded {len(translations)} translation keys")
+    print(f"Loaded {len(translations)} translation keys\n")
     
     # Find all HTML and JS files in data/www/
     www_dir = Path(__file__).parent.parent.parent / 'data' / 'www'
@@ -219,21 +285,70 @@ def main():
         print(f"Error: No HTML or JS files found in {www_dir}")
         sys.exit(1)
     
-    print(f"Found {len(html_files)} HTML files and {len(js_files)} JS files")
+    print(f"Found {len(html_files)} HTML files and {len(js_files)} JS files\n")
     
     # Process each HTML file
-    updated_count = 0
+    files_with_changes = 0
+    files_with_fields = 0
+    total_fields_found = 0
+    total_fields_updated = 0
+    
     for html_path in html_files:
-        if sync_html_file(html_path, translations, dry_run):
-            updated_count += 1
+        print(f"Checking: {html_path.name}")
+        new_content, fields_found, keys_found_count, fields_updated, keys_updated_count, has_changes = sync_html_file(html_path, translations, dry_run)
+        
+        if fields_found > 0:
+            files_with_fields += 1
+            total_fields_found += fields_found
+            
+            if has_changes:
+                total_fields_updated += fields_updated
+                if dry_run:
+                    print(f"  → Found: {fields_found} field{'s' if fields_found != 1 else ''} matching {keys_found_count} key{'s' if keys_found_count != 1 else ''}. Would update {fields_updated} field{'s' if fields_updated != 1 else ''} using {keys_updated_count} key{'s' if keys_updated_count != 1 else ''}. - DRY RUN -")
+                else:
+                    print(f"  → Found: {fields_found} field{'s' if fields_found != 1 else ''} matching {keys_found_count} key{'s' if keys_found_count != 1 else ''}. Updated {fields_updated} field{'s' if fields_updated != 1 else ''} using {keys_updated_count} key{'s' if keys_updated_count != 1 else ''}.")
+                files_with_changes += 1
+                
+                if not dry_run:
+                    with open(html_path, 'w', encoding='utf-8') as f:
+                        f.write(new_content)
+            else:
+                print(f"  → Found: {fields_found} field{'s' if fields_found != 1 else ''} matching {keys_found_count} key{'s' if keys_found_count != 1 else ''} (all match JSON, no updates needed)")
+        else:
+            print(f"  → No translatable fields found")
     
     # Process each JS file
     for js_path in js_files:
-        if sync_js_file(js_path, translations, dry_run):
-            updated_count += 1
+        print(f"Checking: {js_path.name}")
+        new_content, fields_found, keys_found_count, fields_updated, keys_updated_count, has_changes = sync_js_file(js_path, translations, dry_run)
+        
+        if fields_found > 0:
+            files_with_fields += 1
+            total_fields_found += fields_found
+            
+            if has_changes:
+                total_fields_updated += fields_updated
+                if dry_run:
+                    print(f"  → Found: {fields_found} field{'s' if fields_found != 1 else ''} matching {keys_found_count} key{'s' if keys_found_count != 1 else ''}. Would update {fields_updated} field{'s' if fields_updated != 1 else ''} using {keys_updated_count} key{'s' if keys_updated_count != 1 else ''}. - DRY RUN -")
+                else:
+                    print(f"  → Found: {fields_found} field{'s' if fields_found != 1 else ''} matching {keys_found_count} key{'s' if keys_found_count != 1 else ''}. Updated {fields_updated} field{'s' if fields_updated != 1 else ''} using {keys_updated_count} key{'s' if keys_updated_count != 1 else ''}.")
+                files_with_changes += 1
+                
+                if not dry_run:
+                    with open(js_path, 'w', encoding='utf-8') as f:
+                        f.write(new_content)
+            else:
+                print(f"  → Found: {fields_found} field{'s' if fields_found != 1 else ''} matching {keys_found_count} key{'s' if keys_found_count != 1 else ''} (all match JSON, no updates needed)")
+        else:
+            print(f"  → No translatable fields found")
     
     total_files = len(html_files) + len(js_files)
-    print(f"\n{'Would update' if dry_run else 'Updated'} {updated_count} of {total_files} files")
+    print(f"\n{'[DRY RUN] ' if dry_run else ''}Summary:")
+    print(f"Files checked: {total_files}")
+    print(f"Files with translatable fields: {files_with_fields}")
+    print(f"Files {'that would be updated' if dry_run else 'updated'}: {files_with_changes}")
+    print(f"Total translatable fields found: {total_fields_found}")
+    print(f"Total fields {'that would be' if dry_run else ''} updated: {total_fields_updated}")
     
     if dry_run:
         print("\nRun without --dry-run to apply changes")

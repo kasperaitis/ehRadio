@@ -73,6 +73,15 @@ jobs:
             fi
           done
 
+      - name: Prepare Gzipped Locale Files for Release
+        run: |
+          mkdir -p locale_release
+          for file in src/locale/webui/*.json; do
+            filename=$(basename "$file")
+            echo "Compressing $filename."
+            gzip -c -9 "$file" > "locale_release/$filename.gz"
+          done
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -300,6 +309,7 @@ jobs:
             binaries/*.bin
             firmware/**/*.bin
             www_release/*
+            locale_release/*
             builds/${{ github.repository_owner }}/web_assets/**
           retention-days: 90
 
@@ -348,6 +358,7 @@ jobs:
           files: |
             binaries/*.bin
             www_release/*
+            locale_release/*
             version.txt
           fail_on_unmatched_files: false
           draft: false
