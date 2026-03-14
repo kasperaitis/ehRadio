@@ -138,11 +138,11 @@
   "ttl_search": "Іздеу",
   "ttl_curated": "Кураторлық тізімдер",
   "lbl_sort": "Сұрыптау",
-  "sort_name": "Аты",
-  "sort_clicks": "Шертулер",
-  "sort_votes": "Дауыс",
-  "sort_country": "Ел",
-  "sort_language": "Тіл",
+  "lbl_name": "Аты",
+  "lbl_clicks": "Шертулер",
+  "lbl_votes": "Дауыс",
+  "lbl_country": "Ел",
+  "lbl_language": "Тіл",
   "ph_searchterm": "Іздеу терминін енгізіңіз",
   "btn_search": "Іздеу",
   "ttl_add_search": "Іздеу өлшемін қосу",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Ойнату тізімін жүктеу қатесі",
   "msg_no_stations_in_playlist": "Бұл ойнату тізімінде станциялар жоқ",
   "msg_codes_for_button": "Түйме кодтары",
-  "btn_export": "Экспорттау"
+  "btn_export": "Экспорттау",
+  "msg_please_wait": "Күте тұрыңыз..."
 }

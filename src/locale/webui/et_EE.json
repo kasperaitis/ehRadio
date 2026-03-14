@@ -138,11 +138,11 @@
   "ttl_search": "Otsing",
   "ttl_curated": "Kuraatoritud nimekirjad",
   "lbl_sort": "Sordi",
-  "sort_name": "Nimi",
-  "sort_clicks": "Klikid",
-  "sort_votes": "Hääled",
-  "sort_country": "Riik",
-  "sort_language": "Keel",
+  "lbl_name": "Nimi",
+  "lbl_clicks": "Klikid",
+  "lbl_votes": "Hääled",
+  "lbl_country": "Riik",
+  "lbl_language": "Keel",
   "ph_searchterm": "Sisestage otsingutermin",
   "btn_search": "Otsi",
   "ttl_add_search": "Lisa otsingukriteerium",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Viga esitusloendi laadimisel",
   "msg_no_stations_in_playlist": "Selles esitusloendis pole jaamu",
   "msg_codes_for_button": "Koode nupule",
-  "btn_export": "Ekspordi"
+  "btn_export": "Ekspordi",
+  "msg_please_wait": "Palun oodake..."
 }

@@ -425,7 +425,11 @@ void Display::_swichMode(displayMode_e newmode) {
     _nums->setText(config.store.volume, numtxtFmt);
   }
   if (newmode == LOST)      _showDialog(LANG::const_DlgLost);
-  if (newmode == UPDATING)  { _showDialog(LANG::const_DlgUpdate); _updFirstCall = true; }
+  if (newmode == UPDATING)  { _showDialog(LANG::const_DlgUpdate);
+    #ifdef UPDATEURL
+      _updFirstCall = true;
+    #endif
+  }
   if (newmode == SLEEPING)  _showDialog("SLEEPING");
   if (newmode == SDCHANGE)  _showDialog(LANG::const_waitForSD);
   if (newmode == INFO || newmode == SETTINGS || newmode == TIMEZONE || newmode == WIFI) _showDialog(LANG::const_DlgNextion);

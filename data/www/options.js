@@ -27,7 +27,7 @@ if (document.readyState === 'loading') {
   loadLocales();
 }
 
-/** TIMEZONES **/
+/** LOCALE **/
 async function loadTimezones() {
   try {
     const response = await fetch(localTZjson);
@@ -36,7 +36,6 @@ async function loadTimezones() {
     }
     timezoneData = await response.json();
     populateTZDropdown(timezoneData);
-    
     // If WebSocket data arrived before timezones loaded, apply it now
     if (pendingTZData) {
       applyPendingTZData();
@@ -70,7 +69,6 @@ function applyPendingTZData() {
   if (!pendingTZData) return;
   const select = document.getElementById("tz_name");
   const input = document.getElementById("tzposix");
-  
   if (select && input) {
     const i = [...select.options].findIndex(opt => opt.text === pendingTZData.tz_name);
     if (i !== -1) {
@@ -90,7 +88,6 @@ function applyTZ(){
   sendTimezoneAndNTP();
 }
 
-/** LOCALES **/
 async function loadLocales() {
   try {
     const response = await fetch(localLocalesJson);
@@ -99,7 +96,6 @@ async function loadLocales() {
     }
     localesData = await response.json();
     populateLocaleDropdown(localesData);
-    
     // If WebSocket data arrived before locales loaded, apply it now
     if (pendingLocaleData) {
       applyPendingLocaleData();
@@ -112,24 +108,54 @@ async function loadLocales() {
 function populateLocaleDropdown(locales) {
   const select = getId('locale_webui');
   if (!select) return;
-  
   select.innerHTML = '';
-  
   // Check if online update capable (defined in variables.js)
   const canUpdate = typeof onlineUpdCapable !== 'undefined' && onlineUpdCapable;
-  
-  if (!canUpdate && pendingLocaleData) {
-    // Can't update - only show current locale
-    const code = pendingLocaleData.locale_webui;
-    const name = locales[code] || code;
-    const option = document.createElement('option');
-    option.value = code;
-    option.textContent = `${code}: ${name}`;
-    select.appendChild(option);
-    select.disabled = true;
+  if (!canUpdate) {
+    // Can't update - show htmlLocale and optionally device locale if locale.json exists
+    // Get htmlLocale from variables.js and add as first option
+    const htmlLocaleCode = (typeof htmlLocale !== 'undefined') ? htmlLocale : 'en_US';
+    const htmlLocaleName = locales[htmlLocaleCode] || htmlLocaleCode;
+    const htmlOption = document.createElement('option');
+    htmlOption.value = htmlLocaleCode;
+    htmlOption.textContent = `${htmlLocaleCode}: ${htmlLocaleName}`;
+    select.appendChild(htmlOption);
+    // Try to fetch locale.json to see if there's a second locale available
+    fetch('locale.json')
+      .then(response => response.ok ? response.json() : Promise.reject('Not found'))
+      .then(data => {
+        if (data.locale_code && data.locale_code !== htmlLocaleCode) {
+          // Device has a different locale file - add it as second option
+          const code = data.locale_code;
+          const name = data.locale || locales[code] || code;
+          const option = document.createElement('option');
+          option.value = code;
+          option.textContent = `${code}: ${name}`;
+          select.appendChild(option);
+          select.disabled = false;
+          // Select currently active locale (check uiLocale variable or pendingLocaleData)
+          let currentLocale = htmlLocaleCode;
+          if (typeof uiLocale !== 'undefined') {
+            currentLocale = uiLocale;
+          } else if (pendingLocaleData && pendingLocaleData.locale_webui) {
+            currentLocale = pendingLocaleData.locale_webui;
+          }
+          const i = [...select.options].findIndex(opt => opt.value === currentLocale);
+          if (i !== -1) {
+            select.selectedIndex = i;
+          }
+        } else {
+          // locale.json exists but same as htmlLocale, only 1 option
+          select.disabled = true;
+        }
+      })
+      .catch(() => {
+        // locale.json doesn't exist, only htmlLocale available
+        console.log('locale.json not available, using htmlLocale only');
+        select.disabled = true;
+      });
     return;
   }
-  
   // Populate all locales
   Object.entries(locales).sort().forEach(([code, name]) => {
     const option = document.createElement('option');
@@ -141,12 +167,12 @@ function populateLocaleDropdown(locales) {
 
 function applyPendingLocaleData() {
   if (!pendingLocaleData) return;
-  
   const select = getId('locale_webui');
   const display = getId('locale_disp');
-  
-  // Set WebUI locale dropdown
-  if (select && localesData) {
+  // Check if online update capable (defined in variables.js)
+  const canUpdate = typeof onlineUpdCapable !== 'undefined' && onlineUpdCapable;
+  // Set WebUI locale dropdown (only when canUpdate is true)
+  if (select && localesData && canUpdate) {
     const code = pendingLocaleData.locale_webui;
     window.originalLocaleWebui = code; // Store original value globally to detect changes
     const i = [...select.options].findIndex(opt => opt.value === code);
@@ -159,8 +185,12 @@ function applyPendingLocaleData() {
       select.appendChild(option);
       select.selectedIndex = select.options.length - 1;
     }
+  } else if (select && !canUpdate) {
+    // When canUpdate is false, dropdown is already populated by populateLocaleDropdown
+    // Just store the original value for change detection
+    const code = pendingLocaleData.locale_webui;
+    window.originalLocaleWebui = code;
   }
-  
   // Format display locale field nicely
   if (display && localesData) {
     const dispCode = pendingLocaleData.locale_disp;
@@ -172,7 +202,6 @@ function applyPendingLocaleData() {
     display.value = displayValue;
     window.originalLocaleDisp = displayValue; // Store original display value globally
   }
-  
   pendingLocaleData = null;
 }
 
@@ -186,26 +215,21 @@ function sendTimezoneAndNTP() {
 function applyLocale(){
   const select = getId('locale_webui');
   if (!select || !select.value) return;
-  
   const selectedCode = select.value;
   const selectedName = select.selectedOptions[0].textContent;
-  
   // Check if locale actually changed
   const localeChanged = (selectedCode !== window.originalLocaleWebui);
-  
   if (localeChanged) {
     // Show downloading message
     const display = getId('locale_disp');
     if (display) {
-      display.value = 'Downloading...';
+      display.value = t('msg_please_wait', 'Please wait...');
     }
-    
     console.log(`[Locale] Requesting locale change to ${selectedCode}`);
     websocket.send("locale_webui=" + selectedCode);
   } else {
     console.log(`[Locale] Locale unchanged (${selectedCode}), skipping download`);
   }
-  
   // Always apply timezone/NTP settings
   sendTimezoneAndNTP();
 }
@@ -279,7 +303,7 @@ function submitWiFi(){
     xhr.open("POST",`http://${hostname}/upload`,true);
     xhr.send(formData);
     fileuploadinput.value = '';
-  getId("settingscontent").innerHTML='<h2>'+t('msg_settings_saved', 'Settings saved. Rebooting...')+'</h2>';
+    getId("settingscontent").innerHTML='<h2>'+t('msg_settings_saved', 'Settings saved. Rebooting...')+'</h2>';
     getId("settingsdone").classList.add("hidden");
     getId("navigation").classList.add("hidden");
     setTimeout(function(){ window.location.href=`http://${hostname}/`; }, 10000);
@@ -321,7 +345,6 @@ function checkDangerZone() {
   
   const dangerzone = getId('dangerzone');
   const txt = getId('dangerzone_txt');
-  
   if(allChecked) {
     if(dangerzone) dangerzone.classList.remove('hidden');
     if(txt) txt.textContent = t('lbl_dz_careful', 'Be Careful!');
@@ -345,12 +368,9 @@ function initDangerZone() {
     const sw = getId(id);
     if(sw) sw.classList.remove('checked');
   });
-  
   const txt = getId('dangerzone_txt');
   if(txt) txt.textContent = t('lbl_dz_unlock', 'Turn on all switches to unlock');
-  
   const dangerzone = getId('dangerzone');
   if(dangerzone) dangerzone.classList.add('hidden');
-  
   hideDangerConfirm();
 }

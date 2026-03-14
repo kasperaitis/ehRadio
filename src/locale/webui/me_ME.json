@@ -138,11 +138,11 @@
   "ttl_search": "Pretraga",
   "ttl_curated": "Kurairani popisi",
   "lbl_sort": "Kategorija",
-  "sort_name": "Ime",
-  "sort_clicks": "Klikovi",
-  "sort_votes": "Glasovi",
-  "sort_country": "Država",
-  "sort_language": "Jezik",
+  "lbl_name": "Ime",
+  "lbl_clicks": "Klikovi",
+  "lbl_votes": "Glasovi",
+  "lbl_country": "Država",
+  "lbl_language": "Jezik",
   "ph_searchterm": "Unesite pojam za pretragu",
   "btn_search": "Pretraži",
   "ttl_add_search": "Dodaj kriterij za pretragu",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Greška pri učitavanju plejliste",
   "msg_no_stations_in_playlist": "Nema stanica u ovoj plejlisti",
   "msg_codes_for_button": "Kodovi za dugme",
-  "btn_export": "Izvoz"
+  "btn_export": "Izvoz",
+  "msg_please_wait": "Molimo sačekajte..."
 }

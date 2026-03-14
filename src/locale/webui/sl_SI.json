@@ -138,11 +138,11 @@
   "ttl_search": "Iskanje",
   "ttl_curated": "Kurirani seznami",
   "lbl_sort": "Kategorija",
-  "sort_name": "Ime",
-  "sort_clicks": "Klik",
-  "sort_votes": "Glasovi",
-  "sort_country": "Država",
-  "sort_language": "Jezik",
+  "lbl_name": "Ime",
+  "lbl_clicks": "Klik",
+  "lbl_votes": "Glasovi",
+  "lbl_country": "Država",
+  "lbl_language": "Jezik",
   "ph_searchterm": "Vnesite iskalni termin",
   "btn_search": "Išči",
   "ttl_add_search": "Dodaj iskalni pogoj",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Napaka pri nalaganju predvajanja",
   "msg_no_stations_in_playlist": "V tem predvajanju ni postaj",
   "msg_codes_for_button": "Kode za gumb",
-  "btn_export": "Izvozi"
+  "btn_export": "Izvozi",
+  "msg_please_wait": "Prosim počakajte..."
 }

@@ -138,11 +138,11 @@
   "ttl_search": "Ҷустуҷӯ",
   "ttl_curated": "Рӯйхатҳои куратшуда",
   "lbl_sort": "Категория",
-  "sort_name": "Ном",
-  "sort_clicks": "Кликҳо",
-  "sort_votes": "Райҳо",
-  "sort_country": "Кишвар",
-  "sort_language": "Забон",
+  "lbl_name": "Ном",
+  "lbl_clicks": "Кликҳо",
+  "lbl_votes": "Райҳо",
+  "lbl_country": "Кишвар",
+  "lbl_language": "Забон",
   "ph_searchterm": "Истилоҳи ҷустуҷӯро ворид кунед",
   "btn_search": "Ҷустуҷӯ",
   "ttl_add_search": "Илова кардани шартҳои ҷустуҷӯ",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Хато ҳангоми боркунии рӯйхати пахш",
   "msg_no_stations_in_playlist": "Дар ин рӯйхат стансияҳо нестанд",
   "msg_codes_for_button": "Кодҳо барои тугма",
-  "btn_export": "Содирот"
+  "btn_export": "Содирот",
+  "msg_please_wait": "Лутфан интизор шавед..."
 }

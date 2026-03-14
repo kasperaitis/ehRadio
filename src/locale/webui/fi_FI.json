@@ -138,11 +138,11 @@
   "ttl_search": "Haku",
   "ttl_curated": "Kuratellut listat",
   "lbl_sort": "Lajittele",
-  "sort_name": "Nimi",
-  "sort_clicks": "Klikit",
-  "sort_votes": "Äänet",
-  "sort_country": "Maa",
-  "sort_language": "Kieli",
+  "lbl_name": "Nimi",
+  "lbl_clicks": "Klikit",
+  "lbl_votes": "Äänet",
+  "lbl_country": "Maa",
+  "lbl_language": "Kieli",
   "ph_searchterm": "Syötä hakusana",
   "btn_search": "Hae",
   "ttl_add_search": "Lisää hakukriteeri",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Virhe soittolistan lataamisessa",
   "msg_no_stations_in_playlist": "Ei asemia tässä soittolistassa",
   "msg_codes_for_button": "Koodit painikkeelle",
-  "btn_export": "Vie"
+  "btn_export": "Vie",
+  "msg_please_wait": "Odota..."
 }

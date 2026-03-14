@@ -79,7 +79,9 @@ void Player::init() {
     uint8_t i2sVol_init = volToI2S(config.store.volume); /* Also apply stored volume to codec (respecting station ovol via volToI2S) */
     es.setVolume((uint8_t)map(i2sVol_init, 0, 254, 0, 100)); /* Map I2S volume (0..254) to codec volume 0..100 */
   #endif
-  setConnectionTimeout(1700, 3700);
+  #ifdef CONNECT_HTTP_HTTPS_TIMEOUT // macro must be two numbers separated by a comma, ie: 1700, 3700
+    setConnectionTimeout(CONNECT_HTTP_HTTPS_TIMEOUT);
+  #endif
   Serial.println("done");
 }
 

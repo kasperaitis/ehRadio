@@ -138,11 +138,11 @@
   "ttl_search": "Ara",
   "ttl_curated": "Küratörlü listeler",
   "lbl_sort": "Kategori",
-  "sort_name": "İsim",
-  "sort_clicks": "Tıklamalar",
-  "sort_votes": "Oylar",
-  "sort_country": "Ülke",
-  "sort_language": "Dil",
+  "lbl_name": "İsim",
+  "lbl_clicks": "Tıklamalar",
+  "lbl_votes": "Oylar",
+  "lbl_country": "Ülke",
+  "lbl_language": "Dil",
   "ph_searchterm": "Arama terimi girin",
   "btn_search": "Ara",
   "ttl_add_search": "Arama kriteri ekle",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Çalma listesi yüklenirken hata",
   "msg_no_stations_in_playlist": "Bu listede istasyon yok",
   "msg_codes_for_button": "Düğme için kodlar",
-  "btn_export": "Dışa aktar"
+  "btn_export": "Dışa aktar",
+  "msg_please_wait": "Lütfen bekleyin..."
 }

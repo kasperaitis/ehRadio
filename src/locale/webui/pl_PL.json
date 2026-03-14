@@ -138,11 +138,11 @@
   "ttl_search": "Szukaj",
   "ttl_curated": "Wyselekcjonowane listy",
   "lbl_sort": "Kategoria",
-  "sort_name": "Nazwa",
-  "sort_clicks": "Kliknięcia",
-  "sort_votes": "Głosy",
-  "sort_country": "Kraj",
-  "sort_language": "Język",
+  "lbl_name": "Nazwa",
+  "lbl_clicks": "Kliknięcia",
+  "lbl_votes": "Głosy",
+  "lbl_country": "Kraj",
+  "lbl_language": "Język",
   "ph_searchterm": "Wpisz termin wyszukiwania",
   "btn_search": "Szukaj",
   "ttl_add_search": "Dodaj kryterium wyszukiwania",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Błąd wczytywania playlisty",
   "msg_no_stations_in_playlist": "Brak stacji na tej playliście",
   "msg_codes_for_button": "Kody dla przycisku",
-  "btn_export": "Eksportuj"
+  "btn_export": "Eksportuj",
+  "msg_please_wait": "Proszę czekać..."
 }

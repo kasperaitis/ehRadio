@@ -138,11 +138,11 @@
   "ttl_search": "Buscar",
   "ttl_curated": "Listas seleccionadas",
   "lbl_sort": "Ordenar",
-  "sort_name": "Nombre",
-  "sort_clicks": "Clics",
-  "sort_votes": "Votos",
-  "sort_country": "País",
-  "sort_language": "Idioma",
+  "lbl_name": "Nombre",
+  "lbl_clicks": "Clics",
+  "lbl_votes": "Votos",
+  "lbl_country": "País",
+  "lbl_language": "Idioma",
   "ph_searchterm": "Introduce término de búsqueda",
   "btn_search": "Buscar",
   "ttl_add_search": "Añadir criterios de búsqueda",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Error al cargar la lista de reproducción",
   "msg_no_stations_in_playlist": "No hay emisoras en esta lista",
   "msg_codes_for_button": "Códigos para botón",
-  "btn_export": "Exportar"
+  "btn_export": "Exportar",
+  "msg_please_wait": "Por favor, espere..."
 }

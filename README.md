@@ -22,7 +22,7 @@ Documentation will be improved at some point... Until then, check this page and 
 
 ## ehRadio Version history
 
-### 2026.03.15
+### 2026.03.13
 
   - Thanks to [kasperaitis](https://github.com/kasperaitis) for [PR 50](https://github.com/trip5/ehRadio/pull/50)
     - Ignore placeholder stream titles
@@ -31,15 +31,20 @@ Documentation will be improved at some point... Until then, check this page and 
     - good work on multi-locale options for display!
     - glyph tools (more characters are always good)
     - began multi-locale support of WebUI
-  - WebUI now dynamically configurable (if online update capable)
+  - WebUI now dynamically configurable
+    - if online update capable, can switch between many
+    - if not, then can switch between hardcoded HTML (en_US) and another
     - translations may not be good... report issues or open a PR!
   - Configure the display language with something like `#define DSP_LANGUAGE_de_DE` in `myoptions.h`
     - see the available options by checking `displayL10n_*.h` files in `locale` folder 
   - Configure the default webUI language with `#define WEBUI_LANGUAGE_STRING "de_DE"` in `myoptions.h`
+    - if not specified, will use the same as the display language
     - sets a default WebUI locale different than the display - check locale/webui folder .json files (user-configurable)
-  - 
-
-
+  - screensaver mode exits faster on button press
+  - connection timeout can be altered from library default of 250ms for HTTP and 1700ms for HTTPS connections
+    - in `myoptions.h` there should be two numbers like: `#define CONNECT_HTTP_HTTPS_TIMEOUT 1700, 3700`
+    - probably only useful on older ESP32 boards
+  - Can add `#define DISABLE_UPDATER` to `myoptions.h` to disable firmware updating capabilities
 
 ### 2026.02.18
   - WebUI greatly improved for mobile and tablet devices

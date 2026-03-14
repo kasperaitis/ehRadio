@@ -138,11 +138,11 @@
   "ttl_search": "Pretraži",
   "ttl_curated": "Kurirane liste",
   "lbl_sort": "Sortiraj",
-  "sort_name": "Naziv",
-  "sort_clicks": "Klikovi",
-  "sort_votes": "Glasovi",
-  "sort_country": "Država",
-  "sort_language": "Jezik",
+  "lbl_name": "Naziv",
+  "lbl_clicks": "Klikovi",
+  "lbl_votes": "Glasovi",
+  "lbl_country": "Država",
+  "lbl_language": "Jezik",
   "ph_searchterm": "Unesite pojam za pretragu",
   "btn_search": "Pretraži",
   "ttl_add_search": "Dodaj kriterije pretrage",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Greška pri učitavanju playliste",
   "msg_no_stations_in_playlist": "Nema postaja u ovoj playlisti",
   "msg_codes_for_button": "Kodovi za gumb",
-  "btn_export": "Izvoz"
+  "btn_export": "Izvoz",
+  "msg_please_wait": "Molimo pričekajte..."
 }

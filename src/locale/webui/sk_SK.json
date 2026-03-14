@@ -138,11 +138,11 @@
   "ttl_search": "Hľadať",
   "ttl_curated": "Kurátorované zoznamy",
   "lbl_sort": "Kategória",
-  "sort_name": "Názov",
-  "sort_clicks": "Kliky",
-  "sort_votes": "Hlasy",
-  "sort_country": "Krajina",
-  "sort_language": "Jazyk",
+  "lbl_name": "Názov",
+  "lbl_clicks": "Kliky",
+  "lbl_votes": "Hlasy",
+  "lbl_country": "Krajina",
+  "lbl_language": "Jazyk",
   "ph_searchterm": "Zadajte hľadaný výraz",
   "btn_search": "Hľadať",
   "ttl_add_search": "Pridať kritérium hľadania",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Chyba pri načítaní playlistu",
   "msg_no_stations_in_playlist": "Žiadne stanice v tomto playliste",
   "msg_codes_for_button": "Kódy pre tlačidlo",
-  "btn_export": "Exportovať"
+  "btn_export": "Exportovať",
+  "msg_please_wait": "Prosím čakajte..."
 }

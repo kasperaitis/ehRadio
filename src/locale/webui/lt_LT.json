@@ -138,11 +138,10 @@
   "ttl_search": "Paieška",
   "ttl_curated": "Atrinkti grojaraščiai",
   "lbl_sort": "Rikiuoti",
-  "sort_name": "Pavadinimas",
-  "sort_clicks": "Paspaudimai",
-  "sort_votes": "Balsai",
-  "sort_country": "Šalis",
-  "sort_language": "Kalba",
+  "lbl_clicks": "Paspaudimai",
+  "lbl_votes": "Balsai",
+  "lbl_country": "Šalis",
+  "lbl_language": "Kalba",
   "ph_searchterm": "Įveskite paieškos terminą",
   "btn_search": "Ieškoti",
   "ttl_add_search": "Pridėti paieškos sąlygą",
@@ -160,5 +159,10 @@
   "msg_error_loading_playlist": "Klaida įkeliant grojaraštį",
   "msg_no_stations_in_playlist": "Šiame grojaraštyje nėra stočių",
   "msg_codes_for_button": "Mygtuko kodai",
-  "btn_export": "Eksportuoti"
+  "btn_export": "Eksportuoti",
+  "msg_please_wait": "Prašome palaukti...",
+  "lbl_country_code": "Country Code",
+  "lbl_tag_genre": "Tag / Genre",
+  "msg_ir_press_button": "Press a button on the left to record an IR remote code.",
+  "ttl_ir_recorder": "IR Recorder"
 }

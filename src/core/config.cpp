@@ -920,7 +920,6 @@ void Config::purgeUnwantedFiles() {
   BOOTLOG("Scanning SPIFFS for unwanted files...");
   File root = SPIFFS.open("/");
   if (!root || !root.isDirectory()) return;
-
   File file = root.openNextFile();
   while (file) {
     if (file.isDirectory()) {
@@ -931,10 +930,15 @@ void Config::purgeUnwantedFiles() {
     bool keep = false;
     if (path.startsWith("/www/")) {
       String name = path.substring(5);
-      // Keep the current locale file
+      // Keep the current locale file (which depends...)
       char currentLocaleGz[64], currentLocale[64];
-      snprintf(currentLocaleGz, sizeof(currentLocaleGz), "%s.json.gz", config.store.locale_webui);
-      snprintf(currentLocale, sizeof(currentLocale), "%s.json", config.store.locale_webui);
+      #ifdef UPDATEURL
+        snprintf(currentLocaleGz, sizeof(currentLocaleGz), "%s.json.gz", config.store.locale_webui);
+        snprintf(currentLocale, sizeof(currentLocale), "%s.json", config.store.locale_webui);
+      #else
+        snprintf(currentLocaleGz, sizeof(currentLocaleGz), "%s.json.gz", WEBUI_LOCALE);
+        snprintf(currentLocale, sizeof(currentLocale), "%s.json", WEBUI_LOCALE);
+      #endif
       if (name == currentLocaleGz || name == currentLocale) {
         keep = true;
       } else {
@@ -1187,10 +1191,8 @@ bool updateLocaleFileCore(ESPFileUpdater* updater, const char* localeCode) {
 
 void updateLocaleFileAsyncWrapper(void* param) {
   LocaleUpdateParams* params = (LocaleUpdateParams*)param;
-  
   // Attempt to download and install the locale file
   bool success = updateLocaleFileCore(params->updater, params->localeCode);
-  
   if (success) {
     // Remove old locale files before updating config
     char oldLocaleGz[64], oldLocale[64];
@@ -1198,11 +1200,9 @@ void updateLocaleFileAsyncWrapper(void* param) {
     snprintf(oldLocale, sizeof(oldLocale), "/www/%s.json", config.store.locale_webui);
     SPIFFS.remove(oldLocaleGz);
     SPIFFS.remove(oldLocale);
-    
     // Download successful - commit the locale code to config
     config.saveValue(config.store.locale_webui, params->localeCode, sizeof(config.store.locale_webui), false);
     Serial.printf("[Updating Locale: %s] Successfully updated\n", params->localeCode);
-    
     // Send success message to frontend
     char msg[64];
     snprintf(msg, sizeof(msg), "{\"locale_updated\":true,\"locale\":\"%s\"}", params->localeCode);
@@ -1212,7 +1212,6 @@ void updateLocaleFileAsyncWrapper(void* param) {
     Serial.printf("[Updating Locale: %s] Failed to update\n", params->localeCode);
     websocket.text(params->clientId, "{\"locale_update_failed\":true}");
   }
-  
   delete params->updater;
   delete params;
   vTaskDelete(NULL);
@@ -1236,6 +1235,7 @@ void Config::updateLocaleFile() {
 bool Config::updateLocaleFileAsync(const char* localeCode, uint8_t clientId) {
   if (WiFi.status() != WL_CONNECTED) return false;
   #ifdef UPDATEURL
+    // If switching WebUI Locales, need to download a file
     LocaleUpdateParams* params = new LocaleUpdateParams();
     params->updater = new ESPFileUpdater(SPIFFS);
     params->updater->setMaxSize(1024);
@@ -1245,7 +1245,13 @@ bool Config::updateLocaleFileAsync(const char* localeCode, uint8_t clientId) {
     xTaskCreate(updateLocaleFileAsyncWrapper, "updateLocaleFileAsyncWrapper", 8192, params, 2, NULL);
     return true; // Task created successfully (NOT download result)
   #else
-    return false;
+    // If not, then just need to switch
+    config.saveValue(config.store.locale_webui, localeCode, sizeof(config.store.locale_webui), false);
+    Serial.printf("[Locale Switch] Changed to %s\n", localeCode);
+    char msg[64];
+    snprintf(msg, sizeof(msg), "{\"locale_updated\":true,\"locale\":\"%s\"}", localeCode);
+    websocket.text(clientId, msg);
+    return true;
   #endif
 }
 

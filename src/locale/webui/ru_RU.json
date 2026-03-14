@@ -138,11 +138,11 @@
   "ttl_search": "Поиск",
   "ttl_curated": "Курируемые списки",
   "lbl_sort": "Сортировка",
-  "sort_name": "Имя",
-  "sort_clicks": "Клики",
-  "sort_votes": "Голоса",
-  "sort_country": "Страна",
-  "sort_language": "Язык",
+  "lbl_name": "Имя",
+  "lbl_clicks": "Клики",
+  "lbl_votes": "Голоса",
+  "lbl_country": "Страна",
+  "lbl_language": "Язык",
   "ph_searchterm": "Введите запрос",
   "btn_search": "Поиск",
   "ttl_add_search": "Добавить критерий поиска",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Ошибка загрузки плейлиста",
   "msg_no_stations_in_playlist": "Нет станций в этом плейлисте",
   "msg_codes_for_button": "Коды для кнопки",
-  "btn_export": "Экспорт"
+  "btn_export": "Экспорт",
+  "msg_please_wait": "Пожалуйста, подождите..."
 }

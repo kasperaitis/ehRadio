@@ -138,11 +138,11 @@
   "ttl_search": "Zoeken",
   "ttl_curated": "Gecurateerde lijsten",
   "lbl_sort": "Categorie",
-  "sort_name": "Naam",
-  "sort_clicks": "Kliks",
-  "sort_votes": "Stemmen",
-  "sort_country": "Land",
-  "sort_language": "Taal",
+  "lbl_name": "Naam",
+  "lbl_clicks": "Kliks",
+  "lbl_votes": "Stemmen",
+  "lbl_country": "Land",
+  "lbl_language": "Taal",
   "ph_searchterm": "Voer zoekterm in",
   "btn_search": "Zoeken",
   "ttl_add_search": "Voeg zoekcriterium toe",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Fout bij laden van afspeellijst",
   "msg_no_stations_in_playlist": "Geen stations in deze afspeellijst",
   "msg_codes_for_button": "Codes voor knop",
-  "btn_export": "Export"
+  "btn_export": "Export",
+  "msg_please_wait": "Een ogenblik geduld..."
 }

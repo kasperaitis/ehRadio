@@ -58,24 +58,24 @@
     <div id="searches">
       <div class="sort-row">
         <span data-i18n="lbl_sort">Sort</span>
-        <label for="order_name"><input type="radio" id="order_name" name="sortorder" value="name" /><span data-i18n="sort_name">Name</span></label>
-        <label for="order_clickcount"><input type="radio" id="order_clickcount" name="sortorder" value="clickcount" checked /><span data-i18n="sort_clicks">Clicks</span></label>
-        <label for="order_votes"><input type="radio" id="order_votes" name="sortorder" value="votes" /><span data-i18n="sort_votes">Votes</span></label>
-        <label for="order_country"><input type="radio" id="order_country" name="sortorder" value="country" /><span data-i18n="sort_country">Country</span></label>
-        <label for="order_language"><input type="radio" id="order_language" name="sortorder" value="language" /><span data-i18n="sort_language">Language</span></label>
+        <label for="order_name"><input type="radio" id="order_name" name="sortorder" value="name" /><span data-i18n="lbl_name">Name</span></label>
+        <label for="order_clickcount"><input type="radio" id="order_clickcount" name="sortorder" value="clickcount" checked /><span data-i18n="lbl_clicks">Clicks</span></label>
+        <label for="order_votes"><input type="radio" id="order_votes" name="sortorder" value="votes" /><span data-i18n="lbl_votes">Votes</span></label>
+        <label for="order_country"><input type="radio" id="order_country" name="sortorder" value="country" /><span data-i18n="lbl_country">Country</span></label>
+        <label for="order_language"><input type="radio" id="order_language" name="sortorder" value="language" /><span data-i18n="lbl_language">Language</span></label>
       </div>
       <div id="searchRow1" class="search-row">
-        <button class="searchbutton search plus" id="addSearchRowBtn" title="Add search criteria" data-i18n-title="ttl_add_search">
+        <button class="searchbutton search plus" id="addSearchRowBtn" title="Add search criteria" data-i18n="ttl_add_search">
           <svg viewBox="0 0 24 24" class="stroke">
             <path d="M5 12h7m7 0h-7m0 0V5m0 7v7" />
           </svg>
         </button>
         <select id="searchType1" class="searchtextinput select">
-          <option value="name">Name</option>
-          <option value="tag">Tag / Genre</option>
-          <option value="country">Country</option>
-          <option value="countrycode">Country Code</option>
-          <option value="language">Language</option>
+          <option value="name" data-i18n="lbl_name">Name</option>
+          <option value="tag" data-i18n="lbl_tag_genre">Tag / Genre</option>
+          <option value="country" data-i18n="lbl_country">Country</option>
+          <option value="countrycode" data-i18n="lbl_country_code">Country Code</option>
+          <option value="language" data-i18n="lbl_language">Language</option>
         </select>
         <input type="text" class="searchtextinput" id="searchInput1" placeholder="Enter search term" data-i18n="ph_searchterm">
         <button class="searchbutton search" id="searchBtn" disabled data-i18n="btn_search">Search</button>
@@ -83,32 +83,32 @@
       
       <!-- SVG icons from https://www.svgviewer.dev/s/495943/plus & https://www.svgviewer.dev/s/473138/minus -->
       <div id="searchRow2" class="search-row hidden">
-        <button class="searchbutton search minus" id="removeSearchRowBtn2" data-row="2" title="Remove search criteria" data-i18n-title="ttl_remove_search">
+        <button class="searchbutton search minus" id="removeSearchRowBtn2" data-row="2" title="Remove search criteria" data-i18n="ttl_remove_search">
           <svg viewBox="0 0 24 24" class="stroke">
             <path d="M5 12h14" />
           </svg>
         </button>
         <select id="searchType2" class="searchtextinput select">
-          <option value="name">Name</option>
-          <option value="tag">Tag / Genre</option>
-          <option value="country">Country</option>
-          <option value="countrycode">Country Code</option>
-          <option value="language">Language</option>
+          <option value="name" data-i18n="lbl_name">Name</option>
+          <option value="tag" data-i18n="lbl_tag_genre">Tag / Genre</option>
+          <option value="country" data-i18n="lbl_country">Country</option>
+          <option value="countrycode" data-i18n="lbl_country_code">Country Code</option>
+          <option value="language" data-i18n="lbl_language">Language</option>
         </select>
         <input type="text" class="searchtextinput" id="searchInput2" placeholder="Enter search term">
       </div>
       <div id="searchRow3" class="search-row hidden">
-        <button class="searchbutton search minus" id="removeSearchRowBtn3" data-row="3" title="Remove search criteria" data-i18n-title="ttl_remove_search">
+        <button class="searchbutton search minus" id="removeSearchRowBtn3" data-row="3" title="Remove search criteria" data-i18n="ttl_remove_search">
           <svg viewBox="0 0 24 24" class="stroke">
             <path d="M5 12h14" />
           </svg>
         </button>
         <select id="searchType3" class="searchtextinput select">
-          <option value="name">Name</option>
-          <option value="tag">Tag / Genre</option>
-          <option value="country">Country</option>
-          <option value="countrycode">Country Code</option>
-          <option value="language">Language</option>
+          <option value="name" data-i18n="lbl_name">Name</option>
+          <option value="tag" data-i18n="lbl_tag_genre">Tag / Genre</option>
+          <option value="country" data-i18n="lbl_country">Country</option>
+          <option value="countrycode" data-i18n="lbl_country_code">Country Code</option>
+          <option value="language" data-i18n="lbl_language">Language</option>
         </select>
         <input type="text" class="searchtextinput" id="searchInput3" placeholder="Enter search term">
       </div>

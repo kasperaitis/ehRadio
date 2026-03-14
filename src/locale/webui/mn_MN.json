@@ -138,11 +138,11 @@
   "ttl_search": "Хайлт",
   "ttl_curated": "Цуглуулсан жагсаалт",
   "lbl_sort": "Ангилал",
-  "sort_name": "Нэр",
-  "sort_clicks": "Даралт",
-  "sort_votes": "Кодын санал",
-  "sort_country": "Улс",
-  "sort_language": "Хэл",
+  "lbl_name": "Нэр",
+  "lbl_clicks": "Даралт",
+  "lbl_votes": "Кодын санал",
+  "lbl_country": "Улс",
+  "lbl_language": "Хэл",
   "ph_searchterm": "Хайлтын түлхүүр үг оруулна уу",
   "btn_search": "Хайх",
   "ttl_add_search": "Хайлтын нөхцөл нэмэх",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Тоглуулах жагсаалт ачааллахад алдаа гарлаа",
   "msg_no_stations_in_playlist": "Энэ жагсаалтад станц байхгүй",
   "msg_codes_for_button": "Товчны кодууд",
-  "btn_export": "Экспорт"
+  "btn_export": "Экспорт",
+  "msg_please_wait": "Түр хүлээнэ үү..."
 }

@@ -138,11 +138,11 @@
   "ttl_search": "Søg",
   "ttl_curated": "Kuraterede lister",
   "lbl_sort": "Sorter",
-  "sort_name": "Navn",
-  "sort_clicks": "Klik",
-  "sort_votes": "Stemmer",
-  "sort_country": "Land",
-  "sort_language": "Sprog",
+  "lbl_name": "Navn",
+  "lbl_clicks": "Klik",
+  "lbl_votes": "Stemmer",
+  "lbl_country": "Land",
+  "lbl_language": "Sprog",
   "ph_searchterm": "Indtast søgeterm",
   "btn_search": "Søg",
   "ttl_add_search": "Tilføj søgekriterier",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Fejl ved indlæsning af playliste",
   "msg_no_stations_in_playlist": "Ingen stationer i denne playliste",
   "msg_codes_for_button": "Koder for knap",
-  "btn_export": "Eksporter"
+  "btn_export": "Eksporter",
+  "msg_please_wait": "Vent venligst..."
 }

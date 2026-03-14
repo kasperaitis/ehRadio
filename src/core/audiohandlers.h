@@ -23,9 +23,11 @@ void audio_info(const char *info) {
   if (strstr(info, "format is vorbis")  != NULL) { config.setBitrateFormat(BF_VOR); display.putRequest(DBITRATE); }
   if (strstr(info, "format is opus")  != NULL) { config.setBitrateFormat(BF_OPU); display.putRequest(DBITRATE); }
   if (strstr(info, "skip metadata") != NULL) config.setTitle(config.station.name);
+  if (strstr(info, "stream ready") != NULL) {
+    if (strcmp_P(config.station.title, LANG::const_PlConnect) == 0) config.setTitle("");  // Clear connecting message
+  }
   if (strstr(info, "Account already in use") != NULL || strstr(info, "HTTP/1.0 401") != NULL) {
     player.setError(info);
-    
   }
   char* ici; char b[BUFLEN/2]={0};  // Increased buffer to safely hold bitrate string
   if ((ici = strstr(info, "BitRate: ")) != NULL) {

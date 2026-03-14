@@ -138,11 +138,11 @@
   "ttl_search": "Издөө",
   "ttl_curated": "Куратордук тизмелер",
   "lbl_sort": "Сорттоо",
-  "sort_name": "Аты",
-  "sort_clicks": "Чыктарды",
-  "sort_votes": "Добуштар",
-  "sort_country": "Өлкө",
-  "sort_language": "Тил",
+  "lbl_name": "Аты",
+  "lbl_clicks": "Чыктарды",
+  "lbl_votes": "Добуштар",
+  "lbl_country": "Өлкө",
+  "lbl_language": "Тил",
   "ph_searchterm": "Издөө терминин киргизиңиз",
   "btn_search": "Издөө",
   "ttl_add_search": "Издөө критериин кошуу",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Ойнотуу тизмесин жүктөө катасы",
   "msg_no_stations_in_playlist": "Бул тизмеде станциялар жок",
   "msg_codes_for_button": "Баскыч коддору",
-  "btn_export": "Экспорттоо"
+  "btn_export": "Экспорттоо",
+  "msg_please_wait": "Күтө туруңуз..."
 }

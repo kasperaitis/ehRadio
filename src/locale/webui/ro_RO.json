@@ -138,11 +138,11 @@
   "ttl_search": "Căutare",
   "ttl_curated": "Liste selectate",
   "lbl_sort": "Categorie",
-  "sort_name": "Nume",
-  "sort_clicks": "Clickuri",
-  "sort_votes": "Voturi",
-  "sort_country": "Țară",
-  "sort_language": "Limbă",
+  "lbl_name": "Nume",
+  "lbl_clicks": "Clickuri",
+  "lbl_votes": "Voturi",
+  "lbl_country": "Țară",
+  "lbl_language": "Limbă",
   "ph_searchterm": "Introduceți termen de căutare",
   "btn_search": "Caută",
   "ttl_add_search": "Adaugă criteriu de căutare",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Eroare la încărcarea listei de redare",
   "msg_no_stations_in_playlist": "Nu există stații în această listă",
   "msg_codes_for_button": "Coduri pentru buton",
-  "btn_export": "Exportă"
+  "btn_export": "Exportă",
+  "msg_please_wait": "Vă rugăm așteptați..."
 }

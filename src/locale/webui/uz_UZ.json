@@ -138,11 +138,11 @@
   "ttl_search": "Qidiruv",
   "ttl_curated": "Kuratlangan ro'yxatlar",
   "lbl_sort": "Kategoriya",
-  "sort_name": "Ism",
-  "sort_clicks": "Kliklar",
-  "sort_votes": "Ovozlar",
-  "sort_country": "Mamlakat",
-  "sort_language": "Til",
+  "lbl_name": "Ism",
+  "lbl_clicks": "Kliklar",
+  "lbl_votes": "Ovozlar",
+  "lbl_country": "Mamlakat",
+  "lbl_language": "Til",
   "ph_searchterm": "Qidiruv terminini kiriting",
   "btn_search": "Qidirish",
   "ttl_add_search": "Qidiruv mezoni qo'shish",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Pleylist yuklashda xato",
   "msg_no_stations_in_playlist": "Ushbu pleylistda stansiyalar yo'q",
   "msg_codes_for_button": "Tugma uchun kodlar",
-  "btn_export": "Eksport"
+  "btn_export": "Eksport",
+  "msg_please_wait": "Iltimos kuting..."
 }

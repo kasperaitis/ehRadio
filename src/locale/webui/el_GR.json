@@ -138,11 +138,11 @@
   "ttl_search": "Αναζήτηση",
   "ttl_curated": "Επιμελημένες λίστες",
   "lbl_sort": "Ταξινόμηση",
-  "sort_name": "Όνομα",
-  "sort_clicks": "Κλικ",
-  "sort_votes": "Ψήφοι",
-  "sort_country": "Χώρα",
-  "sort_language": "Γλώσσα",
+  "lbl_name": "Όνομα",
+  "lbl_clicks": "Κλικ",
+  "lbl_votes": "Ψήφοι",
+  "lbl_country": "Χώρα",
+  "lbl_language": "Γλώσσα",
   "ph_searchterm": "Εισάγετε όρο αναζήτησης",
   "btn_search": "Αναζήτηση",
   "ttl_add_search": "Προσθήκη κριτηρίων αναζήτησης",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Σφάλμα φόρτωσης λίστας αναπαραγωγής",
   "msg_no_stations_in_playlist": "Δεν υπάρχουν σταθμοί σε αυτή τη λίστα",
   "msg_codes_for_button": "Κωδικοί για το κουμπί",
-  "btn_export": "Εξαγωγή"
+  "btn_export": "Εξαγωγή",
+  "msg_please_wait": "Παρακαλώ περιμένετε..."
 }

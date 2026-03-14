@@ -340,6 +340,12 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
     #define TIME_SYNC_INTERVAL 3600 // 60 * 60 * 1 hour
   #endif
 #endif
+#ifndef CONNECT_HTTP_HTTPS_TIMEOUT
+  // Connection timeout in milliseconds: HTTP, HTTPS(SSL)
+  // Library defaults: 250ms HTTP, 2700ms SSL
+  // Conservative values for slower networks: 1700ms HTTP, 3700ms SSL
+  #define CONNECT_HTTP_HTTPS_TIMEOUT 1700, 3700
+#endif
 
 /*        Other settings. You can overwrite them in the myoptions.h file        */
 #ifndef MUTE_PIN
@@ -620,8 +626,8 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef GITHUBURL
   #define GITHUBURL "https://github.com/trip5/ehradio" // used by the ESPFileUpdater in BrowserClient (and in URLs below)
 #endif
-#ifdef DISABLE_ESPFILEUPDATER // if this is defined, disables online updates
-  #undef FILESURL
+#ifdef DISABLE_UPDATER // if this is defined, disables online updates
+  #undef FIRMWARE
 #endif
 #ifdef FIRMWARE
   #ifndef FILESURL

@@ -97,23 +97,31 @@ char* updateError() {
 }
 
 void handleDynamicLocale(AsyncWebServerRequest *request) {
-  // Dynamically serve the locale file based on config.store.locale_webui
-  // Requested as /locale.json or /locale.json.gz, served from /{locale_code}.json[.gz]
+  // Dynamically serve the current locale file as /locale.json
+  // Maps to /www/{locale_code}.json[.gz] based on config.store.locale_webui or WEBUI_LOCALE
   char localeFile[64];
-  const char* requestPath = request->url().c_str();
-  bool isGzipped = strstr(requestPath, ".gz") != NULL;
-  
-  if (isGzipped) {
-    snprintf(localeFile, sizeof(localeFile), "/www/%s.json.gz", config.store.locale_webui);
-  } else {
-    snprintf(localeFile, sizeof(localeFile), "/www/%s.json", config.store.locale_webui);
-  }
-  
+  #ifdef UPDATEURL
+    // Update capability enabled - use config.store.locale_webui (user can download locales)
+    const char* localeCode = config.store.locale_webui;
+  #else
+    // Update capability disabled - use hardcoded WEBUI_LOCALE
+    const char* localeCode = WEBUI_LOCALE;
+  #endif
+  // Try .gz version first (production builds use gzipped files)
+  snprintf(localeFile, sizeof(localeFile), "/www/%s.json.gz", localeCode);
   if (SPIFFS.exists(localeFile)) {
-    request->send(SPIFFS, localeFile, isGzipped ? "application/json" : "application/json", false, NULL);
-  } else {
-    request->send(404, "text/plain", "Locale file not found");
+    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, localeFile, "application/json");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+    return;
   }
+  // Try non-gzipped version
+  snprintf(localeFile, sizeof(localeFile), "/www/%s.json", localeCode);
+  if (SPIFFS.exists(localeFile)) {
+    request->send(SPIFFS, localeFile, "application/json");
+    return;
+  }
+  request->send(404, "text/plain", "Locale file not found");
 }
 
 void handleSearch(AsyncWebServerRequest *request) {
@@ -222,7 +230,6 @@ bool NetServer::begin(bool quiet) {
 
   webserver.on("/", HTTP_ANY, handleIndex);
   webserver.on("/locale.json", HTTP_GET, handleDynamicLocale);
-  webserver.on("/locale.json.gz", HTTP_GET, handleDynamicLocale);
   webserver.on("/search", HTTP_GET, handleSearch);
   webserver.on("/search", HTTP_POST, handleSearchPost);
 
@@ -1412,12 +1419,16 @@ void handleNotFound(AsyncWebServerRequest * request) {
     config.escapeQuotes(GITHUBURL, escapedGithubUrl, sizeof(escapedGithubUrl));
     snprintf(varjsbuf, sizeof(varjsbuf),
       "var radioVersion='%s';\n"
+      "var htmlLocale='%s';\n"
+      "var uiLocale='%s';\n"
       "var formAction='%s';\n"
       "var playMode='%s';\n"
       "var onlineUpdCapable=%s;\n"
       "var newVerAvailable=%s;\n"
       "var updateUrl='%s';\n",
       escapedRadioVersion,
+      HARDCODED_WEBUI_LOCALE,
+      config.store.locale_webui,
       (network.status == CONNECTED && config.wwwFilesExist) ? "webboard" : "",
       (network.status == CONNECTED) ? "player" : "ap",
       #ifdef UPDATEURL

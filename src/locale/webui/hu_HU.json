@@ -138,11 +138,11 @@
   "ttl_search": "Keresés",
   "ttl_curated": "Kuratált listák",
   "lbl_sort": "Rendezés",
-  "sort_name": "Név",
-  "sort_clicks": "Kattintások",
-  "sort_votes": "Szavazatok",
-  "sort_country": "Ország",
-  "sort_language": "Nyelv",
+  "lbl_name": "Név",
+  "lbl_clicks": "Kattintások",
+  "lbl_votes": "Szavazatok",
+  "lbl_country": "Ország",
+  "lbl_language": "Nyelv",
   "ph_searchterm": "Adja meg a keresendő kifejezést",
   "btn_search": "Keres",
   "ttl_add_search": "Keresési feltétel hozzáadása",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Hiba a lejátszási lista betöltése közben",
   "msg_no_stations_in_playlist": "Nincsenek állomások ebben a listában",
   "msg_codes_for_button": "Kódok a gombhoz",
-  "btn_export": "Export"
+  "btn_export": "Export",
+  "msg_please_wait": "Kérem várjon..."
 }

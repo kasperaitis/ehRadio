@@ -138,11 +138,11 @@
   "ttl_search": "Пребарување",
   "ttl_curated": "Курирани листи",
   "lbl_sort": "Категорија",
-  "sort_name": "Име",
-  "sort_clicks": "Кликнувања",
-  "sort_votes": "Гласања",
-  "sort_country": "Држава",
-  "sort_language": "Јазик",
+  "lbl_name": "Име",
+  "lbl_clicks": "Кликнувања",
+  "lbl_votes": "Гласања",
+  "lbl_country": "Држава",
+  "lbl_language": "Јазик",
   "ph_searchterm": "Внесете појам за пребарување",
   "btn_search": "Пребарај",
   "ttl_add_search": "Додади критериум за пребарување",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Грешка при вчитување на плејлиста",
   "msg_no_stations_in_playlist": "Нема станици во оваа плејлиста",
   "msg_codes_for_button": "Кодови за копче",
-  "btn_export": "Извоз"
+  "btn_export": "Извоз",
+  "msg_please_wait": "Ве молиме почекајте..."
 }

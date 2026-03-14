@@ -56,13 +56,15 @@ Language selection is **compile‑time only**.
 
 ## Picking a Language — `DSP_LANGUAGE`
 
-In `myoptions.h`, set:
+In `myoptions.h`, set something like:
 
 ```cpp
-#define DSP_LANGUAGE ru_RU
+#define DSP_LANGUAGE_de_DE
 ```
 
-If `DSP_LANGUAGE` is not defined, it defaults to `en_US`.
+If a `DSP_LANGUAGE_*` is not defined, it defaults to `DSP_LANGUAGE_en_US`.
+
+The full list is viewable in `locale.h`.
 
 ---
 
@@ -87,7 +89,7 @@ You do **not** need to set `L10N_CODEPAGE` manually. The preprocessor in `option
 To override the auto-detected codepage, add to `myoptions.h`:
 
 ```cpp
-#define L10N_CODEPAGE L10N_CP_CYRILLIC   // or L10N_CP_LATIN
+#define L10N_CP_CYRILLIC   // or L10N_CP_LATIN
 ```
 
 ### Effect on rendering
@@ -132,9 +134,9 @@ All strings are stored in flash (`PROGMEM`) to conserve RAM on the ESP32.
 
 `src/displays/tools/l10n.h` is the single include point for locale strings. It:
 
-1. Checks `DSP_LANGUAGE` with an `#if / #elif` ladder and sets `L10N_PATH` to the matching locale file path.
+1. Checks `DSP_LANGUAGE_*` with an `#if / #elif` ladder and sets `L10N_INCLUDE` to the matching locale file path.
 2. Checks whether `src/locale/displayL10n_custom.h` exists — if so, it is included **instead** of the auto-selected locale file (see [Custom Locale Override](#custom-locale-override)).
-3. Wraps everything inside `namespace LANG { ... }` so locale strings don't pollute the global namespace.
+3. Wraps `L10N_INCLUDE` inside `namespace LANG { ... }` so locale strings don't pollute the global namespace.
 
 All display code that needs localized strings includes `l10n.h` and accesses strings as `LANG::mon`, `LANG::weatherLang`, etc.
 
@@ -213,7 +215,7 @@ The project uses a modified **Adafruit GFX GLCD** bitmap font stored in `src/loc
 | `glcdfont_Cyrillic.c` | Cyrillic variant — slots 0x80–0xFF filled with Cyrillic glyphs |
 | `glcdfont_Cyrillic.md` | Cyrillic glyph map and documentation |
 
-The build script `builds/platformio_pre_replace_font.py` copies the appropriate `.c` variant into the Adafruit GFX library directory before compilation, based on `L10N_CODEPAGE`.
+The build script `builds/platformio_pre_replace_font.py` copies the appropriate `.c` variant into the Adafruit GFX library directory before compilation, based on `L10N_CP_LATIN` or `L10N_CP_CYRILLIC`.
 
 ### Cyrillic glyph layout
 
@@ -374,16 +376,9 @@ The WebUI served over Wi-Fi has its own runtime translation layer that operates 
 
 ### How it works
 
-1. **Language detection** — `variables.js` (injected by the firmware) exposes `uiLang` as the same integer index used by `DSP_LANGUAGE`. On page load, `script.js` maps this to a full BCP-47 code via `_langCodes[]` and fetches `/locale/{code}.json` from the device filesystem. For English (`uiLang == 0` or `en_US`) the fetch is skipped and built-in defaults are used.
+1. **Language detection** — The server handles when the WebUI requests `locale.json` by redirecting to a `.json` on SPIFFS that coincides with the preferred locale code.  If the language selected is `en_US` and the HTML contains English, there is no `.json` to fetch so it reverts to built-in hardcoded text.
 
-    > **Note:** the WebUI language is only controllable at compile time.
-> The firmware injects an integer (`uiLang`) that determines which JSON
-> file the browser attempts to load. Historically this value was equal to
-> `DSP_LANGUAGE`, but it can now be overridden by defining
-> `WEBUI_LANGUAGE` in `myoptions.h`. Omitting the override keeps the
-> old behaviour. Regardless of the setting, any new WebUI language still
-> requires a corresponding JSON file in `src/locale/webui/` and a rebuild
-> of the filesystem image.
+If using a firmware with online updating enabled, this option is changeable and the appropriate `.json` file may be downloaded to SPIFFS (old files are deleted).  If online updating is disabled, then only two options will be available
 
 2. **`t(key, ...args)` helper** — looks up `key` in the loaded `i18n` object and returns the translated string. Positional placeholders `{0}`, `{1}` are substituted with extra arguments.
 
@@ -401,17 +396,16 @@ The WebUI served over Wi-Fi has its own runtime translation layer that operates 
 
 WebUI locale JSONs now live in `src/locale/webui/` (co‑located with the
 firmware locale headers in the parent directory). The build script
-(`platformio_pre_gzip_www.py`) automatically copies all non‑English JSONs
+(`platformio_pre_gzip_www.py`) automatically copies whichever JSON is needed
 from that `webui` folder into `data/www/locale/` before the SPIFFS image is
-built. `en_US.json` is always copied alongside the chosen locale so the JS fallback fetch can succeed; other files are cleaned out.
-are baked into `script.js` as the runtime fallback.
+built. No JSON is needed if using the language hardcoded into the HTML/JS files.
 
 Locale JSON files in `src/locale/` are now named using just the
 BCP‑47 language code (e.g. `en_US.json`, `ru_RU.json`). The build script
 copies the selected file directly to `data/www/locale/<code>.json` when
-building the filesystem image. The loader in `script.js` requests the
-short name; legacy images still using the old prefix will no longer be
-served.
+building the filesystem image. The loaders in the javascript files request
+`locale.json` but the firmware serves whichever json file is currently
+selected by the user (or none if the hardcoded language is selected).
 
 | File | Purpose |
 |---|---|
@@ -420,7 +414,8 @@ served.
 
 To add a new language, copy `src/locale/webui/en_US.json`, rename it to
 `<code>.json` (matching the BCP‑47 code in `_langCodes[]` in `script.js`),
-translate all values, and run a filesystem build. Untranslated keys fall
+translate all values, and run `make_data_www_locales_json.py` to generate the
+`locales.json` file which is used to select the WebUI locale. Untranslated keys fall
 back to displaying the raw key name.
 
 ### Key categories
@@ -436,6 +431,9 @@ back to displaying the raw key name.
 | `msg_` | `msg_ota_complete`, `msg_no_update` | Dynamic status messages |
 | `st_batt_` | `st_batt_idle`, `st_batt_charging` | Battery state strings |
 | `lbl_off` / `lbl_on` | — | Toggle knob labels |
+| `
+
+Note thaa
 
 ---
 ## Two Python GUI tools in `scripts/` assist with font glyph work:

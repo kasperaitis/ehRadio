@@ -136,11 +136,11 @@
   "ttl_search": "Пошук",
   "ttl_curated": "Куратаваныя спісы",
   "lbl_sort": "Сартаваць",
-  "sort_name": "Імя",
-  "sort_clicks": "Клікі",
-  "sort_votes": "Галасы",
-  "sort_country": "Краіна",
-  "sort_language": "Мова",
+  "lbl_name": "Імя",
+  "lbl_clicks": "Клікі",
+  "lbl_votes": "Галасы",
+  "lbl_country": "Краіна",
+  "lbl_language": "Мова",
   "ph_searchterm": "Увядзіце пошукавы тэрмін",
   "btn_search": "Пошук",
   "ttl_add_search": "Дадаць крытэрыі пошуку",
@@ -158,5 +158,6 @@
   "msg_error_loading_playlist": "Памылка загрузкі плэйліста",
   "msg_no_stations_in_playlist": "Няма станцый у гэтым плэйлісце",
   "msg_codes_for_button": "Коды для кнопкі",
-  "btn_export": "Экспартаваць"
+  "btn_export": "Экспартаваць",
+  "msg_please_wait": "Калі ласка, пачакайце..."
 }

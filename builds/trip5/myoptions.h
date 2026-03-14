@@ -363,6 +363,7 @@
   #define SCREEN_FLIP     true
   #define SHOW_VU_METER   true
   #define VOLUME_STEPS    5
+  #define DISABLE_UPDATER
 #endif
 
 
@@ -371,6 +372,7 @@
 #if defined (BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
   #define LOOP_TASK_STACK_SIZE 8  /* Compiler default is 8KB but seems safe on ESP32-S3 to increase to 16KB for audio decoding + concurrent tasks */
   #define CONFIG_ASYNC_TCP_QUEUE_SIZE 32
+  #define CONNECT_HTTP_HTTPS_TIMEOUT 1700, 3700 // library default http 250ms https 2700ms
 #elif defined (BOARD_ESP32_S3_N16R8) ||\
       defined(ESP32_S3_TRIP5_ST7735_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SH1106_PCM_REMOTE) ||\
       defined(ESP32_S3_TRIP5_SH1106_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SSD1306X32_PCM_1BUTTON) ||\
@@ -386,8 +388,6 @@
 /* --- USEFUL OPTIONS --- */
 
 /* --- Need a text pre-processor because your display is printing garbage? --- */
-//#define PRINT_FIX // try to convert all Unicode to ASCII (this is a blunt instrument)
-//#define UTF8_RUS // convert Russian to ASCII
 
 /* --- Hate the idea of your device reporting to Radio Browser API which stations you like? --- */
 //#define RADIO_BROWSER_NO_SEND_CLICKS
@@ -403,7 +403,7 @@
 //#define GITHUBURL "https://github.com/kasperaitis/ehradio" // used by the radio to update firmware and files...
 
 /* Disable automatic runtime downloads from GitHub (ESPFileUpdater) for this board only. */
-//#define DISABLE_ESPFILEUPDATER
+//#define DISABLE_UPDATER
 
 /* --- MORE, UNUSED, UNKNOWN, NOTES --- */
 

@@ -138,11 +138,11 @@
   "ttl_search": "Hledat",
   "ttl_curated": "Kurátorské seznamy",
   "lbl_sort": "Třídit",
-  "sort_name": "Název",
-  "sort_clicks": "Kliknutí",
-  "sort_votes": "Hlasy",
-  "sort_country": "Země",
-  "sort_language": "Jazyk",
+  "lbl_name": "Název",
+  "lbl_clicks": "Kliknutí",
+  "lbl_votes": "Hlasy",
+  "lbl_country": "Země",
+  "lbl_language": "Jazyk",
   "ph_searchterm": "Zadejte hledaný výraz",
   "btn_search": "Hledat",
   "ttl_add_search": "Přidat kritéria hledání",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Chyba při načítání playlistu",
   "msg_no_stations_in_playlist": "Žádné stanice v tomto playlistu",
   "msg_codes_for_button": "Kódy pro tlačítko",
-  "btn_export": "Exportovat"
+  "btn_export": "Exportovat",
+  "msg_please_wait": "Prosím čekejte..."
 }

@@ -138,11 +138,11 @@
   "ttl_search": "Пошук",
   "ttl_curated": "Кураторські списки",
   "lbl_sort": "Категорія",
-  "sort_name": "Ім'я",
-  "sort_clicks": "Кліки",
-  "sort_votes": "Голосування",
-  "sort_country": "Країна",
-  "sort_language": "Мова",
+  "lbl_name": "Ім'я",
+  "lbl_clicks": "Кліки",
+  "lbl_votes": "Голосування",
+  "lbl_country": "Країна",
+  "lbl_language": "Мова",
   "ph_searchterm": "Введіть пошуковий термін",
   "btn_search": "Пошук",
   "ttl_add_search": "Додати критерій пошуку",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Помилка завантаження плейлиста",
   "msg_no_stations_in_playlist": "Немає станцій у цьому плейлисті",
   "msg_codes_for_button": "Коди для кнопки",
-  "btn_export": "Експортувати"
+  "btn_export": "Експортувати",
+  "msg_please_wait": "Будь ласка, зачекайте..."
 }

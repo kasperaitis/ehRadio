@@ -138,11 +138,11 @@
   "ttl_search": "Sök",
   "ttl_curated": "Kuraterade listor",
   "lbl_sort": "Kategori",
-  "sort_name": "Namn",
-  "sort_clicks": "Klick",
-  "sort_votes": "Röster",
-  "sort_country": "Land",
-  "sort_language": "Språk",
+  "lbl_name": "Namn",
+  "lbl_clicks": "Klick",
+  "lbl_votes": "Röster",
+  "lbl_country": "Land",
+  "lbl_language": "Språk",
   "ph_searchterm": "Ange sökterm",
   "btn_search": "Sök",
   "ttl_add_search": "Lägg till sökkriterium",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Fel vid laddning av spellista",
   "msg_no_stations_in_playlist": "Inga stationer i denna spellista",
   "msg_codes_for_button": "Koder för knapp",
-  "btn_export": "Exportera"
+  "btn_export": "Exportera",
+  "msg_please_wait": "Vänligen vänta..."
 }

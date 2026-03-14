@@ -138,11 +138,11 @@
   "ttl_search": "Søk",
   "ttl_curated": "Kuraterte lister",
   "lbl_sort": "Kategori",
-  "sort_name": "Navn",
-  "sort_clicks": "Klikk",
-  "sort_votes": "Stemmer",
-  "sort_country": "Land",
-  "sort_language": "Språk",
+  "lbl_name": "Navn",
+  "lbl_clicks": "Klikk",
+  "lbl_votes": "Stemmer",
+  "lbl_country": "Land",
+  "lbl_language": "Språk",
   "ph_searchterm": "Skriv inn søkeord",
   "btn_search": "Søk",
   "ttl_add_search": "Legg til søkekriterium",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Feil ved lasting av spilleliste",
   "msg_no_stations_in_playlist": "Ingen stasjoner i denne spillelisten",
   "msg_codes_for_button": "Koder for knapp",
-  "btn_export": "Eksport"
+  "btn_export": "Eksport",
+  "msg_please_wait": "Vennligst vent..."
 }

@@ -293,16 +293,19 @@ function onMessage(event) {
           var m = /volt: (\d+)mV, percentage: (\d+)%?, status: (.+)/.exec(item.value);
           if(m){
             var volt = m[1], perc = m[2], stat = m[3].trim();
-            var statKey = 'st_batt_' + stat.toLowerCase();
             
             setupElement('battery_volt', volt);
             setupElement('battery_perc', perc);
             
-            var statusEl = getId('battery_status');
-            if(statusEl) {
-              statusEl.textContent = t(statKey);
-              statusEl.dataset.i18n = statKey;
-            }
+            // Hide all battery status spans, then show the active one
+            ['battery_charging', 'battery_discharging', 'battery_idle'].forEach(function(id) {
+              var el = getId(id);
+              if(el) el.classList.add('hidden');
+            });
+            
+            var statusId = 'battery_' + stat.toLowerCase();
+            var statusEl = getId(statusId);
+            if(statusEl) statusEl.classList.remove('hidden');
             
             // Show battery info wrapper
             const wrap = getId('batteryinfo');

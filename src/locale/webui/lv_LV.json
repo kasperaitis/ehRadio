@@ -138,11 +138,11 @@
   "ttl_search": "Meklēšana",
   "ttl_curated": "Kurētie saraksti",
   "lbl_sort": "Kārtot",
-  "sort_name": "Nosaukums",
-  "sort_clicks": "Klikšķi",
-  "sort_votes": "Balsis",
-  "sort_country": "Valsts",
-  "sort_language": "Valoda",
+  "lbl_name": "Nosaukums",
+  "lbl_clicks": "Klikšķi",
+  "lbl_votes": "Balsis",
+  "lbl_country": "Valsts",
+  "lbl_language": "Valoda",
   "ph_searchterm": "Ievadiet meklējamo vārdu",
   "btn_search": "Meklēt",
   "ttl_add_search": "Pievienot meklēšanas kritēriju",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Kļūda ielādējot atskaņošanas sarakstu",
   "msg_no_stations_in_playlist": "Šajā sarakstā nav staciju",
   "msg_codes_for_button": "Pogas kodi",
-  "btn_export": "Eksportēt"
+  "btn_export": "Eksportēt",
+  "msg_please_wait": "Lūdzu uzgaidiet..."
 }

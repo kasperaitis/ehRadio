@@ -138,11 +138,11 @@
   "ttl_search": "Leita",
   "ttl_curated": "Sérvaldir listar",
   "lbl_sort": "Raða",
-  "sort_name": "Nafn",
-  "sort_clicks": "Smellir",
-  "sort_votes": "Atkvæði",
-  "sort_country": "Land",
-  "sort_language": "Tungumál",
+  "lbl_name": "Nafn",
+  "lbl_clicks": "Smellir",
+  "lbl_votes": "Atkvæði",
+  "lbl_country": "Land",
+  "lbl_language": "Tungumál",
   "ph_searchterm": "Slá inn leitarorð",
   "btn_search": "Leita",
   "ttl_add_search": "Bæta við leitarkröfu",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Villa við að hlaða spilunarlista",
   "msg_no_stations_in_playlist": "Engar stöðvar í þessum spilunarlista",
   "msg_codes_for_button": "Kóðar fyrir hnapp",
-  "btn_export": "Flytja út"
+  "btn_export": "Flytja út",
+  "msg_please_wait": "Vinsamlegast bíðið..."
 }

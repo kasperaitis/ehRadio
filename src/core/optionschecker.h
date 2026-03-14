@@ -17,8 +17,9 @@
 #  error ONLY MODULES "ESP32 Dev Module", "ESP32 Wrover Module" AND "ESP32 S3 Dev Module" ARE SUPPORTED. PLEASE SELECT ONE OF THEM
 #endif
 
-#if (defined(PRINT_FIX) && defined(UTF8_RUS) )
-#  error BOTH PRINT_FIX AND UTF8_RUS ARE DEFINED.  ONLY ONE TEXT PREPROCESSOR WILL WORK.  Check it in myoptions.h
+/* Quick error check */
+#if (defined(L10N_CP_CYRILLIC) && defined(L10N_CP_LATIN))
+#  error Why are L10N_CP_CYRILLIC and L10N_CP_LATIN both defined? Do not define 2 codepages!
 #endif
 
 #endif

@@ -138,11 +138,11 @@
   "ttl_search": "Търсене",
   "ttl_curated": "Курирани списъци",
   "lbl_sort": "Сортирай",
-  "sort_name": "Име",
-  "sort_clicks": "Кликове",
-  "sort_votes": "Гласове",
-  "sort_country": "Държава",
-  "sort_language": "Език",
+  "lbl_name": "Име",
+  "lbl_clicks": "Кликове",
+  "lbl_votes": "Гласове",
+  "lbl_country": "Държава",
+  "lbl_language": "Език",
   "ph_searchterm": "Въведете търсен термин",
   "btn_search": "Търси",
   "ttl_add_search": "Добави критерии за търсене",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Грешка при зареждане на плейлист",
   "msg_no_stations_in_playlist": "Няма станции в този плейлист",
   "msg_codes_for_button": "Кодове за бутон",
-  "btn_export": "Експорт"
+  "btn_export": "Експорт",
+  "msg_please_wait": "Моля, изчакайте..."
 }

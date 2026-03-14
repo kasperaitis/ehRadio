@@ -138,11 +138,11 @@
   "ttl_search": "Suchen",
   "ttl_curated": "Kuratiert Listen",
   "lbl_sort": "Sortieren",
-  "sort_name": "Name",
-  "sort_clicks": "Klicks",
-  "sort_votes": "Votes",
-  "sort_country": "Land",
-  "sort_language": "Sprache",
+  "lbl_name": "Name",
+  "lbl_clicks": "Klicks",
+  "lbl_votes": "Votes",
+  "lbl_country": "Land",
+  "lbl_language": "Sprache",
   "ph_searchterm": "Suchbegriff eingeben",
   "btn_search": "Suche",
   "ttl_add_search": "Suche Kriterien hinzufügen",
@@ -160,5 +160,6 @@
   "msg_error_loading_playlist": "Fehler beim Laden der Playlist",
   "msg_no_stations_in_playlist": "Keine Sender in dieser Playlist",
   "msg_codes_for_button": "Codes für Taste",
-  "btn_export": "Exportieren"
+  "btn_export": "Exportieren",
+  "msg_please_wait": "Bitte warten..."
 }
