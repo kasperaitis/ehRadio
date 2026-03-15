@@ -333,6 +333,9 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef WEATHER_SYNC_INTERVAL
   #define WEATHER_SYNC_INTERVAL 1800 // 60 * 30 minutes
 #endif
+#ifndef OPENWEATHER_API_URL
+  #define OPENWEATHER_API_URL "https://api.openweathermap.org/data/3.0/onecall?&exclude=minutely,hourly,daily&"
+#endif
 #ifndef TIME_SYNC_INTERVAL
   #if RTCSUPPORTED
     #define TIME_SYNC_INTERVAL 86400 // 60 * 60 * 24 hours
@@ -344,7 +347,8 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   // Connection timeout in milliseconds: HTTP, HTTPS(SSL)
   // Library defaults: 250ms HTTP, 2700ms SSL
   // Conservative values for slower networks: 1700ms HTTP, 3700ms SSL
-  #define CONNECT_HTTP_HTTPS_TIMEOUT 1700, 3700
+  // #define CONNECT_HTTP_HTTPS_TIMEOUT 1700, 3700 /* For ESP32? */
+  // undefined means using library defaults (preferred)
 #endif
 
 /*        Other settings. You can overwrite them in the myoptions.h file        */

@@ -111,7 +111,6 @@ struct config_t // specify defaults here (and macros in options.h) (defaults are
   bool      fliptouch = TOUCH_FLIP;
   bool      dbgtouch = TOUCH_DEBUG;
   uint16_t  encacc = ROTARY_ACCEL;
-  // Battery ADC calibration reference (in mV). Set via 'calbatt <mV>' (saves immediately) or override in myoptions.h
   uint16_t  battery_adc_ref_mv = BATTERY_ADC_REF_MV;
   bool      skipPlaylistUpDown = ONE_CLICK_SWITCH;
   uint8_t   irtlp = IR_TOLERANCE;
@@ -121,6 +120,8 @@ struct config_t // specify defaults here (and macros in options.h) (defaults are
   char      sntp1[35] = SNTP_1;
   char      sntp2[35] = SNTP_2;
   bool      showweather = false;
+  char      weatherunits[10] = WEATHER_UNITS;
+  char      weatherlang[10] = WEATHER_LANG;
   char      weatherlat[10] = WEATHER_LAT;
   char      weatherlon[10] = WEATHER_LON;
   char      weatherkey[WEATHERKEY_LENGTH] = "";

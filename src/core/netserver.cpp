@@ -464,10 +464,12 @@ void NetServer::processQueue() {
                                   config.store.sntp1,
                                   config.store.sntp2);
                                   break;
-      case GETWEATHER:    sprintf (wsbuf, "{\"wen\":%d,\"wlat\":\"%s\",\"wlon\":\"%s\",\"wkey\":\"%s\"}",
+      case GETWEATHER:    sprintf (wsbuf, "{\"wen\":%d,\"wlat\":\"%s\",\"wlon\":\"%s\",\"wunits\":\"%s\",\"wlang\":\"%s\",\"wkey\":\"%s\"}",
                                   config.store.showweather,
                                   config.store.weatherlat,
                                   config.store.weatherlon,
+                                  config.store.weatherunits,
+                                  config.store.weatherlang,
                                   config.store.weatherkey);
                                   break;
       case GETMQTT:       sprintf (wsbuf, "{\"mqttenable\":%d,\"mqtthost\":\"%s\",\"mqttport\":\"%d\",\"mqttuser\":\"%s\",\"mqttpass\":\"%s\",\"mqtttopic\":\"%s\"}",

@@ -551,7 +551,7 @@ bool getWeather(char *wstr) {
       return false;
     }
     char httpget[250] = {0};
-    sprintf(httpget, "GET /data/2.5/weather?lat=%s&lon=%s&units=%s&lang=%s&appid=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, LANG::weatherUnits, LANG::weatherLang, config.store.weatherkey, host);
+    sprintf(httpget, "GET /data/2.5/weather?lat=%s&lon=%s&units=%s&lang=%s&appid=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, config.store.weatherunits, config.store.weatherlang, config.store.weatherkey, host);
     client.print(httpget);
     unsigned long timeout = millis();
     while (client.available() == 0) {
@@ -693,16 +693,62 @@ bool getWeather(char *wstr) {
       nextion.weatherVisible(1);
     #endif //#ifdef USE_NEXTION
     
-    Serial.printf("##WEATHER###: description: %s, temp:%.1f C, pressure:%dmmHg, humidity:%s%%\n", desc, tempf, pressi, hum);
-    #ifdef WEATHER_FMT_SHORT
-      sprintf(wstr, LANG::weatherFmt, tempf, pressi, hum);
-    #else
-      #if EXT_WEATHER
-        sprintf(wstr, LANG::weatherFmt, desc, tempf, tempfl, pressi, hum, wind_speed, LANG::wind[wind_deg]);
-      #else
-        sprintf(wstr, LANG::weatherFmt, desc, tempf, pressi, hum);
-      #endif
-    #endif
+  // Build weather format string with proper units based on config.store.weatherunits
+  const char *tempUnit, *windUnit, *pressUnit;
+  float press_display;
+  
+  if (strcmp(config.store.weatherunits, "imperial") == 0) {
+    tempUnit = "\011F";  // Fahrenheit
+    windUnit = "mph";
+    pressUnit = "inHg";
+    press_display = pressi * 0.02953;  // Convert hPa to inHg
+    Serial.printf("##WEATHER###: description: %s, temp:%.1f%s, pressure:%.2f %s (converted from %d hPa), humidity:%s%%\n", 
+                  desc, tempf, tempUnit, press_display, pressUnit, pressi, hum);
+  } else if (strcmp(config.store.weatherunits, "standard") == 0) {
+    tempUnit = "K";      // Kelvin
+    windUnit = "m/s";
+    pressUnit = "hPa";
+    press_display = pressi;
+    Serial.printf("##WEATHER###: description: %s, temp:%.1f%s, pressure:%.0f %s, humidity:%s%%\n", 
+                  desc, tempf, tempUnit, press_display, pressUnit, hum);
+  } else {  // metric (default)
+    tempUnit = "\011C";  // Celsius
+    windUnit = "m/s";
+    pressUnit = "hPa";
+    press_display = pressi;
+    Serial.printf("##WEATHER###: description: %s, temp:%.1f%s, pressure:%.0f %s, humidity:%s%%\n", 
+                  desc, tempf, tempUnit, press_display, pressUnit, hum);
+  }
+  
+  #if EXT_WEATHER
+    if (strcmp(config.store.weatherunits, "imperial") == 0) {
+      sprintf(wstr, "%s, %.1f%s \007 %s %.1f%s \007 %s %.2f %s \007 %s %s%% \007 %s %.1f %s [%s]", 
+              desc, tempf, tempUnit,
+              LANG::weather_feelslike, tempfl, tempUnit,
+              LANG::weather_pressure, press_display, pressUnit,
+              LANG::weather_humidity, hum,
+              LANG::weather_wind, wind_speed, windUnit, LANG::wind[wind_deg]);
+    } else {
+      sprintf(wstr, "%s, %.1f%s \007 %s %.1f%s \007 %s %.0f %s \007 %s %s%% \007 %s %.1f %s [%s]", 
+              desc, tempf, tempUnit,
+              LANG::weather_feelslike, tempfl, tempUnit,
+              LANG::weather_pressure, press_display, pressUnit,
+              LANG::weather_humidity, hum,
+              LANG::weather_wind, wind_speed, windUnit, LANG::wind[wind_deg]);
+    }
+  #else
+    if (strcmp(config.store.weatherunits, "imperial") == 0) {
+      sprintf(wstr, "%s, %.1f%s \007 %s %.2f %s \007 %s %s%%", 
+              desc, tempf, tempUnit,
+              LANG::weather_pressure, press_display, pressUnit,
+              LANG::weather_humidity, hum);
+    } else {
+      sprintf(wstr, "%s, %.1f%s \007 %s %.0f %s \007 %s %s%%", 
+              desc, tempf, tempUnit,
+              LANG::weather_pressure, press_display, pressUnit,
+              LANG::weather_humidity, hum);
+    }
+  #endif
     network.requestWeatherSync();
     return true;
   #endif // if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)

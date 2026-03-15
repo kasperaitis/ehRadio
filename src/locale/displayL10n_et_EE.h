@@ -33,9 +33,9 @@ const char jun[] PROGMEM = "Juuni";
 const char jul[] PROGMEM = "Juuli";
 const char aug[] PROGMEM = "August";
 const char sep[] PROGMEM = "September";
-const char octt[] PROGMEM = "Oktoober";
+const char oct[] PROGMEM = "Oktoober";
 const char nov[] PROGMEM = "November";
-const char decc[] PROGMEM = "Detsember";
+const char dec[] PROGMEM = "Detsember";
 
 const char wn_N[]      PROGMEM = "PÕHJA";
 const char wn_NNE[]    PROGMEM = "NNE";
@@ -56,7 +56,7 @@ const char wn_NNW[]    PROGMEM = "NNW";
 
 const char* const dow[]     PROGMEM = { sun, mon, tue, wed, thu, fri, sat };
 const char* const dowf[]    PROGMEM = { sunf, monf, tuef, wedf, thuf, frif, satf };
-const char* const mnths[]   PROGMEM = { jan, feb, mar, apr, may, jun, jul, aug, sep, octt, nov, decc };
+const char* const mnths[]   PROGMEM = { jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec };
 const char* const wind[]    PROGMEM = { wn_N, wn_NNE, wn_NE, wn_ENE, wn_E, wn_ESE, wn_SE, wn_SSE, wn_S, wn_SSW, wn_SW, wn_WSW, wn_W, wn_WNW, wn_NW, wn_NNW, wn_N };
 
 const char    const_PlReady[]    PROGMEM = "[valmis]";
@@ -66,7 +66,6 @@ const char  const_DlgVolume[]    PROGMEM = "HELITUVEGUS";
 const char    const_DlgLost[]    PROGMEM = "* ÜHENDUS KATKENUD *";
 const char  const_DlgUpdate[]    PROGMEM = "* UUENDAMINE *";
 const char const_DlgNextion[]    PROGMEM = "NEXTION";
-const char const_getWeather[]    PROGMEM = "";
 const char  const_waitForSD[]    PROGMEM = "INDEKSEERIMINE SD";
 
 const char        apNameTxt[]    PROGMEM = "AP NIMI";
@@ -85,13 +84,10 @@ const char        apSettFmt[]    PROGMEM = "ÜHENDAGE JA AVAGE HTTP://%s/";
   const char        updFailed[]    PROGMEM = "Värskendamine ebaõnnestus";
 #endif
 
-#if EXT_WEATHER
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 tundub nagu: %.1f\011C \007 rõhk: %d hPa \007 õhuniiskus: %s%% \007 tuul: %.1f m/s [%s]";
-#else
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 rõhk: %d hPa \007 õhuniiskus: %s%%";
-#endif
-const char     weatherUnits[]    PROGMEM = "metric";   /* standard, metric, imperial */
-const char      weatherLang[]    PROGMEM = "en";       /* https://openweathermap.org/current#multi */
+const char weather_feelslike[]  PROGMEM = "tundub:";
+const char weather_pressure[]   PROGMEM = "rõhk:";
+const char weather_humidity[]   PROGMEM = "niiskus:";
+const char weather_wind[]       PROGMEM = "tuul:";
 
 #endif
 

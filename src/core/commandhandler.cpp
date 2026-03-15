@@ -27,7 +27,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
     if (strEquals(command, "mode"))     { config.changeMode(atoi(value)); return true; }
   #endif
   if (strEquals(command, "reset") && cid==0)    { config.reset(); return true; }
-  if (strEquals(command, "ballance")) { config.setBalance(atoi(value)); return true; }
+  if (strEquals(command, "balance")) { config.setBalance(atoi(value)); return true; }
   if (strEquals(command, "playstation") || strEquals(command, "play")) { 
     int id = atoi(value);
     if (id < 1) id = 1;
@@ -86,10 +86,12 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "encacc"))           { setEncAcceleration(static_cast<uint16_t>(atoi(value))); return true; }
   if (strEquals(command, "irtlp"))            { setIRTolerance(static_cast<uint8_t>(atoi(value))); return true; }
   if (strEquals(command, "oneclickswitching")) { config.saveValue(&config.store.skipPlaylistUpDown, static_cast<bool>(atoi(value))); return true; }
-  if (strEquals(command, "showweather"))      { config.setShowweather(static_cast<bool>(atoi(value))); return true; }
-  if (strEquals(command, "lat"))              { config.saveValue(config.store.weatherlat, value, sizeof(config.store.weatherlat), false); return true; }
-  if (strEquals(command, "lon"))              { config.saveValue(config.store.weatherlon, value, sizeof(config.store.weatherlon), false); return true; }
-  if (strEquals(command, "key"))              { config.setWeatherKey(value); return true; }
+  if (strEquals(command, "wenable"))           { config.setShowweather(static_cast<bool>(atoi(value))); return true; }
+  if (strEquals(command, "wlat"))              { config.saveValue(config.store.weatherlat, value, sizeof(config.store.weatherlat), false); return true; }
+  if (strEquals(command, "wlon"))              { config.saveValue(config.store.weatherlon, value, sizeof(config.store.weatherlon), false); return true; }
+  if (strEquals(command, "wunits"))            { config.saveValue(config.store.weatherunits, value, sizeof(config.store.weatherunits), false); return true; }
+  if (strEquals(command, "wlang"))             { config.saveValue(config.store.weatherlang, value, sizeof(config.store.weatherlang), false); return true; }
+  if (strEquals(command, "wkey"))              { config.setWeatherKey(value); return true; }
 
   #ifdef MQTT_ENABLE
     if (strEquals(command, "mqttenable"))       { config.saveValue(&config.store.mqttenable, static_cast<bool>(atoi(value))); mqttInit(); return true; }

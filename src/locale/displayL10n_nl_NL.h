@@ -33,9 +33,9 @@ const char jun[] PROGMEM = "Juni";
 const char jul[] PROGMEM = "Juli";
 const char aug[] PROGMEM = "Augustus";
 const char sep[] PROGMEM = "September";
-const char octt[] PROGMEM = "Oktober";
+const char oct[] PROGMEM = "Oktober";
 const char nov[] PROGMEM = "November";
-const char decc[] PROGMEM = "December";
+const char dec[] PROGMEM = "December";
 
 const char wn_N[]      PROGMEM = "NOORD";
 const char wn_NNE[]    PROGMEM = "NNE";
@@ -56,7 +56,7 @@ const char wn_NNW[]    PROGMEM = "NNW";
 
 const char* const dow[]     PROGMEM = { sun, mon, tue, wed, thu, fri, sat };
 const char* const dowf[]    PROGMEM = { sunf, monf, tuef, wedf, thuf, frif, satf };
-const char* const mnths[]   PROGMEM = { jan, feb, mar, apr, may, jun, jul, aug, sep, octt, nov, decc };
+const char* const mnths[]   PROGMEM = { jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec };
 const char* const wind[]    PROGMEM = { wn_N, wn_NNE, wn_NE, wn_ENE, wn_E, wn_ESE, wn_SE, wn_SSE, wn_S, wn_SSW, wn_SW, wn_WSW, wn_W, wn_WNW, wn_NW, wn_NNW, wn_N };
 
 const char    const_PlReady[]    PROGMEM = "[klaar]";
@@ -66,7 +66,6 @@ const char  const_DlgVolume[]    PROGMEM = "VOLUME";
 const char    const_DlgLost[]    PROGMEM = "* GEEN VERBINDING *";
 const char  const_DlgUpdate[]    PROGMEM = "* BIJWERKEN *";
 const char const_DlgNextion[]    PROGMEM = "NEXTION";
-const char const_getWeather[]    PROGMEM = "";
 const char  const_waitForSD[]    PROGMEM = "INDEX SD";
 
 const char        apNameTxt[]    PROGMEM = "AP NAAM";
@@ -85,13 +84,10 @@ const char        apSettFmt[]    PROGMEM = "VERBIND & OPEN HTTP://%s/";
   const char        updFailed[]    PROGMEM = "Bijwerken mislukt";
 #endif
 
-#if EXT_WEATHER
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 gevoel: %.1f\011C \007 druk: %d hPa \007 vocht: %s%% \007 wind: %.1f m/s [%s]";
-#else
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 druk: %d hPa \007 vocht: %s%%";
-#endif
-const char     weatherUnits[]    PROGMEM = "metric";   /* standard, metric, imperial */
-const char      weatherLang[]    PROGMEM = "nl";       /* https://openweathermap.org/current#multi */
+const char weather_feelslike[]  PROGMEM = "gevoelstemperatuur:";
+const char weather_pressure[]   PROGMEM = "druk:";
+const char weather_humidity[]   PROGMEM = "vochtigheid:";
+const char weather_wind[]       PROGMEM = "wind:";
 
 #endif
 

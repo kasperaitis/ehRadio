@@ -33,9 +33,9 @@ const char jun[] PROGMEM = "birželio";
 const char jul[] PROGMEM = "liepos";
 const char aug[] PROGMEM = "rugpjūčio";
 const char sep[] PROGMEM = "rugsėjo";
-const char octt[] PROGMEM = "spalio";
+const char oct[] PROGMEM = "spalio";
 const char nov[] PROGMEM = "lapkričio";
-const char decc[] PROGMEM = "gruodžio";
+const char dec[] PROGMEM = "gruodžio";
 
 const char wn_N[]      PROGMEM = "ŠIAURĖS";
 const char wn_NNE[]    PROGMEM = "ŠŠR";
@@ -56,7 +56,7 @@ const char wn_NNW[]    PROGMEM = "ŠŠV";
 
 const char* const dow[]     PROGMEM = { sun, mon, tue, wed, thu, fri, sat };
 const char* const dowf[]    PROGMEM = { sunf, monf, tuef, wedf, thuf, frif, satf };
-const char* const mnths[]   PROGMEM = { jan, feb, mar, apr, may, jun, jul, aug, sep, octt, nov, decc };
+const char* const mnths[]   PROGMEM = { jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec };
 const char* const wind[]    PROGMEM = { wn_N, wn_NNE, wn_NE, wn_ENE, wn_E, wn_ESE, wn_SE, wn_SSE, wn_S, wn_SSW, wn_SW, wn_WSW, wn_W, wn_WNW, wn_NW, wn_NNW, wn_N };
 
 const char    const_PlReady[]    PROGMEM = "[paruošta]";
@@ -66,7 +66,6 @@ const char  const_DlgVolume[]    PROGMEM = "GARSAS";
 const char    const_DlgLost[]    PROGMEM = "* ATSIJUNGĘS *";
 const char  const_DlgUpdate[]    PROGMEM = "* Atnaujinama *";
 const char const_DlgNextion[]    PROGMEM = "NEXTION";
-const char const_getWeather[]    PROGMEM = "";
 const char  const_waitForSD[]    PROGMEM = "INDEKSUOJAMA SD";
 
 const char        apNameTxt[]    PROGMEM = "TAŠKO VARDAS";
@@ -85,13 +84,10 @@ const char        apSettFmt[]    PROGMEM = "PRISIJUNKITE IR ATIDARYKITE HTTP://%
   const char        updFailed[]    PROGMEM = "Atnaujinimas nepavyko";
 #endif
 
-#if EXT_WEATHER
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 jaučiasi: %.1f\011C \007 slėgis: %d hPa \007 drėgmė: %s%% \007 vėjas: %.1f m/s [%s]";
-#else
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 slėgis: %d hPa \007 drėgmė: %s%%";
-#endif
-const char     weatherUnits[]    PROGMEM = "metric";   /* standard, metric, imperial */
-const char      weatherLang[]    PROGMEM = "lt";       /* https://openweathermap.org/current#multi */
+const char weather_feelslike[]  PROGMEM = "jaučiasi:";
+const char weather_pressure[]   PROGMEM = "slėgis:";
+const char weather_humidity[]   PROGMEM = "drėgmė:";
+const char weather_wind[]       PROGMEM = "vėjas:";
 
 #endif
 

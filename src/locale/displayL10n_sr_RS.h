@@ -33,9 +33,9 @@ const char jun[] PROGMEM = "јун";
 const char jul[] PROGMEM = "јул";
 const char aug[] PROGMEM = "август";
 const char sep[] PROGMEM = "септембар";
-const char octt[] PROGMEM = "октобар";
+const char oct[] PROGMEM = "октобар";
 const char nov[] PROGMEM = "новембар";
-const char decc[] PROGMEM = "децембар";
+const char dec[] PROGMEM = "децембар";
 
 const char wn_N[]      PROGMEM = "СЕВ";
 const char wn_NNE[]    PROGMEM = "ССВ";
@@ -56,7 +56,7 @@ const char wn_NNW[]    PROGMEM = "ССЗ";
 
 const char* const dow[]     PROGMEM = { sun, mon, tue, wed, thu, fri, sat };
 const char* const dowf[]    PROGMEM = { sunf, monf, tuef, wedf, thuf, frif, satf };
-const char* const mnths[]   PROGMEM = { jan, feb, mar, apr, may, jun, jul, aug, sep, octt, nov, decc };
+const char* const mnths[]   PROGMEM = { jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec };
 const char* const wind[]    PROGMEM = { wn_N, wn_NNE, wn_NE, wn_ENE, wn_E, wn_ESE, wn_SE, wn_SSE, wn_S, wn_SSW, wn_SW, wn_WSW, wn_W, wn_WNW, wn_NW, wn_NNW, wn_N };
 
 const char    const_PlReady[]    PROGMEM = "[спремно]";
@@ -66,7 +66,6 @@ const char  const_DlgVolume[]    PROGMEM = "ЈАЧИНА";
 const char    const_DlgLost[]    PROGMEM = "* НИМА ВЕЗЕ *";
 const char  const_DlgUpdate[]    PROGMEM = "* АЖУРИРАЊЕ *";
 const char const_DlgNextion[]    PROGMEM = "NEXTION";
-const char const_getWeather[]    PROGMEM = "";
 const char  const_waitForSD[]    PROGMEM = "ИНДЕКС SD";
 
 const char        apNameTxt[]    PROGMEM = "ИМЕ AP";
@@ -85,13 +84,10 @@ const char        apSettFmt[]    PROGMEM = "ПОВЕЖИТЕ СЕ И ОТВОР�
   const char        updFailed[]    PROGMEM = "Ажурирање није успело";
 #endif
 
-#if EXT_WEATHER
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 осећа се као: %.1f\011C \007 притисак: %d гПа \007 влажност: %s%% \007 ветар: %.1f m/s [%s]";
-#else
-const char       weatherFmt[]    PROGMEM = "%s, %.1f\011C \007 притисак: %d гПа \007 влажност: %s%%";
-#endif
-const char     weatherUnits[]    PROGMEM = "metric";   /* standard, metric, imperial */
-const char      weatherLang[]    PROGMEM = "sr";       /* https://openweathermap.org/current#multi */
+const char weather_feelslike[]  PROGMEM = "осећај:";
+const char weather_pressure[]   PROGMEM = "притисак:";
+const char weather_humidity[]   PROGMEM = "влажност:";
+const char weather_wind[]       PROGMEM = "ветар:";
 
 #endif
 

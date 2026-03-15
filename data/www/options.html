@@ -201,7 +201,8 @@
           </div>
           <div class="flex-row group group_ir hidden">
             <div class="inputwrap">
-              <span class="inputtitle" data-i18n="lbl_ir_tolerance">IR Tolerance [<a href="https://crankyoldgit.github.io/IRremoteESP8266/doxygen/html/" target="_blank">docs</a>]</span>
+              <span class="inputtitle" data-i18n="lbl_ir_tolerance">IR Tolerance</span>
+              <span class="inputtitle">[<a href="https://crankyoldgit.github.io/IRremoteESP8266/doxygen/html/" target="_blank">?</a>]</span>
               <span class="inputinfo" id="slirtlpinfo">0</span>
               <input type="range" id="irtl" data-command="irtlp" data-slaveid="slirtlpinfo" min="10" max="80" value="0">
             </div>
@@ -241,6 +242,7 @@
           <div class="flex-row">
             <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_ntp1">NTP Server #1</span>
+              <span class="inputtitle">[<a href="https://www.ntppool.org/en/zone/@" target="_blank">?</a>]</span>
               <input type="text" id="sntp1" name="sntp1" value="" maxlength="34" />
             </div>
             <div class="inputwrap">
@@ -318,12 +320,13 @@
           <div class="flex-row group group_touch hidden">
             <div class="inputwrap center">
               <span class="inputtitle" data-i18n="lbl_show_weather">Show Weather</span>
-              <div class="checkbox" id="wen" data-command="showweather"><div class="knob"></div></div>
+              <div class="checkbox" id="wen" data-command="wenable"><div class="knob"></div></div>
             </div>
           </div>
           <div class="flex-row">
             <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_latitude">Latitude</span>
+              <span class="inputtitle">[<a href="https://www.gps-coordinates.net/" target="_blank">?</a>]</span>
               <input type="number" id="wlat" value="" min="-90" max="90" step="0.0001" />
             </div>
             <div class="inputwrap">
@@ -333,7 +336,24 @@
           </div>
           <div class="flex-row">
             <div class="inputwrap">
-              <span class="inputtitle" data-i18n="lbl_ow_key">Openweathermap API Key [<a href="https://openweathermap.org/appid" target="_blank">link</a>]</span>
+              <span class="inputtitle" data-i18n="lbl_ow_units">Units of measurement</span>
+              <span class="inputtitle">[<a href="https://openweathermap.org/current?collection=current_forecast#data" target="_blank">?</a>]</span>
+              <select type="text" id="wunits" name="wunits">
+                <option value="standard">Standard</option>
+                <option value="metric">Metric</option>
+                <option value="imperial">Imperial</option>
+              </select>
+            </div>
+            <div class="inputwrap">
+              <span class="inputtitle" data-i18n="lbl_ow_lang">Language</span>
+              <span class="inputtitle">[<a href="https://openweathermap.org/current?collection=current_forecast#multi" target="_blank">?</a>]</span>
+              <input type="text" id="wlang" name="wlang" maxlength="10" />
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="inputwrap">
+              <span class="inputtitle" data-i18n="lbl_ow_key">Openweathermap API Key</span>
+              <span class="inputtitle">[<a href="https://openweathermap.org/appid" target="_blank">?</a>]</span>
               <input type="text" id="wkey" value="" />
             </div>
           </div>

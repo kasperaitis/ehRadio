@@ -84,10 +84,6 @@ function applyPendingTZData() {
   pendingTZData = null;
 }
 
-function applyTZ(){
-  sendTimezoneAndNTP();
-}
-
 async function loadLocales() {
   try {
     const response = await fetch(localLocalesJson);
@@ -171,10 +167,14 @@ function applyPendingLocaleData() {
   const display = getId('locale_disp');
   // Check if online update capable (defined in variables.js)
   const canUpdate = typeof onlineUpdCapable !== 'undefined' && onlineUpdCapable;
+  
+  const newLocaleCode = pendingLocaleData.locale_webui;
+  const oldLocaleCode = window.originalLocaleWebui;
+  const localeChangedByReset = (oldLocaleCode !== null && newLocaleCode !== oldLocaleCode);
+  
   // Set WebUI locale dropdown (only when canUpdate is true)
   if (select && localesData && canUpdate) {
-    const code = pendingLocaleData.locale_webui;
-    window.originalLocaleWebui = code; // Store original value globally to detect changes
+    const code = newLocaleCode;
     const i = [...select.options].findIndex(opt => opt.value === code);
     if (i !== -1) {
       select.selectedIndex = i;
@@ -187,9 +187,12 @@ function applyPendingLocaleData() {
     }
   } else if (select && !canUpdate) {
     // When canUpdate is false, dropdown is already populated by populateLocaleDropdown
-    // Just store the original value for change detection
-    const code = pendingLocaleData.locale_webui;
-    window.originalLocaleWebui = code;
+    // Update the selected option
+    const code = newLocaleCode;
+    const i = [...select.options].findIndex(opt => opt.value === code);
+    if (i !== -1) {
+      select.selectedIndex = i;
+    }
   }
   // Format display locale field nicely
   if (display && localesData) {
@@ -203,13 +206,14 @@ function applyPendingLocaleData() {
     window.originalLocaleDisp = displayValue; // Store original display value globally
   }
   pendingLocaleData = null;
-}
-
-function sendTimezoneAndNTP() {
-  websocket.send("tz_name="+getId("tz_name").selectedOptions[0].text);
-  websocket.send("tzposix="+getId("tzposix").value);
-  websocket.send("sntp2="+getId("sntp2").value);
-  websocket.send("sntp1="+getId("sntp1").value);
+  
+  // If locale was changed by reset, trigger apply automatically to show message and reload
+  if (localeChangedByReset) {
+    applyLocale(); // This checks: select.value !== window.originalLocaleWebui (still old value)
+  }
+  
+  // Update original value after potential applyLocale call
+  window.originalLocaleWebui = newLocaleCode;
 }
 
 function applyLocale(){
@@ -230,8 +234,10 @@ function applyLocale(){
   } else {
     console.log(`[Locale] Locale unchanged (${selectedCode}), skipping download`);
   }
-  // Always apply timezone/NTP settings
-  sendTimezoneAndNTP();
+  websocket.send("tz_name="+getId("tz_name").selectedOptions[0].text);
+  websocket.send("tzposix="+getId("tzposix").value);
+  websocket.send("sntp2="+getId("sntp2").value);
+  websocket.send("sntp1="+getId("sntp1").value);
 }
 
 /** MQTT **/
@@ -246,12 +252,11 @@ function applyMQTT(){
 
 /** WEATHER **/
 function applyWeather(){
-  let key=getId("wkey").value;
-  if(key!=""){
-    websocket.send("lat="+getId("wlat").value);
-    websocket.send("lon="+getId("wlon").value);
-    websocket.send("key="+key);
-  }
+  websocket.send("wlat="+getId("wlat").value);
+  websocket.send("wlon="+getId("wlon").value);
+  websocket.send("wunits="+getId("wunits").value);
+  websocket.send("wlang="+getId("wlang").value);
+  websocket.send("wkey="+getId("wkey").value);
 }
 
 /** WIFI **/
