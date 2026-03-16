@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "finnst:";
 const char weather_pressure[]   PROGMEM = "þrýstingur:";
 const char weather_humidity[]   PROGMEM = "raki:";
 const char weather_wind[]       PROGMEM = "vindur:";
+const char weather_loading[]    PROGMEM = "Sæki veðurgögn...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "H eimskt himinn";
+const char w_overcast[]          PROGMEM = "Skyggt";
+const char w_foggy[]             PROGMEM = "Þ oka";
+const char w_drizzle[]           PROGMEM = "Strokregn";
+const char w_freezing_drizzle[]  PROGMEM = "Froststrokregn";
+const char w_rain[]              PROGMEM = "Regn";
+const char w_freezing_rain[]     PROGMEM = "Frostregn";
+const char w_snow[]              PROGMEM = "Snær";
+const char w_snow_grains[]       PROGMEM = "Snjókorn";
+const char w_rain_showers[]      PROGMEM = "Skafregn";
+const char w_snow_showers[]      PROGMEM = "Snjókafol";
+const char w_thunderstorm[]      PROGMEM = "Él veður";
+const char w_thunderstorm_hail[] PROGMEM = "Élveður með hagli";
 
 #endif
 

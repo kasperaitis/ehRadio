@@ -488,10 +488,12 @@ void Config::resetSystem(const char *val, uint8_t clientId) {
   }
   if (strcmp(val, "weather") == 0) {
     saveValue(&store.showweather, false, false);
-    saveValue(store.weatherunits, WEATHER_UNITS, sizeof(store.weatherunits), false);
+    saveValue(&store.weatherimperial, WEATHER_IMPERIAL, false);
     saveValue(store.weatherlang, WEATHER_LANG, sizeof(store.weatherlang), false);
     saveValue(store.weatherlat, WEATHER_LAT, sizeof(store.weatherlat), false);
     saveValue(store.weatherlon, WEATHER_LON, sizeof(store.weatherlon), false);
+    saveValue(store.weatherapi, WEATHER_API, sizeof(store.weatherapi), false);
+    saveValue(store.weatherelev, "", sizeof(store.weatherelev), false);
     saveValue(store.weatherkey, "", WEATHERKEY_LENGTH);
     network.trueWeather=false;
     display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
@@ -1415,11 +1417,13 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(sntp1, "sntp1"),
   CONFIG_KEY_ENTRY(sntp2, "sntp2"),
   CONFIG_KEY_ENTRY(showweather, "showwthr"),
-  CONFIG_KEY_ENTRY(weatherunits, "weatherunit"),
+  CONFIG_KEY_ENTRY(weatherimperial, "weatherimp"),
   CONFIG_KEY_ENTRY(weatherlang, "weatherlang"),
   CONFIG_KEY_ENTRY(weatherlat, "weatherlat"),
   CONFIG_KEY_ENTRY(weatherlon, "weatherlon"),
   CONFIG_KEY_ENTRY(weatherkey, "weatherkey"),
+  CONFIG_KEY_ENTRY(weatherapi, "weatherapi"),
+  CONFIG_KEY_ENTRY(weatherelev, "weatherelev"),
   CONFIG_KEY_ENTRY(mqttenable, "mqttenable"),
   CONFIG_KEY_ENTRY(mqtthost, "mqtthost"),
   CONFIG_KEY_ENTRY(mqttport, "mqttport"),

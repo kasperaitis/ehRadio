@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "gevoelstemperatuur:";
 const char weather_pressure[]   PROGMEM = "druk:";
 const char weather_humidity[]   PROGMEM = "vochtigheid:";
 const char weather_wind[]       PROGMEM = "wind:";
+const char weather_loading[]    PROGMEM = "Weergegevens ophalen...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Heldere lucht";
+const char w_overcast[]          PROGMEM = "Bewolkt";
+const char w_foggy[]             PROGMEM = "Mist";
+const char w_drizzle[]           PROGMEM = "Motregen";
+const char w_freezing_drizzle[]  PROGMEM = "Vriez ende motregen";
+const char w_rain[]              PROGMEM = "Regen";
+const char w_freezing_rain[]     PROGMEM = "Vriez ende regen";
+const char w_snow[]              PROGMEM = "Sneeuw";
+const char w_snow_grains[]       PROGMEM = "Sneeuwkorrels";
+const char w_rain_showers[]      PROGMEM = "Regenbuien";
+const char w_snow_showers[]      PROGMEM = "Sneeuwbuien";
+const char w_thunderstorm[]      PROGMEM = "Onweer";
+const char w_thunderstorm_hail[] PROGMEM = "Onweer met hagel";
 
 #endif
 

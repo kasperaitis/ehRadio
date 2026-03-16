@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "осећај:";
 const char weather_pressure[]   PROGMEM = "притисак:";
 const char weather_humidity[]   PROGMEM = "влажност:";
 const char weather_wind[]       PROGMEM = "ветар:";
+const char weather_loading[]    PROGMEM = "Преузимање временских података...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Ведро небо";
+const char w_overcast[]          PROGMEM = "Облачно";
+const char w_foggy[]             PROGMEM = "Магла";
+const char w_drizzle[]           PROGMEM = "Росуља";
+const char w_freezing_drizzle[]  PROGMEM = "Ледена росуља";
+const char w_rain[]              PROGMEM = "Киша";
+const char w_freezing_rain[]     PROGMEM = "Ледена киша";
+const char w_snow[]              PROGMEM = "Снег";
+const char w_snow_grains[]       PROGMEM = "Зрна снега";
+const char w_rain_showers[]      PROGMEM = "Пљускови";
+const char w_snow_showers[]      PROGMEM = "Снежни пљускови";
+const char w_thunderstorm[]      PROGMEM = "Грмљавина";
+const char w_thunderstorm_hail[] PROGMEM = "Грмљавина са градом";
 
 #endif
 

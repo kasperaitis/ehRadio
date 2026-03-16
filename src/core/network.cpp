@@ -13,6 +13,8 @@
 #include <DNSServer.h>
 #include "locale.h"
 #include <ImprovWiFiLibrary.h>
+#include <ArduinoJson.h>
+#include <ESPFileUpdater.h>
 
 #ifndef WIFI_ATTEMPTS
   #define WIFI_ATTEMPTS  16
@@ -534,223 +536,493 @@ void doSync(void * pvParameters) {
       }
     }
   }
-  if (network.weatherBuf && (strlen(config.store.weatherkey)!=0 && config.store.showweather) && network.forceWeather) {
+  if (network.weatherBuf && config.store.showweather && network.forceWeather) {
+    // Show loading message while fetching weather
+    strcpy(network.weatherBuf, LANG::weather_loading);
+    display.putRequest(NEWWEATHER);
+    
+    // Allow weather update even without API key (Open-Meteo doesn't need one)
     network.forceWeather = false;
     network.trueWeather=getWeather(network.weatherBuf);
   }
   vTaskDelete(NULL);
 }
 
-bool getWeather(char *wstr) {
-  #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
-    WiFiClient client;
-    const char* host  = "api.openweathermap.org";
-    
-    if (!client.connect(host, 80)) {
-      Serial.println("##WEATHER###: connection  failed");
-      return false;
-    }
-    char httpget[250] = {0};
-    sprintf(httpget, "GET /data/2.5/weather?lat=%s&lon=%s&units=%s&lang=%s&appid=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, config.store.weatherunits, config.store.weatherlang, config.store.weatherkey, host);
-    client.print(httpget);
-    unsigned long timeout = millis();
-    while (client.available() == 0) {
-      if (millis() - timeout > 2000UL) {
-        Serial.println("##WEATHER###: client available timeout !");
-        client.stop();
-        return false;
-      }
-    }
-    timeout = millis();
-    String line = "";
-    if (client.connected()) {
-      while (client.available())
-      {
-        line = client.readStringUntil('\n');
-        if (strstr(line.c_str(), "\"temp\"") != NULL) {
-          client.stop();
-          break;
-        }
-        if ((millis() - timeout) > 500)
-        {
-          client.stop();
-          Serial.println("##WEATHER###: client read timeout !");
-          return false;
-        }
-      }
-    }
-    if (strstr(line.c_str(), "\"temp\"") == NULL) {
-      Serial.println("##WEATHER###: weather not found !");
-      return false;
-    }
-    char *tmpe;
-    char *tmps;
-    char *tmpc;
-    const char* cursor = line.c_str();
-    char desc[120], temp[20], hum[20], press[20], icon[5];
-  
-    tmps = strstr(cursor, "\"description\":\"");
-    if (tmps == NULL) { Serial.println("##WEATHER###: description not found !"); return false;}
-    tmps += 15;
-    tmpe = strstr(tmps, "\",\"");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: description not found !"); return false;}
-    strlcpy(desc, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 2;
-    
-    // "ясно","icon":"01d"}],
-    tmps = strstr(cursor, "\"icon\":\"");
-    if (tmps == NULL) { Serial.println("##WEATHER###: icon not found !"); return false;}
-    tmps += 8;
-    tmpe = strstr(tmps, "\"}");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: icon not found !"); return false;}
-    strlcpy(icon, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 2;
-    
-    tmps = strstr(cursor, "\"temp\":");
-    if (tmps == NULL) { Serial.println("##WEATHER###: temp not found !"); return false;}
-    tmps += 7;
-    tmpe = strstr(tmps, ",\"");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: temp not found !"); return false;}
-    strlcpy(temp, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 1;
-    float tempf = atof(temp);
-  
-    tmps = strstr(cursor, "\"feels_like\":");
-    if (tmps == NULL) { Serial.println("##WEATHER###: feels_like not found !"); return false;}
-    tmps += 13;
-    tmpe = strstr(tmps, ",\"");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: feels_like not found !"); return false;}
-    strlcpy(temp, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 2;
-    float tempfl = atof(temp); (void)tempfl;
-  
-    tmps = strstr(cursor, "\"pressure\":");
-    if (tmps == NULL) { Serial.println("##WEATHER###: pressure not found !"); return false;}
-    tmps += 11;
-    tmpe = strstr(tmps, ",\"");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: pressure not found !"); return false;}
-    strlcpy(press, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 2;
-    int pressi = (float)atoi(press) / 1.333;
-    
-    tmps = strstr(cursor, "humidity\":");
-    if (tmps == NULL) { Serial.println("##WEATHER###: humidity not found !"); return false;}
-    tmps += 10;
-    tmpe = strstr(tmps, ",\"");
-    tmpc = strstr(tmps, "}");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: humidity not found !"); return false;}
-    strlcpy(hum, tmps, tmpe - tmps + (tmpc>tmpe?1:0));
-    
-    tmps = strstr(cursor, "\"grnd_level\":");
-    bool grnd_level_pr = (tmps != NULL);
-    if (grnd_level_pr) {
-      tmps += 13;
-      tmpe = strstr(tmps, ",\"");
-      if (tmpe == NULL) { Serial.println("##WEATHER###: grnd_level not found !"); return false;}
-      strlcpy(press, tmps, tmpe - tmps + 1);
-      cursor = tmpe + 2;
-      pressi = (float)atoi(press) / 1.333;
-    }
-    
-    tmps = strstr(cursor, "\"speed\":");
-    if (tmps == NULL) { Serial.println("##WEATHER###: wind speed not found !"); return false;}
-    tmps += 8;
-    tmpe = strstr(tmps, ",\"");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: wind speed not found !"); return false;}
-    strlcpy(temp, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 1;
-    float wind_speed = atof(temp); (void)wind_speed;
-    
-    tmps = strstr(cursor, "\"deg\":");
-    if (tmps == NULL) { Serial.println("##WEATHER###: wind deg not found !"); return false;}
-    tmps += 6;
-    tmpe = strstr(tmps, ",\"");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: wind deg not found !"); return false;}
-    strlcpy(temp, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 1;
-    int wind_deg = atof(temp)/22.5;
-    if (wind_deg<0) wind_deg = 16+wind_deg;
-    
-    
-    #ifdef USE_NEXTION
-      nextion.putcmdf("press_txt.txt=\"%dmm\"", pressi);
-      nextion.putcmdf("hum_txt.txt=\"%d%%\"", atoi(hum));
-      char cmd[30];
-      snprintf(cmd, sizeof(cmd)-1,"temp_txt.txt=\"%.1f\"", tempf);
-      nextion.putcmd(cmd);
-      int iconofset;
-      if (strstr(icon,"01")!=NULL)      iconofset = 0;
-      else if (strstr(icon,"02")!=NULL) iconofset = 1;
-      else if (strstr(icon,"03")!=NULL) iconofset = 2;
-      else if (strstr(icon,"04")!=NULL) iconofset = 3;
-      else if (strstr(icon,"09")!=NULL) iconofset = 4;
-      else if (strstr(icon,"10")!=NULL) iconofset = 5;
-      else if (strstr(icon,"11")!=NULL) iconofset = 6;
-      else if (strstr(icon,"13")!=NULL) iconofset = 7;
-      else if (strstr(icon,"50")!=NULL) iconofset = 8;
-      else                             iconofset = 9;
-      nextion.putcmd("cond_img.pic", 50+iconofset);
-      nextion.weatherVisible(1);
-    #endif //#ifdef USE_NEXTION
-    
-  // Build weather format string with proper units based on config.store.weatherunits
-  const char *tempUnit, *windUnit, *pressUnit;
-  float press_display;
-  
-  if (strcmp(config.store.weatherunits, "imperial") == 0) {
-    tempUnit = "\011F";  // Fahrenheit
-    windUnit = "mph";
-    pressUnit = "inHg";
-    press_display = pressi * 0.02953;  // Convert hPa to inHg
-    Serial.printf("##WEATHER###: description: %s, temp:%.1f%s, pressure:%.2f %s (converted from %d hPa), humidity:%s%%\n", 
-                  desc, tempf, tempUnit, press_display, pressUnit, pressi, hum);
-  } else if (strcmp(config.store.weatherunits, "standard") == 0) {
-    tempUnit = "K";      // Kelvin
-    windUnit = "m/s";
-    pressUnit = "hPa";
-    press_display = pressi;
-    Serial.printf("##WEATHER###: description: %s, temp:%.1f%s, pressure:%.0f %s, humidity:%s%%\n", 
-                  desc, tempf, tempUnit, press_display, pressUnit, hum);
-  } else {  // metric (default)
-    tempUnit = "\011C";  // Celsius
-    windUnit = "m/s";
-    pressUnit = "hPa";
-    press_display = pressi;
-    Serial.printf("##WEATHER###: description: %s, temp:%.1f%s, pressure:%.0f %s, humidity:%s%%\n", 
-                  desc, tempf, tempUnit, press_display, pressUnit, hum);
+// Helper: Download URL to temporary file using EspFileUpdater (handles chunked encoding)
+bool downloadToTempFile(const char* url) {
+  // Delete old temp file if exists
+  if (SPIFFS.exists(TMP_PATH)) {
+    SPIFFS.remove(TMP_PATH);
   }
   
-  #if EXT_WEATHER
-    if (strcmp(config.store.weatherunits, "imperial") == 0) {
-      sprintf(wstr, "%s, %.1f%s \007 %s %.1f%s \007 %s %.2f %s \007 %s %s%% \007 %s %.1f %s [%s]", 
-              desc, tempf, tempUnit,
-              LANG::weather_feelslike, tempfl, tempUnit,
-              LANG::weather_pressure, press_display, pressUnit,
-              LANG::weather_humidity, hum,
-              LANG::weather_wind, wind_speed, windUnit, LANG::wind[wind_deg]);
-    } else {
-      sprintf(wstr, "%s, %.1f%s \007 %s %.1f%s \007 %s %.0f %s \007 %s %s%% \007 %s %.1f %s [%s]", 
-              desc, tempf, tempUnit,
-              LANG::weather_feelslike, tempfl, tempUnit,
-              LANG::weather_pressure, press_display, pressUnit,
-              LANG::weather_humidity, hum,
-              LANG::weather_wind, wind_speed, windUnit, LANG::wind[wind_deg]);
+  ESPFileUpdater* downloader = new ESPFileUpdater(SPIFFS);
+  downloader->setUserAgent(ESPFILEUPDATER_USERAGENT);
+  downloader->setMaxSize(2048);  // Weather JSON responses are small
+  
+  ESPFileUpdater::UpdateStatus result = downloader->checkAndUpdate(
+    TMP_PATH,
+    url,
+    "",
+    ESPFILEUPDATER_VERBOSE
+  );
+  
+  delete downloader;
+  return (result == ESPFileUpdater::UPDATED);
+}
+
+// WMO Weather Code to Description (for Open-Meteo)
+const char* getWMODescription(int code) {
+  switch(code) {
+    case 0:  return LANG::w_clear_sky;
+    case 1: case 2: case 3: return LANG::w_overcast;
+    case 45: case 48: return LANG::w_foggy;
+    case 51: case 53: case 55: return LANG::w_drizzle;
+    case 56: case 57: return LANG::w_freezing_drizzle;
+    case 61: case 63: case 65: return LANG::w_rain;
+    case 66: case 67: return LANG::w_freezing_rain;
+    case 71: case 73: case 75: return LANG::w_snow;
+    case 77: return LANG::w_snow_grains;
+    case 80: case 81: case 82: return LANG::w_rain_showers;
+    case 85: case 86: return LANG::w_snow_showers;
+    case 95: return LANG::w_thunderstorm;
+    case 96: case 99: return LANG::w_thunderstorm_hail;
+    default: return "Unknown";
+  }
+}
+
+// Get weather from Open-Meteo API (free, no API key)
+bool getWeather_OpenMeteo(char *wstr) {
+  #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
+    Serial.println("Weather: Calling Open-Meteo v1 API for current weather...");
+    
+    // Build URL with proper units
+    const char* temp_unit = config.store.weatherimperial ? "&temperature_unit=fahrenheit" : "";
+    const char* wind_unit = config.store.weatherimperial ? "&wind_speed_unit=mph" : "&wind_speed_unit=ms";
+    
+    char url[512];
+    sprintf(url, "http://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&models=best_match&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,surface_pressure,wind_direction_10m,wind_speed_10m&forecast_days=1%s%s",
+            config.store.weatherlat, config.store.weatherlon, temp_unit, wind_unit);
+    
+    // Download JSON response to temp file (EspFileUpdater handles chunked encoding)
+    if (!downloadToTempFile(url)) {
+      Serial.println("Weather: Failed to download Open-Meteo data");
+      return false;
     }
-  #else
-    if (strcmp(config.store.weatherunits, "imperial") == 0) {
-      sprintf(wstr, "%s, %.1f%s \007 %s %.2f %s \007 %s %s%%", 
-              desc, tempf, tempUnit,
-              LANG::weather_pressure, press_display, pressUnit,
-              LANG::weather_humidity, hum);
-    } else {
-      sprintf(wstr, "%s, %.1f%s \007 %s %.0f %s \007 %s %s%%", 
-              desc, tempf, tempUnit,
-              LANG::weather_pressure, press_display, pressUnit,
-              LANG::weather_humidity, hum);
+    
+    // Read the downloaded JSON file
+    File file = SPIFFS.open(TMP_PATH, "r");
+    if (!file) {
+      Serial.println("Weather: Failed to open temp file");
+      return false;
     }
-  #endif
+    
+    String response = file.readString();
+    file.close();
+    
+    // Parse JSON with ArduinoJson
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, response);
+    if (error) {
+      Serial.printf("Weather: Open-Meteo JSON parse error: %s\n", error.c_str());
+      return false;
+    }
+    
+    // Cache elevation if available and not already cached
+    if (doc["elevation"].is<float>() && strlen(config.store.weatherelev) == 0) {
+      float elevation = doc["elevation"];
+      snprintf(config.store.weatherelev, sizeof(config.store.weatherelev), "%.0f", elevation);
+      config.saveValue(config.store.weatherelev, config.store.weatherelev, sizeof(config.store.weatherelev), true);
+      Serial.printf("Weather: Elevation retrieved from Open-Meteo: %.0f meters\n", elevation);
+    }
+    
+    JsonObject current = doc["current"];
+    if (current.isNull()) {
+      Serial.println("Weather: No current data in Open-Meteo response");
+      return false;
+    }
+    
+    float temp = current["temperature_2m"];
+    float feels_like = current["apparent_temperature"];
+    int humidity = current["relative_humidity_2m"];
+    int wmo_code = current["weather_code"];
+    float pressure = current["surface_pressure"];  // hPa
+    float wind_speed = current["wind_speed_10m"];
+    int wind_deg = current["wind_direction_10m"];
+    
+    const char* description = getWMODescription(wmo_code);
+    int wind_dir_idx = (int)(wind_deg / 22.5) % 16;
+    
+    // Units formatting
+    const char *tempUnit, *windUnit, *pressUnit;
+    float press_display;
+    
+    if (config.store.weatherimperial) {
+      tempUnit = "\011F";
+      windUnit = "mph";
+      pressUnit = "mmHg";
+      press_display = pressure / 1.333;  // hPa to mmHg
+    } else {  // metric
+      tempUnit = "\011C";
+      windUnit = "m/s";
+      pressUnit = "hPa";
+      press_display = pressure;
+    }
+    
+    #ifdef USE_NEXTION
+      if (config.store.weatherimperial) {
+        nextion.putcmdf("press_txt.txt=\"%.0fmm\"", press_display);
+      } else {
+        nextion.putcmdf("press_txt.txt=\"%.0fhPa\"", press_display);
+      }
+      nextion.putcmdf("hum_txt.txt=\"%d%%\"", humidity);
+      nextion.putcmdf("temp_txt.txt=\"%.1f\"", temp);
+      // WMO codes don't map 1:1 to OpenWeather icons, use generic mapping
+      int iconoffset = (wmo_code == 0) ? 0 : (wmo_code <= 3) ? 1 : (wmo_code < 50) ? 2 : 
+                       (wmo_code < 60) ? 4 : (wmo_code < 70) ? 5 : (wmo_code < 80) ? 7 : 4;
+      nextion.putcmd("cond_img.pic", 50 + iconoffset);
+      nextion.weatherVisible(1);
+    #endif
+    
+    // Build weather string
+    #if EXT_WEATHER
+      if (config.store.weatherimperial) {
+        sprintf(wstr, "%s, %.1f%s \007 %s %.1f%s \007 %s %.0f %s \007 %s %d%% \007 %s %.1f %s [%s]",
+                description, temp, tempUnit,
+                LANG::weather_feelslike, feels_like, tempUnit,
+                LANG::weather_pressure, press_display, pressUnit,
+                LANG::weather_humidity, humidity,
+                LANG::weather_wind, wind_speed, windUnit, LANG::wind[wind_dir_idx]);
+      } else {
+        sprintf(wstr, "%s, %.1f%s \007 %s %.1f%s \007 %s %.0f %s \007 %s %d%% \007 %s %.1f %s [%s]",
+                description, temp, tempUnit,
+                LANG::weather_feelslike, feels_like, tempUnit,
+                LANG::weather_pressure, press_display, pressUnit,
+                LANG::weather_humidity, humidity,
+                LANG::weather_wind, wind_speed, windUnit, LANG::wind[wind_dir_idx]);
+      }
+    #else
+      sprintf(wstr, "%s, %.1f%s \007 %s %.0f %s \007 %s %d%%",
+              description, temp, tempUnit,
+              LANG::weather_pressure, press_display, pressUnit,
+              LANG::weather_humidity, humidity);
+    #endif
+    
+    Serial.printf("Weather: %s\n", wstr);
+    
     network.requestWeatherSync();
     return true;
-  #endif // if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
+  #endif
+  return false;
+}
+
+// Helper: Get icon offset from OpenWeather icon code
+int getWeatherIconOffset(const char* icon) {
+  if (strstr(icon,"01")!=NULL)      return 0;
+  else if (strstr(icon,"02")!=NULL) return 1;
+  else if (strstr(icon,"03")!=NULL) return 2;
+  else if (strstr(icon,"04")!=NULL) return 3;
+  else if (strstr(icon,"09")!=NULL) return 4;
+  else if (strstr(icon,"10")!=NULL) return 5;
+  else if (strstr(icon,"11")!=NULL) return 6;
+  else if (strstr(icon,"13")!=NULL) return 7;
+  else if (strstr(icon,"50")!=NULL) return 8;
+  else                             return 9;
+}
+
+// Get weather from OpenWeather API 2.5 (legacy)
+bool getWeather_OpenWeather25(char *wstr) {
+  #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
+    Serial.println("Weather: Calling OpenWeather API 2.5 for current weather...");
+    
+    // Check for API key
+    if (strlen(config.store.weatherkey) == 0) {
+      Serial.println("Weather: OpenWeather requires API key");
+      return false;
+    }
+    
+    // Build URL
+    char url[512];
+    sprintf(url, "http://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&units=%s&lang=%s&appid=%s",
+            config.store.weatherlat, config.store.weatherlon, config.store.weatherimperial ? "imperial" : "metric",
+            config.store.weatherlang, config.store.weatherkey);
+    
+    // Download JSON response to temp file (EspFileUpdater handles chunked encoding)
+    if (!downloadToTempFile(url)) {
+      Serial.println("Weather: Failed to download OpenWeather 2.5 data");
+      return false;
+    }
+    
+    // Read the downloaded JSON file
+    File file = SPIFFS.open(TMP_PATH, "r");
+    if (!file) {
+      Serial.println("Weather: Failed to open temp file");
+      return false;
+    }
+    
+    String response = file.readString();
+    file.close();
+    
+    // Parse JSON with ArduinoJson
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, response);
+    if (error) {
+      Serial.printf("Weather: OpenWeather 2.5 JSON parse error: %s\n", error.c_str());
+      return false;
+    }
+    
+    // Extract data
+    const char* description = doc["weather"][0]["description"];
+    const char* icon = doc["weather"][0]["icon"];
+    float temp = doc["main"]["temp"];
+    float feels_like = doc["main"]["feels_like"];
+    
+    // Use grnd_level if available, otherwise sea_level pressure
+    float pressure_hpa;
+    if (doc["main"]["grnd_level"].is<float>()) {
+      pressure_hpa = doc["main"]["grnd_level"];
+    } else if (doc["main"]["pressure"].is<float>()) {
+      pressure_hpa = doc["main"]["pressure"];
+    } else {
+      Serial.println("Weather: No pressure data in OpenWeather 2.5 response");
+      return false;
+    }
+    
+    int humidity = doc["main"]["humidity"];
+    float wind_speed = doc["wind"]["speed"];
+    int wind_deg = doc["wind"]["deg"];
+    int wind_dir_idx = (int)(wind_deg / 22.5) % 16;
+    
+    // Units formatting with FIXED pressure conversion
+    const char *tempUnit, *windUnit, *pressUnit;
+    float press_display;
+    
+    if (config.store.weatherimperial) {
+      tempUnit = "\011F";
+      windUnit = "mph";
+      pressUnit = "mmHg";
+      press_display = pressure_hpa / 1.333;  // hPa to mmHg (NOT inHg!)
+    } else {  // metric
+      tempUnit = "\011C";
+      windUnit = "m/s";
+      pressUnit = "hPa";
+      press_display = pressure_hpa;
+    }
+    
+    #ifdef USE_NEXTION
+      if (config.store.weatherimperial) {
+        nextion.putcmdf("press_txt.txt=\"%.0fmm\"", press_display);
+      } else {
+        nextion.putcmdf("press_txt.txt=\"%.0fhPa\"", press_display);
+      }
+      nextion.putcmdf("hum_txt.txt=\"%d%%\"", humidity);
+      nextion.putcmdf("temp_txt.txt=\"%.1f\"", temp);
+      int iconoffset = getWeatherIconOffset(icon);
+      nextion.putcmd("cond_img.pic", 50 + iconoffset);
+      nextion.weatherVisible(1);
+    #endif
+    
+    // Build weather string
+    #if EXT_WEATHER
+      sprintf(wstr, "%s, %.1f%s \007 %s %.1f%s \007 %s %.0f %s \007 %s %d%% \007 %s %.1f %s [%s]",
+              description, temp, tempUnit,
+              LANG::weather_feelslike, feels_like, tempUnit,
+              LANG::weather_pressure, press_display, pressUnit,
+              LANG::weather_humidity, humidity,
+              LANG::weather_wind, wind_speed, windUnit, LANG::wind[wind_dir_idx]);
+    #else
+      sprintf(wstr, "%s, %.1f%s \007 %s %.0f %s \007 %s %d%%",
+              description, temp, tempUnit,
+              LANG::weather_pressure, press_display, pressUnit,
+              LANG::weather_humidity, humidity);
+    #endif
+    
+    Serial.printf("Weather: %s\n", wstr);
+    
+    network.requestWeatherSync();
+    return true;
+  #endif
+  return false;
+}
+
+// Helper: Fetch elevation from open-elevation.com API (fallback for OW 3.0)
+float fetchElevation(float lat, float lon) {
+  char url[256];
+  sprintf(url, "http://api.open-elevation.com/api/v1/lookup?locations=%.4f,%.4f", lat, lon);
+  
+  // Download JSON response to temp file (EspFileUpdater handles chunked encoding)
+  if (!downloadToTempFile(url)) {
+    Serial.println("Weather: Failed to download elevation data");
+    return 0.0;
+  }
+  
+  // Read the downloaded JSON file
+  File file = SPIFFS.open(TMP_PATH, "r");
+  if (!file) {
+    Serial.println("Weather: Failed to open temp file");
+    return 0.0;
+  }
+  
+  String response = file.readString();
+  file.close();
+  
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, response);
+  if (!error && doc["results"][0]["elevation"].is<float>()) {
+    float elevation = doc["results"][0]["elevation"];
+    Serial.printf("Weather: Elevation retrieved from open-elevation.com: %.0f meters\n", elevation);
+    return elevation;
+  }
+  
+  Serial.println("Weather: Failed to parse elevation data");
+  return 0.0;
+}
+
+// Helper: Calculate ground-level pressure from sea-level pressure using elevation
+float calculateGroundPressure(float seaLevelPressure, float elevationMeters) {
+  // Barometric formula: P_ground = P_sea * (1 - elevation / 44330)^5.255
+  if (elevationMeters == 0.0) return seaLevelPressure;
+  return seaLevelPressure * pow((1.0 - elevationMeters / 44330.0), 5.255);
+}
+
+// Get weather from OpenWeather API 3.0 (current)
+bool getWeather_OpenWeather30(char *wstr) {
+  #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
+    Serial.println("Weather: Calling OpenWeather API 3.0 for current weather...");
+    
+    // Check for API key
+    if (strlen(config.store.weatherkey) == 0) {
+      Serial.println("Weather: OpenWeather requires API key");
+      return false;
+    }
+    
+    // Build URL
+    char url[512];
+    sprintf(url, "http://api.openweathermap.org/data/3.0/onecall?exclude=minutely,hourly,daily&lat=%s&lon=%s&units=%s&lang=%s&appid=%s",
+            config.store.weatherlat, config.store.weatherlon, config.store.weatherimperial ? "imperial" : "metric",
+            config.store.weatherlang, config.store.weatherkey);
+    
+    // Download JSON response to temp file (EspFileUpdater handles chunked encoding)
+    if (!downloadToTempFile(url)) {
+      Serial.println("Weather: Failed to download OpenWeather 3.0 data");
+      return false;
+    }
+    
+    // Read the downloaded JSON file
+    File file = SPIFFS.open(TMP_PATH, "r");
+    if (!file) {
+      Serial.println("Weather: Failed to open temp file");
+      return false;
+    }
+    
+    String response = file.readString();
+    file.close();
+    
+    // Parse JSON with ArduinoJson
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, response);
+    if (error) {
+      Serial.printf("Weather: OpenWeather 3.0 JSON parse error: %s\n", error.c_str());
+      return false;
+    }
+    
+    JsonObject current = doc["current"];
+    if (current.isNull()) {
+      Serial.println("Weather: No current data in OpenWeather 3.0 response");
+      return false;
+    }
+    
+    // Extract data
+    const char* description = current["weather"][0]["description"];
+    const char* icon = current["weather"][0]["icon"];
+    float temp = current["temp"];
+    float feels_like = current["feels_like"];
+    float pressure_sea_hpa = current["pressure"];  // Sea-level pressure
+    int humidity = current["humidity"];
+    float wind_speed = current["wind_speed"];
+    int wind_deg = current["wind_deg"];
+    int wind_dir_idx = (int)(wind_deg / 22.5) % 16;
+    
+    // Get or fetch elevation for barometric adjustment
+    float elevation = 0.0;
+    if (strlen(config.store.weatherelev) > 0) {
+      elevation = atof(config.store.weatherelev);
+      Serial.printf("Weather: Using cached elevation: %.0f meters\n", elevation);
+    } else {
+      // Fetch elevation from open-elevation.com
+      elevation = fetchElevation(atof(config.store.weatherlat), atof(config.store.weatherlon));
+      if (elevation > 0.0) {
+        snprintf(config.store.weatherelev, sizeof(config.store.weatherelev), "%.0f", elevation);
+        config.saveValue(config.store.weatherelev, config.store.weatherelev, sizeof(config.store.weatherelev), true);
+      }
+    }
+    
+    // Calculate ground-level pressure from sea-level pressure
+    float pressure_hpa = calculateGroundPressure(pressure_sea_hpa, elevation);
+    Serial.printf("Weather: Adjusted pressure from %.0f hPa (sea) to %.0f hPa (ground) using %.0f m elevation\n",
+                  pressure_sea_hpa, pressure_hpa, elevation);
+    
+    // Units formatting
+    const char *tempUnit, *windUnit, *pressUnit;
+    float press_display;
+    
+    if (config.store.weatherimperial) {
+      tempUnit = "\011F";
+      windUnit = "mph";
+      pressUnit = "mmHg";
+      press_display = pressure_hpa / 1.333;  // hPa to mmHg
+    } else {  // metric
+      tempUnit = "\011C";
+      windUnit = "m/s";
+      pressUnit = "hPa";
+      press_display = pressure_hpa;
+    }
+    
+    #ifdef USE_NEXTION
+      if (config.store.weatherimperial) {
+        nextion.putcmdf("press_txt.txt=\"%.0fmm\"", press_display);
+      } else {
+        nextion.putcmdf("press_txt.txt=\"%.0fhPa\"", press_display);
+      }
+      nextion.putcmdf("hum_txt.txt=\"%d%%\"", humidity);
+      nextion.putcmdf("temp_txt.txt=\"%.1f\"", temp);
+      int iconoffset = getWeatherIconOffset(icon);
+      nextion.putcmd("cond_img.pic", 50 + iconoffset);
+      nextion.weatherVisible(1);
+    #endif
+    
+    // Build weather string
+    #if EXT_WEATHER
+      sprintf(wstr, "%s, %.1f%s \007 %s %.1f%s \007 %s %.0f %s \007 %s %d%% \007 %s %.1f %s [%s]",
+              description, temp, tempUnit,
+              LANG::weather_feelslike, feels_like, tempUnit,
+              LANG::weather_pressure, press_display, pressUnit,
+              LANG::weather_humidity, humidity,
+              LANG::weather_wind, wind_speed, windUnit, LANG::wind[wind_dir_idx]);
+    #else
+      sprintf(wstr, "%s, %.1f%s \007 %s %.0f %s \007 %s %d%%",
+              description, temp, tempUnit,
+              LANG::weather_pressure, press_display, pressUnit,
+              LANG::weather_humidity, humidity);
+    #endif
+    
+    Serial.printf("Weather: %s\n", wstr);
+    
+    network.requestWeatherSync();
+    return true;
+  #endif
+  return false;
+}
+
+bool getWeather(char *wstr) {
+  #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
+    // Provider dispatcher - route to appropriate weather API
+    if (strcmp(config.store.weatherapi, "OW30") == 0) {
+      return getWeather_OpenWeather30(wstr);
+    } else if (strcmp(config.store.weatherapi, "OW25") == 0) {
+      return getWeather_OpenWeather25(wstr);
+    } else {  // Default: "OM1" or any other value
+      return getWeather_OpenMeteo(wstr);
+    }
+  #endif
   return false;
 }

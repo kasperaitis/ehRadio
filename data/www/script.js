@@ -404,6 +404,11 @@ function setupElement(id,value){
     }
     if(element.tagName==='SELECT'){
       element.value=String(value);
+      // Trigger weather provider toggle if wapi changes
+      if(id === 'wapi' && typeof setupWeatherProviderToggle === 'function') {
+        const event = new Event('change');
+        element.dispatchEvent(event);
+      }
     }
   }
 }

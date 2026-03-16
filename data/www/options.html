@@ -325,6 +325,16 @@
           </div>
           <div class="flex-row">
             <div class="inputwrap">
+              <span class="inputtitle">Weather Provider</span>
+              <select type="text" id="wapi" name="wapi">
+                <option value="OW25">OpenWeather API 2.5</option>
+                <option value="OW30">OpenWeather API 3.0</option>
+                <option value="OM1">Open-Meteo API v1 (Free)</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_latitude">Latitude</span>
               <span class="inputtitle">[<a href="https://www.gps-coordinates.net/" target="_blank">?</a>]</span>
               <input type="number" id="wlat" value="" min="-90" max="90" step="0.0001" />
@@ -338,19 +348,20 @@
             <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_ow_units">Units of measurement</span>
               <span class="inputtitle">[<a href="https://openweathermap.org/current?collection=current_forecast#data" target="_blank">?</a>]</span>
-              <select type="text" id="wunits" name="wunits">
-                <option value="standard">Standard</option>
-                <option value="metric">Metric</option>
-                <option value="imperial">Imperial</option>
+              <select type="text" id="wimperial" name="wimperial">
+                <option value="0">Metric (°C, hPa, m/s)</option>
+                <option value="1">Imperial (°F, mmHg, mph)</option>
               </select>
             </div>
+          </div>
+          <div class="flex-row group_ow hidden" id="weatherlangrow">
             <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_ow_lang">Language</span>
               <span class="inputtitle">[<a href="https://openweathermap.org/current?collection=current_forecast#multi" target="_blank">?</a>]</span>
               <input type="text" id="wlang" name="wlang" maxlength="10" />
             </div>
           </div>
-          <div class="flex-row">
+          <div class="flex-row group_ow hidden" id="weatherkeyrow">
             <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_ow_key">Openweathermap API Key</span>
               <span class="inputtitle">[<a href="https://openweathermap.org/appid" target="_blank">?</a>]</span>
@@ -454,6 +465,7 @@
           </div>
         </div>
 
+        <a id="page-bottom"></a>
         </section>
         <div class="hr">&nbsp;</div>
       </div>

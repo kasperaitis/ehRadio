@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "tuntuu kuin:";
 const char weather_pressure[]   PROGMEM = "paine:";
 const char weather_humidity[]   PROGMEM = "kosteus:";
 const char weather_wind[]       PROGMEM = "tuuli:";
+const char weather_loading[]    PROGMEM = "Haetaan säätietoja...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Kirk as taivas";
+const char w_overcast[]          PROGMEM = "Pilvinen";
+const char w_foggy[]             PROGMEM = "Sumua";
+const char w_drizzle[]           PROGMEM = "Tihkusade";
+const char w_freezing_drizzle[]  PROGMEM = "Jäätävä tihkusade";
+const char w_rain[]              PROGMEM = "Sade";
+const char w_freezing_rain[]     PROGMEM = "Jäätävä sade";
+const char w_snow[]              PROGMEM = "Lumi";
+const char w_snow_grains[]       PROGMEM = "Lumirakeita";
+const char w_rain_showers[]      PROGMEM = "Sadekuuroja";
+const char w_snow_showers[]      PROGMEM = "Lumikuuroja";
+const char w_thunderstorm[]      PROGMEM = "Ukkosmyrsky";
+const char w_thunderstorm_hail[] PROGMEM = "Ukkosmyrsky ja rakeita";
 
 #endif
 

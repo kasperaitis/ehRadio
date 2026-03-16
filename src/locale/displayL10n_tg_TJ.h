@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "ҳис:";
 const char weather_pressure[]   PROGMEM = "фишор:";
 const char weather_humidity[]   PROGMEM = "намӣ:";
 const char weather_wind[]       PROGMEM = "бод:";
+const char weather_loading[]    PROGMEM = "Боргирӣ кардани маълумоти обу ҳаво...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Осмони соф";
+const char w_overcast[]          PROGMEM = "Абрнок";
+const char w_foggy[]             PROGMEM = "Мех";
+const char w_drizzle[]           PROGMEM = "Регборон";
+const char w_freezing_drizzle[]  PROGMEM = "Регборони яхзада";
+const char w_rain[]              PROGMEM = "Борон";
+const char w_freezing_rain[]     PROGMEM = "Борони яхзада";
+const char w_snow[]              PROGMEM = "Барф";
+const char w_snow_grains[]       PROGMEM = "Донаҳои барф";
+const char w_rain_showers[]      PROGMEM = "Регборонӣ";
+const char w_snow_showers[]      PROGMEM = "Барфборон";
+const char w_thunderstorm[]      PROGMEM = "Тунду гурумбо";
+const char w_thunderstorm_hail[] PROGMEM = "Тунду бо жола";
 
 #endif
 

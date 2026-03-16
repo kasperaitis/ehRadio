@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "his qilish:";
 const char weather_pressure[]   PROGMEM = "bosim:";
 const char weather_humidity[]   PROGMEM = "namlik:";
 const char weather_wind[]       PROGMEM = "shamol:";
+const char weather_loading[]    PROGMEM = "Ob-havo ma'lumotlari yuklanmoqda...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Ochiq osmon";
+const char w_overcast[]          PROGMEM = "Bulutli";
+const char w_foggy[]             PROGMEM = "Tumanli";
+const char w_drizzle[]           PROGMEM = "Mayda yomg'ir";
+const char w_freezing_drizzle[]  PROGMEM = "Muzlaydigan mayda yomg'ir";
+const char w_rain[]              PROGMEM = "Yomg'ir";
+const char w_freezing_rain[]     PROGMEM = "Muzlaydigan yomg'ir";
+const char w_snow[]              PROGMEM = "Qor";
+const char w_snow_grains[]       PROGMEM = "Qor donalari";
+const char w_rain_showers[]      PROGMEM = "Jala yomg'ir";
+const char w_snow_showers[]      PROGMEM = "Qor yog'ishi";
+const char w_thunderstorm[]      PROGMEM = "Momaqaldiroq";
+const char w_thunderstorm_hail[] PROGMEM = "Do'l bilan momaqaldiroq";
 
 #endif
 

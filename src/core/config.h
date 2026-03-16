@@ -120,11 +120,13 @@ struct config_t // specify defaults here (and macros in options.h) (defaults are
   char      sntp1[35] = SNTP_1;
   char      sntp2[35] = SNTP_2;
   bool      showweather = false;
-  char      weatherunits[10] = WEATHER_UNITS;
+  bool      weatherimperial = WEATHER_IMPERIAL;
   char      weatherlang[10] = WEATHER_LANG;
   char      weatherlat[10] = WEATHER_LAT;
   char      weatherlon[10] = WEATHER_LON;
   char      weatherkey[WEATHERKEY_LENGTH] = "";
+  char      weatherapi[6] = WEATHER_API;
+  char      weatherelev[10] = "";
   bool      mqttenable = false;
   char      mqtthost[60] = MQTT_HOST;
   uint16_t  mqttport = MQTT_PORT;

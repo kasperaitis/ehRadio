@@ -20,11 +20,47 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     loadTimezones();
     loadLocales();
+    setupWeatherProviderToggle();
   });
 } else {
   // DOM already loaded (script loaded dynamically)
   loadTimezones();
   loadLocales();
+  setupWeatherProviderToggle();
+}
+
+/** WEATHER **/
+function setupWeatherProviderToggle() {
+  const wapiSelect = document.getElementById('wapi');
+  if (!wapiSelect) return;
+  
+  function toggleWeatherFields() {
+    const provider = wapiSelect.value;
+    const isOpenWeather = (provider === 'OW25' || provider === 'OW30');
+    const langRow = document.getElementById('weatherlangrow');
+    const keyRow = document.getElementById('weatherkeyrow');
+    
+    if (langRow) {
+      if (isOpenWeather) {
+        langRow.classList.remove('hidden');
+      } else {
+        langRow.classList.add('hidden');
+      }
+    }
+    if (keyRow) {
+      if (isOpenWeather) {
+        keyRow.classList.remove('hidden');
+      } else {
+        keyRow.classList.add('hidden');
+      }
+    }
+  }
+  
+  // Add change listener
+  wapiSelect.addEventListener('change', toggleWeatherFields);
+  
+  // Trigger once on load to set initial state
+  toggleWeatherFields();
 }
 
 /** LOCALE **/
@@ -254,7 +290,8 @@ function applyMQTT(){
 function applyWeather(){
   websocket.send("wlat="+getId("wlat").value);
   websocket.send("wlon="+getId("wlon").value);
-  websocket.send("wunits="+getId("wunits").value);
+  websocket.send("wimperial="+getId("wimperial").value);
+  websocket.send("wapi="+getId("wapi").value);
   websocket.send("wlang="+getId("wlang").value);
   websocket.send("wkey="+getId("wkey").value);
 }
@@ -324,10 +361,22 @@ function rebootSystem(info){
 }
 
 /** TOOLS AKA DANGERZONE **/
+function scrollToBottom() {
+  setTimeout(() => {
+    const anchor = document.getElementById('page-bottom');
+    if (anchor) {
+      anchor.scrollIntoView();
+    }
+  }, 100);
+}
+
 function showDangerConfirm(buttonId) {
   hideDangerConfirm();
   const btn = getId(buttonId);
-  if(btn) btn.classList.remove('hidden');
+  if(btn) {
+    btn.classList.remove('hidden');
+    scrollToBottom();
+  }
 }
 
 function hideDangerConfirm() {
@@ -351,7 +400,10 @@ function checkDangerZone() {
   const dangerzone = getId('dangerzone');
   const txt = getId('dangerzone_txt');
   if(allChecked) {
-    if(dangerzone) dangerzone.classList.remove('hidden');
+    if(dangerzone) {
+      dangerzone.classList.remove('hidden');
+      scrollToBottom();
+    }
     if(txt) txt.textContent = t('lbl_dz_careful', 'Be Careful!');
   } else {
     if(dangerzone) dangerzone.classList.add('hidden');

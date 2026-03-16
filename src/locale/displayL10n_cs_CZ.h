@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "pocit:";
 const char weather_pressure[]   PROGMEM = "tlak:";
 const char weather_humidity[]   PROGMEM = "vlhkost:";
 const char weather_wind[]       PROGMEM = "vítr:";
+const char weather_loading[]    PROGMEM = "Načítání počasí...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Jasná obloha";
+const char w_overcast[]          PROGMEM = "Zataženo";
+const char w_foggy[]             PROGMEM = "Ml ha";
+const char w_drizzle[]           PROGMEM = "Mrholení";
+const char w_freezing_drizzle[]  PROGMEM = "Mrznoucí mrholení";
+const char w_rain[]              PROGMEM = "Déšť";
+const char w_freezing_rain[]     PROGMEM = "Mrznoucí déšť";
+const char w_snow[]              PROGMEM = "Sníh";
+const char w_snow_grains[]       PROGMEM = "Sněhové zrno";
+const char w_rain_showers[]      PROGMEM = "Přeháňky";
+const char w_snow_showers[]      PROGMEM = "Sněhové přeháňky";
+const char w_thunderstorm[]      PROGMEM = "Bouřka";
+const char w_thunderstorm_hail[] PROGMEM = "Bouřka s krupobitím";
 
 #endif
 

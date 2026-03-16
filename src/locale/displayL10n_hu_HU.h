@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "hőérzet:";
 const char weather_pressure[]   PROGMEM = "légnyomás:";
 const char weather_humidity[]   PROGMEM = "páratartalom:";
 const char weather_wind[]       PROGMEM = "szél:";
+const char weather_loading[]    PROGMEM = "Időjárás adatok letöltése...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Tiszta ég";
+const char w_overcast[]          PROGMEM = "Borult";
+const char w_foggy[]             PROGMEM = "Ködös";
+const char w_drizzle[]           PROGMEM = "Szitálás";
+const char w_freezing_drizzle[]  PROGMEM = "Fagyos szitálás";
+const char w_rain[]              PROGMEM = "Eső";
+const char w_freezing_rain[]     PROGMEM = "Fagyos eső";
+const char w_snow[]              PROGMEM = "Hó";
+const char w_snow_grains[]       PROGMEM = "Hószemcsék";
+const char w_rain_showers[]      PROGMEM = "Zivatarok";
+const char w_snow_showers[]      PROGMEM = "Hózivatar";
+const char w_thunderstorm[]      PROGMEM = "Vihar";
+const char w_thunderstorm_hail[] PROGMEM = "Jégeső";
 
 #endif
 

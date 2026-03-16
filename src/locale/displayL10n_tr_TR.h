@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "hissedilen:";
 const char weather_pressure[]   PROGMEM = "basınç:";
 const char weather_humidity[]   PROGMEM = "nem:";
 const char weather_wind[]       PROGMEM = "rüzgar:";
+const char weather_loading[]    PROGMEM = "Hava durumu alınıyor...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Açık gökyüzü";
+const char w_overcast[]          PROGMEM = "Kapalı";
+const char w_foggy[]             PROGMEM = "Sisli";
+const char w_drizzle[]           PROGMEM = "Çiseleme";
+const char w_freezing_drizzle[]  PROGMEM = "Dondurucu çiseleme";
+const char w_rain[]              PROGMEM = "Yağmur";
+const char w_freezing_rain[]     PROGMEM = "Dondurucu yağmur";
+const char w_snow[]              PROGMEM = "Kar";
+const char w_snow_grains[]       PROGMEM = "Kar taneleri";
+const char w_rain_showers[]      PROGMEM = "Sağanak yağmur";
+const char w_snow_showers[]      PROGMEM = "Kar yağışı";
+const char w_thunderstorm[]      PROGMEM = "Gök gürültülü fırtına";
+const char w_thunderstorm_hail[] PROGMEM = "Dolu fırtınası";
 
 #endif
 

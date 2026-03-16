@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "αίσθηση:";
 const char weather_pressure[]   PROGMEM = "πίεση:";
 const char weather_humidity[]   PROGMEM = "υγρασία:";
 const char weather_wind[]       PROGMEM = "άνεμος:";
+const char weather_loading[]    PROGMEM = "Λήψη μετεωρολογικών δεδομένων...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Αίθριος ουρανός";
+const char w_overcast[]          PROGMEM = "Συννεφιά";
+const char w_foggy[]             PROGMEM = "Ομίχλη";
+const char w_drizzle[]           PROGMEM = "Ψιλόβροχο";
+const char w_freezing_drizzle[]  PROGMEM = "Ψυχρή ψιλή βροχή";
+const char w_rain[]              PROGMEM = "Βροχή";
+const char w_freezing_rain[]     PROGMEM = "Ψυχρή βροχή";
+const char w_snow[]              PROGMEM = "Χιόνι";
+const char w_snow_grains[]       PROGMEM = "Κόκκοι χιονιού";
+const char w_rain_showers[]      PROGMEM = "Πρόσκαιρες βροχές";
+const char w_snow_showers[]      PROGMEM = "Χιονόπτωση";
+const char w_thunderstorm[]      PROGMEM = "Καταιγίδα";
+const char w_thunderstorm_hail[] PROGMEM = "Καταιγίδα με χαλάζι";
 
 #endif
 

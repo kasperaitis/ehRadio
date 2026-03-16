@@ -87,7 +87,21 @@ const char        apSettFmt[]    PROGMEM = "POVEŽI SE I OTVORI HTTP://%s/";
 const char weather_feelslike[]  PROGMEM = "osjeća se:";
 const char weather_pressure[]   PROGMEM = "tlak:";
 const char weather_humidity[]   PROGMEM = "vlažnost:";
-const char weather_wind[]       PROGMEM = "vjetar:";
+const char weather_wind[]       PROGMEM = "vjetar:";const char weather_loading[]    PROGMEM = "Dohvaćanje vremenskih podataka...";
 
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Vedro nebo";
+const char w_overcast[]          PROGMEM = "Oblačno";
+const char w_foggy[]             PROGMEM = "Magla";
+const char w_drizzle[]           PROGMEM = "Rosulja";
+const char w_freezing_drizzle[]  PROGMEM = "Ledena rosulja";
+const char w_rain[]              PROGMEM = "Kiša";
+const char w_freezing_rain[]     PROGMEM = "Ledena kiša";
+const char w_snow[]              PROGMEM = "Snijeg";
+const char w_snow_grains[]       PROGMEM = "Zrnca snijega";
+const char w_rain_showers[]      PROGMEM = "Pljuskovi";
+const char w_snow_showers[]      PROGMEM = "Snijeg pljuskovi";
+const char w_thunderstorm[]      PROGMEM = "Oluja s grmljavinom";
+const char w_thunderstorm_hail[] PROGMEM = "Oluja s tučom";
 #endif
 

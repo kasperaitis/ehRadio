@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "sajūta:";
 const char weather_pressure[]   PROGMEM = "spiediens:";
 const char weather_humidity[]   PROGMEM = "mitrums:";
 const char weather_wind[]       PROGMEM = "vējš:";
+const char weather_loading[]    PROGMEM = "Ielādē laika datus...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Skaidra debess";
+const char w_overcast[]          PROGMEM = "Mākoņains";
+const char w_foggy[]             PROGMEM = "Migla";
+const char w_drizzle[]           PROGMEM = "Smidzinājums";
+const char w_freezing_drizzle[]  PROGMEM = "Salstosoburnis";
+const char w_rain[]              PROGMEM = "Lietus";
+const char w_freezing_rain[]     PROGMEM = "Salstoburnis lietus";
+const char w_snow[]              PROGMEM = "Sniegs";
+const char w_snow_grains[]       PROGMEM = "Sniega gr audi";
+const char w_rain_showers[]      PROGMEM = "Lietus pērkona";
+const char w_snow_showers[]      PROGMEM = "Sniega kritiena";
+const char w_thunderstorm[]      PROGMEM = "Pērkona negaiss";
+const char w_thunderstorm_hail[] PROGMEM = "Negaiss ar krusia";
 
 #endif
 

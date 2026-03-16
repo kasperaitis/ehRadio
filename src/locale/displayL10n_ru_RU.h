@@ -87,6 +87,22 @@ const char weather_feelslike[]  PROGMEM = "ощущается:";
 const char weather_pressure[]   PROGMEM = "давление:";
 const char weather_humidity[]   PROGMEM = "влажность:";
 const char weather_wind[]       PROGMEM = "ветер:";
+const char weather_loading[]    PROGMEM = "Получение данных о погоде...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Ясное небо";
+const char w_overcast[]          PROGMEM = "Облачно";
+const char w_foggy[]             PROGMEM = "Туман";
+const char w_drizzle[]           PROGMEM = "Морось";
+const char w_freezing_drizzle[]  PROGMEM = "Ледяная морось";
+const char w_rain[]              PROGMEM = "Дождь";
+const char w_freezing_rain[]     PROGMEM = "Ледяной дождь";
+const char w_snow[]              PROGMEM = "Снег";
+const char w_snow_grains[]       PROGMEM = "Снежная крупа";
+const char w_rain_showers[]      PROGMEM = "Ливневый дождь";
+const char w_snow_showers[]      PROGMEM = "Снегопад";
+const char w_thunderstorm[]      PROGMEM = "Гроза";
+const char w_thunderstorm_hail[] PROGMEM = "Гроза с градом";
 
 #endif
 

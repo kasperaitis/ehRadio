@@ -87,10 +87,11 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "irtlp"))            { setIRTolerance(static_cast<uint8_t>(atoi(value))); return true; }
   if (strEquals(command, "oneclickswitching")) { config.saveValue(&config.store.skipPlaylistUpDown, static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "wenable"))           { config.setShowweather(static_cast<bool>(atoi(value))); return true; }
-  if (strEquals(command, "wlat"))              { config.saveValue(config.store.weatherlat, value, sizeof(config.store.weatherlat), false); return true; }
-  if (strEquals(command, "wlon"))              { config.saveValue(config.store.weatherlon, value, sizeof(config.store.weatherlon), false); return true; }
-  if (strEquals(command, "wunits"))            { config.saveValue(config.store.weatherunits, value, sizeof(config.store.weatherunits), false); return true; }
-  if (strEquals(command, "wlang"))             { config.saveValue(config.store.weatherlang, value, sizeof(config.store.weatherlang), false); return true; }
+  if (strEquals(command, "wapi"))              { config.saveValue(config.store.weatherapi, value, sizeof(config.store.weatherapi), false); network.forceWeather = true; return true; }
+  if (strEquals(command, "wlat"))              { config.saveValue(config.store.weatherlat, value, sizeof(config.store.weatherlat), false); network.forceWeather = true; return true; }
+  if (strEquals(command, "wlon"))              { config.saveValue(config.store.weatherlon, value, sizeof(config.store.weatherlon), false); network.forceWeather = true; return true; }
+  if (strEquals(command, "wimperial"))         { config.saveValue(&config.store.weatherimperial, static_cast<bool>(atoi(value))); network.forceWeather = true; return true; }
+  if (strEquals(command, "wlang"))             { config.saveValue(config.store.weatherlang, value, sizeof(config.store.weatherlang), false); network.forceWeather = true; return true; }
   if (strEquals(command, "wkey"))              { config.setWeatherKey(value); return true; }
 
   #ifdef MQTT_ENABLE

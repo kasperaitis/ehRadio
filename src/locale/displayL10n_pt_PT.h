@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "sensação:";
 const char weather_pressure[]   PROGMEM = "pressão:";
 const char weather_humidity[]   PROGMEM = "humidade:";
 const char weather_wind[]       PROGMEM = "vento:";
+const char weather_loading[]    PROGMEM = "A obter dados meteorológicos...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Céu limpo";
+const char w_overcast[]          PROGMEM = "Nublado";
+const char w_foggy[]             PROGMEM = "Nevoeiro";
+const char w_drizzle[]           PROGMEM = "Chuvisco";
+const char w_freezing_drizzle[]  PROGMEM = "Chuvisco gelado";
+const char w_rain[]              PROGMEM = "Chuva";
+const char w_freezing_rain[]     PROGMEM = "Chuva gelada";
+const char w_snow[]              PROGMEM = "Neve";
+const char w_snow_grains[]       PROGMEM = "Grãos de neve";
+const char w_rain_showers[]      PROGMEM = "Aguaceiros";
+const char w_snow_showers[]      PROGMEM = "Nevadas";
+const char w_thunderstorm[]      PROGMEM = "Trovoada";
+const char w_thunderstorm_hail[] PROGMEM = "Trovoada com granizo";
 
 #endif
 

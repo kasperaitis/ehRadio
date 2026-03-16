@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "ressenti:";
 const char weather_pressure[]   PROGMEM = "pression:";
 const char weather_humidity[]   PROGMEM = "humidité:";
 const char weather_wind[]       PROGMEM = "vent:";
+const char weather_loading[]    PROGMEM = "Chargement de la météo...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Ciel dégagé";
+const char w_overcast[]          PROGMEM = "Couvert";
+const char w_foggy[]             PROGMEM = "Brouillard";
+const char w_drizzle[]           PROGMEM = "Bruine";
+const char w_freezing_drizzle[]  PROGMEM = "Bruine verglaçante";
+const char w_rain[]              PROGMEM = "Pluie";
+const char w_freezing_rain[]     PROGMEM = "Pluie verglaçante";
+const char w_snow[]              PROGMEM = "Neige";
+const char w_snow_grains[]       PROGMEM = "Grains de neige";
+const char w_rain_showers[]      PROGMEM = "Averses";
+const char w_snow_showers[]      PROGMEM = "Averses de neige";
+const char w_thunderstorm[]      PROGMEM = "Orage";
+const char w_thunderstorm_hail[] PROGMEM = "Orage avec grêle";
 
 #endif
 

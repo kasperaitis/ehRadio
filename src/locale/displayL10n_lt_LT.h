@@ -84,10 +84,25 @@ const char        apSettFmt[]    PROGMEM = "PRISIJUNKITE IR ATIDARYKITE HTTP://%
   const char        updFailed[]    PROGMEM = "Atnaujinimas nepavyko";
 #endif
 
-const char weather_feelslike[]  PROGMEM = "jaučiasi:";
-const char weather_pressure[]   PROGMEM = "slėgis:";
-const char weather_humidity[]   PROGMEM = "drėgmė:";
-const char weather_wind[]       PROGMEM = "vėjas:";
+const char weather_feelslike[]   PROGMEM = "jaučiasi:";
+const char weather_pressure[]    PROGMEM = "slėgis:";
+const char weather_humidity[]    PROGMEM = "drėgmė:";
+const char weather_wind[]        PROGMEM = "vėjas:";
+const char weather_loading[]     PROGMEM = "Gaunama dabartinė orų informacija...";
+
+const char w_clear_sky[]         PROGMEM = "Giedras dangus";
+const char w_overcast[]          PROGMEM = "Debesuota";
+const char w_foggy[]             PROGMEM = "Rūkas";
+const char w_drizzle[]           PROGMEM = "Dulksna";
+const char w_freezing_drizzle[]  PROGMEM = "Šalanti dulksna";
+const char w_rain[]              PROGMEM = "Lietus";
+const char w_freezing_rain[]     PROGMEM = "Šalantis lietus";
+const char w_snow[]              PROGMEM = "Sniegas";
+const char w_snow_grains[]       PROGMEM = "Sniego grūdeliai";
+const char w_rain_showers[]      PROGMEM = "Lietaus liūtys";
+const char w_snow_showers[]      PROGMEM = "Sniego liūtys";
+const char w_thunderstorm[]      PROGMEM = "Audra";
+const char w_thunderstorm_hail[] PROGMEM = "Audra su kruša";
 
 #endif
 

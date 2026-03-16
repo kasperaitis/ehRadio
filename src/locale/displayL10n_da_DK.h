@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "føles som:";
 const char weather_pressure[]   PROGMEM = "tryk:";
 const char weather_humidity[]   PROGMEM = "fugtighed:";
 const char weather_wind[]       PROGMEM = "vind:";
+const char weather_loading[]    PROGMEM = "Henter vejrdata...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Klar himmel";
+const char w_overcast[]          PROGMEM = "Overskyet";
+const char  w_foggy[]             PROGMEM = "Tåge";
+const char w_drizzle[]           PROGMEM = "Støvregn";
+const char w_freezing_drizzle[]  PROGMEM = "Isende støvregn";
+const char w_rain[]              PROGMEM = "Regn";
+const char w_freezing_rain[]     PROGMEM = "Isende regn";
+const char w_snow[]              PROGMEM = "Sne";
+const char w_snow_grains[]       PROGMEM = "Snekorn";
+const char w_rain_showers[]      PROGMEM = "Regnbyger";
+const char w_snow_showers[]      PROGMEM = "Snebyger";
+const char w_thunderstorm[]      PROGMEM = "Tordenv ejr";
+const char w_thunderstorm_hail[] PROGMEM = "Tordenv ejr med hagl";
 
 #endif
 

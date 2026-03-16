@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "мэдрэх:";
 const char weather_pressure[]   PROGMEM = "даралт:";
 const char weather_humidity[]   PROGMEM = "чийгшил:";
 const char weather_wind[]       PROGMEM = "салхи:";
+const char weather_loading[]    PROGMEM = "Цаг агаарын мэдээлэл авч байна...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Цэвэр тэнгэр";
+const char w_overcast[]          PROGMEM = "Үүлэрхэг";
+const char w_foggy[]             PROGMEM = "Манантай";
+const char w_drizzle[]           PROGMEM = "Шиврэлтэй бороо";
+const char w_freezing_drizzle[]  PROGMEM = "Хөлдсөн шиврэлтэй бороо";
+const char w_rain[]              PROGMEM = "Бороо";
+const char w_freezing_rain[]     PROGMEM = "Хөлдсөн бороо";
+const char w_snow[]              PROGMEM = "Цас";
+const char w_snow_grains[]       PROGMEM = "Цасны мөхлөг";
+const char w_rain_showers[]      PROGMEM = "Борооны дусал";
+const char w_snow_showers[]      PROGMEM = "Цасны дусал";
+const char w_thunderstorm[]      PROGMEM = "Аянгатай бороо";
+const char w_thunderstorm_hail[] PROGMEM = "Мөндөртэй аянга";
 
 #endif
 

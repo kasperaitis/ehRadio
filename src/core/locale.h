@@ -24,8 +24,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"
@@ -38,8 +38,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "be"
@@ -52,8 +52,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "bg"
@@ -66,8 +66,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "hr"  /* Bosnian not available, using Croatian */
@@ -80,8 +80,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "cz"
@@ -94,8 +94,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "da"
@@ -108,8 +108,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "de"
@@ -122,8 +122,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "el"
@@ -136,8 +136,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "imperial"  /* US uses imperial */
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL true  /* US uses imperial */
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"
@@ -150,8 +150,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "es"
@@ -164,8 +164,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"  /* Estonian not available */
@@ -178,8 +178,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "fi"
@@ -192,8 +192,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "fr"
@@ -206,8 +206,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "hr"
@@ -220,8 +220,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "hu"
@@ -234,8 +234,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "is"
@@ -248,8 +248,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"  /* Kazakh not available */
@@ -262,8 +262,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"  /* Kyrgyz not available */
@@ -276,8 +276,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "lt"
@@ -290,8 +290,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "la"
@@ -304,8 +304,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "sr"  /* Montenegrin not available, using Serbian */
@@ -318,8 +318,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "mk"
@@ -332,8 +332,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"  /* Mongolian not available */
@@ -346,8 +346,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "nl"
@@ -360,8 +360,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "no"
@@ -374,8 +374,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "pl"
@@ -388,8 +388,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "pt"
@@ -402,8 +402,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "ro"
@@ -416,8 +416,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "ru"
@@ -430,8 +430,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "sk"
@@ -444,8 +444,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "sl"
@@ -458,8 +458,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "sr"
@@ -472,8 +472,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "sv"
@@ -486,8 +486,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"  /* Tajik not available */
@@ -500,8 +500,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "tr"
@@ -514,8 +514,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "uk"
@@ -528,8 +528,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"  /* Uzbek not available */
@@ -542,8 +542,8 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_UNITS
-    #define WEATHER_UNITS "metric"
+  #ifndef WEATHER_IMPERIAL
+    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"
@@ -557,7 +557,7 @@
 #endif
 
 /* Weather defaults are set per-language above and can be overridden in myoptions.h */
-/* Runtime validation of WEATHER_UNITS should be done in config code, not here */
+/* Runtime validation of WEATHER_IMPERIAL should be done in config code, not here */
 
 /* Is the hardcoded text in the HTML files not English? */
 /* If yes, then you should over-ride this */
@@ -576,4 +576,5 @@ namespace LANG{
 }
 
 #endif // _locale_h
+
 

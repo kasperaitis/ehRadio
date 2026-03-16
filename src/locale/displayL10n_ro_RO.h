@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "resimțit:";
 const char weather_pressure[]   PROGMEM = "presiune:";
 const char weather_humidity[]   PROGMEM = "umiditate:";
 const char weather_wind[]       PROGMEM = "vânt:";
+const char weather_loading[]    PROGMEM = "Se obțin datele meteo...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Cer senin";
+const char w_overcast[]          PROGMEM = "Acoperit";
+const char w_foggy[]             PROGMEM = "Ceață";
+const char w_drizzle[]           PROGMEM = "Burniță";
+const char w_freezing_drizzle[]  PROGMEM = "Burniță înghețată";
+const char w_rain[]              PROGMEM = "Ploaie";
+const char w_freezing_rain[]     PROGMEM = "Ploaie înghețată";
+const char w_snow[]              PROGMEM = "Zăpadă";
+const char w_snow_grains[]       PROGMEM = "Boabe de zăpadă";
+const char w_rain_showers[]      PROGMEM = "Averse";
+const char w_snow_showers[]      PROGMEM = "Ninsoare";
+const char w_thunderstorm[]      PROGMEM = "Furtună";
+const char w_thunderstorm_hail[] PROGMEM = "Furtună cu grindindre";
 
 #endif
 

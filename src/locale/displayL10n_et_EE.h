@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "tundub:";
 const char weather_pressure[]   PROGMEM = "rõhk:";
 const char weather_humidity[]   PROGMEM = "niiskus:";
 const char weather_wind[]       PROGMEM = "tuul:";
+const char weather_loading[]    PROGMEM = "Ilmaandmete laadimine...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Selge taevas";
+const char w_overcast[]          PROGMEM = "Pilves";
+const char w_foggy[]             PROGMEM = "Udu";
+const char w_drizzle[]           PROGMEM = "Uduvihm";
+const char w_freezing_drizzle[]  PROGMEM = "Külmuv uduvihm";
+const char w_rain[]              PROGMEM = "Vihm";
+const char w_freezing_rain[]     PROGMEM = "Külmuv vihm";
+const char w_snow[]              PROGMEM = "Lumi";
+const char w_snow_grains[]       PROGMEM = "Lumeterakesed";
+const char w_rain_showers[]      PROGMEM = "Vihmahood";
+const char w_snow_showers[]      PROGMEM = "Lumehood";
+const char w_thunderstorm[]      PROGMEM = "Äikest orm";
+const char w_thunderstorm_hail[] PROGMEM = "Äikestorm rahehooga";
 
 #endif
 

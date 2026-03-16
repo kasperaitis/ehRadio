@@ -88,6 +88,22 @@ const char weather_feelslike[]  PROGMEM = "odczuwalna:";
 const char weather_pressure[]   PROGMEM = "ciśnienie:";
 const char weather_humidity[]   PROGMEM = "wilgotność:";
 const char weather_wind[]       PROGMEM = "wiatr:";
+const char weather_loading[]    PROGMEM = "Pobieranie danych pogodowych...";
+
+// WMO Weather Code Translations (for Open-Meteo)
+const char w_clear_sky[]         PROGMEM = "Bezchmurne niebo";
+const char w_overcast[]          PROGMEM = "Pochmurno";
+const char w_foggy[]             PROGMEM = "Mgła";
+const char w_drizzle[]           PROGMEM = "Mżawka";
+const char w_freezing_drizzle[]  PROGMEM = "Marznijąca mżawka";
+const char w_rain[]              PROGMEM = "Deszcz";
+const char w_freezing_rain[]     PROGMEM = "Marznijący deszcz";
+const char w_snow[]              PROGMEM = "Śnieg";
+const char w_snow_grains[]       PROGMEM = "Ziarna śniegu";
+const char w_rain_showers[]      PROGMEM = "Przelotne opady";
+const char w_snow_showers[]      PROGMEM = "Opady śniegu";
+const char w_thunderstorm[]      PROGMEM = "Burza";
+const char w_thunderstorm_hail[] PROGMEM = "Burza z gradem";
 
 #endif
 
