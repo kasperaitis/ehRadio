@@ -40,6 +40,7 @@ Documentation will be improved at some point... Until then, check this page and 
   - Configure the default webUI language with `#define WEBUI_LANGUAGE_STRING "de_DE"` in `myoptions.h`
     - if not specified, will use the same as the display language
     - sets a default WebUI locale different than the display - check locale/webui folder .json files (user-configurable)
+    - can still switch between 2 languages even if not using an online firmware
   - Multiple Weather providers now available (APIs: Openweather 2.5 & 3.0, Open-Meteo v1)
     - old code relied on Openweather API 2.5 which will be discontinued
     - completely re-factored with possibility to add more
@@ -49,16 +50,10 @@ Documentation will be improved at some point... Until then, check this page and 
     - in `myoptions.h` there should be two numbers like: `#define CONNECT_HTTP_HTTPS_TIMEOUT 1700, 3700`
     - probably only useful on older ESP32 boards
   - Can add `#define DISABLE_UPDATER` to `myoptions.h` to disable firmware updating capabilities
-  - Time sync can be configured in WebUI
+  - Time sync interval can be configured in WebUI
     - default in `myoptions.h` set with `#define TIME_SYNC_INTERVAL 4` (time in hours: 1 to 24)
-  - Weather sync can be configured in WebUI
-    - default in `myoptions.h` set with `#define WEATHER_SYNC_INTERVAL ` (time in minutes: 10 to 60)
-
-WEATHER_SYNC_INTERVAL
-
-TIME_SYNC_INTERVAL
-WEATHER_SYNC_INTERVAL
-
+  - Weather API sync interval can be configured in WebUI
+    - default in `myoptions.h` set with `#define WEATHER_SYNC_INTERVAL 15` (time in minutes: 10 to 60)
 ### 2026.02.18
   - WebUI greatly improved for mobile and tablet devices
     - automatic checking for new version availability

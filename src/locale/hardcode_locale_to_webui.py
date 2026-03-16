@@ -37,6 +37,31 @@ def load_translations(locale_code):
         return json.loads(content)
 
 
+def update_locale_h(locale_code):
+    """Update HARDCODED_WEBUI_LOCALE in locale.h"""
+    locale_h_path = Path(__file__).parent / 'locale.h'
+    
+    if not locale_h_path.exists():
+        print(f"Warning: Could not find locale.h at {locale_h_path}")
+        return False
+    
+    with open(locale_h_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # Find and replace the #define HARDCODED_WEBUI_LOCALE line
+    pattern = r'(#define\s+HARDCODED_WEBUI_LOCALE\s+")[^"]*(")'
+    new_content = re.sub(pattern, rf'\1{locale_code}\2', content)
+    
+    if new_content != content:
+        with open(locale_h_path, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+        print(f"\nUpdated locale.h: HARDCODED_WEBUI_LOCALE = \"{locale_code}\"")
+        return True
+    else:
+        print(f"\nWarning: Could not find HARDCODED_WEBUI_LOCALE in locale.h")
+        return False
+
+
 def sync_html_file(html_path, translations, dry_run=False):
     """Sync a single HTML file with translations"""
     with open(html_path, 'r', encoding='utf-8') as f:
@@ -66,7 +91,7 @@ def sync_html_file(html_path, translations, dry_run=False):
         
         return match.group(0)
     
-    content = re.sub(r'data-i18n="([^"]+)">([^<]*?)(<\/)', replace_text_content, content)
+    content = re.sub(r'data-i18n=["\']([^"\']+)["\']>([^<]*?)(<\/)', replace_text_content, content)
     
     # Pattern 1b/1c: placeholder attribute (bidirectional)
     def replace_placeholder_di18n_first(match):
@@ -102,8 +127,8 @@ def sync_html_file(html_path, translations, dry_run=False):
         
         return match.group(0)
     
-    content = re.sub(r'data-i18n="([^"]+)"[^>]*placeholder="([^"]+)"', replace_placeholder_di18n_first, content)
-    content = re.sub(r'placeholder="([^"]+)"[^>]*data-i18n="([^"]+)"', replace_placeholder_ph_first, content)
+    content = re.sub(r'data-i18n=["\']([^"\']+)["\'][^>]*placeholder=["\']([^"\']+)["\']', replace_placeholder_di18n_first, content)
+    content = re.sub(r'placeholder=["\']([^"\']+)["\'][^>]*data-i18n=["\']([^"\']+)["\']', replace_placeholder_ph_first, content)
     
     # Pattern 1d/1e: value attribute (bidirectional)
     def replace_value_di18n_first(match):
@@ -138,8 +163,8 @@ def sync_html_file(html_path, translations, dry_run=False):
         
         return match.group(0)
     
-    content = re.sub(r'data-i18n="([^"]+)"[^>]*value="([^"]+)"', replace_value_di18n_first, content)
-    content = re.sub(r'value="([^"]+)"[^>]*data-i18n="([^"]+)"', replace_value_val_first, content)
+    content = re.sub(r'data-i18n=["\']([^"\']+)["\'][^>]*value=["\']([^"\']+)["\']', replace_value_di18n_first, content)
+    content = re.sub(r'value=["\']([^"\']+)["\'][^>]*data-i18n=["\']([^"\']+)["\']', replace_value_val_first, content)
     
     # Pattern 1f/1g: title attribute (bidirectional)
     def replace_title_di18n_first(match):
@@ -174,8 +199,8 @@ def sync_html_file(html_path, translations, dry_run=False):
         
         return match.group(0)
     
-    content = re.sub(r'data-i18n="([^"]+)"[^>]*title="([^"]+)"', replace_title_di18n_first, content)
-    content = re.sub(r'title="([^"]+)"[^>]*data-i18n="([^"]+)"', replace_title_ttl_first, content)
+    content = re.sub(r'data-i18n=["\']([^"\']+)["\'][^>]*title=["\']([^"\']+)["\']', replace_title_di18n_first, content)
+    content = re.sub(r'title=["\']([^"\']+)["\'][^>]*data-i18n=["\']([^"\']+)["\']', replace_title_ttl_first, content)
     
     # Pattern 1h/1i: alt attribute (bidirectional)
     def replace_alt_di18n_first(match):
@@ -210,8 +235,8 @@ def sync_html_file(html_path, translations, dry_run=False):
         
         return match.group(0)
     
-    content = re.sub(r'data-i18n="([^"]+)"[^>]*alt="([^"]+)"', replace_alt_di18n_first, content)
-    content = re.sub(r'alt="([^"]+)"[^>]*data-i18n="([^"]+)"', replace_alt_alt_first, content)
+    content = re.sub(r'data-i18n=["\']([^"\']+)["\'][^>]*alt=["\']([^"\']+)["\']', replace_alt_di18n_first, content)
+    content = re.sub(r'alt=["\']([^"\']+)["\'][^>]*data-i18n=["\']([^"\']+)["\']', replace_alt_alt_first, content)
     
     return content, fields_found, len(keys_found), fields_updated, len(keys_used), content != original_content
 
@@ -271,6 +296,21 @@ def main():
     locale_code = locale_args[0] if locale_args else 'en_US'
     
     print(f"{'[DRY RUN] ' if dry_run else ''}Syncing HTML/JS files with locale: {locale_code}")
+    
+    # Check for locale.h FIRST - before doing any work
+    locale_h_path = Path(__file__).parent / 'locale.h'
+    locale_h_exists = locale_h_path.exists()
+    
+    if locale_h_exists:
+        print(f"✓ locale.h is ready at {locale_h_path}\n")
+    elif dry_run:
+        print(f"⚠ WARNING: locale.h not found at {locale_h_path}")
+        print(f"  This is a dry-run, so proceeding anyway...\n")
+    else:
+        print(f"✗ ERROR: locale.h not found at {locale_h_path}")
+        print(f"  Cannot proceed without locale.h to update HARDCODED_WEBUI_LOCALE")
+        print(f"  Aborting.")
+        sys.exit(1)
     
     # Load translations
     translations = load_translations(locale_code)
@@ -352,6 +392,17 @@ def main():
     
     if dry_run:
         print("\nRun without --dry-run to apply changes")
+    else:
+        # Update locale.h to reflect the hardcoded locale (only after all files processed successfully)
+        if files_with_changes > 0:
+            # Final safety check before updating locale.h
+            locale_h_path = Path(__file__).parent / 'locale.h'
+            if locale_h_path.exists():
+                update_locale_h(locale_code)
+            else:
+                print(f"\n⚠ WARNING: locale.h disappeared! Cannot update HARDCODED_WEBUI_LOCALE")
+        elif total_files > 0:
+            print("\nNo files were updated, so locale.h was not modified.")
 
 
 if __name__ == '__main__':
