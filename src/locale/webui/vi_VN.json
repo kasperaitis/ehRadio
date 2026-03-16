@@ -140,7 +140,7 @@
   "msg_no_playlists": "Không có danh sách phát nào",
   "msg_no_stations_in_playlist": "Không có đài nào trong danh sách phát này",
   "msg_no_update": "Không có bản cập nhật",
-  "msg_ota_complete": "Cập nhật OTA hoàn tất. Radio sẽ khởi động lại, cập nhật tệp và khởi động lại một lần nữa. Quá trình này sẽ mất 1 hoặc 2 phút.",
+  "msg_ota_complete": "Cập nhật OTA hoàn tất. Radio sẽ khởi động lại, cập nhật tệp và khởi động lại một lần nữa. Quá trình này sẽ mất 3 phút.",
   "msg_ota_progress": "Cập nhật OTA: đã tải xuống {0}% | vui lòng chờ...",
   "msg_pl_empty": "Danh sách phát trống, không có gì để xuất.",
   "msg_pl_missing": "Đài {0} thiếu tên hoặc URL. Vui lòng điền tất cả các trường trước khi xuất.",

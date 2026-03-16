@@ -433,14 +433,23 @@ back to displaying the raw key name.
 | `lbl_off` / `lbl_on` | — | Toggle knob labels |
 | `
 
-Note thaa
-
 ---
-## Two Python GUI tools in `scripts/` assist with font glyph work:
+
+## Three Python GUI tools in `locale/` assist with `.json` file work:
 
 | Tool | Purpose |
 |---|---|
-| `scripts/glyph_creator_gui.py` | Create and edit individual glyph bitmaps in the Adafruit GLCD format. Supports importing and exporting `.c` font files. |
-| `scripts/glyph_compare_gui.py` | Visually compare two glyph sets side-by-side. Useful for auditing differences between `glcdfont_Latin.c` and `glcdfont_Cyrillic.c`. |
+| `scan_www_check_json.py` | Checks `.html` and`.js` files in the `data/www` folder against a `.json` file for keys - can automatically sort, and add & delete missing keys |
+| `hardcode_locale_to_webui.py` | This can replace all text in `.html` and`.js` files in the `data/www` folder using a locale `.json` file... will also update `#define HARDCODED_WEBUI_LOCALE` in `locale.h` to make sure the radio knows what it's hardcoded language is |
+| `make_data_www_locales_json.py` | Generates `locales.json` in the `data/www` folder using a list of all `.json` files for the locales dropdown selector in the Web UI |
 
-See `scripts/scripts.md` for usage instructions.
+---
+
+## Two Python GUI tools in `locale/glcdfont/glyph_scripts/` assist with font glyph work:
+
+| Tool | Purpose |
+|---|---|
+| `glyph_creator_gui.py` | Create and edit individual glyph bitmaps in the Adafruit GLCD format. Supports importing and exporting `.c` font files. |
+| `glyph_compare_gui.py` | Visually compare two glyph sets side-by-side. Useful for auditing differences between `glcdfont_Latin.c` and `glcdfont_Cyrillic.c`. |
+
+See `scripts.md` in the same folder for usage instructions.

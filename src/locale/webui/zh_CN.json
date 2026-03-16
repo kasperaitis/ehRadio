@@ -141,7 +141,7 @@
   "msg_no_playlists": "没有可用的播放列表",
   "msg_no_stations_in_playlist": "此播放列表中没有电台",
   "msg_no_update": "没有可用更新",
-  "msg_ota_complete": "OTA 更新完成。收音机将重启、更新文件并再次重启。这将需要1到2分钟。",
+  "msg_ota_complete": "OTA 更新完成。收音机将重启、更新文件并再次重启。这将需要3分钟。",
   "msg_ota_progress": "OTA 更新：已下载 {0}% | 请稍候...",
   "msg_pl_empty": "播放列表为空，无法导出。",
   "msg_pl_missing": "电台 {0} 缺少名称或 URL。导出前请填写所有字段。",

@@ -141,7 +141,7 @@
   "msg_no_playlists": "No playlists available",
   "msg_no_stations_in_playlist": "No stations in this playlist",
   "msg_no_update": "No Update Available",
-  "msg_ota_complete": "OTA Update Complete. Radio will reboot, update files, and reboot again. This will take 1 or 2 minutes.",
+  "msg_ota_complete": "OTA Update Complete. Radio will reboot, update files, and reboot again. This will take 3 minutes.",
   "msg_ota_progress": "OTA Update: {0}% downloaded | please wait...",
   "msg_pl_empty": "Playlist is empty, nothing to export.",
   "msg_pl_missing": "Station {0} is missing name or URL. Please fill in all fields before exporting.",

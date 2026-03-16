@@ -140,7 +140,7 @@
   "msg_no_playlists": "사용 가능한 재생목록 없음",
   "msg_no_stations_in_playlist": "이 재생목록에 방송국 없음",
   "msg_no_update": "사용 가능한 업데이트 없음",
-  "msg_ota_complete": "OTA 업데이트 완료. 라디오가 재부팅하고 파일을 업데이트한 후 다시 재부팅합니다. 1~2분이 소요됩니다.",
+  "msg_ota_complete": "OTA 업데이트 완료. 라디오가 재부팅하고 파일을 업데이트한 후 다시 재부팅합니다. 3분이 소요됩니다.",
   "msg_ota_progress": "OTA 업데이트: {0}% 다운로드 완료 | 잠시 기다려 주세요...",
   "msg_pl_empty": "재생목록이 비어 있어 내보낼 수 없습니다.",
   "msg_pl_missing": "방송국 {0}에 이름 또는 URL이 없습니다. 내보내기 전에 모든 필드를 입력하세요.",

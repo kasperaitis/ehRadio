@@ -148,7 +148,7 @@ function onMessage(event) {
         const status = getId('uploadstatus');
         if(status) status.textContent = t('msg_ota_progress', 'OTA Update: {0}% downloaded | please wait...', data.onlineupdateprogress);
         if (data.onlineupdateprogress >= 100) {
-          getId("uploadstatus").textContent = t('msg_ota_complete', 'OTA Update Complete. Radio will reboot, update files, and reboot again. This will take 1 or 2 minutes.');
+          getId("uploadstatus").textContent = t('msg_ota_complete', 'OTA Update Complete. Radio will reboot, update files, and reboot again. This will take 3 minutes.');
           rebootingProgress(60);
         }
       }

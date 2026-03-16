@@ -266,13 +266,10 @@ def acquire_lock():
     # Create lock file
     LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
     LOCK_FILE.touch()
-    print(f"Build lock acquired: {LOCK_FILE}")
+    print(f"\nBuild lock acquired: {LOCK_FILE}")
 
 def compress_and_hide_originals(source, target, env):
     """Compress web files and temporarily move originals so only .gz files are in SPIFFS"""
-    # Acquire lock before doing anything
-    acquire_lock()
-    
     print("\n" + "="*70)
     print("PRE-BUILD: Compressing web files for SPIFFS...")
     print("="*70)
@@ -365,6 +362,9 @@ import sys
 any_fs_target = any(t in sys.argv for t in ["uploadfs", "buildfs", "--target"])
 
 if any_fs_target:
+    # Acquire before doing anything
+    acquire_lock()
+    
     # Delete cached spiffs.bin to force rebuild
     spiffs_bin = Path(env.subst("$BUILD_DIR")) / "spiffs.bin"
     if spiffs_bin.exists():
