@@ -451,9 +451,9 @@
 /* If yes, then you should over-ride this */
 /* Over-ride with extreme caution!! */
 /* You must prepare the HTML files with hardcode_locale_to_html.py */
-/* That script will automatically change this line anyways */
-#undef HARDCODED_WEBUI_LOCALE
-#define HARDCODED_WEBUI_LOCALE "en_US"
+#ifndef HARDCODED_WEBUI_LOCALE
+  #define HARDCODED_WEBUI_LOCALE "en_US"
+#endif
 
 //==================================================
 // Include the selected locale file inside LANG namespace
