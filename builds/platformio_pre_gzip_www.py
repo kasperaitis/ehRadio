@@ -2,10 +2,12 @@ Import("env")
 import gzip
 import os
 import shutil
+import time
 from pathlib import Path
 
 # Temp directory outside data folder
 TEMP_BACKUP_DIR = Path(".pio/temp_www_backup")
+LOCK_FILE = Path(".pio/temp_www_backup.lock")
 
 def should_compress(source_file, gz_file):
     """Check if source file needs compression (newer than .gz or .gz doesn't exist)"""
@@ -231,8 +233,46 @@ def deploy_locale_json(source, target, env):
     print(f"  [locale] WebUI locale deployed for {lang_code}")
 
 
+def acquire_lock():
+    """Wait for and acquire the build lock file to prevent concurrent builds"""
+    max_wait = 300  # Maximum wait time in seconds
+    wait_interval = 1  # Check every 1 second
+    elapsed = 0
+    
+    while LOCK_FILE.exists():
+        if elapsed == 0:
+            print("\n" + "="*70)
+            print("WAITING: Another build is in progress. Waiting up to 3 minutes...")
+            print("="*70)
+        time.sleep(wait_interval)
+        elapsed += wait_interval
+        if elapsed >= max_wait:
+            # ABORT the build - do NOT proceed if another build is still running
+            print("\n" + "="*70)
+            print(f"ERROR: Lock file timeout after {max_wait}s")
+            print(f"Another build process appears stuck or is still running.")
+            print(f"Lock file: {LOCK_FILE}")
+            print(f"")
+            print(f"If you're certain no other build is running, manually delete:")
+            print(f"  {LOCK_FILE}")
+            print("="*70)
+            raise SystemExit(1)  # Abort the build completely
+    
+    # Extra safety delay if we had to wait
+    if elapsed > 0:
+        print("Previous build finished, waiting 2s for safety...")
+        time.sleep(2)
+    
+    # Create lock file
+    LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+    LOCK_FILE.touch()
+    print(f"Build lock acquired: {LOCK_FILE}")
+
 def compress_and_hide_originals(source, target, env):
     """Compress web files and temporarily move originals so only .gz files are in SPIFFS"""
+    # Acquire lock before doing anything
+    acquire_lock()
+    
     print("\n" + "="*70)
     print("PRE-BUILD: Compressing web files for SPIFFS...")
     print("="*70)

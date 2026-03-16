@@ -33,9 +33,6 @@ static bool onImprovCustomConnect(const char* ssid, const char* password);
 void ticks() {
   if (!display.ready()) return; //waiting for SD is ready
   pm.on_ticker();
-  static const uint16_t weatherSyncInterval=WEATHER_SYNC_INTERVAL;
-  //static const uint16_t weatherSyncIntervalFail=10;
-  static const uint32_t timeSyncInterval=TIME_SYNC_INTERVAL;
   static uint32_t timeSyncTicks = 0;
   static uint16_t weatherSyncTicks = 0;
   static bool divrssi;
@@ -56,10 +53,14 @@ void ticks() {
         network.forceTimeSync = true;
       }
     }
+    // Time sync interval: config value is in hours, convert to seconds
+    uint32_t timeSyncInterval = (uint32_t)config.store.timesyncinterval * 3600;
     if (timeSyncTicks >= timeSyncInterval) {
       timeSyncTicks=0;
       network.forceTimeSync = true;
     }
+    // Weather sync interval: config value is in minutes, convert to seconds
+    uint16_t weatherSyncInterval = (uint16_t)config.store.weathersyncinterval * 60;
     if (weatherSyncTicks >= weatherSyncInterval) {
       weatherSyncTicks=0;
       network.forceWeather = true;
@@ -492,7 +493,7 @@ void MyNetwork::raiseSoftAP() {
   dnsServer->start(53, "*", WiFi.softAPIP());
   Serial.println("##[BOOT]#");
   BOOTLOG("************************************************");
-  BOOTLOG("Running in AP mode");
+  BOOTLOG("Running in AP/Improv mode");
   #ifdef AP_PASSWORD
     BOOTLOG("Connect to AP %s with password %s", AP_SSID, AP_PASSWORD);
   #else
@@ -618,6 +619,7 @@ bool getWeather_OpenMeteo(char *wstr) {
     
     String response = file.readString();
     file.close();
+    SPIFFS.remove(TMP_PATH);
     
     // Parse JSON with ArduinoJson
     JsonDocument doc;
@@ -628,11 +630,11 @@ bool getWeather_OpenMeteo(char *wstr) {
     }
     
     // Cache elevation if available and not already cached
-    if (doc["elevation"].is<float>() && strlen(config.store.weatherelev) == 0) {
+    if (doc["elevation"].is<float>() && config.store.weatherelevation == 0) {
       float elevation = doc["elevation"];
-      snprintf(config.store.weatherelev, sizeof(config.store.weatherelev), "%.0f", elevation);
-      config.saveValue(config.store.weatherelev, config.store.weatherelev, sizeof(config.store.weatherelev), true);
-      Serial.printf("Weather: Elevation retrieved from Open-Meteo: %.0f meters\n", elevation);
+      config.store.weatherelevation = (int16_t)elevation;
+      config.saveValue(&config.store.weatherelevation, config.store.weatherelevation);
+      Serial.printf("Weather: Elevation retrieved from Open-Meteo: %d meters\n", config.store.weatherelevation);
     }
     
     JsonObject current = doc["current"];
@@ -761,6 +763,7 @@ bool getWeather_OpenWeather25(char *wstr) {
     
     String response = file.readString();
     file.close();
+    SPIFFS.remove(TMP_PATH);
     
     // Parse JSON with ArduinoJson
     JsonDocument doc;
@@ -845,36 +848,67 @@ bool getWeather_OpenWeather25(char *wstr) {
 }
 
 // Helper: Fetch elevation from open-elevation.com API (fallback for OW 3.0)
-float fetchElevation(float lat, float lon) {
+// Helper: Fetch and cache elevation from APIs (Open-Elevation with Open-Meteo fallback)
+void fetchAndCacheElevation() {
+  float lat = atof(config.store.weatherlat);
+  float lon = atof(config.store.weatherlon);
+  float elevation = 0.0;
+  bool success = false;
+  
+  // Try Open-Elevation API first
+  Serial.println("Weather: Getting elevation from Open-Elevation...");
   char url[256];
   sprintf(url, "http://api.open-elevation.com/api/v1/lookup?locations=%.4f,%.4f", lat, lon);
   
-  // Download JSON response to temp file (EspFileUpdater handles chunked encoding)
-  if (!downloadToTempFile(url)) {
-    Serial.println("Weather: Failed to download elevation data");
-    return 0.0;
+  if (downloadToTempFile(url)) {
+    File file = SPIFFS.open(TMP_PATH, "r");
+    if (file) {
+      String response = file.readString();
+      file.close();
+      
+      JsonDocument doc;
+      if (deserializeJson(doc, response) == DeserializationError::Ok) {
+        if (doc["results"][0]["elevation"].is<float>()) {
+          elevation = doc["results"][0]["elevation"];
+          success = true;
+        }
+      }
+    }
   }
   
-  // Read the downloaded JSON file
-  File file = SPIFFS.open(TMP_PATH, "r");
-  if (!file) {
-    Serial.println("Weather: Failed to open temp file");
-    return 0.0;
+  // Fall back to Open-Meteo if Open-Elevation failed
+  if (!success) {
+    Serial.println("Weather: Getting elevation from Open-Meteo...");
+    sprintf(url, "https://api.open-meteo.com/v1/elevation?latitude=%.4f&longitude=%.4f", lat, lon);
+    
+    if (downloadToTempFile(url)) {
+      File file = SPIFFS.open(TMP_PATH, "r");
+      if (file) {
+        String response = file.readString();
+        file.close();
+        
+        JsonDocument doc;
+        if (deserializeJson(doc, response) == DeserializationError::Ok) {
+          if (doc["elevation"].is<float>()) {
+            elevation = doc["elevation"];
+            success = true;
+          }
+        }
+      }
+    }
   }
   
-  String response = file.readString();
-  file.close();
+  // Clean up temp file
+  SPIFFS.remove(TMP_PATH);
   
-  JsonDocument doc;
-  DeserializationError error = deserializeJson(doc, response);
-  if (!error && doc["results"][0]["elevation"].is<float>()) {
-    float elevation = doc["results"][0]["elevation"];
-    Serial.printf("Weather: Elevation retrieved from open-elevation.com: %.0f meters\n", elevation);
-    return elevation;
+  // Cache elevation if successfully retrieved
+  if (success && elevation > 0.0) {
+    config.store.weatherelevation = (int16_t)elevation;
+    config.saveValue(&config.store.weatherelevation, config.store.weatherelevation);
+    Serial.printf("Weather: Caching elevation: %d meters\n", config.store.weatherelevation);
+  } else {
+    Serial.println("Weather: Failed to retrieve elevation from all sources");
   }
-  
-  Serial.println("Weather: Failed to parse elevation data");
-  return 0.0;
 }
 
 // Helper: Calculate ground-level pressure from sea-level pressure using elevation
@@ -916,6 +950,7 @@ bool getWeather_OpenWeather30(char *wstr) {
     
     String response = file.readString();
     file.close();
+    SPIFFS.remove(TMP_PATH);
     
     // Parse JSON with ArduinoJson
     JsonDocument doc;
@@ -944,16 +979,13 @@ bool getWeather_OpenWeather30(char *wstr) {
     
     // Get or fetch elevation for barometric adjustment
     float elevation = 0.0;
-    if (strlen(config.store.weatherelev) > 0) {
-      elevation = atof(config.store.weatherelev);
-      Serial.printf("Weather: Using cached elevation: %.0f meters\n", elevation);
+    if (config.store.weatherelevation != 0) {
+      elevation = (float)config.store.weatherelevation;
+      Serial.printf("Weather: Using cached elevation: %d meters\n", config.store.weatherelevation);
     } else {
-      // Fetch elevation from open-elevation.com
-      elevation = fetchElevation(atof(config.store.weatherlat), atof(config.store.weatherlon));
-      if (elevation > 0.0) {
-        snprintf(config.store.weatherelev, sizeof(config.store.weatherelev), "%.0f", elevation);
-        config.saveValue(config.store.weatherelev, config.store.weatherelev, sizeof(config.store.weatherelev), true);
-      }
+      // Fetch and cache elevation
+      fetchAndCacheElevation();
+      elevation = (float)config.store.weatherelevation;
     }
     
     // Calculate ground-level pressure from sea-level pressure

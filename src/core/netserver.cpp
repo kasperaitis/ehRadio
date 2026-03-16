@@ -456,23 +456,25 @@ void NetServer::processQueue() {
                                   config.store.volumepage,
                                   config.store.clock12);
                                   break;
-      case GETLOCALE:     sprintf (wsbuf, "{\"locale_webui\":\"%s\",\"locale_disp\":\"%s\",\"tz_name\":\"%s\",\"tzposix\":\"%s\",\"sntp1\":\"%s\",\"sntp2\":\"%s\"}",
+      case GETLOCALE:     sprintf (wsbuf, "{\"locale_webui\":\"%s\",\"locale_disp\":\"%s\",\"tz_name\":\"%s\",\"tzposix\":\"%s\",\"sntp1\":\"%s\",\"sntp2\":\"%s\",\"timeinterval\":%d}",
                                   config.store.locale_webui,
                                   DSP_LOCALE,
                                   config.store.tz_name,
                                   config.store.tzposix,
                                   config.store.sntp1,
-                                  config.store.sntp2);
+                                  config.store.sntp2,
+                                  config.store.timesyncinterval);
                                   break;
-      case GETWEATHER:    sprintf (wsbuf, "{\"wen\":%d,\"wlat\":\"%s\",\"wlon\":\"%s\",\"wimperial\":%d,\"wapi\":\"%s\",\"welev\":\"%s\",\"wlang\":\"%s\",\"wkey\":\"%s\"}",
+      case GETWEATHER:    sprintf (wsbuf, "{\"wen\":%d,\"wlat\":\"%s\",\"wlon\":\"%s\",\"wimperial\":%d,\"wapi\":\"%s\",\"welev\":\"%d\",\"wlang\":\"%s\",\"wkey\":\"%s\",\"winterval\":%d}",
                                   config.store.showweather,
                                   config.store.weatherlat,
                                   config.store.weatherlon,
                                   config.store.weatherimperial ? 1 : 0,
                                   config.store.weatherapi,
-                                  config.store.weatherelev,
+                                  config.store.weatherelevation,
                                   config.store.weatherlang,
-                                  config.store.weatherkey);
+                                  config.store.weatherkey,
+                                  config.store.weathersyncinterval);
                                   break;
       case GETMQTT:       sprintf (wsbuf, "{\"mqttenable\":%d,\"mqtthost\":\"%s\",\"mqttport\":\"%d\",\"mqttuser\":\"%s\",\"mqttpass\":\"%s\",\"mqtttopic\":\"%s\"}",
                                   config.store.mqttenable,

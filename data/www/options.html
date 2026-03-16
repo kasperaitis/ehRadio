@@ -250,6 +250,15 @@
               <input type="text" id="sntp2" name="sntp2" value="" maxlength="34" />
             </div>
           </div>
+
+          <div class="flex-row">
+            <div class="inputwrap pad">
+              <span class="inputtitle" data-i18n="lbl_time_interval">Time Sync Interval (hours)</span>
+              <span class="inputinfo" id="sltimeintervalinfo">1</span>
+              <input type="range" id="timeinterval" data-command="timeinterval" data-slaveid="sltimeintervalinfo" min="1" max="24" value="1">
+            </div>
+          </div>
+
           <div class="flex-row last">
             <div class="fb hl local" data-command="applylocale" data-i18n="btn_apply">Apply</div>
           </div>
@@ -317,7 +326,7 @@
         <section class="group group_weather hidden" id="group_weather">
           <div class="title"><span data-i18n="title_weather">Weather</span></div>
           <div class="reset" data-name="weather" title="reset"></div>
-          <div class="flex-row group group_touch hidden">
+          <div class="flex-row">
             <div class="inputwrap center">
               <span class="inputtitle" data-i18n="lbl_show_weather">Show Weather</span>
               <div class="checkbox" id="wen" data-command="wenable"><div class="knob"></div></div>
@@ -325,7 +334,7 @@
           </div>
           <div class="flex-row">
             <div class="inputwrap">
-              <span class="inputtitle">Weather Provider</span>
+              <span class="inputtitle" data-i18n="lbl_weather_api">Weather Provider</span>
               <select type="text" id="wapi" name="wapi">
                 <option value="OW25">OpenWeather API 2.5</option>
                 <option value="OW30">OpenWeather API 3.0</option>
@@ -333,6 +342,15 @@
               </select>
             </div>
           </div>
+
+          <div class="flex-row">
+            <div class="inputwrap pad">
+              <span class="inputtitle" data-i18n="lbl_api_interval">API Sync Interval (min)</span>
+              <span class="inputinfo" id="slwintervalinfo">15</span>
+              <input type="range" id="winterval" data-command="winterval" data-slaveid="slwintervalinfo" min="10" max="60" value="15">
+            </div>
+          </div>
+
           <div class="flex-row">
             <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_latitude">Latitude</span>
@@ -346,7 +364,7 @@
           </div>
           <div class="flex-row">
             <div class="inputwrap">
-              <span class="inputtitle" data-i18n="lbl_ow_units">Units of measurement</span>
+              <span class="inputtitle" data-i18n="lbl_units">Units of measurement</span>
               <span class="inputtitle">[<a href="https://openweathermap.org/current?collection=current_forecast#data" target="_blank">?</a>]</span>
               <select type="text" id="wimperial" name="wimperial">
                 <option value="0">Metric (°C, hPa, m/s)</option>
@@ -356,14 +374,14 @@
           </div>
           <div class="flex-row group_ow hidden" id="weatherlangrow">
             <div class="inputwrap">
-              <span class="inputtitle" data-i18n="lbl_ow_lang">Language</span>
+              <span class="inputtitle" data-i18n="lbl_language">Language</span>
               <span class="inputtitle">[<a href="https://openweathermap.org/current?collection=current_forecast#multi" target="_blank">?</a>]</span>
               <input type="text" id="wlang" name="wlang" maxlength="10" />
             </div>
           </div>
           <div class="flex-row group_ow hidden" id="weatherkeyrow">
             <div class="inputwrap">
-              <span class="inputtitle" data-i18n="lbl_ow_key">Openweathermap API Key</span>
+              <span class="inputtitle" data-i18n="lbl_owm_key">Openweathermap API Key</span>
               <span class="inputtitle">[<a href="https://openweathermap.org/appid" target="_blank">?</a>]</span>
               <input type="text" id="wkey" value="" />
             </div>

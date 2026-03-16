@@ -24,9 +24,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"
   #endif
@@ -37,9 +34,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "be"
@@ -52,9 +46,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "bg"
   #endif
@@ -65,9 +56,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "hr"  /* Bosnian not available, using Croatian */
@@ -80,9 +68,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "cz"
   #endif
@@ -93,9 +78,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "da"
@@ -108,9 +90,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "de"
   #endif
@@ -121,9 +100,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "el"
@@ -136,9 +112,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL true  /* US uses imperial */
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"
   #endif
@@ -149,9 +122,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "es"
@@ -164,9 +134,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"  /* Estonian not available */
   #endif
@@ -177,9 +144,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "fi"
@@ -192,9 +156,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "fr"
   #endif
@@ -205,9 +166,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "hr"
@@ -220,9 +178,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "hu"
   #endif
@@ -233,9 +188,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "is"
@@ -248,9 +200,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"  /* Kazakh not available */
   #endif
@@ -261,9 +210,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"  /* Kyrgyz not available */
@@ -276,9 +222,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "lt"
   #endif
@@ -289,9 +232,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "la"
@@ -304,9 +244,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "sr"  /* Montenegrin not available, using Serbian */
   #endif
@@ -317,9 +254,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "mk"
@@ -332,9 +266,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"  /* Mongolian not available */
   #endif
@@ -345,9 +276,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "nl"
@@ -360,9 +288,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "no"
   #endif
@@ -373,9 +298,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "pl"
@@ -388,9 +310,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "pt"
   #endif
@@ -401,9 +320,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "ro"
@@ -416,9 +332,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "ru"
   #endif
@@ -429,9 +342,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "sk"
@@ -444,9 +354,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "sl"
   #endif
@@ -457,9 +364,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "sr"
@@ -472,9 +376,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "sv"
   #endif
@@ -485,9 +386,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"  /* Tajik not available */
@@ -500,9 +398,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "tr"
   #endif
@@ -513,9 +408,6 @@
   #endif
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
-  #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
   #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "uk"
@@ -528,9 +420,6 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_CYRILLIC
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"  /* Uzbek not available */
   #endif
@@ -542,12 +431,14 @@
   #if !defined(L10N_CP_CYRILLIC) && !defined(L10N_CP_LATIN)
     #define L10N_CP_LATIN
   #endif
-  #ifndef WEATHER_IMPERIAL
-    #define WEATHER_IMPERIAL false
-  #endif
   #ifndef WEATHER_LANG
     #define WEATHER_LANG "en"
   #endif
+#endif
+
+/* Most of the world uses Metric but you can over-ride in myoptions.h */
+#ifndef WEATHER_IMPERIAL
+  #define WEATHER_IMPERIAL false
 #endif
 
 /* Default is to use the same language in the WebUI as the display */
@@ -555,9 +446,6 @@
 #ifndef WEBUI_LOCALE
   #define WEBUI_LOCALE DSP_LOCALE
 #endif
-
-/* Weather defaults are set per-language above and can be overridden in myoptions.h */
-/* Runtime validation of WEATHER_IMPERIAL should be done in config code, not here */
 
 /* Is the hardcoded text in the HTML files not English? */
 /* If yes, then you should over-ride this */

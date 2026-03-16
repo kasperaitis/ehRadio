@@ -240,6 +240,15 @@ function onMessage(event) {
       if (document.getElementById("sntp2")) document.getElementById("sntp2").value=data.sntp2;
       if (document.getElementById("sntp1")) document.getElementById("sntp1").value=data.sntp1;
       
+      // Handle time sync interval slider
+      if (data.timeinterval !== undefined) {
+        const timeintervalEl = document.getElementById("timeinterval");
+        if (timeintervalEl) {
+          timeintervalEl.value = data.timeinterval;
+          fillSlider(timeintervalEl);
+        }
+      }
+      
       // Store locale data for pending application after locales.json loads
       if (data.locale_webui && data.locale_disp) {
         pendingLocaleData = { locale_webui: data.locale_webui, locale_disp: data.locale_disp };

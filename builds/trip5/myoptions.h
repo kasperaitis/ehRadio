@@ -11,6 +11,7 @@
 //#define ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS        // Ali Speaker with OLED, VS1053, 3 Buttons
 //#define ESP32_S3_TRIP5_ST7735_PCM_1BUTTON            // Color TFT (red board) with PCM I2S, 1 Button
 //#define ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON           // Big Screen with PCM, 1 button
+//#define ESP32_S3_TRIP5_ES3C28P                       // ESP32-S3 ES3C28P Dev Board (attached 240x320 screen and ES8311 + FM8002E Decoder)
 //#define ESP32_S3_KASPERAITIS_ES3C28P                 // ESP32-S3 ES3C28P Dev Board (attached 240x320 screen and ES8311 + FM8002E Decoder)
 
 /* --- FIRMWARE FILENAME & BOARD --- */
@@ -48,6 +49,10 @@
   #undef FIRMWARE
   #define FIRMWARE "esp32_s3_trip5_ili9488_pcm_1button.bin"
   #define ARDUINO_ESP32S3_DEV
+#elif defined(ESP32_S3_TRIP5_ES3C28P)
+  #undef FIRMWARE
+  #define FIRMWARE "esp32_s3_trip5_es3c28p.bin"
+  #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #undef FIRMWARE
   #define FIRMWARE "esp32_s3_kasperaitis_es3c28p.bin"
@@ -66,7 +71,7 @@
 #if defined(ESP32_S3_TRIP5_SH1106_PCM_REMOTE)
   #define LED_BUILTIN_S3      8
   #define LED_INVERT          true
-#elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
+#elif defined(ESP32_S3_KASPERAITIS_ES3C28P) || defined(ESP32_S3_TRIP5_ES3C28P)
   #define USE_RGB_LED     true         /* Enable single-pin RGB LED (WS2812 style) on ES3C28P boards */
   #ifndef RGB_LED_PIN
     #define RGB_LED_PIN   42
@@ -123,7 +128,7 @@
   #define BRIGHTNESS_PIN  4       /* Red Smaller TFT doesn't have brightness control so leave commented? use unused pin? or 255? */
   #define TFT_RST         -1      /* set to -1 if connected to ESP EN pin */
 #endif
-#if defined(ESP32_S3_KASPERAITIS_ES3C28P)
+#if defined(ESP32_S3_KASPERAITIS_ES3C28P) || defined(ESP32_S3_TRIP5_ES3C28P)
   #define DSP_MODEL       DSP_ILI9341
   #define SCREEN_INVERT   true
   #define TFT_CS          10
@@ -137,16 +142,6 @@
   #define TFT_MISO        13
   #define BRIGHTNESS_PIN  TFT_BL
 #endif
-
-/* --- LANGUAGE --- */
-/* Locale codes: be_BY(Belarusian), bg_BG(Bulgarian), bs_BA(Bosnian), cs_CZ(Czech), da_DK(Danish), de_DE(German), el_GR(Greek), en_CA(Canadian English), en_US(English), es_ES(Spanish), et_EE(Estonian), fi_FI(Finnish), fr_CA(Canadian French), fr_FR(French), hr_HR(Croatian), hu_HU(Hungarian), is_IS(Icelandic), kk_KZ(Kazakh), ky_KG(Kyrgyz), lt_LT(Lithuanian), lv_LV(Latvian), me_ME(Montenegrin), mk_MK(Macedonian), mn_MN(Mongolian), nl_NL(Dutch), no_NO(Norwegian), pl_PL(Polish), pt_PT(Portuguese), ro_RO(Romanian), ru_RU(Russian), sk_SK(Slovak), sl_SI(Slovenian), sr_RS(Serbian), sv_SE(Swedish), tg_TJ(Tajik), tr_TR(Turkish), uk_UA(Ukrainian), uz_UZ(Uzbek) */
-// #define DSP_LANGUAGE_lt_LT
-
-/* Optional: set a different language for the WebUI only.  If omitted the UI will use the same value as DSP_LANGUAGE.  Also, this will still be changeable in the WebUI */
-//#define WEBUI_LANGUAGE_en_US
-
-/* Codepage for display glyph mapping: L10N_CP_LATIN or L10N_CP_CYRILLIC */
-/* This is now auto-detected based on DSP_LANGUAGE, but can be overridden if needed */
 
 
 /* --- AUDIO DECODER --- */
@@ -174,7 +169,7 @@
   #define I2S_LRC         10
   #define VS1053_CS       255     /* set to 255 to disable VS1053 */
 #endif
-#if defined(ESP32_S3_KASPERAITIS_ES3C28P)
+#if defined(ESP32_S3_KASPERAITIS_ES3C28P) || defined(ESP32_S3_TRIP5_ES3C28P)
   #define USE_ES8311                  /* a special define for a special decoder */
   /* ES3C28P I2S pins (from LCDWiki / user) */
   #define I2S_MCLK        4
@@ -194,13 +189,14 @@
   #ifndef ES8311_MAX_I2S
     #define ES8311_MAX_I2S 180
   #endif
+  #define PLAYER_FORCE_MONO true
   #define VS1053_CS       255     /* set to 255 to disable VS1053 */
 #endif
 
 
 /* --- TOUCH --- */
 
-#if defined(ESP32_S3_KASPERAITIS_ES3C28P)
+#if defined(ESP32_S3_KASPERAITIS_ES3C28P) || defined(ESP32_S3_TRIP5_ES3C28P)
   // For some ES3C28P boards the touch controller may be D-FT6336G family — set to TS_MODEL_FT6336 if required
   #define TS_MODEL            TS_MODEL_FT6336
   #define TS_SDA              16
@@ -286,7 +282,7 @@
   #define SD_SPIPINS      21, 2, 1        /* SCK, MISO, MOSI */
   #define SDC_CS          47
   #define SDSPISPEED      40000000       /* Default speed 20000000 */
-#elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
+#elif defined(ESP32_S3_KASPERAITIS_ES3C28P) || defined(ESP32_S3_TRIP5_ES3C28P)
   #define SD_SPIPINS      38, 39, 40     /* SCK, MISO, MOSI */
   #define SDC_CS          47
   #define SDSPISPEED      40000000       /* Default speed 20000000 */
@@ -312,11 +308,6 @@
   #define BATTERY_IMMEDIATE_PERCENT_THRESHOLD 20 /* percent */
   #define BATTERY_CANDIDATE_PERCENT_DELTA 1 /* percent */
   #define BATTERY_SUSTAINED_PERCENT_WINDOW_THRESHOLD 0 /* percent over hold window */
-
-  /* --- Plugin BacklightDown --- */
-
-  //#define DOWN_INTERVAL 60   // seconds before auto-dim
-  //#define DOWN_LEVEL    50   // optional: target PWM level (0..255). 64 ≈ 25% brightness
 #endif
 
 
@@ -332,7 +323,8 @@
 
 #elif defined(ESP32_S3_TRIP5_ST7735_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SH1106_PCM_REMOTE) ||\
       defined(ESP32_S3_TRIP5_SH1106_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SSD1306X32_PCM_1BUTTON) ||\
-      defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS ) || defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON)
+      defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS ) || defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON) ||\
+      defined(ESP32_S3_TRIP5_ES3C28P)
   #define SMART_START true
   #define SD_SHUFFLE true
   #define SHOW_AUDIO_INFO true
@@ -343,9 +335,8 @@
   #define TIMEZONE_POSIX  "AST4ADT,M3.2.0,M11.1.0"
   #define SNTP_1          "ca.pool.ntp.org"
   #define SNTP_2          "pool.ntp.org"
-  #define WEATHER_LAT     "44.6453"       /* latitude */
-  #define WEATHER_LON     "-63.5724"      /* longitude */
-  #define HIDE_WEATHER
+  #define WEATHER_LAT     "44.64738"       /* latitude */
+  #define WEATHER_LON     "-63.58029"      /* longitude */
   #define MQTT_ENABLE
   #define PLAYLIST_DEFAULT_URL "https://github.com/trip5/webstations/releases/latest/download/trip5-radio-playlist.csv" /* can be CSV or JSON */
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
@@ -377,7 +368,7 @@
       defined(ESP32_S3_TRIP5_ST7735_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SH1106_PCM_REMOTE) ||\
       defined(ESP32_S3_TRIP5_SH1106_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SSD1306X32_PCM_1BUTTON) ||\
       defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS ) || defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON) ||\
-      defined(ESP32_S3_KASPERAITIS_ES3C28P)
+      defined(ESP32_S3_KASPERAITIS_ES3C28P) || defined(ESP32_S3_TRIP5_ES3C28P)
   #define LOOP_TASK_STACK_SIZE 16  /* Compiler default is 8KB but seems safe on ESP32-S3 to increase to 16KB for audio decoding + concurrent tasks / 8KB is safe when using a VS1053 decoder */
   #define CONFIG_ASYNC_TCP_QUEUE_SIZE 64
   #define SEARCHRESULTS_BUFFER 1024*32 // 32KB matches chunk sizes from radio-browser.info but likely only good for ESP32-S3
@@ -387,14 +378,14 @@
 
 /* --- USEFUL OPTIONS --- */
 
-/* --- Need a text pre-processor because your display is printing garbage? --- */
-
 /* --- Hate the idea of your device reporting to Radio Browser API which stations you like? --- */
 //#define RADIO_BROWSER_NO_SEND_CLICKS
 
 /* --- Don't want to see curated lists? --- */
 //#define CURATED_LISTS false
 
+/* --- Want your weather in freedom units? --- */
+//#define WEATHER_IMPERIAL true
 
 /* Only use this if you've decided to use your own Github as the source of files */
 /* ...or your firmware is not available from Trip5's Github... sorry! */

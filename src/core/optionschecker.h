@@ -17,9 +17,16 @@
 #  error ONLY MODULES "ESP32 Dev Module", "ESP32 Wrover Module" AND "ESP32 S3 Dev Module" ARE SUPPORTED. PLEASE SELECT ONE OF THEM
 #endif
 
-/* Quick error check */
 #if (defined(L10N_CP_CYRILLIC) && defined(L10N_CP_LATIN))
 #  error Why are L10N_CP_CYRILLIC and L10N_CP_LATIN both defined? Do not define 2 codepages!
+#endif
+
+#if defined(TIME_SYNC_INTERVAL) && (TIME_SYNC_INTERVAL < 1 || TIME_SYNC_INTERVAL > 24)
+#  error TIME_SYNC_INTERVAL must be a number from 1 to 24
+#endif
+
+#if defined(WEATHER_SYNC_INTERVAL) && (WEATHER_SYNC_INTERVAL < 1 || WEATHER_SYNC_INTERVAL > 24)
+#  error WEATHER_SYNC_INTERVAL must be a number from 10 to 60
 #endif
 
 #endif

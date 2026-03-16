@@ -4,6 +4,7 @@ from pathlib import Path
 
 # Temp directory where originals were backed up
 TEMP_BACKUP_DIR = Path(".pio/temp_www_backup")
+LOCK_FILE = Path(".pio/temp_www_backup.lock")
 
 def restore_and_cleanup(source, target, env):
     """Restore original files and delete all .gz files after SPIFFS build"""
@@ -54,12 +55,16 @@ def restore_and_cleanup(source, target, env):
     
     # Clean up deployed locale files (deployed during pre-build, should not remain in source)
     import re
-    data_dir = Path("data/www")
     locale_pattern = re.compile(r'^[a-z]{2}_[A-Z]{2}\.json$')
     for locale_file in data_dir.glob("*.json"):
         if locale_pattern.match(locale_file.name):
             locale_file.unlink()
             print(f"Removed {locale_file.name}")
+    
+    # Release the build lock
+    if LOCK_FILE.exists():
+        LOCK_FILE.unlink()
+        print(f"\nBuild lock released: {LOCK_FILE}")
     
     print("-"*70)
     print(f"data/www now contains only original source files")

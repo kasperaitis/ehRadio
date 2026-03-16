@@ -27,7 +27,7 @@
 static const char* wwwFiles[] = {"curated.js", "dragpl.js", "ir.js", "locale.js", "options.js", "playstation.js", "script.js", "search.js", "updform.js",
                                  "logo.svg", "icon.png", "locales.json", "rb_srvrs.json", "timezones.json", "style.css", "theme.css",
                                  "curated.html", "irrecord.html", "options.html", "search.html", "updform.html",
-                                 "player.html"}; // keep main page at end (deleted when upgraded, so user sees emptyfs_html)
+                                 "player.html"}; // keep main page at end (deleted when upgraded, last to be downloaded, so user sees emptyfs_html with wait message)
 static const size_t wwwFilesCount = sizeof(wwwFiles) / sizeof(wwwFiles[0]);
 
 // List of optional data files
@@ -479,7 +479,8 @@ void Config::resetSystem(const char *val, uint8_t clientId) {
     saveValue(store.tz_name, TIMEZONE_NAME, sizeof(store.tz_name), false);
     saveValue(store.tzposix, TIMEZONE_POSIX, sizeof(store.tzposix), false);
     saveValue(store.sntp1, SNTP_1, sizeof(store.sntp1), false);
-    saveValue(store.sntp2, SNTP_2, sizeof(store.sntp2));
+    saveValue(store.sntp2, SNTP_2, sizeof(store.sntp2), false);
+    saveValue(&store.timesyncinterval, (uint8_t)TIME_SYNC_INTERVAL);
     network.forceTimeSync = true;
     network.requestTimeSync(true);
     network.forceTimeSync = true;
@@ -488,12 +489,13 @@ void Config::resetSystem(const char *val, uint8_t clientId) {
   }
   if (strcmp(val, "weather") == 0) {
     saveValue(&store.showweather, false, false);
+    saveValue(&store.weathersyncinterval, (uint8_t)WEATHER_SYNC_INTERVAL, false);
     saveValue(&store.weatherimperial, WEATHER_IMPERIAL, false);
     saveValue(store.weatherlang, WEATHER_LANG, sizeof(store.weatherlang), false);
     saveValue(store.weatherlat, WEATHER_LAT, sizeof(store.weatherlat), false);
     saveValue(store.weatherlon, WEATHER_LON, sizeof(store.weatherlon), false);
     saveValue(store.weatherapi, WEATHER_API, sizeof(store.weatherapi), false);
-    saveValue(store.weatherelev, "", sizeof(store.weatherelev), false);
+    saveValue(&store.weatherelevation, static_cast<int16_t>(0), false);
     saveValue(store.weatherkey, "", WEATHERKEY_LENGTH);
     network.trueWeather=false;
     display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
@@ -1416,14 +1418,16 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(tzposix, "tzposix"),
   CONFIG_KEY_ENTRY(sntp1, "sntp1"),
   CONFIG_KEY_ENTRY(sntp2, "sntp2"),
+  CONFIG_KEY_ENTRY(timesyncinterval, "timesync"),
   CONFIG_KEY_ENTRY(showweather, "showwthr"),
+  CONFIG_KEY_ENTRY(weatherapi, "weatherapi"),
+  CONFIG_KEY_ENTRY(weathersyncinterval, "weathersync"),
   CONFIG_KEY_ENTRY(weatherimperial, "weatherimp"),
   CONFIG_KEY_ENTRY(weatherlang, "weatherlang"),
   CONFIG_KEY_ENTRY(weatherlat, "weatherlat"),
   CONFIG_KEY_ENTRY(weatherlon, "weatherlon"),
   CONFIG_KEY_ENTRY(weatherkey, "weatherkey"),
-  CONFIG_KEY_ENTRY(weatherapi, "weatherapi"),
-  CONFIG_KEY_ENTRY(weatherelev, "weatherelev"),
+  CONFIG_KEY_ENTRY(weatherelevation, "weatherelev"),
   CONFIG_KEY_ENTRY(mqttenable, "mqttenable"),
   CONFIG_KEY_ENTRY(mqtthost, "mqtthost"),
   CONFIG_KEY_ENTRY(mqttport, "mqttport"),

@@ -360,7 +360,7 @@ function rebootSystem(info){
   setTimeout(function(){ window.location.href=`http://${hostname}/`; }, 5000);
 }
 
-/** TOOLS AKA DANGERZONE **/
+/** TOOLS AKA DANGER ZONE **/
 function scrollToBottom() {
   setTimeout(() => {
     const anchor = document.getElementById('page-bottom');
