@@ -533,9 +533,44 @@ def process_locale_file(locale_code, www_path, json_path, mode, auto_clean, auto
         print(f"Error: JSON file not found at {json_path}")
         return False
     
-    # Load JSON
-    with open(json_path, 'r', encoding='utf-8') as f:
-        locale_data = json.load(f)
+    # Load JSON with automatic trailing comma fix
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            locale_data = json.load(f)
+    except json.JSONDecodeError as e:
+        # Check if it's a trailing comma error
+        if 'trailing comma' in str(e).lower() or 'illegal trailing comma' in str(e).lower():
+            print(f"⚠ Found trailing comma error in JSON file - attempting to fix...")
+            
+            # Read the file and remove trailing commas
+            with open(json_path, 'r', encoding='utf-8') as f:
+                json_text = f.read()
+            
+            # Remove trailing commas before closing braces/brackets
+            # Pattern: comma followed by optional whitespace and then } or ]
+            fixed_json = re.sub(r',(\s*[}\]])', r'\1', json_text)
+            
+            # Try to parse the fixed JSON
+            try:
+                locale_data = json.loads(fixed_json)
+                
+                # Save the fixed JSON back to file
+                with open(json_path, 'w', encoding='utf-8') as f:
+                    json.dump(locale_data, f, ensure_ascii=False, indent=2)
+                
+                print(f"✓ Automatically fixed and saved {locale_code}.json")
+                
+            except json.JSONDecodeError as e2:
+                print(f"\nError: Could not parse JSON file even after fixing trailing commas")
+                print(f"  {e2}")
+                print(f"  Please manually fix {json_path}")
+                return False
+        else:
+            # Different JSON error - show helpful message
+            print(f"\nError: Invalid JSON in {json_path}")
+            print(f"  {e}")
+            print(f"  Please fix the JSON syntax errors manually")
+            return False
     
     # Scan www files
     print(f"Scanning {www_path} for translation keys...")
