@@ -9,6 +9,13 @@ Exit codes: 0 = success, 1 = error
 
 import sys
 import os
+import time
+
+# Rate limiting and back-off configuration
+# Initial delay before each API call (will be doubled on 429 errors)
+initial_delay = 0.05  # 50ms - used for exponential backoff on 429 rate limit errors
+max_delay = 2.0       # 2s maximum - if we exceed this, treat API as unavailable
+max_retries = 5       # Maximum retry attempts on 429 errors
 
 # DeepL-specific language code exceptions FOR TARGET languages
 # Most languages: use first 2 letters (de_DE -> de)
@@ -63,7 +70,7 @@ def get_api_key():
         return None
 
 def translate(text, source_lang, target_lang, api_key):
-    """Translate text using DeepL API."""
+    """Translate text using DeepL API with exponential backoff on rate limits."""
     try:
         import deepl
     except ImportError:
@@ -84,22 +91,67 @@ def translate(text, source_lang, target_lang, api_key):
     source_deepl = convert_to_deepl_code(source_lang, is_target=False)  # Source: simple 2-letter
     target_deepl = convert_to_deepl_code(target_lang, is_target=True)   # Target: may need exceptions
     
-    try:
-        translator = deepl.Translator(api_key)
-        result = translator.translate_text(text, source_lang=source_deepl.upper(), target_lang=target_deepl.upper())
-        return result.text
-    except Exception as e:
-        # Handle various error types
-        error_msg = str(e).lower()
-        if 'authorization' in error_msg or 'auth' in error_msg:
-            print("Error: Invalid DeepL API key", file=sys.stderr)
-        elif 'quota' in error_msg:
-            print("Error: DeepL API quota exceeded", file=sys.stderr)
-        else:
-            print(f"Error translating: {e}", file=sys.stderr)
-        return None
+    # Exponential backoff retry loop
+    current_delay = initial_delay
+    retry_count = 0
+    
+    while retry_count <= max_retries:
+        try:
+            # Apply delay before API call (even on first attempt for rate limiting)
+            time.sleep(current_delay)
+            
+            translator = deepl.Translator(api_key)
+            result = translator.translate_text(text, source_lang=source_deepl.upper(), target_lang=target_deepl.upper())
+            return result.text
+            
+        except deepl.DeepLException as e:
+            # Check if it's a 429 rate limit error
+            error_msg = str(e).lower()
+            
+            if hasattr(e, 'http_status_code') and e.http_status_code == 429:
+                # Rate limit hit - apply exponential backoff
+                retry_count += 1
+                
+                if current_delay * 2 > max_delay:
+                    print(f"Error: DeepL rate limit exceeded, delays exceeded {max_delay}s threshold", file=sys.stderr)
+                    return None
+                
+                # Double the delay for next attempt
+                current_delay *= 2
+                print(f"Rate limit (429) - retrying with {current_delay}s delay (attempt {retry_count}/{max_retries})...", file=sys.stderr)
+                continue
+                
+            # Handle other DeepL errors
+            if 'authorization' in error_msg or 'auth' in error_msg:
+                print("Error: Invalid DeepL API key", file=sys.stderr)
+            elif 'quota' in error_msg:
+                print("Error: DeepL API quota exceeded", file=sys.stderr)
+            else:
+                print(f"Error translating: {e}", file=sys.stderr)
+            return None
+            
+        except Exception as e:
+            # Handle non-DeepL exceptions
+            error_msg = str(e).lower()
+            if 'authorization' in error_msg or 'auth' in error_msg:
+                print("Error: Invalid DeepL API key", file=sys.stderr)
+            elif 'quota' in error_msg:
+                print("Error: DeepL API quota exceeded", file=sys.stderr)
+            else:
+                print(f"Error translating: {e}", file=sys.stderr)
+            return None
+    
+    # Max retries exceeded
+    print(f"Error: Max retry attempts ({max_retries}) exceeded for rate limiting", file=sys.stderr)
+    return None
 
 def main():
+    # Reconfigure stdout/stderr to use UTF-8 encoding (for international characters)
+    if sys.stdout.encoding != 'utf-8':
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    
     if len(sys.argv) < 4:
         print("Usage: python scan_trans_deepl.py source_lang target_lang text...", file=sys.stderr)
         print("  All text after target_lang is treated as input (joined with spaces)", file=sys.stderr)

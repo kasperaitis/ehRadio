@@ -17,10 +17,11 @@ MODES:
     (default)        Interactive mode - prompts for missing keys, ask about cleanup, ask about sort
     --fast, -f       Add all missing keys at once using HTML Found text, skip individual edits (one prompt)
     --every, -e      Prompt to review every single key using HTML Found text (detailed proofreading)
-    --diff, -d       Only prompt when HTML text differs from JSON (to compare hardagainst)
+    --diff, -d       Only prompt when HTML text differs from JSON (to compare hardcoded)
+    --ndiff, -n      Only prompt when HTML text is same as JSON (to fix untranslated text)
 
 OPTIONS:
-    --translate, -t  Translate HTML Found text
+    --translate, -t  Translate HTML Found text (can't use with --diff)
     --clean, -c      Auto-delete unused keys (no prompt)
     --sort, -s       Auto-sort keys hierarchically at end (no prompt)
 
@@ -36,6 +37,9 @@ EXAMPLES:
 
     # Diff mode (never uses translation, useful for checking that hard-coded text and locale file are same)
     py scan_www_check_json.py en_US --diff
+
+    # Ndiff mode (prompt only when text matches - to find/fix untranslated text with translation)
+    py scan_www_check_json.py de_DE --ndiff --translate --clean --sort
 """
 
 import os
@@ -153,7 +157,8 @@ def translate_text(text, source_locale=None, target_locale=None):
                 capture_output=True,
                 timeout=30,
                 text=True,
-                encoding='utf-8'
+                encoding='utf-8',
+                errors='replace'  # Replace invalid UTF-8 with ? instead of crashing
             )
             
             # Check if translation succeeded
@@ -180,6 +185,14 @@ def translate_text(text, source_locale=None, target_locale=None):
             # Timeout - show warning on first occurrence
             if not _translation_error_shown:
                 print(f"\n⚠ Translation timeout (>30s) for {target_locale}")
+                print("  Falling back to hardcoded text for remaining keys.\n")
+                _translation_error_shown = True
+            _translation_lang_cache[target_locale] = False
+            return None
+        except (UnicodeDecodeError, UnicodeError) as e:
+            # Unicode error from subprocess
+            if not _translation_error_shown:
+                print(f"\n⚠ Translation encoding error for {target_locale}: {e}")
                 print("  Falling back to hardcoded text for remaining keys.\n")
                 _translation_error_shown = True
             _translation_lang_cache[target_locale] = False
@@ -394,7 +407,7 @@ def prompt_for_key(key, found_text, json_text=None, filename=None, mode='missing
                     user_input += ch
                     print(ch, end='', flush=True)
     
-    else:  # 'all' or 'diff' mode
+    else:  # 'all', 'diff', or 'ndiff' mode
         print(f"[{filename}] {key}")
         print(f"[Found] {found_text}")
         
@@ -547,7 +560,7 @@ def process_locale_file(locale_code, www_path, json_path, mode, auto_clean, auto
             print("\n" + "="*60)
             print(f"Keys in HTML/JS files not found in JSON{locale_display}:")
             print("="*60)
-            for key, data in sorted(missing_keys):
+            for key, data in missing_keys:
                 print(f"  {key} = {data['text']}")
             print(f"\nTotal: {len(missing_keys)} missing key(s)")
             print("=" * 60)
@@ -560,9 +573,14 @@ def process_locale_file(locale_code, www_path, json_path, mode, auto_clean, auto
         # Fast mode: add all missing keys at once
         missing_keys = [(key, data) for key, data in found_keys.items() if locale_data.get(key) is None]
         if missing_keys:
+            # Prepare translations/text FIRST (show progress)
+            pending_updates = {}
+            
             if use_translate and locale_code != 'en_US':
-                # Auto-translate all missing keys
+                # Auto-translate all missing keys and show progress
                 print(f"\nAuto-translating {len(missing_keys)} missing keys...")
+                print("  (✓ = translated, → = using hardcoded text)\n")
+                
                 for key, data in missing_keys:
                     found_text = data['text']
                     # Try translation first
@@ -570,22 +588,29 @@ def process_locale_file(locale_code, www_path, json_path, mode, auto_clean, auto
                     
                     # Use translation if available, otherwise fallback to Found text
                     if translated_text:
-                        updates[key] = translated_text
+                        pending_updates[key] = translated_text
                         print(f"  ✓ {key}: {translated_text}")
                     else:
-                        updates[key] = found_text
+                        pending_updates[key] = found_text
                         print(f"  → {key}: {found_text}")
-                    processed_count += 1
             else:
-                # No translation: just copy hardcoded text with one prompt
-                print(f"\nAdd all {len(missing_keys)} missing keys? [y/n]: ", end='', flush=True)
-                response = input().strip().lower()
-                if response == 'y':
-                    for key, data in missing_keys:
-                        updates[key] = data['text']
-                        processed_count += 1
+                # No translation: just prepare hardcoded text
+                for key, data in missing_keys:
+                    pending_updates[key] = data['text']
+            
+            # NOW prompt user to confirm adding
+            print(f"\nAdd {len(pending_updates)} keys? [y/n]: ", end='', flush=True)
+            
+            response = input().strip().lower()
+            if response != 'y':
+                print("Skipped adding missing keys")
+            else:
+                # User confirmed - apply updates
+                updates.update(pending_updates)
+                processed_count = len(pending_updates)
+                print(f"✓ Added {processed_count} key(s) to JSON")
     
-    elif mode in ('missing', 'every', 'diff'):
+    elif mode in ('missing', 'every', 'diff', 'ndiff'):
         for key, data in found_keys.items():
             found_text = data['text']
             json_text = locale_data.get(key)
@@ -609,6 +634,14 @@ def process_locale_file(locale_code, www_path, json_path, mode, auto_clean, auto
                 if json_text is None or (found_text and json_text != found_text):
                     # Note: diff mode never uses translation per user request
                     new_text = prompt_for_key(key, found_text, json_text, filename, mode='diff', locale_code=locale_code, use_translate=False)
+                    if new_text != json_text:
+                        updates[key] = new_text
+                        processed_count += 1
+            
+            elif mode == 'ndiff':
+                # Only prompt when texts are the same (to fix untranslated text)
+                if json_text is not None and found_text and json_text == found_text:
+                    new_text = prompt_for_key(key, found_text, json_text, filename, mode='ndiff', locale_code=locale_code, use_translate=use_translate)
                     if new_text != json_text:
                         updates[key] = new_text
                         processed_count += 1
@@ -692,17 +725,23 @@ def main():
     parser.add_argument('--translate', '-t', action='store_true', help='Use translation service for missing/new keys')
     parser.add_argument('--every', '-e', action='store_true', help='Prompt to review every single key')
     parser.add_argument('--diff', '-d', action='store_true', help='Only prompt when text differs')
+    parser.add_argument('--ndiff', '-n', action='store_true', help='Only prompt when text is same (to fix untranslated)')
     parser.add_argument('--clean', '-c', action='store_true', help='Auto-delete unused keys (no prompt)')
     parser.add_argument('--sort', '-s', action='store_true', help='Auto-sort keys hierarchically (no prompt)')
     args = parser.parse_args()
     
     # Validate argument combinations
-    if args.every and args.diff:
-        print("Error: --every and --diff cannot be combined")
+    mode_count = sum([args.fast, args.every, args.diff, args.ndiff])
+    if mode_count > 1:
+        print("Error: Only one mode can be specified (--fast, --every, --diff, --ndiff)")
         sys.exit(1)
     
-    if args.locale == '*' and (args.every or args.diff):
-        print("Error: * (all locales) cannot be combined with --every or --diff")
+    if args.translate and args.diff:
+        print("Error: --translate cannot be used with --diff mode")
+        sys.exit(1)
+    
+    if args.locale == '*' and (args.every or args.diff or args.ndiff):
+        print("Error: * (all locales) cannot be combined with --every, --diff, or --ndiff")
         sys.exit(1)
     
     # Determine mode
@@ -712,6 +751,8 @@ def main():
         mode = 'every'
     elif args.diff:
         mode = 'diff'
+    elif args.ndiff:
+        mode = 'ndiff'
     else:
         mode = 'missing'
     

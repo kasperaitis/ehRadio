@@ -450,9 +450,12 @@ For UI translations, this is rarely an issue as most strings don't contain liter
 ### Adding Another API
 
 This can be used to harness another translation API... just make a python script that matches the naming scheme of `scan_trans_*.py` works (with the API name as the `*`).
-The script `scan_trans_deepl.py` scans for scripts and `.key` files that match this pattern and attempts to use them.
 
-Make sure it has the same commandline and output structure as shown above.
+The script `scan_www_check_json.py` scans for `scan_trans_*.py` scripts and will use whichever file has a matching `scan_trans_*.key` file.
+
+If making a script that uses a translation API, make sure it has the same commandline and output structure as shown above.
+
+It should also handle `HTTP 429 "Too Many Requests" errors` gracefully.
 
 ---
 

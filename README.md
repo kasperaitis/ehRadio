@@ -31,16 +31,16 @@ Documentation will be improved at some point... Until then, check this page and 
     - good work on multi-locale options for display!
     - glyph tools (more characters are always good)
     - began multi-locale support of WebUI
+  - Configure the display language with something like `#define DSP_LANGUAGE_de_DE` in `myoptions.h`
+    - see the available options by checking `displayL10n_*.h` files in `locale` folder 
   - WebUI locale now dynamically configurable
     - if online update capable, can switch between many
     - if not, then can switch between hardcoded HTML (en_US) and another
     - translations may not be good... report issues or open a PR!
-  - Configure the display language with something like `#define DSP_LANGUAGE_de_DE` in `myoptions.h`
-    - see the available options by checking `displayL10n_*.h` files in `locale` folder 
-  - Configure the default webUI language with `#define WEBUI_LANGUAGE_STRING "de_DE"` in `myoptions.h`
+    - Configure the default webUI language with `#define WEBUI_LANGUAGE_STRING "de_DE"` in `myoptions.h`
     - if not specified, will use the same as the display language
     - sets a default WebUI locale different than the display - check locale/webui folder .json files (user-configurable)
-    - can still switch between 2 languages even if not using an online firmware
+    - can still switch between 2 languages even if not using an online firmware (if it uses a locale .json)
   - Multiple Weather providers now available (APIs: Openweather 2.5 & 3.0, Open-Meteo v1)
     - old code relied on Openweather API 2.5 which will be discontinued
     - completely re-factored with possibility to add more
