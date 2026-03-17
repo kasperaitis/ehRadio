@@ -340,7 +340,7 @@ void Display::_start() {
   if (_heapbar)  _heapbar->lock(!config.store.audioinfo);
   
   if (_weather)  _weather->lock(!config.store.showweather);
-  if (_weather && config.store.showweather)  _weather->setText("");
+  if (_weather && config.store.showweather) network.buildWeatherString();
 
   if (_vuwidget) _vuwidget->lock();
   if (_rssi)     _setRSSI(WiFi.RSSI());
@@ -597,7 +597,7 @@ void Display::loop() {
               if (_volip) _volip->setText(config.ipToStr(WiFi.localIP()), iptxtFmt);
             #endif
           } else {
-            if (_weather) _weather->setText("");
+            network.buildWeatherString();
           }
           break;
         }

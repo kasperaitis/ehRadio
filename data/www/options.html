@@ -102,9 +102,7 @@
               <div class="checkbox" id="inv" data-command="invertdisplay"><div class="knob"></div></div>
             </div>
           </div>
-          <div class="flex-row">
-            <!-- Left from yoRadio but seems to have no purpose: <div class="checkbox group_brightness group_oled hidden" id="dspon" data-command="screenon"><div class="knob"></div>Turn on</div> -->
-          </div>
+          <!-- Left from yoRadio but seems to have no purpose: <div class="checkbox group_brightness group_oled hidden" id="dspon" data-command="screenon"><div class="knob"></div>Turn on</div> -->
           <div class="flex-row group_tft hidden">
             <div class="inputwrap center">
               <span class="inputtitle" data-i18n="lbl_numbered_playlist">Numbered Playlist</span>
@@ -137,29 +135,29 @@
           </div>
           <div class="row-title"><span data-i18n="title_screensaver">Screensaver</span></div>
           <div class="flex-row group group_tft group_oled group_nextion hidden">
-            <div class="inputwrap pad">
+            <div class="inputwrap center">
               <span class="inputtitle" data-i18n="lbl_while_not_playing">While Not Playing</span>
-              <div class="checkbox tzoption" id="scre" data-command="screensaverenabled"><div class="knob"></div></div>
+              <div class="checkbox ssoption" id="scre" data-command="screensaverenabled"><div class="knob"></div></div>
             </div>
-            <div class="inputwrap pad">
+            <div class="inputwrap center">
               <span class="inputtitle" data-i18n="lbl_blank_screen">Blank Screen</span>
-              <div class="checkbox tzoption" id="scrb" data-command="screensaverblank"><div class="knob"></div></div>
+              <div class="checkbox ssoption" id="scrb" data-command="screensaverblank"><div class="knob"></div></div>
             </div>
-            <div class="inputwrap pad">
+            <div class="inputwrap center">
               <span class="inputtitle" data-i18n="lbl_timeout_sec">Timeout (sec)</span>
               <input type="number" id="scrt" data-command="screensavertimeout" value="" maxlength="3" min="5" max="65520" />
             </div>
           </div>
           <div class="flex-row group group_tft group_oled group_nextion hidden">
-            <div class="inputwrap pad">
+            <div class="inputwrap center">
               <span class="inputtitle" data-i18n="lbl_while_playing">While Playing</span>
-              <div class="checkbox tzoption" id="scrpe" data-command="screensaverplayingenabled"><div class="knob"></div></div>
+              <div class="checkbox ssoption" id="scrpe" data-command="screensaverplayingenabled"><div class="knob"></div></div>
             </div>
-            <div class="inputwrap pad">
+            <div class="inputwrap center">
               <span class="inputtitle" data-i18n="lbl_blank_screen">Blank Screen</span>
-              <div class="checkbox tzoption" id="scrpb" data-command="screensaverplayingblank"><div class="knob"></div></div>
+              <div class="checkbox ssoption" id="scrpb" data-command="screensaverplayingblank"><div class="knob"></div></div>
             </div>
-            <div class="inputwrap pad">
+            <div class="inputwrap center">
               <span class="inputtitle" data-i18n="lbl_timeout_min">Timeout (min)</span>
               <input type="number" id="scrpt" data-command="screensaverplayingtimeout" value="" maxlength="3" min="1" max="1080" />
             </div>
@@ -170,7 +168,7 @@
           <div class="title"><span data-i18n="title_controls">Controls</span></div>
           <div class="reset" data-name="controls" title="reset"></div>
           <div class="flex-row">
-            <div class="inputwrap pad">
+            <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_vol_steps">Volume Steps</span>
               <span class="inputinfo" id="slvolstepsinfo">0</span>
               <input type="range" id="vols" data-command="volsteps" data-slaveid="slvolstepsinfo" min="1" max="10" value="1">
@@ -333,42 +331,59 @@
             </div>
           </div>
           <div class="flex-row">
+            <div class="inputwrap center">
+              <span class="inputtitle" data-i18n="lbl_feels_like">Show Feels Like</span>
+              <div class="checkbox" id="wen_feelslike" data-command="wen_feelslike"><div class="knob"></div></div>
+            </div>
+            <div class="inputwrap center">
+              <span class="inputtitle" data-i18n="lbl_humidity">Show Humidity</span>
+              <div class="checkbox" id="wen_humidity" data-command="wen_humidity"><div class="knob"></div></div>
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="inputwrap center">
+              <span class="inputtitle" data-i18n="lbl_air_pressure">Show Air Pressure</span>
+              <div class="checkbox" id="wen_pressure" data-command="wen_pressure"><div class="knob"></div></div>
+            </div>
+            <div class="inputwrap center">
+              <span class="inputtitle" data-i18n="lbl_wind_info">Show Wind Information</span>
+              <div class="checkbox" id="wen_wind" data-command="wen_wind"><div class="knob"></div></div>
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="inputwrap">
+              <span class="inputtitle" data-i18n="lbl_temp_unit">Temperature Unit</span>
+              <select type="text" id="wtempunit" name="wtempunit" data-command="wtempunit">
+                <option value="0">Metric (°C)</option>
+                <option value="1">Imperial (°F)</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="inputwrap">
+              <span class="inputtitle" data-i18n="lbl_air_pressure_unit">Air Pressure Unit</span>
+              <select type="text" id="wpressunit" name="wpressunit" data-command="wpressunit">
+                <option value="0">Metric (hPa)</option>
+                <option value="1">Imperial (mmHg)</option>
+              </select>
+            </div>
+            <div class="inputwrap">
+              <span class="inputtitle" data-i18n="lbl_wind_speed_unit">Wind Speed Unit</span>
+              <select type="text" id="wspeedunit" name="wspeedunit" data-command="wspeedunit">
+                <option value="kmh">Metric (km/h)</option>
+                <option value="mph">Imperial (mph)</option>
+                <option value="ms">Scientific (m/s)</option>
+                <option value="kn">Nautical (knots)</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex-row">
             <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_weather_api">Weather Provider</span>
               <select type="text" id="wapi" name="wapi">
                 <option value="OW25">OpenWeather API 2.5</option>
                 <option value="OW30">OpenWeather API 3.0</option>
                 <option value="OM1">Open-Meteo API v1 (Free)</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="flex-row">
-            <div class="inputwrap pad">
-              <span class="inputtitle" data-i18n="lbl_api_interval">API Sync Interval (min)</span>
-              <span class="inputinfo" id="slwintervalinfo">15</span>
-              <input type="range" id="winterval" data-command="winterval" data-slaveid="slwintervalinfo" min="10" max="60" value="15">
-            </div>
-          </div>
-
-          <div class="flex-row">
-            <div class="inputwrap">
-              <span class="inputtitle" data-i18n="lbl_latitude">Latitude</span>
-              <span class="inputtitle">[<a href="https://www.gps-coordinates.net/" target="_blank">?</a>]</span>
-              <input type="number" id="wlat" value="" min="-90" max="90" step="0.0001" />
-            </div>
-            <div class="inputwrap">
-              <span class="inputtitle" data-i18n="lbl_longitude">Longitude</span>
-              <input type="number" id="wlon" value="" min="-90" max="90" step="0.0001" />
-            </div>
-          </div>
-          <div class="flex-row">
-            <div class="inputwrap">
-              <span class="inputtitle" data-i18n="lbl_units">Units of measurement</span>
-              <span class="inputtitle">[<a href="https://openweathermap.org/current?collection=current_forecast#data" target="_blank">?</a>]</span>
-              <select type="text" id="wimperial" name="wimperial">
-                <option value="0">Metric (°C, hPa, m/s)</option>
-                <option value="1">Imperial (°F, mmHg, mph)</option>
               </select>
             </div>
           </div>
@@ -384,6 +399,24 @@
               <span class="inputtitle" data-i18n="lbl_owm_key">Openweathermap API Key</span>
               <span class="inputtitle">[<a href="https://openweathermap.org/appid" target="_blank">?</a>]</span>
               <input type="text" id="wkey" value="" />
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="inputwrap pad">
+              <span class="inputtitle" data-i18n="lbl_api_interval">API Sync Interval (min)</span>
+              <span class="inputinfo" id="slwintervalinfo">15</span>
+              <input type="range" id="winterval" data-command="winterval" data-slaveid="slwintervalinfo" min="10" max="60" value="15">
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="inputwrap">
+              <span class="inputtitle" data-i18n="lbl_latitude">Latitude</span>
+              <span class="inputtitle">[<a href="https://www.gps-coordinates.net/" target="_blank">?</a>]</span>
+              <input type="number" id="wlat" value="" min="-90" max="90" step="0.0001" />
+            </div>
+            <div class="inputwrap">
+              <span class="inputtitle" data-i18n="lbl_longitude">Longitude</span>
+              <input type="number" id="wlon" value="" min="-90" max="90" step="0.0001" />
             </div>
           </div>
           <div class="flex-row last">

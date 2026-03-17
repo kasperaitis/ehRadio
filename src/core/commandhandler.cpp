@@ -92,7 +92,13 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "winterval"))         { config.saveValue(&config.store.weathersyncinterval, static_cast<uint8_t>(atoi(value))); return true; }
   if (strEquals(command, "wlat"))              { config.saveValue(config.store.weatherlat, value, sizeof(config.store.weatherlat), false); config.store.weatherelevation = 0; config.saveValue(&config.store.weatherelevation, static_cast<int16_t>(0)); network.forceWeather = true; return true; }
   if (strEquals(command, "wlon"))              { config.saveValue(config.store.weatherlon, value, sizeof(config.store.weatherlon), false); config.store.weatherelevation = 0; config.saveValue(&config.store.weatherelevation, static_cast<int16_t>(0)); network.forceWeather = true; return true; }
-  if (strEquals(command, "wimperial"))         { config.saveValue(&config.store.weatherimperial, static_cast<bool>(atoi(value))); network.forceWeather = true; return true; }
+  if (strEquals(command, "wtempunit"))         { config.saveValue(&config.store.weathertempimp, (atoi(value) != 0)); network.buildWeatherString(); return true; }
+  if (strEquals(command, "wpressunit"))        { config.saveValue(&config.store.weatherpressimp, (atoi(value) != 0)); network.buildWeatherString(); return true; }
+  if (strEquals(command, "wspeedunit"))        { config.saveValue(config.store.weatherwindspeed, value, sizeof(config.store.weatherwindspeed), false); network.buildWeatherString(); return true; }
+  if (strEquals(command, "wen_feelslike"))     { config.saveValue(&config.store.weatherfeels, (atoi(value) != 0)); network.buildWeatherString(); return true; }
+  if (strEquals(command, "wen_humidity"))      { config.saveValue(&config.store.weatherhumidity, (atoi(value) != 0)); network.buildWeatherString(); return true; }
+  if (strEquals(command, "wen_pressure"))      { config.saveValue(&config.store.weatherpressure, (atoi(value) != 0)); network.buildWeatherString(); return true; }
+  if (strEquals(command, "wen_wind"))          { config.saveValue(&config.store.weatherwind, (atoi(value) != 0)); network.buildWeatherString(); return true; }
   if (strEquals(command, "wlang"))             { config.saveValue(config.store.weatherlang, value, sizeof(config.store.weatherlang), false); network.forceWeather = true; return true; }
   if (strEquals(command, "wkey"))              { config.setWeatherKey(value); return true; }
 

@@ -45,15 +45,26 @@ Documentation will be improved at some point... Until then, check this page and 
     - old code relied on Openweather API 2.5 which will be discontinued
     - completely re-factored with possibility to add more
     - configurable in WebUI
+    - preferences for units can be defined in `myoptions.h` with
+      - `#define WEATHER_IMPERIAL true` (for °F, mmHg, mph)
+      - `#define WEATHER_IMPERIAL false` (for °C, hPa, km/h) (this is default)
+      - individual unit preferences can also be defined
+        - `#define WEATHER_TEMPERATURE_IMPERIAL true` (for °F)
+        - `#define WEATHER_PRESSURE_IMPERIAL true` (for mmHg)
+        - `#define WEATHER_WIND_SPEED_UNITS "mph"` (for mph)
+          - `"kmh"` (for km/h)
+          - `"ms"` (for m/s)
+          - `"kn"` (for knots)
   - screensaver mode exits faster on button press
   - connection timeout can be altered from library default of 250ms for HTTP and 1700ms for HTTPS connections
     - in `myoptions.h` there should be two numbers like: `#define CONNECT_HTTP_HTTPS_TIMEOUT 1700, 3700`
     - probably only useful on older ESP32 boards
   - Can add `#define DISABLE_UPDATER` to `myoptions.h` to disable firmware updating capabilities
   - Time sync interval can be configured in WebUI
-    - default in `myoptions.h` set with `#define TIME_SYNC_INTERVAL 4` (time in hours: 1 to 24)
+    - default in `myoptions.h` set with `#define TIME_SYNC_INTERVAL 1` (time in hours: 1 to 24)
   - Weather API sync interval can be configured in WebUI
-    - default in `myoptions.h` set with `#define WEATHER_SYNC_INTERVAL 15` (time in minutes: 10 to 60)
+    - default in `myoptions.h` set with `#define WEATHER_SYNC_INTERVAL 10` (time in minutes: 10 to 60)
+
 ### 2026.02.18
   - WebUI greatly improved for mobile and tablet devices
     - automatic checking for new version availability

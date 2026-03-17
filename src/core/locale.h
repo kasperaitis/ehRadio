@@ -436,11 +436,6 @@
   #endif
 #endif
 
-/* Most of the world uses Metric but you can over-ride in myoptions.h */
-#ifndef WEATHER_IMPERIAL
-  #define WEATHER_IMPERIAL false
-#endif
-
 /* Default is to use the same language in the WebUI as the display */
 /* This can be over-ridden in myoptions.h */
 #ifndef WEBUI_LOCALE

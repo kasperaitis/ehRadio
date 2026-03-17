@@ -490,13 +490,19 @@ void Config::resetSystem(const char *val, uint8_t clientId) {
   if (strcmp(val, "weather") == 0) {
     saveValue(&store.showweather, false, false);
     saveValue(&store.weathersyncinterval, (uint8_t)WEATHER_SYNC_INTERVAL, false);
-    saveValue(&store.weatherimperial, WEATHER_IMPERIAL, false);
+    saveValue(&store.weathertempimp, WEATHER_TEMPERATURE_IMPERIAL);
+    saveValue(&store.weatherpressimp, WEATHER_PRESSURE_IMPERIAL);
+    saveValue(store.weatherwindspeed, WEATHER_WIND_SPEED_UNITS, sizeof(store.weatherwindspeed), false);
+    saveValue(&store.weatherfeels, false);
+    saveValue(&store.weatherhumidity, false);
+    saveValue(&store.weatherpressure, false);
+    saveValue(&store.weatherwind, false);
     saveValue(store.weatherlang, WEATHER_LANG, sizeof(store.weatherlang), false);
     saveValue(store.weatherlat, WEATHER_LAT, sizeof(store.weatherlat), false);
     saveValue(store.weatherlon, WEATHER_LON, sizeof(store.weatherlon), false);
     saveValue(store.weatherapi, WEATHER_API, sizeof(store.weatherapi), false);
     saveValue(&store.weatherelevation, static_cast<int16_t>(0), false);
-    saveValue(store.weatherkey, "", WEATHERKEY_LENGTH);
+    //saveValue(store.weatherkey, "", WEATHERKEY_LENGTH); // don't reset API key
     network.trueWeather=false;
     display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
     netserver.requestOnChange(GETWEATHER, clientId);
@@ -1422,12 +1428,18 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(showweather, "showwthr"),
   CONFIG_KEY_ENTRY(weatherapi, "weatherapi"),
   CONFIG_KEY_ENTRY(weathersyncinterval, "weathersync"),
-  CONFIG_KEY_ENTRY(weatherimperial, "weatherimp"),
-  CONFIG_KEY_ENTRY(weatherlang, "weatherlang"),
   CONFIG_KEY_ENTRY(weatherlat, "weatherlat"),
   CONFIG_KEY_ENTRY(weatherlon, "weatherlon"),
+  CONFIG_KEY_ENTRY(weatherlang, "weatherlang"),
   CONFIG_KEY_ENTRY(weatherkey, "weatherkey"),
   CONFIG_KEY_ENTRY(weatherelevation, "weatherelev"),
+  CONFIG_KEY_ENTRY(weathertempimp, "weathertempi"),
+  CONFIG_KEY_ENTRY(weatherpressimp, "weatherpressi"),
+  CONFIG_KEY_ENTRY(weatherwindspeed, "weatherwindsp"),
+  CONFIG_KEY_ENTRY(weatherfeels, "weatherfeels"),
+  CONFIG_KEY_ENTRY(weatherhumidity, "weatherhumid"),
+  CONFIG_KEY_ENTRY(weatherpressure, "weatherpress"),
+  CONFIG_KEY_ENTRY(weatherwind, "weatherwind"),
   CONFIG_KEY_ENTRY(mqttenable, "mqttenable"),
   CONFIG_KEY_ENTRY(mqtthost, "mqtthost"),
   CONFIG_KEY_ENTRY(mqttport, "mqttport"),

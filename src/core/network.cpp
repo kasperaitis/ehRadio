@@ -538,11 +538,7 @@ void doSync(void * pvParameters) {
     }
   }
   if (network.weatherBuf && config.store.showweather && network.forceWeather) {
-    // Show loading message while fetching weather
-    strcpy(network.weatherBuf, LANG::weather_loading);
-    display.putRequest(NEWWEATHER);
-    
-    // Allow weather update even without API key (Open-Meteo doesn't need one)
+    // Fetch weather without interrupting display (keep showing cached data)
     network.forceWeather = false;
     network.trueWeather=getWeather(network.weatherBuf);
   }
@@ -591,18 +587,109 @@ const char* getWMODescription(int code) {
   }
 }
 
+// Weather data cache (stores raw metric data from last API fetch)
+namespace WeatherCache {
+  bool valid = false;
+  bool is_openmeteo = false;  // Track API type for icon mapping
+  unsigned long fetch_time = 0;  // Timestamp when data was fetched
+  float temp_c = 0;
+  float feels_like_c = 0;
+  int humidity = 0;
+  float pressure_hpa = 0;
+  float wind_speed_ms = 0;  // Always stored in m/s (meters per second) for both APIs
+  int wind_deg = 0;
+  char description[64] = "";
+  char icon[8] = "";  // For OpenWeather
+  int wmo_code = 0;    // For OpenMeteo
+}
+
+// Build weather display string from cached data (no API refetch)
+bool MyNetwork::buildWeatherString() {
+  #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
+    if (!weatherBuf) return false;
+    
+    // Check if cached data is stale (older than 2x the sync interval)
+    if (WeatherCache::valid) {
+      unsigned long cache_age = (millis() - WeatherCache::fetch_time) / 1000;  // Age in seconds
+      unsigned long max_age = (unsigned long)config.store.weathersyncinterval * 60 * 2;  // 2x sync interval
+      if (cache_age > max_age) {
+        Serial.printf("Weather: Cache expired (age: %lu sec, max: %lu sec)\n", cache_age, max_age);
+        WeatherCache::valid = false;
+      }
+    }
+    
+    // If no cached data or cache expired, show loading message
+    if (!WeatherCache::valid) {
+      strcpy(weatherBuf, LANG::weather_loading);
+      display.putRequest(NEWWEATHER);
+      return false;
+    }
+    
+    Serial.println("Weather: Rebuilding display string from cached data");
+    
+    // Convert temperature based on user preference
+    float temp_display = config.store.weathertempimp ? (WeatherCache::temp_c * 9.0 / 5.0 + 32.0) : WeatherCache::temp_c;
+    float feels_display = config.store.weathertempimp ? (WeatherCache::feels_like_c * 9.0 / 5.0 + 32.0) : WeatherCache::feels_like_c;
+    const char *tempUnit = config.store.weathertempimp ? "\011F" : "\011C";
+    
+    // Convert pressure based on user preference
+    float press_display = config.store.weatherpressimp ? (WeatherCache::pressure_hpa * 0.750062) : WeatherCache::pressure_hpa;
+    const char *pressUnit = config.store.weatherpressimp ? "mmHg" : "hPa";
+    
+    // Convert wind speed from cached m/s to user's preferred display unit
+    float wind_display;
+    const char *windUnit;
+    
+    if (strcmp(config.store.weatherwindspeed, "kmh") == 0) {
+      wind_display = WeatherCache::wind_speed_ms * 3.6;
+      windUnit = "km/h";
+    } else if (strcmp(config.store.weatherwindspeed, "mph") == 0) {
+      wind_display = WeatherCache::wind_speed_ms * 2.23694;
+      windUnit = "mph";
+    } else if (strcmp(config.store.weatherwindspeed, "kn") == 0) {
+      wind_display = WeatherCache::wind_speed_ms * 1.94384;
+      windUnit = "kn";
+    } else {  // ms
+      wind_display = WeatherCache::wind_speed_ms;
+      windUnit = "m/s";
+    }
+    
+    int wind_dir_idx = (int)(WeatherCache::wind_deg / 22.5) % 16;
+    
+    // Build weather string dynamically based on enabled fields
+    char *p = weatherBuf;
+    p += sprintf(p, "%s, %.1f%s", WeatherCache::description, temp_display, tempUnit);
+    
+    if (config.store.weatherfeels) {
+      p += sprintf(p, " \007 %s %.1f%s", LANG::weather_feelslike, feels_display, tempUnit);
+    }
+    if (config.store.weatherpressure) {
+      p += sprintf(p, " \007 %s %.0f %s", LANG::weather_pressure, press_display, pressUnit);
+    }
+    if (config.store.weatherhumidity) {
+      p += sprintf(p, " \007 %s %d%%", LANG::weather_humidity, WeatherCache::humidity);
+    }
+    if (config.store.weatherwind) {
+      p += sprintf(p, " \007 %s %.1f %s [%s]", LANG::weather_wind, wind_display, windUnit, LANG::wind[wind_dir_idx]);
+    }
+    
+    Serial.printf("Weather: %s\n", weatherBuf);
+    display.putRequest(NEWWEATHER);
+    return true;
+  #endif
+  return false;
+}
+
 // Get weather from Open-Meteo API (free, no API key)
 bool getWeather_OpenMeteo(char *wstr) {
   #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
     Serial.println("Weather: Calling Open-Meteo v1 API for current weather...");
     
-    // Build URL with proper units
-    const char* temp_unit = config.store.weatherimperial ? "&temperature_unit=fahrenheit" : "";
-    const char* wind_unit = config.store.weatherimperial ? "&wind_speed_unit=mph" : "&wind_speed_unit=ms";
-    
+    // Build URL - always request metric (Celsius, m/s, hPa) for consistent processing
+    // Wind speed: always request in m/s so we can cache and convert to any display unit
     char url[512];
-    sprintf(url, "http://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&models=best_match&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,surface_pressure,wind_direction_10m,wind_speed_10m&forecast_days=1%s%s",
-            config.store.weatherlat, config.store.weatherlon, temp_unit, wind_unit);
+    sprintf(url, "http://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&models=best_match&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,surface_pressure,wind_direction_10m,wind_speed_10m&forecast_days=1&wind_speed_unit=ms",
+            config.store.weatherlat, config.store.weatherlon);
     
     // Download JSON response to temp file (EspFileUpdater handles chunked encoding)
     if (!downloadToTempFile(url)) {
@@ -643,41 +730,40 @@ bool getWeather_OpenMeteo(char *wstr) {
       return false;
     }
     
-    float temp = current["temperature_2m"];
-    float feels_like = current["apparent_temperature"];
+    // Get raw data from API (always in Celsius from Open-Meteo)
+    float temp_c = current["temperature_2m"];
+    float feels_like_c = current["apparent_temperature"];
     int humidity = current["relative_humidity_2m"];
     int wmo_code = current["weather_code"];
-    float pressure = current["surface_pressure"];  // hPa
-    float wind_speed = current["wind_speed_10m"];
+    float pressure_hpa = current["surface_pressure"];  // hPa
+    float wind_speed_ms = current["wind_speed_10m"];  // Now always in m/s
     int wind_deg = current["wind_direction_10m"];
     
     const char* description = getWMODescription(wmo_code);
-    int wind_dir_idx = (int)(wind_deg / 22.5) % 16;
     
-    // Units formatting
-    const char *tempUnit, *windUnit, *pressUnit;
-    float press_display;
-    
-    if (config.store.weatherimperial) {
-      tempUnit = "\011F";
-      windUnit = "mph";
-      pressUnit = "mmHg";
-      press_display = pressure / 1.333;  // hPa to mmHg
-    } else {  // metric
-      tempUnit = "\011C";
-      windUnit = "m/s";
-      pressUnit = "hPa";
-      press_display = pressure;
-    }
+    // Cache raw weather data for later string rebuilding
+    WeatherCache::valid = true;
+    WeatherCache::is_openmeteo = false;  // Now uses same conversion logic as OpenWeather
+    WeatherCache::fetch_time = millis();  // Record fetch timestamp
+    WeatherCache::temp_c = temp_c;
+    WeatherCache::feels_like_c = feels_like_c;
+    WeatherCache::humidity = humidity;
+    WeatherCache::pressure_hpa = pressure_hpa;
+    WeatherCache::wind_speed_ms = wind_speed_ms;  // Stored in consistent m/s
+    WeatherCache::wind_deg = wind_deg;
+    WeatherCache::wmo_code = wmo_code;
+    strncpy(WeatherCache::description, description, sizeof(WeatherCache::description) - 1);
+    WeatherCache::description[sizeof(WeatherCache::description) - 1] = '\0';
     
     #ifdef USE_NEXTION
-      if (config.store.weatherimperial) {
-        nextion.putcmdf("press_txt.txt=\"%.0fmm\"", press_display);
-      } else {
-        nextion.putcmdf("press_txt.txt=\"%.0fhPa\"", press_display);
-      }
+      // For Nextion, need to compute display values
+      float temp_display = config.store.weathertempimp ? (temp_c * 9.0 / 5.0 + 32.0) : temp_c;
+      float press_display = config.store.weatherpressimp ? (pressure_hpa * 0.750062) : pressure_hpa;
+      const char *pressUnit = config.store.weatherpressimp ? "mmHg" : "hPa";
+      
+      nextion.putcmdf("press_txt.txt=\"%.0f%s\"", press_display, pressUnit);
       nextion.putcmdf("hum_txt.txt=\"%d%%\"", humidity);
-      nextion.putcmdf("temp_txt.txt=\"%.1f\"", temp);
+      nextion.putcmdf("temp_txt.txt=\"%.1f\"", temp_display);
       // WMO codes don't map 1:1 to OpenWeather icons, use generic mapping
       int iconoffset = (wmo_code == 0) ? 0 : (wmo_code <= 3) ? 1 : (wmo_code < 50) ? 2 : 
                        (wmo_code < 60) ? 4 : (wmo_code < 70) ? 5 : (wmo_code < 80) ? 7 : 4;
@@ -685,34 +771,9 @@ bool getWeather_OpenMeteo(char *wstr) {
       nextion.weatherVisible(1);
     #endif
     
-    // Build weather string
-    #if EXT_WEATHER
-      if (config.store.weatherimperial) {
-        sprintf(wstr, "%s, %.1f%s \007 %s %.1f%s \007 %s %.0f %s \007 %s %d%% \007 %s %.1f %s [%s]",
-                description, temp, tempUnit,
-                LANG::weather_feelslike, feels_like, tempUnit,
-                LANG::weather_pressure, press_display, pressUnit,
-                LANG::weather_humidity, humidity,
-                LANG::weather_wind, wind_speed, windUnit, LANG::wind[wind_dir_idx]);
-      } else {
-        sprintf(wstr, "%s, %.1f%s \007 %s %.1f%s \007 %s %.0f %s \007 %s %d%% \007 %s %.1f %s [%s]",
-                description, temp, tempUnit,
-                LANG::weather_feelslike, feels_like, tempUnit,
-                LANG::weather_pressure, press_display, pressUnit,
-                LANG::weather_humidity, humidity,
-                LANG::weather_wind, wind_speed, windUnit, LANG::wind[wind_dir_idx]);
-      }
-    #else
-      sprintf(wstr, "%s, %.1f%s \007 %s %.0f %s \007 %s %d%%",
-              description, temp, tempUnit,
-              LANG::weather_pressure, press_display, pressUnit,
-              LANG::weather_humidity, humidity);
-    #endif
-    
-    Serial.printf("Weather: %s\n", wstr);
-    
+    // Build display string from cached data
     network.requestWeatherSync();
-    return true;
+    return network.buildWeatherString();
   #endif
   return false;
 }
@@ -742,10 +803,10 @@ bool getWeather_OpenWeather25(char *wstr) {
       return false;
     }
     
-    // Build URL
+    // Build URL - always request metric for consistent processing
     char url[512];
-    sprintf(url, "http://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&units=%s&lang=%s&appid=%s",
-            config.store.weatherlat, config.store.weatherlon, config.store.weatherimperial ? "imperial" : "metric",
+    sprintf(url, "http://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&units=metric&lang=%s&appid=%s",
+            config.store.weatherlat, config.store.weatherlon,
             config.store.weatherlang, config.store.weatherkey);
     
     // Download JSON response to temp file (EspFileUpdater handles chunked encoding)
@@ -773,11 +834,11 @@ bool getWeather_OpenWeather25(char *wstr) {
       return false;
     }
     
-    // Extract data
+    // Extract data (metric: Celsius, m/s, hPa)
     const char* description = doc["weather"][0]["description"];
     const char* icon = doc["weather"][0]["icon"];
-    float temp = doc["main"]["temp"];
-    float feels_like = doc["main"]["feels_like"];
+    float temp_c = doc["main"]["temp"];
+    float feels_like_c = doc["main"]["feels_like"];
     
     // Use grnd_level if available, otherwise sea_level pressure
     float pressure_hpa;
@@ -791,58 +852,41 @@ bool getWeather_OpenWeather25(char *wstr) {
     }
     
     int humidity = doc["main"]["humidity"];
-    float wind_speed = doc["wind"]["speed"];
+    float wind_speed_ms = doc["wind"]["speed"];  // m/s from metric API
     int wind_deg = doc["wind"]["deg"];
-    int wind_dir_idx = (int)(wind_deg / 22.5) % 16;
     
-    // Units formatting with FIXED pressure conversion
-    const char *tempUnit, *windUnit, *pressUnit;
-    float press_display;
-    
-    if (config.store.weatherimperial) {
-      tempUnit = "\011F";
-      windUnit = "mph";
-      pressUnit = "mmHg";
-      press_display = pressure_hpa / 1.333;  // hPa to mmHg (NOT inHg!)
-    } else {  // metric
-      tempUnit = "\011C";
-      windUnit = "m/s";
-      pressUnit = "hPa";
-      press_display = pressure_hpa;
-    }
+    // Cache raw weather data for later string rebuilding
+    WeatherCache::valid = true;
+    WeatherCache::is_openmeteo = false;
+    WeatherCache::fetch_time = millis();  // Record fetch timestamp
+    WeatherCache::temp_c = temp_c;
+    WeatherCache::feels_like_c = feels_like_c;
+    WeatherCache::humidity = humidity;
+    WeatherCache::pressure_hpa = pressure_hpa;
+    WeatherCache::wind_speed_ms = wind_speed_ms;  // Stored in m/s for OpenWeather
+    WeatherCache::wind_deg = wind_deg;
+    strncpy(WeatherCache::description, description, sizeof(WeatherCache::description) - 1);
+    WeatherCache::description[sizeof(WeatherCache::description) - 1] = '\0';
+    strncpy(WeatherCache::icon, icon, sizeof(WeatherCache::icon) - 1);
+    WeatherCache::icon[sizeof(WeatherCache::icon) - 1] = '\0';
     
     #ifdef USE_NEXTION
-      if (config.store.weatherimperial) {
-        nextion.putcmdf("press_txt.txt=\"%.0fmm\"", press_display);
-      } else {
-        nextion.putcmdf("press_txt.txt=\"%.0fhPa\"", press_display);
-      }
+      // For Nextion, need to compute display values
+      float temp_display = config.store.weathertempimp ? (temp_c * 9.0 / 5.0 + 32.0) : temp_c;
+      float press_display = config.store.weatherpressimp ? (pressure_hpa * 0.750062) : pressure_hpa;
+      const char *pressUnit = config.store.weatherpressimp ? "mmHg" : "hPa";
+      
+      nextion.putcmdf("press_txt.txt=\"%.0f%s\"", press_display, pressUnit);
       nextion.putcmdf("hum_txt.txt=\"%d%%\"", humidity);
-      nextion.putcmdf("temp_txt.txt=\"%.1f\"", temp);
+      nextion.putcmdf("temp_txt.txt=\"%.1f\"", temp_display);
       int iconoffset = getWeatherIconOffset(icon);
       nextion.putcmd("cond_img.pic", 50 + iconoffset);
       nextion.weatherVisible(1);
     #endif
     
-    // Build weather string
-    #if EXT_WEATHER
-      sprintf(wstr, "%s, %.1f%s \007 %s %.1f%s \007 %s %.0f %s \007 %s %d%% \007 %s %.1f %s [%s]",
-              description, temp, tempUnit,
-              LANG::weather_feelslike, feels_like, tempUnit,
-              LANG::weather_pressure, press_display, pressUnit,
-              LANG::weather_humidity, humidity,
-              LANG::weather_wind, wind_speed, windUnit, LANG::wind[wind_dir_idx]);
-    #else
-      sprintf(wstr, "%s, %.1f%s \007 %s %.0f %s \007 %s %d%%",
-              description, temp, tempUnit,
-              LANG::weather_pressure, press_display, pressUnit,
-              LANG::weather_humidity, humidity);
-    #endif
-    
-    Serial.printf("Weather: %s\n", wstr);
-    
+    // Build display string from cached data
     network.requestWeatherSync();
-    return true;
+    return network.buildWeatherString();
   #endif
   return false;
 }
@@ -929,10 +973,10 @@ bool getWeather_OpenWeather30(char *wstr) {
       return false;
     }
     
-    // Build URL
+    // Build URL - always request metric for consistent processing
     char url[512];
-    sprintf(url, "http://api.openweathermap.org/data/3.0/onecall?exclude=minutely,hourly,daily&lat=%s&lon=%s&units=%s&lang=%s&appid=%s",
-            config.store.weatherlat, config.store.weatherlon, config.store.weatherimperial ? "imperial" : "metric",
+    sprintf(url, "http://api.openweathermap.org/data/3.0/onecall?exclude=minutely,hourly,daily&lat=%s&lon=%s&units=metric&lang=%s&appid=%s",
+            config.store.weatherlat, config.store.weatherlon,
             config.store.weatherlang, config.store.weatherkey);
     
     // Download JSON response to temp file (EspFileUpdater handles chunked encoding)
@@ -966,14 +1010,14 @@ bool getWeather_OpenWeather30(char *wstr) {
       return false;
     }
     
-    // Extract data
+    // Extract data (metric: Celsius, m/s, hPa)
     const char* description = current["weather"][0]["description"];
     const char* icon = current["weather"][0]["icon"];
-    float temp = current["temp"];
-    float feels_like = current["feels_like"];
+    float temp_c = current["temp"];
+    float feels_like_c = current["feels_like"];
     float pressure_sea_hpa = current["pressure"];  // Sea-level pressure
     int humidity = current["humidity"];
-    float wind_speed = current["wind_speed"];
+    float wind_speed_ms = current["wind_speed"];  // m/s from metric API
     int wind_deg = current["wind_deg"];
     int wind_dir_idx = (int)(wind_deg / 22.5) % 16;
     
@@ -993,54 +1037,38 @@ bool getWeather_OpenWeather30(char *wstr) {
     Serial.printf("Weather: Adjusted pressure from %.0f hPa (sea) to %.0f hPa (ground) using %.0f m elevation\n",
                   pressure_sea_hpa, pressure_hpa, elevation);
     
-    // Units formatting
-    const char *tempUnit, *windUnit, *pressUnit;
-    float press_display;
-    
-    if (config.store.weatherimperial) {
-      tempUnit = "\011F";
-      windUnit = "mph";
-      pressUnit = "mmHg";
-      press_display = pressure_hpa / 1.333;  // hPa to mmHg
-    } else {  // metric
-      tempUnit = "\011C";
-      windUnit = "m/s";
-      pressUnit = "hPa";
-      press_display = pressure_hpa;
-    }
+    // Cache raw weather data for later string rebuilding
+    WeatherCache::valid = true;
+    WeatherCache::is_openmeteo = false;
+    WeatherCache::fetch_time = millis();  // Record fetch timestamp
+    WeatherCache::temp_c = temp_c;
+    WeatherCache::feels_like_c = feels_like_c;
+    WeatherCache::humidity = humidity;
+    WeatherCache::pressure_hpa = pressure_hpa;  // Ground-level adjusted
+    WeatherCache::wind_speed_ms = wind_speed_ms;  // Stored in m/s for OpenWeather
+    WeatherCache::wind_deg = wind_deg;
+    strncpy(WeatherCache::description, description, sizeof(WeatherCache::description) - 1);
+    WeatherCache::description[sizeof(WeatherCache::description) - 1] = '\0';
+    strncpy(WeatherCache::icon, icon, sizeof(WeatherCache::icon) - 1);
+    WeatherCache::icon[sizeof(WeatherCache::icon) - 1] = '\0';
     
     #ifdef USE_NEXTION
-      if (config.store.weatherimperial) {
-        nextion.putcmdf("press_txt.txt=\"%.0fmm\"", press_display);
-      } else {
-        nextion.putcmdf("press_txt.txt=\"%.0fhPa\"", press_display);
-      }
+      // For Nextion, need to compute display values
+      float temp_display = config.store.weathertempimp ? (temp_c * 9.0 / 5.0 + 32.0) : temp_c;
+      float press_display = config.store.weatherpressimp ? (pressure_hpa * 0.750062) : pressure_hpa;
+      const char *pressUnit = config.store.weatherpressimp ? "mmHg" : "hPa";
+      
+      nextion.putcmdf("press_txt.txt=\"%.0f%s\"", press_display, pressUnit);
       nextion.putcmdf("hum_txt.txt=\"%d%%\"", humidity);
-      nextion.putcmdf("temp_txt.txt=\"%.1f\"", temp);
+      nextion.putcmdf("temp_txt.txt=\"%.1f\"", temp_display);
       int iconoffset = getWeatherIconOffset(icon);
       nextion.putcmd("cond_img.pic", 50 + iconoffset);
       nextion.weatherVisible(1);
     #endif
     
-    // Build weather string
-    #if EXT_WEATHER
-      sprintf(wstr, "%s, %.1f%s \007 %s %.1f%s \007 %s %.0f %s \007 %s %d%% \007 %s %.1f %s [%s]",
-              description, temp, tempUnit,
-              LANG::weather_feelslike, feels_like, tempUnit,
-              LANG::weather_pressure, press_display, pressUnit,
-              LANG::weather_humidity, humidity,
-              LANG::weather_wind, wind_speed, windUnit, LANG::wind[wind_dir_idx]);
-    #else
-      sprintf(wstr, "%s, %.1f%s \007 %s %.0f %s \007 %s %d%%",
-              description, temp, tempUnit,
-              LANG::weather_pressure, press_display, pressUnit,
-              LANG::weather_humidity, humidity);
-    #endif
-    
-    Serial.printf("Weather: %s\n", wstr);
-    
+    // Build display string from cached data
     network.requestWeatherSync();
-    return true;
+    return network.buildWeatherString();
   #endif
   return false;
 }

@@ -288,9 +288,10 @@ function applyMQTT(){
 
 /** WEATHER **/
 function applyWeather(){
+  // Only send fields that trigger API refetch
+  // Other fields (unit selects, checkboxes) send instantly via data-command event handlers
   websocket.send("wlat="+getId("wlat").value);
   websocket.send("wlon="+getId("wlon").value);
-  websocket.send("wimperial="+getId("wimperial").value);
   websocket.send("wapi="+getId("wapi").value);
   websocket.send("wlang="+getId("wlang").value);
   websocket.send("wkey="+getId("wkey").value);

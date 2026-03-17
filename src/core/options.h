@@ -379,11 +379,8 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef DSP_INVERT_TITLE
   #define DSP_INVERT_TITLE  true   // Invert title colors for displays ?
 #endif
-#ifndef EXT_WEATHER
-  #define EXT_WEATHER       true   // Extended weather
-#endif
 #ifndef RSSI_DIGIT
-  #define RSSI_DIGIT       false   // Extended weather
+  #define RSSI_DIGIT       false   // display RSSI as number
 #endif
 #ifndef RSSI_STEPS
   #define RSSI_STEPS       -50,-60,-70,-80
@@ -857,6 +854,36 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #endif
 #ifndef WEATHER_SYNC_INTERVAL // minutes
   #define WEATHER_SYNC_INTERVAL 15
+#endif
+/* Most of the world uses Metric but you can over-ride in myoptions.h */
+#ifndef WEATHER_IMPERIAL
+  #define WEATHER_IMPERIAL false
+#else
+  #undef WEATHER_IMPERIAL
+  #define WEATHER_IMPERIAL true
+#endif
+/* The exact units can also be over-ridden in myoptions.h */
+/* valid choices for wind speed are "kph" (km/h), "mph", "ms" (m/s), "kn" (knots) */
+#if WEATHER_IMPERIAL
+  #ifndef WEATHER_TEMPERATURE_IMPERIAL
+    #define WEATHER_TEMPERATURE_IMPERIAL true
+  #endif
+  #ifndef WEATHER_PRESSURE_IMPERIAL
+    #define WEATHER_PRESSURE_IMPERIAL true
+  #endif
+  #ifndef WEATHER_WIND_SPEED_UNITS
+    #define WEATHER_WIND_SPEED_UNITS "mph"
+  #endif
+#else
+  #ifndef WEATHER_TEMPERATURE_IMPERIAL
+    #define WEATHER_TEMPERATURE_IMPERIAL false
+  #endif
+  #ifndef WEATHER_PRESSURE_IMPERIAL
+    #define WEATHER_PRESSURE_IMPERIAL false
+  #endif
+  #ifndef WEATHER_WIND_SPEED_UNITS
+    #define WEATHER_WIND_SPEED_UNITS "kmh"
+  #endif
 #endif
 
 #ifndef MQTT_HOST

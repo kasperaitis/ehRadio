@@ -33,6 +33,7 @@ class MyNetwork {
     void requestTimeSync(bool withTelnetOutput=false, uint8_t clientId=0);
     void raiseSoftAP();
     void requestWeatherSync();
+    bool buildWeatherString();
   private:
     Ticker rtimer;
     static void WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info);
