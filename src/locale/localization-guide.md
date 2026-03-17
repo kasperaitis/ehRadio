@@ -245,7 +245,7 @@ There are two independent codepaths — one for the **Latin** codepage and one f
 
 **Step 1 — Find a free glyph slot**
 
-Open `src/locale/glcdfont/glcdfont_Latin.c`. The used range is currently 0x80–0xC8. The next free slot is **0xC9**. Pick the lowest unused index.
+Open `src/locale/glcdfont/glcdfont_Latin.c`. Pick the lowest unused slot.
 
 **Step 2 — Draw the glyph**
 
@@ -287,7 +287,7 @@ Open `src/locale/glcdfont/glcdfont_Cyrillic.c`. Used slots:
 - 0x80–0x9F: main Cyrillic А–Я (fixed, do not touch)
 - 0xA0–0xB7: language-specific extras
 
-The next free slot is **0xB8**. Pick the lowest unused index above 0xB7.
+Pick the lowest unused slow.
 
 **Step 2 — Draw the glyph**
 
@@ -330,19 +330,6 @@ This is sufficient for characters whose script is already covered by the font sc
 
 ---
 
-## Weather Language (`weatherLang`)
-
-Each locale file defines a `weatherLang[]` string constant. This is the language code sent as the `lang=` parameter in OpenWeather API requests, allowing weather condition descriptions to be returned in the local language.
-
-```cpp
-// Example from displayL10n_ru_RU.h
-const char weatherLang[] PROGMEM = "ru";
-```
-
-If OpenWeather does not support a particular language, the locale falls back to `"en"`. See `src/locale/l10n.md` for the full table.
-
----
-
 ## How to Add a New Language
 
 1. **Copy an existing locale file** as a starting point:
@@ -352,19 +339,15 @@ If OpenWeather does not support a particular language, the locale falls back to 
 
 2. **Translate all string constants** in the new file (day names, month names, weather labels, wind directions).
 
-3. **Set `weatherLang[]`** to the appropriate OpenWeather API language code.
+3. **Add an `#elif` branch** in `src/core/locale.h` with it's proper includes, codepage (font), weather language preference, etc. Try to keep it in alphabetic order.
 
-4. **Register the language token** in `src/core/options.h` — add a `#define` line in the language list block and assign it the next available numeric index.
+4. **Determine codepage.** If the language uses a Cyrillic script, make sure it's part of the `#elif` condition in `locale.h`. If it uses an unusual script not covered by either existing codepage, a new codepage and corresponding font would be needed.
 
-5. **Add an `#elif` branch** in `src/displays/tools/l10n.h` to map the new token to the new file path.
+5. **Update `src/locale/l10n.md`** with the new entry in the languages table.
 
-6. **Determine codepage.** If the language uses a Cyrillic script, add it to the auto-detect `#if` condition in `options.h`. If it uses an unusual script not covered by either existing codepage, a new codepage and corresponding font would be needed.
+6. **Add a WebUI locale JSON file** in `src/locale/webui/`. Copy `src/locale/webui/en_US.json` as a template, rename it to `{code}.json`, and translate all values. The build script (`platformio_pre_gzip_www.py`) will deploy can deploy a locale `.json` into `data/www/locale/` during the SPIFFS build.
 
-7. **Update `src/locale/l10n.md`** with the new entry in the languages table.
-
-8. **Add a WebUI locale JSON file** in `src/locale/webui/`. Copy `src/locale/webui/en_US.json` as a template, rename it to `{code}.json`, and translate all values. The build script (`platformio_pre_gzip_www.py`) always deploys **both the selected language’s JSON and `en_US.json`** into `data/www/locale/` during the SPIFFS build, removing any stale files from previous builds. See [WebUI i18n](#webui-i18n) for the key reference.
-
-9. **Set `DSP_LANGUAGE`** in `myoptions.h` and build.
+7. **Set a `DSP_LANGUAGE_xx_XX`** in `myoptions.h` and build... that is, use `#define DSP_LANGUAGE_de_DE` for German, `#define DSP_LANGUAGE_en_US` for English, etc.
    *Optionally* also define `WEBUI_LANGUAGE` if you want the
    WebUI to use a different locale than the display firmware.  If this
    macro is omitted the web interface simply inherits `DSP_LANGUAGE`.
@@ -394,13 +377,13 @@ If using a firmware with online updating enabled, this option is changeable and 
 
 ### JSON locale files
 
-WebUI locale JSONs now live in `src/locale/webui/` (co‑located with the
+WebUI locale JSONs live in `src/locale/webui/` (co‑located with the
 firmware locale headers in the parent directory). The build script
 (`platformio_pre_gzip_www.py`) automatically copies whichever JSON is needed
 from that `webui` folder into `data/www/locale/` before the SPIFFS image is
-built. No JSON is needed if using the language hardcoded into the HTML/JS files.
+built. No JSON is deployed if using the language hardcoded into the HTML/JS files.
 
-Locale JSON files in `src/locale/` are now named using just the
+Locale JSON files in `src/locale/` are named using just the
 BCP‑47 language code (e.g. `en_US.json`, `ru_RU.json`). The build script
 copies the selected file directly to `data/www/locale/<code>.json` when
 building the filesystem image. The loaders in the javascript files request
@@ -416,7 +399,7 @@ To add a new language, copy `src/locale/webui/en_US.json`, rename it to
 `<code>.json` (matching the BCP‑47 code in `_langCodes[]` in `script.js`),
 translate all values, and run `make_data_www_locales_json.py` to generate the
 `locales.json` file which is used to select the WebUI locale. Untranslated keys fall
-back to displaying the raw key name.
+back to displaying the text that has been hardcoded into the HTML and JS files.
 
 ### Key categories
 
@@ -435,13 +418,41 @@ back to displaying the raw key name.
 
 ---
 
-## Three Python GUI tools in `locale/` assist with `.json` file work:
+## Several Python tools in `locale/` assist with `.json` file work:
 
 | Tool | Purpose |
 |---|---|
-| `scan_www_check_json.py` | Checks `.html` and`.js` files in the `data/www` folder against a `.json` file for keys - can automatically sort, and add & delete missing keys |
+| `scan_www_check_json.py` | Checks `.html` and`.js` files in the `data/www` folder against a `.json` file for keys - can automatically translate, add, sort, and delete missing keys |
 | `hardcode_locale_to_webui.py` | This can replace all text in `.html` and`.js` files in the `data/www` folder using a locale `.json` file... will also update `#define HARDCODED_WEBUI_LOCALE` in `locale.h` to make sure the radio knows what it's hardcoded language is |
 | `make_data_www_locales_json.py` | Generates `locales.json` in the `data/www` folder using a list of all `.json` files for the locales dropdown selector in the Web UI |
+
+### Translation Assistance to `scan_www_check_json.py`:
+| `scan_trans_deepl.py` | Assists in auto-translating for `scan_www_check_json.py` using DeepL |
+| `scan_trans_deepl.md` | Contains instructions for installing and signing up to use DeepL |
+| `scan_trans_deepl.key` | Make this file and put your API Key in here (`*.key` already in `.gitignore`) |
+
+You can test it out with:
+`py scan_trans_deepl.py en_US de_DE Hello`
+
+It should output:
+`Hallo`
+
+An input with special characters may require quotes:
+`py scan_trans_deepl.py en_US de_DE "Hello. Is it me you're looking for?"`
+
+It should output:
+`Hallo. Suchst du nach mir?`
+
+Note that most APIs may normalize punctuation (quotes, apostrophes) as it's designed for natural language translation, not exact character preservation.
+
+For UI translations, this is rarely an issue as most strings don't contain literal quote marks.
+
+### Adding Another API
+
+This can be used to harness another translation API... just make a python script that matches the naming scheme of `scan_trans_*.py` works (with the API name as the `*`).
+The script `scan_trans_deepl.py` scans for scripts and `.key` files that match this pattern and attempts to use them.
+
+Make sure it has the same commandline and output structure as shown above.
 
 ---
 

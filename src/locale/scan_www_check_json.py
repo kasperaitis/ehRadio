@@ -1,38 +1,41 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Scan data/www/*.html and *.js files for translation keys and compare with locale JSON.
 
+NOTE:
+    Check .md files for how to install full translation support
+
 USAGE:
-    python scan_www_check_json.py <locale> [options]
-    python scan_www_check_json.py * [options]
+    python scan_www_check_json.py <locale> [mode] [options]
+    python scan_www_check_json.py * [mode] [options]
+
+TARGET:
+    <locale>         One locale → .json file in the webui folder (en_US → en_US.json)
+    *                All locales → all .json files
 
 MODES:
-    (default)        Interactive mode - prompt for missing keys, ask about cleanup, ask about sort
-    --fast, -f       Add all missing keys at once (one prompt), skip individual edits
-    --every, -e      Prompt to review every single key (detailed proofreading)
-    --diff, -d       Only prompt when HTML text differs from JSON
+    (default)        Interactive mode - prompts for missing keys, ask about cleanup, ask about sort
+    --fast, -f       Add all missing keys at once using HTML Found text, skip individual edits (one prompt)
+    --every, -e      Prompt to review every single key using HTML Found text (detailed proofreading)
+    --diff, -d       Only prompt when HTML text differs from JSON (to compare hardagainst)
 
 OPTIONS:
+    --translate, -t  Translate HTML Found text
     --clean, -c      Auto-delete unused keys (no prompt)
     --sort, -s       Auto-sort keys hierarchically at end (no prompt)
 
-COMBINATIONS:
-    <locale> --fast --clean --sort   Batch fix all issues automatically (one prompt)
-    * --fast --clean --sort          Fix all locale files in one command (one prompt per locale file)
-    --every and --diff cannot be combined
-
 EXAMPLES:
-    python scan_www_check_json.py en_US
-        Interactive: add missing keys, ask to delete unused, ask to sort
-    
-    python scan_www_check_json.py lt_LT --fast
-        Add all missing keys at once, ask to delete unused, ask to sort
-    
-    python scan_www_check_json.py en_US --clean --sort
-        Delete unused keys and sort automatically
-    
-    python scan_www_check_json.py * --fast --clean --sort
-        Batch process all locale files: add missing, delete unused, sort
+    # Interactive check of one file
+    py scan_www_check_json.py fr_FR
+
+    # Interactive check of each key with translation (cleaned & sorted file)
+    py scan_www_check_json.py lt_LT --translate --clean --sort
+
+    # Fast mode WITH translation (auto-translate all missing keys in all files)
+    py scan_www_check_json.py * --translate --fast --clean --sort
+
+    # Diff mode (never uses translation, useful for checking that hard-coded text and locale file are same)
+    py scan_www_check_json.py en_US --diff
 """
 
 import os
@@ -41,6 +44,8 @@ import json
 import re
 import argparse
 import glob
+import subprocess
+import shlex
 try:
     import msvcrt  # Windows
     WINDOWS = True
@@ -48,6 +53,148 @@ except ImportError:
     import termios
     import tty
     WINDOWS = False
+
+# Translation service configuration
+_translation_service = None  # None, 'deepl', or other future services
+_translation_check_done = False
+_translation_input_locale = "en_US"  # Default source language for HTML/JS text
+
+# Cache for per-language translation support: locale_code -> True (works) / False (failed)
+_translation_lang_cache = {}
+# Track if we've shown a translation error (to avoid spam)
+_translation_error_shown = False
+
+
+def detect_translation_service():
+    """
+    Detect available translation service by scanning for scan_trans_*.api files.
+    Returns: service name (e.g., 'deepl', 'google') or None if none available
+    """
+    global _translation_service, _translation_check_done
+    
+    if _translation_check_done:
+        return _translation_service
+    
+    _translation_check_done = True
+    
+    # Get script directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Scan for any scan_trans_*.key files
+    key_files = glob.glob(os.path.join(script_dir, 'scan_trans_*.key'))
+    
+    for key_file in sorted(key_files):  # Sorted for consistent order
+        # Extract service name from filename: scan_trans_deepl.key -> deepl
+        basename = os.path.basename(key_file)
+        service_name = basename[11:-4]  # Remove 'scan_trans_' prefix and '.key' suffix
+        
+        # Check if key file has content (not just comments)
+        has_key = False
+        try:
+            with open(key_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        has_key = True
+                        break
+        except Exception:
+            continue
+        
+        if not has_key:
+            continue
+        
+        # Check if matching .py script exists
+        script_file = os.path.join(script_dir, f'scan_trans_{service_name}.py')
+        if os.path.exists(script_file):
+            # Found a valid translation service!
+            _translation_service = service_name
+            return _translation_service
+    
+    # No translation service available
+    _translation_service = None
+    return _translation_service
+
+
+def translate_text(text, source_locale=None, target_locale=None):
+    """
+    Translate text using available translation service.
+    Returns translated text or None if translation failed.
+    Auto-discovers language support and caches results.
+    
+    Args:
+        text: Text to translate
+        source_locale: Source language code (default: uses _translation_input_locale)
+        target_locale: Target language code (e.g., de_DE, hr_HR)
+    """
+    global _translation_lang_cache, _translation_input_locale, _translation_error_shown
+    
+    # Use global default if not specified
+    if source_locale is None:
+        source_locale = _translation_input_locale
+    
+    # Check if translation service is available
+    service = detect_translation_service()
+    if not service or not target_locale:
+        return None
+    
+    # Check cache - if we already know this language doesn't work, skip
+    if target_locale in _translation_lang_cache and not _translation_lang_cache[target_locale]:
+        return None
+    
+    # Call external translation script (generic for any service)
+    if service:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(script_dir, f'scan_trans_{service}.py')
+        
+        try:
+            # Pass: source_lang target_lang "text"
+            result = subprocess.run(
+                [sys.executable, script_path, source_locale, target_locale, text],
+                capture_output=True,
+                timeout=30,
+                text=True,
+                encoding='utf-8'
+            )
+            
+            # Check if translation succeeded
+            if result.returncode == 0:
+                translated = result.stdout.strip()
+                if translated:
+                    # Success! Cache this language as working
+                    _translation_lang_cache[target_locale] = True
+                    return translated
+            
+            # Failed - show error from stderr on first failure
+            if result.stderr and not _translation_error_shown:
+                error_msg = result.stderr.strip()
+                if error_msg:
+                    print(f"\n⚠ Translation error: {error_msg}")
+                    print("  Falling back to hardcoded text for remaining keys.\n")
+                    _translation_error_shown = True
+            
+            # Cache as not supported
+            _translation_lang_cache[target_locale] = False
+            return None
+            
+        except subprocess.TimeoutExpired:
+            # Timeout - show warning on first occurrence
+            if not _translation_error_shown:
+                print(f"\n⚠ Translation timeout (>30s) for {target_locale}")
+                print("  Falling back to hardcoded text for remaining keys.\n")
+                _translation_error_shown = True
+            _translation_lang_cache[target_locale] = False
+            return None
+        except Exception as e:
+            # Other error - show on first occurrence
+            if not _translation_error_shown:
+                print(f"\n⚠ Translation error: {e}")
+                print("  Falling back to hardcoded text for remaining keys.\n")
+                _translation_error_shown = True
+            _translation_lang_cache[target_locale] = False
+            return None
+    
+    # Unknown service
+    return None
 
 
 def get_key():
@@ -170,25 +317,41 @@ def scan_www_folder(www_path):
     return all_keys
 
 
-def prompt_for_key(key, found_text, json_text=None, filename=None, mode='missing'):
+def prompt_for_key(key, found_text, json_text=None, filename=None, mode='missing', locale_code=None, use_translate=False):
     """Prompt user for translation text."""
     print()  # Blank line before prompt
+    
+    # Try to get translation if flag is set
+    translated_text = None
+    if use_translate and locale_code and locale_code != 'en_US':
+        translated_text = translate_text(found_text, target_locale=locale_code)
     
     if mode == 'missing':
         print(f"[{filename}] {key}")
         print(f"[Found] {found_text}")
-        print("Enter new text (ENTER to accept Found text / ESC skip adding key to JSON): ", end='', flush=True)
+        
+        # Show translation if available
+        if translated_text:
+            print(f"[Translation] {translated_text}")
+            default_text = translated_text
+            prompt_msg = "Enter new text (ENTER accepts Translation / type to edit / ESC skip): "
+        else:
+            default_text = found_text
+            prompt_msg = "Enter new text (ENTER accepts Found / type to edit / ESC skip): "
+        
+        print(prompt_msg, end='', flush=True)
         
         user_input = ""
         while True:
             if WINDOWS:
                 ch = msvcrt.getch()
                 if ch == b'\r':  # Enter
-                    result = user_input if user_input else found_text
+                    result = user_input if user_input else default_text
                     if user_input:
                         print()
                     else:
-                        print(f"[ENTER - using Found text: {result}]")
+                        source = "Translation" if translated_text else "Found"
+                        print(f"[ENTER - using {source} text: {result}]")
                     return result
                 elif ch == b'\x1b':  # ESC
                     print("[ESC - skipping this key]")
@@ -210,11 +373,12 @@ def prompt_for_key(key, found_text, json_text=None, filename=None, mode='missing
             else:  # Unix/Linux
                 ch = get_key()
                 if ch == '\r' or ch == '\n':  # Enter
-                    result = user_input if user_input else found_text
+                    result = user_input if user_input else default_text
                     if user_input:
                         print()
                     else:
-                        print(f"[ENTER - using Found text: {result}]")
+                        source = "Translation" if translated_text else "Found"
+                        print(f"[ENTER - using {source} text: {result}]")
                     return result
                 elif ch == '\x1b':  # ESC
                     print("[ESC - skipping this key]")
@@ -233,23 +397,38 @@ def prompt_for_key(key, found_text, json_text=None, filename=None, mode='missing
     else:  # 'all' or 'diff' mode
         print(f"[{filename}] {key}")
         print(f"[Found] {found_text}")
+        
+        # Show translation if available
+        if translated_text:
+            print(f"[Translation] {translated_text}")
+        
         if json_text is not None:
             print(f"[JSON] {json_text}")
-        print("Enter new text (ENTER to accept Found text / ESC keeps JSON text): ", end='', flush=True)
+        
+        # Determine default text priority: Translation > Found
+        if translated_text:
+            default_text = translated_text
+            prompt_msg = "Enter new text (ENTER accepts Translation / type to edit / ESC keeps JSON): "
+        else:
+            default_text = found_text
+            prompt_msg = "Enter new text (ENTER accepts Found / type to edit / ESC keeps JSON): "
+        
+        print(prompt_msg, end='', flush=True)
         
         user_input = ""
         while True:
             if WINDOWS:
                 ch = msvcrt.getch()
                 if ch == b'\r':  # Enter
-                    result = user_input if user_input else found_text
+                    result = user_input if user_input else default_text
                     if user_input:
                         print()
                     else:
-                        print(f"[ENTER - using Found text: {result}]")
+                        source = "Translation" if translated_text else "Found"
+                        print(f"[ENTER - using {source} text: {result}]")
                     return result
                 elif ch == b'\x1b':  # ESC
-                    result = json_text if json_text is not None else found_text
+                    result = json_text if json_text is not None else default_text
                     print(f"[ESC - keeping JSON text: {result}]")
                     return result
                 elif ch == b'\x08':  # Backspace
@@ -269,14 +448,15 @@ def prompt_for_key(key, found_text, json_text=None, filename=None, mode='missing
             else:  # Unix/Linux
                 ch = get_key()
                 if ch == '\r' or ch == '\n':  # Enter
-                    result = user_input if user_input else found_text
+                    result = user_input if user_input else default_text
                     if user_input:
                         print()
                     else:
-                        print(f"[ENTER - using Found text: {result}]")
+                        source = "Translation" if translated_text else "Found"
+                        print(f"[ENTER - using {source} text: {result}]")
                     return result
                 elif ch == '\x1b':  # ESC
-                    result = json_text if json_text is not None else found_text
+                    result = json_text if json_text is not None else default_text
                     print(f"[ESC - keeping JSON text: {result}]")
                     return result
                 elif ch == '\x7f':  # Backspace
@@ -330,7 +510,7 @@ def sort_json_data(data):
     return {key: data[key] for key in sorted_keys}
 
 
-def process_locale_file(locale_code, www_path, json_path, mode, auto_clean, auto_sort):
+def process_locale_file(locale_code, www_path, json_path, mode, auto_clean, auto_sort, use_translate=False):
     """Process a single locale file."""
     print(f"\n{'='*60}")
     print(f"Processing: {locale_code}.json")
@@ -355,12 +535,17 @@ def process_locale_file(locale_code, www_path, json_path, mode, auto_clean, auto
     if excluded_keys:
         print(f"Ignoring {len(excluded_keys)} locale* metadata key(s)")
     
+    # Extract locale info for headers
+    locale_native = locale_data.get('locale', '')
+    locale_english = locale_data.get('locale_en', '')
+    locale_display = f" ({locale_native} / {locale_english})" if locale_native and locale_english else ""
+    
     # Show missing keys summary if in missing or fast mode
     if mode in ('missing', 'fast'):
         missing_keys = [(key, data) for key, data in found_keys.items() if locale_data.get(key) is None]
         if missing_keys:
             print("\n" + "="*60)
-            print("Keys in HTML/JS files not found in JSON:")
+            print(f"Keys in HTML/JS files not found in JSON{locale_display}:")
             print("="*60)
             for key, data in sorted(missing_keys):
                 print(f"  {key} = {data['text']}")
@@ -375,36 +560,55 @@ def process_locale_file(locale_code, www_path, json_path, mode, auto_clean, auto
         # Fast mode: add all missing keys at once
         missing_keys = [(key, data) for key, data in found_keys.items() if locale_data.get(key) is None]
         if missing_keys:
-            print(f"\nAdd all {len(missing_keys)} missing keys? [y/n]: ", end='', flush=True)
-            response = input().strip().lower()
-            if response == 'y':
+            if use_translate and locale_code != 'en_US':
+                # Auto-translate all missing keys
+                print(f"\nAuto-translating {len(missing_keys)} missing keys...")
                 for key, data in missing_keys:
-                    updates[key] = data['text']
+                    found_text = data['text']
+                    # Try translation first
+                    translated_text = translate_text(found_text, target_locale=locale_code)
+                    
+                    # Use translation if available, otherwise fallback to Found text
+                    if translated_text:
+                        updates[key] = translated_text
+                        print(f"  ✓ {key}: {translated_text}")
+                    else:
+                        updates[key] = found_text
+                        print(f"  → {key}: {found_text}")
                     processed_count += 1
+            else:
+                # No translation: just copy hardcoded text with one prompt
+                print(f"\nAdd all {len(missing_keys)} missing keys? [y/n]: ", end='', flush=True)
+                response = input().strip().lower()
+                if response == 'y':
+                    for key, data in missing_keys:
+                        updates[key] = data['text']
+                        processed_count += 1
     
     elif mode in ('missing', 'every', 'diff'):
-        # Interactive modes
-        for key, data in sorted(found_keys.items()):
+        for key, data in found_keys.items():
             found_text = data['text']
-            filename = data['files'][0] if data['files'] else 'unknown'
             json_text = locale_data.get(key)
+            filename = data['files'][0] if data['files'] else 'unknown'
             
             if mode == 'missing':
-                if json_text is None:
-                    new_text = prompt_for_key(key, found_text, None, filename, mode='missing')
-                    if new_text is not None:  # Only add if not skipped (ESC)
-                        updates[key] = new_text
-                        processed_count += 1
+                if json_text is not None:
+                    continue
+                new_text = prompt_for_key(key, found_text, json_text, filename, mode='missing', locale_code=locale_code, use_translate=use_translate)
+                if new_text is not None:
+                    updates[key] = new_text
+                    processed_count += 1
             
             elif mode == 'every':
-                new_text = prompt_for_key(key, found_text, json_text, filename, mode='all')
+                new_text = prompt_for_key(key, found_text, json_text, filename, mode='all', locale_code=locale_code, use_translate=use_translate)
                 if new_text != json_text:
                     updates[key] = new_text
                     processed_count += 1
             
             elif mode == 'diff':
                 if json_text is None or (found_text and json_text != found_text):
-                    new_text = prompt_for_key(key, found_text, json_text, filename, mode='diff')
+                    # Note: diff mode never uses translation per user request
+                    new_text = prompt_for_key(key, found_text, json_text, filename, mode='diff', locale_code=locale_code, use_translate=False)
                     if new_text != json_text:
                         updates[key] = new_text
                         processed_count += 1
@@ -424,7 +628,7 @@ def process_locale_file(locale_code, www_path, json_path, mode, auto_clean, auto
     
     # Show unused keys
     print("\n" + "="*60)
-    print("Keys in JSON not found in HTML/JS files:")
+    print(f"Keys in JSON not found in HTML/JS files{locale_display}:")
     print("="*60)
     
     if unused:
@@ -485,6 +689,7 @@ def main():
     )
     parser.add_argument('locale', help='Locale code (e.g., en_US) or * to process all locales')
     parser.add_argument('--fast', '-f', action='store_true', help='Add all missing keys at once (one prompt)')
+    parser.add_argument('--translate', '-t', action='store_true', help='Use translation service for missing/new keys')
     parser.add_argument('--every', '-e', action='store_true', help='Prompt to review every single key')
     parser.add_argument('--diff', '-d', action='store_true', help='Only prompt when text differs')
     parser.add_argument('--clean', '-c', action='store_true', help='Auto-delete unused keys (no prompt)')
@@ -510,6 +715,50 @@ def main():
     else:
         mode = 'missing'
     
+    # Blank line for readability
+    print()
+    
+    # Check translation service availability BEFORE any file work
+    service = detect_translation_service()
+    
+    if service:
+        if not args.translate:
+            # Service available but user didn't specify --translate flag
+            # Only ask interactively in default/missing mode
+            if mode == 'missing':
+                print(f"{'='*60}")
+                print(f"✓ Translation service available: {service.upper()}")
+                print(f"{'='*60}")
+                print("Use translation service for missing/new keys? [y/n]: ", end='', flush=True)
+                response = input().strip().lower()
+                if response == 'y':
+                    args.translate = True
+                    print("✓ Translation enabled for this session\n")
+                else:
+                    print("→ Translation disabled, will use hardcoded text\n")
+            # else: in fast/every/diff mode without --translate flag, just proceed without translation
+        else:
+            # User explicitly requested translation
+            print(f"{'='*60}")
+            print(f"✓ Translation service: {service.upper()}")
+            print(f"{'='*60}\n")
+    else:
+        # No translation service available
+        if args.translate:
+            # User requested translation but it's unavailable
+            print(f"{'='*60}")
+            print("⚠ Error: --translate flag is set but translation is unavailable!")
+            print("⚠ No translation service (add API key to scan_trans_<service>.key)")
+            print(f"{'='*60}")
+            sys.exit(1)
+        elif mode == 'missing':
+            # Interactive mode without translation service - show helpful warning
+            print(f"{'='*60}")
+            print("⚠ Warning: No translation service found.")
+            print("⚠ This tool is more powerful with a translation service!")
+            print(f"{'='*60}\n")
+        # else: no service in fast/every/diff mode, just continue silently
+    
     # Paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
@@ -534,7 +783,7 @@ def main():
         success_count = 0
         for json_path in sorted(json_files):
             locale_code = os.path.splitext(os.path.basename(json_path))[0]
-            if process_locale_file(locale_code, www_path, json_path, mode, args.clean, args.sort):
+            if process_locale_file(locale_code, www_path, json_path, mode, args.clean, args.sort, args.translate):
                 success_count += 1
         
         print(f"\n{'='*60}")
@@ -544,7 +793,7 @@ def main():
     else:
         # Process single locale file
         json_path = os.path.join(script_dir, 'webui', f'{args.locale}.json')
-        process_locale_file(args.locale, www_path, json_path, mode, args.clean, args.sort)
+        process_locale_file(args.locale, www_path, json_path, mode, args.clean, args.sort, args.translate)
 
 
 if __name__ == '__main__':

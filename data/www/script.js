@@ -20,7 +20,7 @@ function updateBitinfo(){
   var txt = '';
   if(currentCodec) txt += currentCodec + ' ';
   if(currentBitrate) txt += currentBitrate + t('unit_kbits', 'kBits');
-  if(!txt) txt = t('lbl_no_codec', 'no codec');
+  if(!txt) txt = t('lbl_no_codec', 'No Codec');
   var bi = getId('bitinfo'); if(bi) bi.textContent = txt;
 }
 
@@ -163,7 +163,7 @@ function onMessage(event) {
     /*end online update*/
     
     if(typeof data.redirect !== 'undefined'){
-      getId("mdnsnamerow").innerHTML=`<h3 style="line-height: 37px;color: #aaa; margin: 0 auto;">${t('msg_redirecting', 'redirecting to {0}', data.redirect)}</h3>`;
+      getId("mdnsnamerow").innerHTML=`<h3 style="line-height: 37px;color: #aaa; margin: 0 auto;">${t('msg_redirecting', 'Redirecting to {0}', data.redirect)}</h3>`;
       setTimeout(function(){ window.location.href=data.redirect; }, 4000);
       return;
     }
