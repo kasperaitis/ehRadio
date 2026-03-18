@@ -1,22 +1,25 @@
 # ehRadio AI Coding Guide
 
+## About
+- **ehRadio**: A fork of [yoRadio](https://github.com/e2002/yoradio) with added Web UI functionality, improved Web UI, usability, and customization.
+- **Arduino**: Trip5 hosts firmware files, flashing tools, and Releases on the [Github Repo](https://github.com/trip5/ehRadio) and [Github Page](https://trip5.github.io/ehRadio/)
+- **Online Flasher**: Releases are also available through the [ESP Web Tool](https://trip5.github.io/ehRadio/firmware.html)
+- **Online Updating**: Files on a running device are updated using ESPFileUpdater from the Releases on the Github Repo.
+
 ## ⚠️ Critical Rules
-- **Rule #1**: Always confirm with user BEFORE making more than 10 lines of changes at once.
-- **Rule #2**: Always confirm with user before editing `src/core/options.h`. Use `myoptions.h` for all hardware/settings overrides.
-- **Rule #3**: ehRadio is for ESP32/ESP32-S3. Assume I2S audio unless VS1053 pins are defined.
+- **Rule #1**: Before making changes spanning more than 25 lines, explain what changes will be made and ask the user to confirm before proceeding.
+- **Rule #2**: Before making changes spanning more than 50 lines, stop and tell the user: "This change is large. Please switch to Plan mode so we can review a plan before making edits." Only proceed if the user confirms or switches to Plan mode.
+- **Rule #3**: Do not edit `myoptions.h`, `src/core/options.h`, or `platformio.ini` without explicit user confirmation first.
 
 ## Project Structure
-- **Config Cascade**: `options.h` (Internal Defaults) → `myoptions.h` (Hardware) → `mytheme.h` (UI).
+- **Config Cascade**: `platformio.ini` (env #define) → `myoptions.h` (hardware profile, user defaults) → `mytheme.h` (UI theme) → `options.h` (fallback defaults for anything undefined).
 - **Core logic**: `src/core/` (Player, Display, Network, Config, Controls).
-- **Audio path**: `src/audioI2S/` (Software codecs) vs `src/audioVS1053/` (Hardware chip).
+- **Libraries path**: Software codecs: `libraries/I2S_Audio/`, `libraries/ES8311_Audio` / Hardware decoder: `libraries/VS1053_Audio/` (Hardware chip), other folders are custom drivers for other display, touchscreen, and other hardware.
 - **UI**: Widgets in `src/displays/widgets/`, drivers in `src/displays/`.
 - **Plugins**: Class-based hooks in `src/plugins/`, registered in `main.cpp`.
+- **Web UI**: Most files in `data/www` are served with headers in `src/core/netserver.h`. `search.html` and `curated.html` are not.
 
-## Build Patterns
-- **Hardware defines**: Use macros like `DSP_MODEL` and `AUDIO_MODEL` in `myoptions.h`.
-- **Memory**: ESP32-S3 usually has PSRAM (`BOARD_HAS_PSRAM`) and uses Native USB.
-- **Storage**: SPIFFS is the default filesystem for `/data` (WebUI/Playlists).
-
-## Development Tasks
-- **Adding hardware**: Add specific defines to a block in `myoptions.h`. 
-- **Modifying UI**: Edit widget source or add new model to `src/displays/`.
+## Functionality
+- **Hardware**: The firmware is built according to the hardware that is connected to it and users who will use it.  These are defined by files listed in Config Cascade.
+- **Software**: `src/core/options.h` and the Config Cascade should not be used to keep functionality. `#if defined` and `#ifndef` should not be used for configuration not related to hardware.
+- **Granular Control in Web UI**: If not hardware-related, functionality should be changeable in the Web UI, not controlled by a `#define` in Config Cascade.
