@@ -24,52 +24,6 @@ function updateBitinfo(){
   var bi = getId('bitinfo'); if(bi) bi.textContent = txt;
 }
 
-// Try to fetch locale.json... if not exist, use hardcoded HTML text
-var localePromise = Promise.resolve();
-if (typeof uiLang !== 'undefined') {
-  localePromise = fetch('locale.json?' + (typeof radioVersion !== 'undefined' ? radioVersion : ''))
-      .then(function(r){ return r.ok ? r.json() : Promise.reject('not-ok'); })
-      .then(function(data){ 
-          i18n = data;
-          applyI18n(); // Apply translations to initial page content
-          return data;
-      })
-      .catch(function(){
-          console.warn('Failed to load locale.json, using hardcoded HTML text');
-          i18n = {};
-          return {}; // Return empty object so Promise still resolves
-      });
-}
-function t(key, defaultText) {
-  // If only key provided, use old behavior (for backward compatibility)
-  if (arguments.length === 1) {
-    var s = (i18n && i18n[key]) ? i18n[key] : key;
-    return s;
-  }
-  // With defaultText provided: use translation or fallback to English
-  var args = Array.prototype.slice.call(arguments, 2);
-  var s = (i18n && i18n[key]) ? i18n[key] : (defaultText || key);
-  args.forEach(function(a, i){ s = s.replace('{' + i + '}', a); });
-  return s;
-}
-function applyI18n(root) {
-  (root || document).querySelectorAll('[data-i18n]').forEach(function(el) {
-    var key = el.dataset.i18n;
-    var val = i18n[key];
-    if (!val) return;
-    if (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) {
-      el.value = val;
-    } else if (el.tagName === 'INPUT' && el.placeholder !== undefined) {
-      el.placeholder = val;
-    } else {
-      el.textContent = val;
-    }
-  });
-
-  // update knob on/off labels via CSS variables (must be quoted for `content:` property)
-  document.documentElement.style.setProperty('--knob-off', '"' + t('lbl_off', 'Off') + '"');
-  document.documentElement.style.setProperty('--knob-on', '"' + t('lbl_on', 'On') + '"');
-}
 
 function loadCSS(href){ const link = document.createElement("link"); link.rel = "stylesheet"; link.href = href; document.head.appendChild(link); }
 function loadJS(src, callback){ const script = document.createElement("script"); script.src = src; script.type = "text/javascript"; script.async = true; script.onload = callback; document.head.appendChild(script); }

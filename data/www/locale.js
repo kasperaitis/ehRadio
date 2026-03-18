@@ -12,9 +12,10 @@ if (typeof uiLocale !== 'undefined' && typeof htmlLocale !== 'undefined') {
   }
 }
 
-// Only fetch locale.json if needed
+// Only fetch locale.json if needed; expose promise so other scripts can chain on it
+var localePromise = Promise.resolve();
 if (shouldLoadLocale) {
-  fetch('locale.json?' + (typeof radioVersion !== 'undefined' ? radioVersion : ''))
+  localePromise = fetch('locale.json?' + (typeof radioVersion !== 'undefined' ? radioVersion : ''))
       .then(function(r){ return r.ok ? r.json() : Promise.reject('not-ok'); })
       .then(function(data){ 
           i18n = data;
@@ -27,8 +28,12 @@ if (shouldLoadLocale) {
 }
 
 function t(key) {
-  var args = Array.prototype.slice.call(arguments, 1);
-  var s = (i18n && i18n[key]) ? i18n[key] : key;
+  // If only key provided, use old behavior (backward compatibility)
+  if (arguments.length === 1) { return (i18n && i18n[key]) ? i18n[key] : key; }
+  // With defaultText as second arg: use translation or fallback to English
+  var defaultText = arguments[1];
+  var args = Array.prototype.slice.call(arguments, 2);
+  var s = (i18n && i18n[key]) ? i18n[key] : (defaultText || key);
   args.forEach(function(a, i){ s = s.replace('{' + i + '}', a); });
   return s;
 }
