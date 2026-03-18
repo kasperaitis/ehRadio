@@ -2,20 +2,20 @@
     </div>
     <h2 class="pagetitle" data-i18n="ttl_settings">Settings</h2>
     <div class="navigation group group_system hidden" id="navigation">
-      <div class="navitem group group_system hidden" data-target="group_system" data-i18n="title_system">System</div>
-      <div class="navitem group group_battery hidden" data-target="group_battery" data-i18n="title_battery">Battery</div>
-      <div class="navitem group group_display group_nextion hidden" data-target="group_display" data-i18n="title_screen">Screen</div>
-      <div class="navitem group group_controls hidden" data-target="group_controls" data-i18n="title_controls">Controls</div>
-      <div class="navitem group group_locale hidden" data-target="group_locale" data-i18n="title_locale">Locale</div>
-      <div class="navitem group group_wifi hidden" data-target="group_wifi" data-i18n="title_wifi">Wi-Fi</div>
-      <div class="navitem group group_weather hidden" data-target="group_weather" data-i18n="title_weather">Weather</div>
-      <div class="navitem group group_mqtt hidden" data-target="group_mqtt" data-i18n="title_mqtt">MQTT</div>
+      <div class="navitem group group_system hidden" data-target="group_system" data-i18n="ttl_system">System</div>
+      <div class="navitem group group_battery hidden" data-target="group_battery" data-i18n="ttl_battery">Battery</div>
+      <div class="navitem group group_display group_nextion hidden" data-target="group_display" data-i18n="ttl_screen">Screen</div>
+      <div class="navitem group group_controls hidden" data-target="group_controls" data-i18n="ttl_controls">Controls</div>
+      <div class="navitem group group_locale hidden" data-target="group_locale" data-i18n="ttl_locale">Locale</div>
+      <div class="navitem group group_wifi hidden" data-target="group_wifi" data-i18n="ttl_wifi">Wi-Fi</div>
+      <div class="navitem group group_weather hidden" data-target="group_weather" data-i18n="ttl_weather">Weather</div>
+      <div class="navitem group group_mqtt hidden" data-target="group_mqtt" data-i18n="ttl_mqtt">MQTT</div>
     </div>
     <div id="settingswrap">
       <div id="settingscontent">
         <a name="system"></a>
         <section class="group group_system hidden" id="group_system">
-          <div class="title"><span data-i18n="title_system">System</span></div>
+          <div class="title"><span data-i18n="ttl_system">System</span></div>
           <div class="reset" data-name="system" title="reset"></div>
           <div class="flex-row">
             <div class="inputwrap center">
@@ -55,7 +55,7 @@
             </div>
             <div class="fb hl local" data-command="rebootmdns" style=" margin-top: 24px; height: 37px;" data-i18n="btn_save">Save</div>
           </div>
-          <div class="row-title"><span data-i18n="title_update">Update</span></div>
+          <div class="row-title"><span data-i18n="ttl_update">Update</span></div>
           <div class="flex-row last">
             <div class="fb local" data-command="fwupdate" data-i18n="btn_firmware">Firmware</div>
             <div class="fb local" data-command="webboard" id="webboard" data-i18n="btn_board">Board</div>
@@ -63,22 +63,22 @@
         </section>
         <a name="battery"></a>
         <section class="group group_battery hidden" id="group_battery">
-          <div class="title"><span data-i18n="title_battery">Battery</span></div>
+          <div class="title"><span data-i18n="ttl_battery">Battery</span></div>
           <div class="reset" data-name="battery" title="reset"></div>
           <div class="flex-row center" style="padding-bottom: 10;">
             <div class="infoitem" id="batteryinfo">
               <span data-i18n="lbl_batt_volt">Voltage</span>: <span id="battery_volt" class="text"></span>mV, 
               <span data-i18n="lbl_batt_percentage">Percentage</span>: <span id="battery_perc" class="text"></span>%, 
               <span data-i18n="lbl_batt_status">Status</span>:
-                  <span id="battery_charging" class="text hidden" data-i18n="st_batt_charging">Charging</span>
-                  <span id="battery_discharging" class="text hidden" data-i18n="st_batt_discharging">Discharging</span>
-                  <span id="battery_idle" class="text hidden" data-i18n="st_batt_idle">Idle</span>
+                  <span id="battery_charging" class="text hidden" data-i18n="msg_batt_charging">Charging</span>
+                  <span id="battery_discharging" class="text hidden" data-i18n="msg_batt_discharging">Discharging</span>
+                  <span id="battery_idle" class="text hidden" data-i18n="msg_batt_idle">Idle</span>
             </div>
           </div>
           <div class="flex-row" id="battrefrow">
             <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_calibrate">Calibrate (Measured mV)</span>
-              <input type="number" id="battref" class="text" name="battref" value="" min="2500" max="4500" placeholder="Multimeter reading" data-i18n="ph_battref" />
+              <input type="number" id="battref" class="text" name="battref" value="" min="2500" max="4500" placeholder="Multimeter reading" data-i18n="lbl_battref" />
             </div>
             <div class="fb hl local" data-command="savebattref" style="margin-top: 24px; height: 37px;" data-i18n="btn_calibrate">Calibrate</div>
           </div>
@@ -90,7 +90,7 @@
         </section>
         <a name="screen"></a>
         <section class="group group_display group_oled group_nextion hidden" id="group_display">
-          <div class="title"><span data-i18n="title_screen">Screen</span></div>
+          <div class="title"><span data-i18n="ttl_screen">Screen</span></div>
           <div class="reset" data-name="screen" title="reset"></div>
           <div class="flex-row group_tft hidden">
             <div class="inputwrap center">
@@ -133,7 +133,7 @@
               <input type="range" id="con" data-slaveid="slcontrastinfo" data-command="contrast" min="0" max="100" value="55">
             </div>
           </div>
-          <div class="row-title"><span data-i18n="title_screensaver">Screensaver</span></div>
+          <div class="row-title"><span data-i18n="ttl_screensaver">Screensaver</span></div>
           <div class="flex-row group group_tft group_oled group_nextion hidden">
             <div class="inputwrap center">
               <span class="inputtitle" data-i18n="lbl_while_not_playing">While Not Playing</span>
@@ -165,7 +165,7 @@
         </section>
         <a name="controls"></a>
         <section class="group group_controls hidden" id="group_controls">
-          <div class="title"><span data-i18n="title_controls">Controls</span></div>
+          <div class="title"><span data-i18n="ttl_controls">Controls</span></div>
           <div class="reset" data-name="controls" title="reset"></div>
           <div class="flex-row">
             <div class="inputwrap">
@@ -211,7 +211,7 @@
         </section>
         <a name="locale"></a>
         <section class="group group_locale hidden" id="group_locale">
-          <div class="title"><span data-i18n="title_locale">Locale</span></div>
+          <div class="title"><span data-i18n="ttl_locale">Locale</span></div>
           <div class="reset" data-name="locale" title="reset"></div>
           <div class="flex-row">
             <div class="inputwrap">
@@ -263,7 +263,7 @@
         </section>
         <a name="wifi"></a>
         <section class="group group_wifi hidden" id="group_wifi">
-          <div class="title"><span data-i18n="title_wifi">Wi-Fi</span></div>
+          <div class="title"><span data-i18n="ttl_wifi">Wi-Fi</span></div>
           <div class="flex-row credential">
             <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_ssid">SSID</span>
@@ -322,7 +322,7 @@
         </section>
         <a name="weather"></a>
         <section class="group group_weather hidden" id="group_weather">
-          <div class="title"><span data-i18n="title_weather">Weather</span></div>
+          <div class="title"><span data-i18n="ttl_weather">Weather</span></div>
           <div class="reset" data-name="weather" title="reset"></div>
           <div class="flex-row">
             <div class="inputwrap center">
@@ -354,26 +354,24 @@
             <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_temp_unit">Temperature Unit</span>
               <select type="text" id="wtempunit" name="wtempunit" data-command="wtempunit">
-                <option value="0">Metric (°C)</option>
-                <option value="1">Imperial (°F)</option>
+                <option value="0" data-i18n="unit_deg_c">°C</option>
+                <option value="1" data-i18n="unit_deg_f">°F</option>
               </select>
             </div>
-          </div>
-          <div class="flex-row">
             <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_air_pressure_unit">Air Pressure Unit</span>
               <select type="text" id="wpressunit" name="wpressunit" data-command="wpressunit">
-                <option value="0">Metric (hPa)</option>
-                <option value="1">Imperial (mmHg)</option>
+                <option value="0" data-i18n="unit_hpa">hPa</option>
+                <option value="1" data-i18n="unit_mmhg">mmHg</option>
               </select>
             </div>
             <div class="inputwrap">
               <span class="inputtitle" data-i18n="lbl_wind_speed_unit">Wind Speed Unit</span>
               <select type="text" id="wspeedunit" name="wspeedunit" data-command="wspeedunit">
-                <option value="kmh">Metric (km/h)</option>
-                <option value="mph">Imperial (mph)</option>
-                <option value="ms">Scientific (m/s)</option>
-                <option value="kn">Nautical (knots)</option>
+                <option value="kmh" data-i18n="unit_kmh">km/h</option>
+                <option value="mph" data-i18n="unit_mph">mph</option>
+                <option value="ms" data-i18n="unit_ms">m/s</option>
+                <option value="kn" data-i18n="unit_kn">knots</option>
               </select>
             </div>
           </div>
@@ -426,7 +424,7 @@
 
         <a name="mqtt"></a>
         <section class="group group_mqtt hidden" id="group_mqtt">
-          <div class="title"><span data-i18n="title_mqtt">MQTT</span></div>
+          <div class="title"><span data-i18n="ttl_mqtt">MQTT</span></div>
           <div class="reset" data-name="mqtt" title="reset"></div>
           <div class="flex-row">
             <div class="inputwrap center">
@@ -467,7 +465,7 @@
 
         <a name="tools"></a>
         <section class="group group_system hidden" id="group_tools">
-        <div class="title"><span data-i18n="title_dangerzone">Danger Zone</span></div>
+        <div class="title"><span data-i18n="ttl_dangerzone">Danger Zone</span></div>
         <div class="flex-row">
           <div class="inputwrap center">
             <span class="inputtitle" id="dangerzone_txt" data-i18n="lbl_dz_unlock">Turn on all switches to unlock</span>

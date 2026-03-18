@@ -405,16 +405,11 @@ back to displaying the text that has been hardcoded into the HTML and JS files.
 
 | Prefix | Examples | Covers |
 |---|---|---|
-| `ttl_` | `ttl_settings`, `ttl_playlist_editor` | Page titles |
-| `nav_` | `nav_system`, `nav_wifi` | Navigation tab labels |
-| `title_` | `title_battery`, `title_weather` | Section headings |
+| `ttl_` | `ttl_settings`, `ttl_playlist_editor` | Page & section titles |
 | `lbl_` | `lbl_flip_screen`, `lbl_volume` | Input / toggle labels |
-| `ph_` | `ph_battref` | Input placeholders |
 | `btn_` | `btn_save`, `btn_reset` | Button labels |
-| `msg_` | `msg_ota_complete`, `msg_no_update` | Dynamic status messages |
-| `st_batt_` | `st_batt_idle`, `st_batt_charging` | Battery state strings |
-| `lbl_off` / `lbl_on` | — | Toggle knob labels |
-| `
+| `msg_` | `msg_ota_complete`, `msg_no_update` | Status messages / placeholders |
+| `unit_` | `unit_dbm`, `unit_kbits` | Units of measurement |
 
 ---
 

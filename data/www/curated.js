@@ -136,7 +136,7 @@ function displayIndex() {
     row.className = 'line';
     row.innerHTML = `
       <td class="name">${escapeHtml(playlist.name || t('lbl_unnamed', 'Unnamed'))}</td>
-      <td class="info">${escapeHtml(playlist.total ? playlist.total + ' ' + t('unit_stations', 'stations') : '')}</td>
+      <td class="info">${escapeHtml(playlist.total ? playlist.total + ' ' + t('msg_stations', 'stations') : '')}</td>
       <td class="add">
         <button class="searchbutton addtoplaylist" data-index="${idx}" data-action="load">
           <svg viewBox="0 0 24 24" class="stroke">
@@ -235,7 +235,7 @@ function displayPlaylist(data) {
   playlistTable.innerHTML = '';
   
   // Update section title
-  document.getElementById('playlistSectionTitle').textContent = data.name + ' (' + data.stations.length + ' ' + t('unit_stations', 'stations') + ')';
+  document.getElementById('playlistSectionTitle').textContent = data.name + ' (' + data.stations.length + ' ' + t('msg_stations', 'stations') + ')';
   
   const stations = data.stations || [];
   if (stations.length === 0) {

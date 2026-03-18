@@ -497,16 +497,11 @@ def get_sort_priority(key):
     
     prefixes = [
         'locale_',   # 0
-        'title_',    # 1
-        'nav_',      # 2
-        'ttl_',      # 3
-        'lbl_',      # 4
-        'btn_',      # 5
-        'msg_',      # 6
-        'ph_',       # 7
-        'st_',       # 8
-        'sort_',     # 9
-        'unit_',     # 10
+        'ttl_',      # 1
+        'lbl_',      # 2
+        'btn_',      # 3
+        'msg_',      # 4
+        'unit_',     # 5
     ]
     
     for i, prefix in enumerate(prefixes):
