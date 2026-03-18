@@ -64,7 +64,7 @@ function onCuratedWSMessage(event) {
       window.location.replace('/');
     } else if (data.curated_import_failed) {
       console.error('[Curated] Import failed');
-      alert('Failed to prepare playlist. Please try again.');
+      alert(t('msg_failed_prepare_playlist', 'Failed to prepare playlist. Please try again.'));
     }
   } catch (e) {
     console.error('[Curated] Error parsing WebSocket message:', e);
@@ -117,7 +117,7 @@ function fetchIndex() {
     })
     .catch(error => {
       console.error('[Curated] Error fetching index:', error);
-      alert('Error loading index file. Please try again.');
+      alert(t('msg_error_loading_index', 'Error loading index file. Please try again.'));
       setButtonState('load');
     });
 }
@@ -305,7 +305,7 @@ function importPlaylist(mode) {
   // Verify that a playlist was actually loaded
   if (!currentPlaylistFile || !currentPlaylistData) {
     console.error('[Curated] No playlist loaded');
-    alert('Please load a playlist first by clicking on one from the list.');
+    alert(t('msg_load_playlist_first', 'Please load a playlist first by clicking on one from the list.'));
     return;
   }
   
@@ -320,19 +320,19 @@ function setButtonState(state) {
   const btn = document.getElementById('loadListsBtn');
   switch(state) {
     case 'load':
-      btn.value = 'Load Index';
+      btn.value = t('btn_load_index', 'Load Index');
       btn.disabled = false;
       break;
     case 'loading':
-      btn.value = 'Loading Index...';
+      btn.value = t('btn_loading_index', 'Loading Index...');
       btn.disabled = true;
       break;
     case 'loaded':
-      btn.value = 'Index Loaded';
+      btn.value = t('btn_index_loaded', 'Index Loaded');
       btn.disabled = true;
       break;
     case 'reload':
-      btn.value = 'Reload Index';
+      btn.value = t('btn_reload_index', 'Reload Index');
       btn.disabled = false;
       break;
   }

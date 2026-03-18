@@ -46,11 +46,11 @@ Documentation will be improved at some point... Until then, check this page and 
     - completely re-factored with possibility to add more
     - configurable in WebUI
     - preferences for units can be defined in `myoptions.h` with
-      - `#define WEATHER_IMPERIAL true` (for °F, mmHg, mph)
-      - `#define WEATHER_IMPERIAL false` (for °C, hPa, km/h) (this is default)
+      - `#define WEATHER_METRIC false` (for °F, mmHg, mph)
+      - `#define WEATHER_IMPERIAL true` (for °C, hPa, km/h) (this is default)
       - individual unit preferences can also be defined
-        - `#define WEATHER_TEMPERATURE_IMPERIAL true` (for °F)
-        - `#define WEATHER_PRESSURE_IMPERIAL true` (for mmHg)
+        - `#define WEATHER_TEMPERATURE_F true` (for °F)
+        - `#define WEATHER_PRESSURE_MMHG true` (for mmHg)
         - `#define WEATHER_WIND_SPEED_UNITS "mph"` (for mph)
           - `"kmh"` (for km/h)
           - `"ms"` (for m/s)

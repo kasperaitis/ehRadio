@@ -230,17 +230,18 @@ def sync_js_file(js_path, translations, dry_run=False):
     # Pattern: t('key', 'Default Text', ...) with optional additional parameters
     def replace_t_function(match):
         nonlocal fields_updated, fields_found
-        quote_char = match.group(1)
-        key = match.group(2)
-        old_text = match.group(3)
-        rest = match.group(4) or ''  # Optional additional parameters
+        key_quote = match.group(1)  # Quote char for key
+        key = match.group(2)  # Key string
+        text_quote = match.group(3)  # Quote char for default text
+        old_text = match.group(4)  # Default text string
+        rest = match.group(5) or ''  # Optional additional parameters + closing paren
         
         if key in translations:
             fields_found += 1
             keys_found.add(key)
             new_text = translations[key]
-            # Escape quotes in translation
-            if quote_char == "'":
+            # Escape quotes in translation based on which quote type is used
+            if text_quote == "'":
                 new_text_escaped = new_text.replace("\\", "\\\\").replace("'", "\\'")
             else:
                 new_text_escaped = new_text.replace("\\", "\\\\").replace('"', '\\"')
@@ -248,10 +249,7 @@ def sync_js_file(js_path, translations, dry_run=False):
             if old_text != new_text:
                 fields_updated += 1
                 keys_used.add(key)
-                if rest:
-                    return f"t({quote_char}{key}{quote_char}, {quote_char}{new_text_escaped}{quote_char}{rest})"
-                else:
-                    return f"t({quote_char}{key}{quote_char}, {quote_char}{new_text_escaped}{quote_char})"
+                return f"t({key_quote}{key}{key_quote}, {text_quote}{new_text_escaped}{text_quote}{rest}"
         
         return match.group(0)
     
@@ -352,17 +350,6 @@ def main():
     
     if dry_run:
         print("\nRun without --dry-run to apply changes")
-    else:
-        # Update locale.h to reflect the hardcoded locale (only after all files processed successfully)
-        if files_with_changes > 0:
-            # Final safety check before updating locale.h
-            locale_h_path = Path(__file__).parent / 'locale.h'
-            if locale_h_path.exists():
-                update_locale_h(locale_code)
-            else:
-                print(f"\n⚠ WARNING: locale.h disappeared! Cannot update HARDCODED_WEBUI_LOCALE")
-        elif total_files > 0:
-            print("\nNo files were updated, so locale.h was not modified.")
 
 
 if __name__ == '__main__':

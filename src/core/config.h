@@ -128,8 +128,8 @@ struct config_t // specify defaults here (and macros in options.h) (defaults are
   char      weatherlon[10] = WEATHER_LON;
   char      weatherkey[WEATHERKEY_LENGTH] = "";
   int16_t   weatherelevation = 0;
-  bool      weathertempimp = WEATHER_TEMPERATURE_IMPERIAL;
-  bool      weatherpressimp = WEATHER_PRESSURE_IMPERIAL;
+  bool      weathertempimp = WEATHER_TEMPERATURE_F;
+  bool      weatherpressimp = WEATHER_PRESSURE_MMHG;
   char      weatherwindspeed[6] = WEATHER_WIND_SPEED_UNITS;
   bool      weatherfeels = false;
   bool      weatherhumidity = false;

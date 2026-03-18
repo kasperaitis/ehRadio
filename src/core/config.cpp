@@ -490,8 +490,8 @@ void Config::resetSystem(const char *val, uint8_t clientId) {
   if (strcmp(val, "weather") == 0) {
     saveValue(&store.showweather, false, false);
     saveValue(&store.weathersyncinterval, (uint8_t)WEATHER_SYNC_INTERVAL, false);
-    saveValue(&store.weathertempimp, WEATHER_TEMPERATURE_IMPERIAL);
-    saveValue(&store.weatherpressimp, WEATHER_PRESSURE_IMPERIAL);
+    saveValue(&store.weathertempimp, WEATHER_TEMPERATURE_F);
+    saveValue(&store.weatherpressimp, WEATHER_PRESSURE_MMHG);
     saveValue(store.weatherwindspeed, WEATHER_WIND_SPEED_UNITS, sizeof(store.weatherwindspeed), false);
     saveValue(&store.weatherfeels, false);
     saveValue(&store.weatherhumidity, false);

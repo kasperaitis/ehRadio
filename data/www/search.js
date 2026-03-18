@@ -196,11 +196,11 @@ function onSearchWSMessage(event) {
       fetchSearchResults(true); // Show "loading" message
     } else if (data.search_failed) {
       const elapsed = (Date.now() - searchStartTime) / 1000;
-	  let errorMsg = 'Search failed. No servers available. Try again later.';
+	  let errorMsg = t('msg_search_no_servers', 'Search failed. No servers available. Try again later.');
       if (elapsed <= 2) {
-        errorMsg = 'Search failed. Likely reason: API not responding. Try again later.';
+        errorMsg = t('msg_search_api_not_responding', 'Search failed. Likely reason: API not responding. Try again later.');
       } else if (elapsed <= 5) {
-        errorMsg = 'Search failed. Likely reason: connection refused when getting servers list.';
+        errorMsg = t('msg_search_connection_refused', 'Search failed. Likely reason: connection refused when getting servers list.');
       }
       console.error(errorMsg);
       document.getElementById('stationsTable').innerHTML = 
@@ -300,7 +300,7 @@ function loadLastSearchAndResults() {
       fetchSearchResults(false); // Fetch results based on history, don't show "loading" message
     } else {
       // No history or an error occurred, so just set the UI to its initial state.
-      document.getElementById('stationsTable').innerHTML = '<tr><td class="importantmessage" colspan="4">Try searching.</td></tr>';
+      document.getElementById('stationsTable').innerHTML = '<tr><td class="importantmessage" colspan="4">' + t('msg_try_searching', 'Try searching.') + '</td></tr>';
       hideSearchPageNav();
       setSearchButtonsDisabled(false);
     }
@@ -311,7 +311,7 @@ function fetchSearchResults(showLoadingMsg, retries = 5, delay = 300) {
   if (showLoadingMsg) {
       document.getElementById('stationsTable').innerHTML = `
     <tr>
-      <td class="importantmessage" colspan="4">Search completed. Loading results.</td>
+      <td class="importantmessage" colspan="4">${t('msg_search_loading_results', 'Search completed. Loading results.')}</td>
     </tr>
     <tr style="height: 100%;">
       <td colspan="4" style="height: 100%; text-align: center; vertical-align: middle;">
@@ -343,7 +343,7 @@ function fetchSearchResults(showLoadingMsg, retries = 5, delay = 300) {
       setTimeout(() => fetchSearchResults(showLoadingMsg, retries - 1, delay), delay);
     } else {
       console.error('Error fetching search results:', error);
-      document.getElementById('stationsTable').innerHTML = '<tr><td class="importantmessage" colspan="4">Failed to load results. Try refreshing this page or performing a new search.</td></tr>';
+      document.getElementById('stationsTable').innerHTML = '<tr><td class="importantmessage" colspan="4">' + t('msg_failed_load_results', 'Failed to load results. Try refreshing this page or performing a new search.') + '</td></tr>';
       stationArr = [];
       hideSearchPageNav();
       setSearchButtonsDisabled(false);
@@ -370,7 +370,7 @@ function updateSearchPageDisplay() {
   prevBtn.classList.remove('hidden');
   nextBtn.classList.remove('hidden');
 
-  pageDisplay.textContent = `Page ${currentPage + 1}`;
+  pageDisplay.textContent = t('msg_page_number', 'Page {0}', currentPage + 1);
 
   // Use visibility to show/hide buttons. This keeps them in the layout and prevents alignment issues.
   prevBtn.style.visibility = currentPage <= 0 ? 'hidden' : 'visible';
@@ -437,7 +437,7 @@ function searchStations(isPageNav = false) {
 
   document.getElementById('stationsTable').innerHTML = `
     <tr>
-      <td class="importantmessage" colspan="4">Waiting for results. Be patient.</td>
+      <td class="importantmessage" colspan="4">${t('msg_waiting_results', 'Waiting for results. Be patient.')}</td>
     </tr>
     <tr style="height: 100%;">
       <td colspan="4" style="height: 100%; text-align: center; vertical-align: middle;">
@@ -459,7 +459,7 @@ function searchStations(isPageNav = false) {
   })
   .catch(error => {
     console.error('Error initiating search:', error);
-    document.getElementById('stationsTable').innerHTML = '<tr><td class="importantmessage" colspan="4">Search failed. Reload the page and try again?</td></tr>';
+    document.getElementById('stationsTable').innerHTML = '<tr><td class="importantmessage" colspan="4">' + t('msg_search_failed_reload', 'Search failed. Reload the page and try again?') + '</td></tr>';
     hideSearchPageNav();
     setSearchButtonsDisabled(false); // Re-enable buttons on fetch error
   });
@@ -469,7 +469,7 @@ function populateSearchTable(data, afterSearch = false) {
   const table = document.getElementById('stationsTable');
   table.innerHTML = "";
   if (!data || data.length === 0) {
-    const message = afterSearch ? 'No results found. Try a different search.' : 'Try searching.';
+    const message = afterSearch ? t('msg_no_results_found', 'No results found. Try a different search.') : t('msg_try_searching', 'Try searching.');
     table.innerHTML = `<tr><td class="importantmessage" colspan="4">${message}</td></tr>`;
     hideSearchPageNav(); //
     return;
