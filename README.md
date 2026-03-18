@@ -13,7 +13,7 @@ The objective of this fork is to create a more pleasant experience to use for al
 I will absolutely drop support for ESP8266 (mostly already deleted but some elements remain).  Support for low-end versions of ESP32s may get dropped (PSRAM is already a requirement).  I build with ESP32-S3s and various displays.
 I can't test every piece of hardware this firmware is capable of suporting.
 
-I may drop support for certain components like Nextion.
+I may drop support for certain components like Nextion (it's already likely broken).
 
 If you have issues it may help to also check yoRadio documentation.  The hardware implementations should still be 100% compatible.
 
