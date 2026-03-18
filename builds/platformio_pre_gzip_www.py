@@ -176,7 +176,7 @@ def deploy_locale_json(source, target, env):
     """Copy the chosen WebUI language JSON into the SPIFFS source tree.
 
     The language code is derived via :pyfunc:`_get_selected_lang_code`, which
-    reads ``WEBUI_LANGUAGE`` if defined or falls back to
+    reads ``WEBUI_LOCALE`` if defined or falls back to
     ``DSP_LANGUAGE``.  If English (``en_US``), no file is copied since the
     JS layer uses built-in defaults from ``language.json``.  Otherwise, the
     selected locale JSON is copied from ``src/locale/webui/{code}.json`` to

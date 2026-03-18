@@ -14,6 +14,14 @@ Usage:
   --dry-run: Preview changes without modifying files
   
   Example: python hardcode_locale_to_webui.py lt_LT --dry-run
+
+Trip5 Note:
+
+This is not meant to be used in releases.  It may be used to switch the hardcoded text to a secondary fallback language.
+But, thanks to the way that the releases are put together, if including a .json locale, the .json becomes primary.
+It's probably best to leave English as the "master" language, even if just thanks to how easy it is to translate English
+into other languages.  So, this script probably works pretty well, but remains untested in practice.
+
 """
 
 import json
@@ -350,7 +358,6 @@ def main():
     
     if dry_run:
         print("\nRun without --dry-run to apply changes")
-
 
 if __name__ == '__main__':
     main()
