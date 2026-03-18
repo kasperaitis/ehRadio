@@ -12,6 +12,7 @@ The following libraries are custom to ehRadio, mostly inherited from yoRadio v0.
   
 #### FT6336_Touchscreen
   - made by https://github.com/kasperaitis for ehRadio
+  - used as source: https://github.com/aselectroworks/Arduino-FT6336U
 
 #### ILI9225Fix https://github.com/arduinopavlodar/TFT_22_ILI9225
   - not on Platformio and also highly-modified from an unknown version
@@ -38,10 +39,11 @@ The following libraries are custom to ehRadio, mostly inherited from yoRadio v0.
   - likely adapted https://github.com/schreibfaul1/ESP32-audioI2S
   - from Maleksm's yoRadio mod v0.9.512m: https://4pda.to/forum/index.php?showtopic=1010378&st=11240#entry125839228
     - Maleksm says source from Wolle (schreibfaul1) 3.3.2l on 2025.07.09
+    - But source mostly matches 3.1.0 - so perhaps there's a few minor fixes from 3.3.2 or...?
   - attempt to update using Maleksm's mod v0.9.533m failed (probably due to similar issues as below)
 
 #### VS1053_Audio
-  - original DNA in https://github.com/Edzelf/Esp-radio and https://github.com/Edzelf/Esp-radio2
+  - original DNA in https://github.com/Edzelf/Esp-radio and https://github.com/Edzelf/ESP32Radio-V2
   - but then replaced with https://github.com/schreibfaul1/ESP32-vs1053_ext
   - likely adapted from https://github.com/nstepanets/ESP32-vs1053_ext
   - from Maleksm's yoRadio mod v0.9.512m: https://4pda.to/forum/index.php?showtopic=1010378&st=11240#entry125839228

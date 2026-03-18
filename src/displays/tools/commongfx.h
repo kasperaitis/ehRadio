@@ -2,7 +2,7 @@
 #define common_gfx_h
 #include <Arduino.h>
 #include "../widgets/widgetsconfig.h" // displayXXXDDDDconf.h
-#include "prepText.h"
+#include "utf8To.h"
 
 // Define missing macros for SSD1306x32 if not already defined
 #ifndef CHARWIDTH
@@ -14,6 +14,11 @@
 #endif
 
 #define ADAFRUIT_CLIPPING !defined(DSP_LCD) && DSP_MODEL!=DSP_ILI9225
+
+// In-band pixel-spacer control character used by display and widget rendering
+// (ASCII Record Separator 0x1E). Inserting this byte into a display string
+// adds a 2-pixel gap without advancing a full character cell.
+#define DSP_PIXEL_SPACER '\x1E'
 
 typedef struct clipArea {
   uint16_t left; 
@@ -45,7 +50,7 @@ class DspCore: public yoDisplay {
       #if DSP_MODEL!=DSP_SSD1306x32
         drawBitmap((width()  - LOGO_WIDTH ) / 2, top, logo, LOGO_WIDTH, LOGO_HEIGHT, 1);
       #else
-        setTextSize(1); setCursor((width() - 6*CHARWIDTH) / 2, 0); setTextColor(TFT_FG, TFT_BG); print(prepText("ehRadio", false));
+        setTextSize(1); setCursor((width() - 6*CHARWIDTH) / 2, 0); setTextColor(TFT_FG, TFT_BG); print(utf8To("ehRadio", false));
       #endif
       display();
     }

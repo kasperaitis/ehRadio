@@ -6,6 +6,7 @@
 #include <SPI.h>
 #include <SPIFFS.h>
 #include <Preferences.h>
+#include "locale.h"
 #include "../displays/widgets/widgetsconfig.h"
 
 #define ESPFILEUPDATER_USERAGENT "ehradio/" RADIOVERSION "(" GITHUBURL ")"  // used as a user-agent string for downloading with ESPFileUpdater
@@ -18,7 +19,6 @@
 #define PLAYLIST_PATH     "/data/playlist.csv"
 #define SSIDS_PATH        "/data/wifi.csv"
 #define TMP_PATH          "/data/tmpfile.txt"
-#define TMP2_PATH         "/data/tmpfile2.txt"
 #define INDEX_PATH        "/data/index.dat"
 #define PLAYLIST_SD_PATH  "/data/playlistsd.csv"
 #define INDEX_SD_PATH     "/data/indexsd.dat"
@@ -38,9 +38,9 @@ enum playMode_e      : uint8_t  { PM_WEB=0, PM_SDCARD=1 };
 void u8fix(char *src);
 void cleanStaleSearchResults();
 void fixPlaylistFileEnding();
-void getRequiredFiles(void* param);
+void getRequiredFiles();
 void checkNewVersionFile();
-void startAsyncServices(void* param);
+void startupServicesAsync(void* param);
 
 struct theme_t {
   uint16_t background;
@@ -111,18 +111,30 @@ struct config_t // specify defaults here (and macros in options.h) (defaults are
   bool      fliptouch = TOUCH_FLIP;
   bool      dbgtouch = TOUCH_DEBUG;
   uint16_t  encacc = ROTARY_ACCEL;
-  // Battery ADC calibration reference (in mV). Set via 'calbatt <mV>' (saves immediately) or override in myoptions.h
   uint16_t  battery_adc_ref_mv = BATTERY_ADC_REF_MV;
   bool      skipPlaylistUpDown = ONE_CLICK_SWITCH;
   uint8_t   irtlp = IR_TOLERANCE;
+  char      locale_webui[10] = WEBUI_LOCALE;
   char      tz_name[70] = TIMEZONE_NAME;
   char      tzposix[70] = TIMEZONE_POSIX;
   char      sntp1[35] = SNTP_1;
   char      sntp2[35] = SNTP_2;
+  uint8_t   timesyncinterval = TIME_SYNC_INTERVAL;
   bool      showweather = false;
+  uint8_t   weathersyncinterval = WEATHER_SYNC_INTERVAL;
+  char      weatherapi[6] = WEATHER_API;
+  char      weatherlang[10] = WEATHER_LANG;
   char      weatherlat[10] = WEATHER_LAT;
   char      weatherlon[10] = WEATHER_LON;
   char      weatherkey[WEATHERKEY_LENGTH] = "";
+  int16_t   weatherelevation = 0;
+  bool      weathertempimp = WEATHER_TEMPERATURE_F;
+  bool      weatherpressimp = WEATHER_PRESSURE_MMHG;
+  char      weatherwindspeed[6] = WEATHER_WIND_SPEED_UNITS;
+  bool      weatherfeels = false;
+  bool      weatherhumidity = false;
+  bool      weatherpressure = false;
+  bool      weatherwind = false;
   bool      mqttenable = false;
   char      mqtthost[60] = MQTT_HOST;
   uint16_t  mqttport = MQTT_PORT;
@@ -243,7 +255,9 @@ class Config {
     void purgeUnwantedFiles();
     void deleteMainwwwFile();
     void updateFile(void* param, const char* localFile, const char* onlineFile, const char* updatePeriod, const char* simpleName);
-    void startAsyncServicesButWait();
+    void startupServices();
+    void updateLocaleFile();
+    bool updateLocaleFileAsync(const char* localeCode, uint8_t clientId);
     void bootInfo();
     void deleteOldKeys();
     void setBitrateFormat(BitrateFormat fmt) { configFmt = fmt; }

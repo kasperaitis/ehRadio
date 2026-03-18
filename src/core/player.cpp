@@ -6,7 +6,7 @@
 #include "sdmanager.h"
 #include "netserver.h"
 #include "network.h"
-#include "../displays/tools/l10n.h"
+#include "locale.h"
 #include "../pluginsManager/pluginsManager.h"
 #ifdef USE_ES8311
   #include "../libraries/ES8311_Audio/es8311.h"
@@ -79,7 +79,9 @@ void Player::init() {
     uint8_t i2sVol_init = volToI2S(config.store.volume); /* Also apply stored volume to codec (respecting station ovol via volToI2S) */
     es.setVolume((uint8_t)map(i2sVol_init, 0, 254, 0, 100)); /* Map I2S volume (0..254) to codec volume 0..100 */
   #endif
-  setConnectionTimeout(1700, 3700);
+  #ifdef CONNECT_HTTP_HTTPS_TIMEOUT // macro must be two numbers separated by a comma, ie: 1700, 3700
+    setConnectionTimeout(CONNECT_HTTP_HTTPS_TIMEOUT);
+  #endif
   Serial.println("done");
 }
 
@@ -244,7 +246,15 @@ void Player::_play(uint16_t stationId) {
   } else {
     config.saveValue(&config.store.play_mode, static_cast<uint8_t>(PM_WEB));
   }
-  if (config.getMode()==PM_WEB) isConnected=connecttohost(config.station.url);
+  if (config.getMode()==PM_WEB) {
+    isConnected=connecttohost(config.station.url);
+    if (!isConnected) {
+      // Retry once after a brief delay — covers boot-time transient failures
+      // (DNS not ready / TCP stack not fully up immediately after WiFi join)
+      vTaskDelay(pdMS_TO_TICKS(1500));
+      isConnected=connecttohost(config.station.url);
+    }
+  }
   if (isConnected) {
   //if (config.store.play_mode==PM_WEB?connecttohost(config.station.url):connecttoFS(SD,config.station.url,config.sdResumePos==0?_resumeFilePos:config.sdResumePos-player.sd_min)) {
     _status = PLAYING;

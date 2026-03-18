@@ -330,15 +330,13 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef SEARCHRESULTS_YIELDINTERVAL
   #define SEARCHRESULTS_YIELDINTERVAL 0 // With a large buffer, skipping is almost eliminated with 0
 #endif
-#ifndef WEATHER_SYNC_INTERVAL
-  #define WEATHER_SYNC_INTERVAL 1800 // 60 * 30 minutes
-#endif
-#ifndef TIME_SYNC_INTERVAL
-  #if RTCSUPPORTED
-    #define TIME_SYNC_INTERVAL 86400 // 60 * 60 * 24 hours
-  #else
-    #define TIME_SYNC_INTERVAL 3600 // 60 * 60 * 1 hour
-  #endif
+
+#ifndef CONNECT_HTTP_HTTPS_TIMEOUT
+  // Connection timeout in milliseconds: HTTP, HTTPS(SSL)
+  // Library defaults: 250ms HTTP, 2700ms SSL
+  // Conservative values for slower networks: 1700ms HTTP, 3700ms SSL
+  // #define CONNECT_HTTP_HTTPS_TIMEOUT 1700, 3700 /* For ESP32? */
+  // undefined means using library defaults (preferred)
 #endif
 
 /*        Other settings. You can overwrite them in the myoptions.h file        */
@@ -381,11 +379,8 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef DSP_INVERT_TITLE
   #define DSP_INVERT_TITLE  true   // Invert title colors for displays ?
 #endif
-#ifndef EXT_WEATHER
-  #define EXT_WEATHER       true   // Extended weather
-#endif
 #ifndef RSSI_DIGIT
-  #define RSSI_DIGIT       false   // Extended weather
+  #define RSSI_DIGIT       false   // display RSSI as number
 #endif
 #ifndef RSSI_STEPS
   #define RSSI_STEPS       -50,-60,-70,-80
@@ -525,13 +520,6 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   #define COLOR_BITRATE           231, 211,  90
 #endif
 
-/*      Language Default EN       */
-#define EN  1
-#define RU  2
-#ifndef L10N_LANGUAGE
-  #define L10N_LANGUAGE EN
-#endif
-
 /*        SYSTEM DEFAULTS         */
 #ifndef SCREENSAVERSTARTUPDELAY
   #define SCREENSAVERSTARTUPDELAY 5
@@ -555,6 +543,7 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   #define BUFLEN 170 // seems safe... a lot of multipliers exist in the code...
 #endif
 
+/* This bit will actually do something but needs to be handled a different way (configurable would be better!) */
 //#define OTA_PASS "myotapassword12345"
 //#define HTTP_USER "user"
 //#define HTTP_PASS "password"
@@ -626,6 +615,9 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef GITHUBURL
   #define GITHUBURL "https://github.com/trip5/ehradio" // used by the ESPFileUpdater in BrowserClient (and in URLs below)
 #endif
+#ifdef DISABLE_UPDATER // if this is defined, disables online updates
+  #undef FIRMWARE
+#endif
 #ifdef FIRMWARE
   #ifndef FILESURL
     #define FILESURL GITHUBURL "/releases/download/" RADIOVERSION "/" // + FILE for SPIFFS files (this version)
@@ -685,7 +677,6 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
     #undef CURATED_LISTS_INDEX
   #endif
 #endif
-
 
 /*    RADIO BROWSER API SERVER    */
 /* Used as fallback for search and primary for sending clicks */
@@ -833,7 +824,7 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #endif
 
 #ifndef TIMEZONE_NAME
-  #define TIMEZONE_NAME "America/Halifax"
+  #define TIMEZONE_NAME "Canada/Atlantic"
 #endif
 #ifndef TIMEZONE_POSIX
   #define TIMEZONE_POSIX "AST4ADT,M3.2.0,M11.1.0"
@@ -844,11 +835,52 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef SNTP_2
   #define SNTP_2 "pool.ntp.org"
 #endif
+#ifndef TIME_SYNC_INTERVAL // hours
+  #if RTCSUPPORTED
+    #define TIME_SYNC_INTERVAL 8
+  #else
+    #define TIME_SYNC_INTERVAL 1
+  #endif
+#endif
+
+#ifndef WEATHER_API
+  #define WEATHER_API "OM1"
+#endif
 #ifndef WEATHER_LAT
-  #define WEATHER_LAT "44.8857"
+  #define WEATHER_LAT "44.64738"
 #endif
 #ifndef WEATHER_LON
-  #define WEATHER_LON "63.1005"
+  #define WEATHER_LON "-63.58029"
+#endif
+#ifndef WEATHER_SYNC_INTERVAL // minutes
+  #define WEATHER_SYNC_INTERVAL 15
+#endif
+/* Most of the world uses Metric but you can over-ride in myoptions.h */
+#ifndef WEATHER_METRIC
+  #define WEATHER_METRIC true
+#endif
+/* The exact units can also be over-ridden in myoptions.h */
+/* valid choices for wind speed are "kph" (km/h), "mph", "ms" (m/s), "kn" (knots) */
+#if WEATHER_METRIC
+  #ifndef WEATHER_TEMPERATURE_F
+    #define WEATHER_TEMPERATURE_F false
+  #endif
+  #ifndef WEATHER_PRESSURE_MMHG
+    #define WEATHER_PRESSURE_MMHG false
+  #endif
+  #ifndef WEATHER_WIND_SPEED_UNITS
+    #define WEATHER_WIND_SPEED_UNITS "kmh"
+  #endif
+#else
+  #ifndef WEATHER_TEMPERATURE_F
+    #define WEATHER_TEMPERATURE_F true
+  #endif
+  #ifndef WEATHER_PRESSURE_MMHG
+    #define WEATHER_PRESSURE_MMHG true
+  #endif
+  #ifndef WEATHER_WIND_SPEED_UNITS
+    #define WEATHER_WIND_SPEED_UNITS "mph"
+  #endif
 #endif
 
 #ifndef MQTT_HOST

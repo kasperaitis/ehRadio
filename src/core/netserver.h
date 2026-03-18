@@ -4,7 +4,7 @@
 #include <ESPAsyncWebServer.h>
 #include "../displays/widgets/widgetsconfig.h"
 
-enum requestType_e : uint8_t  { PLAYLIST=1, STATION=2, STATIONNAME=3, ITEM=4, TITLE=5, VOLUME=6, NRSSI=7, BITRATE=8, MODE=9, EQUALIZER=10, BALANCE=11, PLAYLISTSAVED=12, STARTUP=13, GETINDEX=14, GETACTIVE=15, GETSYSTEM=16, GETSCREEN=17, GETTIMEZONE=18, GETWEATHER=19, GETCONTROLS=20, DSPON=21, SDPOS=22, SDLEN=23, SDSHUFFLE=24, SDINIT=25, GETPLAYERMODE=26, CHANGEMODE=27, SEARCH_DONE=28, SEARCH_FAILED=29, CURATED_INDEX_DONE=30, CURATED_PLAYLIST_DONE=31, CURATED_FAILED=32, GETMQTT=33, GETBATTERY=34 }; 
+enum requestType_e : uint8_t  { PLAYLIST=1, STATION=2, STATIONNAME=3, ITEM=4, TITLE=5, VOLUME=6, NRSSI=7, BITRATE=8, MODE=9, EQUALIZER=10, BALANCE=11, PLAYLISTSAVED=12, STARTUP=13, GETINDEX=14, GETACTIVE=15, GETSYSTEM=16, GETSCREEN=17, GETLOCALE=18, GETWEATHER=19, GETCONTROLS=20, DSPON=21, SDPOS=22, SDLEN=23, SDSHUFFLE=24, SDINIT=25, GETPLAYERMODE=26, CHANGEMODE=27, SEARCH_DONE=28, SEARCH_FAILED=29, CURATED_INDEX_DONE=30, CURATED_PLAYLIST_DONE=31, CURATED_FAILED=32, GETMQTT=33, GETBATTERY=34 }; 
 enum import_e      : uint8_t  { IMDONE=0, IMWIFI=2 };
 // the only place we use the 32 pixel .png icon is here for empty_fs
 const char emptyfs_html[] PROGMEM = R"(
@@ -90,12 +90,21 @@ const char index_html[] PROGMEM = R"(
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="icon" type="image/png" href="icon.png">
-  <link rel="stylesheet" href="theme.css" type="text/css" />
-  <link rel="stylesheet" href="style.css" type="text/css" />
+  <link rel="stylesheet" id="themeCSS" href="theme.css" type="text/css" />
+  <link rel="stylesheet" id="styleCSS" href="style.css" type="text/css" />
   <script type="text/javascript" src="variables.js"></script>
-  <script type="text/javascript" src="script.js"></script>
-  <script type="text/javascript" src="dragpl.js"></script>
-  <script type="text/javascript" src="playstation.js"></script>
+  <script>
+    // Cache-busting
+    var v = '?v=' + radioVersion;
+    document.getElementById('themeCSS').href = 'theme.css' + v;
+    document.getElementById('styleCSS').href = 'style.css' + v;
+    ['locale.js', 'script.js', 'dragpl.js', 'playstation.js'].forEach(function(src) {
+      var script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.src = src + v;
+      document.head.appendChild(script);
+    });
+  </script>
   </head>
 <body>
 <div id="content" class="hidden progmem"></div><!--content--><div id="progress"><span id="loader"></span></div>

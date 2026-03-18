@@ -1,8 +1,10 @@
 #ifndef widgetsconfig_h
 #define widgetsconfig_h
 
+#include <stdint.h>
+
 enum WidgetAlign { WA_LEFT, WA_CENTER, WA_RIGHT };
-enum BitrateFormat { BF_UNKNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_OGG, BF_WAV, BF_VOR, BF_OPU };
+enum BitrateFormat { BF_UNKNOWN, BF_MP3, BF_AAC, BF_FLAC, BF_WAV, BF_VOR, BF_OPU };
 
 struct WidgetConfig {
   uint16_t left; 

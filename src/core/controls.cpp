@@ -451,6 +451,10 @@ void onBtnDuringLongPress(int id) {
 }
 
 void controlsEvent(bool toRight, int8_t volDelta) {
+  if (display.mode() == SCREENSAVER || display.mode() == SCREENBLANK) {
+    display.putRequest(NEWMODE, PLAYER);
+    return;  // Don't perform action, just exit screensaver
+  }
   if (display.mode() == NUMBERS) {
     display.numOfNextStation = 0;
     display.putRequest(NEWMODE, PLAYER);
@@ -526,6 +530,14 @@ void onBtnClick(int id) {
       }
     case EVT_BTNUP:
     case EVT_BTNDOWN: {
+        // Exit screensaver on first press (don't perform action if skipPlaylistUpDown enabled)
+        if (display.mode() == SCREENSAVER || display.mode() == SCREENBLANK) {
+          display.putRequest(NEWMODE, PLAYER);
+          return;  // first press only exits screensaver
+          #ifdef DSP_LCD
+            delay(200); // brief delay for mode change
+          #endif
+        }
         if (DSP_MODEL == DSP_DUMMY) {
           if (id == EVT_BTNUP) {
             player.next();

@@ -64,7 +64,7 @@ function onCuratedWSMessage(event) {
       window.location.replace('/');
     } else if (data.curated_import_failed) {
       console.error('[Curated] Import failed');
-      alert('Failed to prepare playlist. Please try again.');
+      alert(t('msg_failed_prepare_playlist', 'Failed to prepare playlist. Please try again.'));
     }
   } catch (e) {
     console.error('[Curated] Error parsing WebSocket message:', e);
@@ -117,7 +117,7 @@ function fetchIndex() {
     })
     .catch(error => {
       console.error('[Curated] Error fetching index:', error);
-      alert('Error loading index file. Please try again.');
+      alert(t('msg_error_loading_index', 'Error loading index file. Please try again.'));
       setButtonState('load');
     });
 }
@@ -127,7 +127,7 @@ function displayIndex() {
   indexTable.innerHTML = '';
   
   if (!indexData || indexData.length === 0) {
-    indexTable.innerHTML = '<tr class="line"><td colspan="3" class="importantmessage">No playlists available</td></tr>';
+    indexTable.innerHTML = '<tr class="line"><td colspan="3" class="importantmessage">' + t('msg_no_playlists', 'No playlists available') + '</td></tr>';
     return;
   }
   
@@ -135,8 +135,8 @@ function displayIndex() {
     const row = document.createElement('tr');
     row.className = 'line';
     row.innerHTML = `
-      <td class="name">${escapeHtml(playlist.name || 'Unnamed')}</td>
-      <td class="info">${escapeHtml(playlist.total ? playlist.total + ' stations' : '')}</td>
+      <td class="name">${escapeHtml(playlist.name || t('lbl_unnamed', 'Unnamed'))}</td>
+      <td class="info">${escapeHtml(playlist.total ? playlist.total + ' ' + t('msg_stations', 'stations') : '')}</td>
       <td class="add">
         <button class="searchbutton addtoplaylist" data-index="${idx}" data-action="load">
           <svg viewBox="0 0 24 24" class="stroke">
@@ -168,7 +168,7 @@ function loadPlaylist(playlist) {
   console.log('[Curated] Requesting playlist download:', currentPlaylistFile);
   
   // Update section title
-  document.getElementById('playlistSectionTitle').textContent = 'Loading: ' + (playlist.name || 'Playlist');
+  document.getElementById('playlistSectionTitle').textContent = t('msg_loading', 'Loading') + ': ' + (playlist.name || t('lbl_unnamed', 'Unnamed'));
   
   // Show loading spinner in playlist table
   const playlistTable = document.getElementById('playlistTable');
@@ -224,8 +224,8 @@ function fetchPlaylist() {
     })
     .catch(error => {
       console.error('[Curated] Error fetching playlist:', error);
-      document.getElementById('playlistTable').innerHTML = '<tr class="line"><td class="importantmessage" colspan="3">Error loading playlist file</td></tr>';
-      document.getElementById('playlistSectionTitle').textContent = 'Error Loading Playlist';
+      document.getElementById('playlistTable').innerHTML = '<tr class="line"><td class="importantmessage" colspan="3">' + t('msg_error_loading_playlist', 'Error loading playlist') + '</td></tr>';
+      document.getElementById('playlistSectionTitle').textContent = t('msg_error_loading_playlist', 'Error loading playlist');
       setImportButtonsEnabled(false);
     });
 }
@@ -235,11 +235,11 @@ function displayPlaylist(data) {
   playlistTable.innerHTML = '';
   
   // Update section title
-  document.getElementById('playlistSectionTitle').textContent = data.name + ' (' + data.stations.length + ' stations)';
+  document.getElementById('playlistSectionTitle').textContent = data.name + ' (' + data.stations.length + ' ' + t('msg_stations', 'stations') + ')';
   
   const stations = data.stations || [];
   if (stations.length === 0) {
-    playlistTable.innerHTML = '<tr class="line"><td colspan="3" class="importantmessage">No stations in this playlist</td></tr>';
+    playlistTable.innerHTML = '<tr class="line"><td colspan="3" class="importantmessage">' + t('msg_no_stations_in_playlist', 'No stations in this playlist') + '</td></tr>';
     setImportButtonsEnabled(false);
     return;
   }
@@ -305,7 +305,7 @@ function importPlaylist(mode) {
   // Verify that a playlist was actually loaded
   if (!currentPlaylistFile || !currentPlaylistData) {
     console.error('[Curated] No playlist loaded');
-    alert('Please load a playlist first by clicking on one from the list.');
+    alert(t('msg_load_playlist_first', 'Please load a playlist first by clicking on one from the list.'));
     return;
   }
   
@@ -320,19 +320,19 @@ function setButtonState(state) {
   const btn = document.getElementById('loadListsBtn');
   switch(state) {
     case 'load':
-      btn.value = 'Load Index';
+      btn.value = t('btn_load_index', 'Load Index');
       btn.disabled = false;
       break;
     case 'loading':
-      btn.value = 'Loading Index...';
+      btn.value = t('btn_loading_index', 'Loading Index...');
       btn.disabled = true;
       break;
     case 'loaded':
-      btn.value = 'Index Loaded';
+      btn.value = t('btn_index_loaded', 'Index Loaded');
       btn.disabled = true;
       break;
     case 'reload':
-      btn.value = 'Reload Index';
+      btn.value = t('btn_reload_index', 'Reload Index');
       btn.disabled = false;
       break;
   }

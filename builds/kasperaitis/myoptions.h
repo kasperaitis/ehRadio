@@ -38,7 +38,7 @@
     #define RGB_LED_PIN   42
   #endif
   #ifndef RGB_LED_ORDER
-    #define RGB_LED_ORDER GRB
+    #define RGB_LED_ORDER NEO_GRB
   #endif
 #elif defined(BOARD_ESP32_S3_N16R8)
   //#define LED_BUILTIN         48          /* S3 RGB LED probably default in board def 48 */
@@ -58,7 +58,6 @@
 /* When using SPI Displays, trying to use same SPI MOSI, SCK, MISO as VS1053 doesn't work */
 #if defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define DSP_MODEL       DSP_ILI9341
-  #define PRINT_FIX
   #define SCREEN_INVERT true
   #define TFT_CS          10
   #define TFT_DC          46
@@ -70,6 +69,7 @@
   #define TFT_SCLK        12
   #define TFT_MISO        13
   #define BRIGHTNESS_PIN  TFT_BL
+  #define DSP_LANGUAGE    lt_LT
 #endif
 
 
@@ -95,6 +95,8 @@
   #ifndef ES8311_MAX_I2S
     #define ES8311_MAX_I2S 180
   #endif
+  /* force mono audio for this board */
+  #define PLAYER_FORCE_MONO true
   #define VS1053_CS       255     /* set to 255 to disable VS1053 */
 #endif
 
@@ -201,20 +203,20 @@
   #define VOLUME_STEPS    5
 #endif
 
-
 /* --- SYSTEM OVERRIDES --- */
 
 #if defined (BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
   #define LOOP_TASK_STACK_SIZE 8  /* Compiler default is 8KB but seems safe on ESP32-S3 to increase to 16KB for audio decoding + concurrent tasks */
   #define CONFIG_ASYNC_TCP_QUEUE_SIZE 32
-#elif defined (BOARD_ESP32_S3_N16R8) ||\
-      defined(ESP32_S3_KASPERAITIS_ES3C28P)
+#elif defined (BOARD_ESP32_S3_N16R8) || defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define LOOP_TASK_STACK_SIZE 16  /* Compiler default is 8KB but seems safe on ESP32-S3 to increase to 16KB for audio decoding + concurrent tasks / 8KB is safe when using a VS1053 decoder */
   #define CONFIG_ASYNC_TCP_QUEUE_SIZE 64
   #define SEARCHRESULTS_BUFFER 1024*32 // 32KB matches chunk sizes from radio-browser.info but likely only good for ESP32-S3
   #define SEARCHRESULTS_YIELDINTERVAL 0 // With a large buffer, skipping is almost eliminated with 0
-#endif
 
+  /* Disable automatic runtime downloads from GitHub (ESPFileUpdater) for this board only. */
+  //#define DISABLE_ESPFILEUPDATER
+#endif
 
 /* --- URL SOURCE OVERRIDE --- */
 /* Only use this if you've decided to use your own Github as the source of files */

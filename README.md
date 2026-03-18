@@ -13,7 +13,7 @@ The objective of this fork is to create a more pleasant experience to use for al
 I will absolutely drop support for ESP8266 (mostly already deleted but some elements remain).  Support for low-end versions of ESP32s may get dropped (PSRAM is already a requirement).  I build with ESP32-S3s and various displays.
 I can't test every piece of hardware this firmware is capable of suporting.
 
-I may drop support for certain components like Nextion.
+I may drop support for certain components like Nextion (it's already likely broken).
 
 If you have issues it may help to also check yoRadio documentation.  The hardware implementations should still be 100% compatible.
 
@@ -21,6 +21,49 @@ Documentation will be improved at some point... Until then, check this page and 
 
 
 ## ehRadio Version history
+
+### 2026.03.18
+
+  - Thanks to [kasperaitis](https://github.com/kasperaitis) for [PR 50](https://github.com/trip5/ehRadio/pull/50)
+    - Ignore placeholder stream titles
+    - improved battery handling
+  - Also: [PR 51](https://github.com/trip5/ehRadio/pull/51)
+    - good work on multi-locale options for display!
+    - glyph tools (more characters are always good)
+    - began multi-locale support of WebUI
+  - Configure the display language with something like `#define DSP_LANGUAGE_de_DE` in `myoptions.h`
+    - see the available options by checking `displayL10n_*.h` files in `locale` folder 
+  - WebUI locale now dynamically configurable
+    - if online update capable, can switch between any that are available in the release
+    - if not, then can switch between hardcoded HTML (en_US) and another (if English is not the default)
+    - translations may not be good... report issues or open a PR!
+    - Configure the default webUI language with `#define WEBUI_LANGUAGE_STRING "de_DE"` in `myoptions.h`
+    - if not specified, will use the same as the display language
+    - sets a default WebUI locale different than the display - check locale/webui folder .json files (user-configurable)
+    - can still switch between 2 languages even if not using an online firmware (if it uses a locale .json)
+  - Multiple Weather providers now available (APIs: Openweather 2.5 & 3.0, Open-Meteo v1)
+    - old code relied on Openweather API 2.5 which will be discontinued
+    - completely re-factored with possibility to add more
+    - configurable in WebUI
+    - preferences for units can be defined in `myoptions.h` with
+      - `#define WEATHER_METRIC false` (for °F, mmHg, mph)
+      - `#define WEATHER_IMPERIAL true` (for °C, hPa, km/h) (this is default)
+      - individual unit preferences can also be defined
+        - `#define WEATHER_TEMPERATURE_F true` (for °F)
+        - `#define WEATHER_PRESSURE_MMHG true` (for mmHg)
+        - `#define WEATHER_WIND_SPEED_UNITS "mph"` (for mph)
+          - `"kmh"` (for km/h)
+          - `"ms"` (for m/s)
+          - `"kn"` (for knots)
+  - screensaver mode exits faster on button press
+  - connection timeout can be altered from library default of 250ms for HTTP and 1700ms for HTTPS connections
+    - in `myoptions.h` there should be two numbers like: `#define CONNECT_HTTP_HTTPS_TIMEOUT 1700, 3700`
+    - probably only useful on older ESP32 boards
+  - Can add `#define DISABLE_UPDATER` to `myoptions.h` to disable firmware updating capabilities
+  - Time sync interval can be configured in WebUI
+    - default in `myoptions.h` set with `#define TIME_SYNC_INTERVAL 1` (time in hours: 1 to 24)
+  - Weather API sync interval can be configured in WebUI
+    - default in `myoptions.h` set with `#define WEATHER_SYNC_INTERVAL 30` (time in minutes: 10 to 60)
 
 ### 2026.02.18
   - WebUI greatly improved for mobile and tablet devices
@@ -1067,7 +1110,7 @@ or -> **!!! a [full update](#update-over-web-interface) with Sketch data upload 
 - added the ability to display the weather on all displays except LCD1602
 - examples of plug-ins related to displaying information on the display are outdated and no longer work. The examples have been removed from the examples/plugins folder.
 - the structure of the project files has been changed so that I don’t know what.
-- localization of information displayed on the display (rus, en). Option L10N_LANGUAGE (EN by default. see examples/myoptions.h for details)
+- localization of information displayed on the display (rus, en). Option DSP_LANGUAGE (EN by default. see examples/myoptions.h for details)
 - changes in mytheme.h . Added colors COLOR_STATION_BG, COLOR_STATION_FILL, COLOR_BITRATE
 - optimization, refactoring
 - bugs fixes

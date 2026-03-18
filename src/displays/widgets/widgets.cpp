@@ -6,9 +6,8 @@
 #include "../../core/player.h"    //  for VU widget
 #include "../../core/network.h"   //  for Clock widget
 #include "../../core/config.h"
-#include "../tools/l10n.h"
+#include "../../core/locale.h"
 #include "../tools/psframebuffer.h"
-#include "../tools/prepText.h"
 
 /************************
       FILL WIDGET
@@ -60,7 +59,7 @@ void TextWidget::init(WidgetConfig wconf, uint16_t buffsize, bool uppercase, uin
 }
 
 void TextWidget::setText(const char* txt) {
-  strlcpy(_text, prepText(txt, _uppercase), _buffsize);
+  strlcpy(_text, utf8To(txt, _uppercase), _buffsize);
   /* Compute width accounting for special in-text pixel spacer (0x1E) which counts as 2 pixels
      and otherwise each character occupies _charWidth pixels. */
   uint16_t w = 0;
@@ -175,7 +174,7 @@ bool ScrollWidget::_checkIsScrollNeeded() {
 }
 
 void ScrollWidget::setText(const char* txt) {
-  strlcpy(_text, prepText(txt, _uppercase), _buffsize - 1);
+  strlcpy(_text, utf8To(txt, _uppercase), _buffsize - 1);
   if (strcmp(_oldtext, _text) == 0) return;
   _textwidth = strlen(_text) * _charWidth;
   _x = _fb->ready()?0:_config.left;
@@ -733,9 +732,9 @@ void ClockWidget::_getTimeBounds() {
           gfx.setTextSize(_superfont);
           gfx.setCursor(_linesleft+_space+1, _top()-CHARHEIGHT * _superfont);
           gfx.setTextColor(config.theme.dow, config.theme.background);
-          gfx.print(prepText(LANG::dow[network.timeinfo.tm_wday], false));
-          sprintf(_tmp, "%2d %s %d", network.timeinfo.tm_mday,LANG::mnths[network.timeinfo.tm_mon], network.timeinfo.tm_year+1900);
-          strlcpy(_datebuf, prepText(_tmp, true), sizeof(_datebuf));
+          gfx.print(utf8To(LANG::dow[network.timeinfo.tm_wday], false));
+          sprintf(_tmp, "%2d %s %d", network.timeinfo.tm_mday, LANG::mnths[network.timeinfo.tm_mon], network.timeinfo.tm_year+1900);
+          strlcpy(_datebuf, utf8To(_tmp, true), sizeof(_datebuf));
           uint16_t _datewidth = strlen(_datebuf) * CHARWIDTH*_dateheight;
           gfx.setTextSize(_dateheight);
           #if DSP_MODEL==DSP_GC9A01A
@@ -896,9 +895,8 @@ void BitrateWidget::_draw(){
     case BF_MP3:  dsp.print("MP3"); break;
     case BF_AAC:  dsp.print("AAC"); break;
     case BF_FLAC: dsp.print("FLC"); break;
-    case BF_OGG:  dsp.print("OGG"); break;
     case BF_WAV:  dsp.print("WAV"); break;
-    case BF_VOR:  dsp.print("VOR"); break;
+    case BF_VOR:  dsp.print("OGG"); break;
     case BF_OPU:  dsp.print("OPU"); break;
     default:                        break;
   }
@@ -985,7 +983,7 @@ uint8_t PlayListWidget::_fillPlMenu(int from, uint8_t count) {
       dsp.setCursor(TFT_FRAMEWDT, _plYStart + pos * _plItemHeight);
       dsp.fillRect(0, _plYStart + pos * _plItemHeight - 1, dsp.width(), _plItemHeight - 2, config.theme.background);
       Serial.println(item);
-      dsp.print(prepText(item, true));
+      dsp.print(utf8To(item, true));
     }
   }
 #else //#ifndef DSP_LCD
@@ -995,7 +993,7 @@ uint8_t PlayListWidget::_fillPlMenu(int from, uint8_t count) {
     } else {
       dsp.setCursor(1, pos);
       char tmp[dsp.width()] = {0};
-      strlcpy(tmp, prepText(item, true), dsp.width());
+      strlcpy(tmp, utf8To(item, true), dsp.width());
       dsp.print(tmp);
     }
   }

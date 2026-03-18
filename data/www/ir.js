@@ -71,7 +71,7 @@ function irbuttonClick(){
     if(!hasactive && elements[i]==this) btnid=i;
   }
   if(!hasactive) {
-    document.getElementById("irrecordtitle").innerHTML = 'Codes for button <span>'+this.innerHTML+'</span>';
+    document.getElementById("irrecordtitle").innerHTML = t('msg_codes_for_button', 'Codes for button') + ' <span>'+this.innerHTML+'</span>';
     document.getElementById("irrecord").classList.remove("hidden");
     document.getElementById("irstartrecord").classList.add("hidden");
     this.classList.add("active");

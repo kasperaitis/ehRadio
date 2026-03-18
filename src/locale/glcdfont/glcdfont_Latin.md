@@ -1,0 +1,80 @@
+## List of glyphs (64 entries) 🔧
+
+The main Latin/Greek glyph set spans slots dec 128..200 (hex 0x80..0xC8) in the font.
+
+
+| dec | hex | U+ | char | Unicode name | Languages |
+|---:|:---:|:---:|:---:|---|---|
+| 128 | 0x80 | U+00C0 | <span style="font-size:1.3em">À</span> | LATIN CAPITAL LETTER A WITH GRAVE | fr_FR, fr_CA |
+| 129 | 0x81 | U+00C1 | <span style="font-size:1.3em">Á</span> | LATIN CAPITAL LETTER A WITH ACUTE | es_ES, pt_PT, hu_HU, cs_CZ, sk_SK |
+| 130 | 0x82 | U+00C2 | <span style="font-size:1.3em">Â</span> | LATIN CAPITAL LETTER A WITH CIRCUMFLEX | fr_FR, fr_CA, pt_PT, ro_RO |
+| 131 | 0x83 | U+00C3 | <span style="font-size:1.3em">Ã</span> | LATIN CAPITAL LETTER A WITH TILDE | pt_PT |
+| 132 | 0x84 | U+00C4 | <span style="font-size:1.3em">Ä</span> | LATIN CAPITAL LETTER A WITH DIAERESIS | de_DE, sv_SE, fi_FI, et_EE |
+| 133 | 0x85 | U+00C5 | <span style="font-size:1.3em">Å</span> | LATIN CAPITAL LETTER A WITH RING ABOVE | sv_SE, no_NO, da_DK |
+| 134 | 0x86 | U+00C6 | <span style="font-size:1.3em">Æ</span> | LATIN CAPITAL LETTER AE | da_DK, no_NO, is_IS |
+| 135 | 0x87 | U+00C7 | <span style="font-size:1.3em">Ç</span> | LATIN CAPITAL LETTER C WITH CEDILLA | fr_FR, fr_CA, pt_PT |
+| 136 | 0x88 | U+00C8 | <span style="font-size:1.3em">È</span> | LATIN CAPITAL LETTER E WITH GRAVE | fr_FR, fr_CA |
+| 137 | 0x89 | U+00C9 | <span style="font-size:1.3em">É</span> | LATIN CAPITAL LETTER E WITH ACUTE | fr_FR, fr_CA, es_ES, hu_HU, cs_CZ |
+| 138 | 0x8A | U+00CD | <span style="font-size:1.3em">Í</span> | LATIN CAPITAL LETTER I WITH ACUTE | hu_HU, es_ES, cs_CZ, sk_SK, is_IS |
+| 139 | 0x8B | U+00CE | <span style="font-size:1.3em">Î</span> | LATIN CAPITAL LETTER I WITH CIRCUMFLEX | ro_RO, fr_FR, fr_CA |
+| 140 | 0x8C | U+00D0 | <span style="font-size:1.3em">Ð</span> | LATIN CAPITAL LETTER ETH | is_IS |
+| 141 | 0x8D | U+00D1 | <span style="font-size:1.3em">Ñ</span> | LATIN CAPITAL LETTER N WITH TILDE | es_ES |
+| 142 | 0x8E | U+00D3 | <span style="font-size:1.3em">Ó</span> | LATIN CAPITAL LETTER O WITH ACUTE | es_ES, hu_HU, pl_PL, cs_CZ, sk_SK |
+| 143 | 0x8F | U+00D4 | <span style="font-size:1.3em">Ô</span> | LATIN CAPITAL LETTER O WITH CIRCUMFLEX | fr_FR, fr_CA, pt_PT |
+| 144 | 0x90 | U+00D5 | <span style="font-size:1.3em">Õ</span> | LATIN CAPITAL LETTER O WITH TILDE | et_EE, pt_PT |
+| 145 | 0x91 | U+00D6 | <span style="font-size:1.3em">Ö</span> | LATIN CAPITAL LETTER O WITH DIAERESIS | de_DE, sv_SE, fi_FI, hu_HU, tr_TR |
+| 146 | 0x92 | U+00D8 | <span style="font-size:1.3em">Ø</span> | LATIN CAPITAL LETTER O WITH STROKE | da_DK, no_NO |
+| 147 | 0x93 | U+00DA | <span style="font-size:1.3em">Ú</span> | LATIN CAPITAL LETTER U WITH ACUTE | es_ES, hu_HU, cs_CZ, sk_SK, is_IS |
+| 148 | 0x94 | U+00DC | <span style="font-size:1.3em">Ü</span> | LATIN CAPITAL LETTER U WITH DIAERESIS | de_DE, hu_HU, tr_TR |
+| 149 | 0x95 | U+00DD | <span style="font-size:1.3em">Ý</span> | LATIN CAPITAL LETTER Y WITH ACUTE | cs_CZ, sk_SK, is_IS |
+| 150 | 0x96 | U+00DE | <span style="font-size:1.3em">Þ</span> | LATIN CAPITAL LETTER THORN | is_IS |
+| 151 | 0x97 | U+0100 | <span style="font-size:1.3em">Ā</span> | LATIN CAPITAL LETTER A WITH MACRON | lv_LV |
+| 152 | 0x98 | U+0102 | <span style="font-size:1.3em">Ă</span> | LATIN CAPITAL LETTER A WITH BREVE | ro_RO |
+| 153 | 0x99 | U+0104 | <span style="font-size:1.3em">Ą</span> | LATIN CAPITAL LETTER A WITH OGONEK | pl_PL, lt_LT |
+| 154 | 0x9A | U+0106 | <span style="font-size:1.3em">Ć</span> | LATIN CAPITAL LETTER C WITH ACUTE | pl_PL, hr_HR, bs_BA, sr_RS |
+| 155 | 0x9B | U+010C | <span style="font-size:1.3em">Č</span> | LATIN CAPITAL LETTER C WITH CARON | cs_CZ, sk_SK, sl_SI, hr_HR |
+| 156 | 0x9C | U+010E | <span style="font-size:1.3em">Ď</span> | LATIN CAPITAL LETTER D WITH CARON | cs_CZ, sk_SK |
+| 157 | 0x9D | U+0110 | <span style="font-size:1.3em">Đ</span> | LATIN CAPITAL LETTER D WITH STROKE | hr_HR, bs_BA, sr_RS |
+| 158 | 0x9E | U+0112 | <span style="font-size:1.3em">Ē</span> | LATIN CAPITAL LETTER E WITH MACRON | lv_LV |
+| 159 | 0x9F | U+0116 | <span style="font-size:1.3em">Ė</span> | LATIN CAPITAL LETTER E WITH DOT ABOVE | lt_LT |
+| 160 | 0xA0 | U+0118 | <span style="font-size:1.3em">Ę</span> | LATIN CAPITAL LETTER E WITH OGONEK | pl_PL |
+| 161 | 0xA1 | U+011A | <span style="font-size:1.3em">Ě</span> | LATIN CAPITAL LETTER E WITH CARON | cs_CZ |
+| 162 | 0xA2 | U+0122 | <span style="font-size:1.3em">Ģ</span> | LATIN CAPITAL LETTER G WITH CEDILLA | lv_LV |
+| 163 | 0xA3 | U+012A | <span style="font-size:1.3em">Ī</span> | LATIN CAPITAL LETTER I WITH MACRON | lv_LV |
+| 164 | 0xA4 | U+012E | <span style="font-size:1.3em">Į</span> | LATIN CAPITAL LETTER I WITH OGONEK | lt_LT |
+| 165 | 0xA5 | U+0136 | <span style="font-size:1.3em">Ķ</span> | LATIN CAPITAL LETTER K WITH CEDILLA | lv_LV |
+| 166 | 0xA6 | U+0139 | <span style="font-size:1.3em">Ĺ</span> | LATIN CAPITAL LETTER L WITH ACUTE | sk_SK |
+| 167 | 0xA7 | U+013B | <span style="font-size:1.3em">Ļ</span> | LATIN CAPITAL LETTER L WITH CEDILLA | lv_LV |
+| 168 | 0xA8 | U+013D | <span style="font-size:1.3em">Ľ</span> | LATIN CAPITAL LETTER L WITH CARON | sk_SK |
+| 169 | 0xA9 | U+0141 | <span style="font-size:1.3em">Ł</span> | LATIN CAPITAL LETTER L WITH STROKE | pl_PL |
+| 170 | 0xAA | U+0143 | <span style="font-size:1.3em">Ń</span> | LATIN CAPITAL LETTER N WITH ACUTE | pl_PL |
+| 171 | 0xAB | U+0145 | <span style="font-size:1.3em">Ņ</span> | LATIN CAPITAL LETTER N WITH CEDILLA | lv_LV |
+| 172 | 0xAC | U+0147 | <span style="font-size:1.3em">Ň</span> | LATIN CAPITAL LETTER N WITH CARON | cs_CZ, sk_SK |
+| 173 | 0xAD | U+014C | <span style="font-size:1.3em">Ō</span> | LATIN CAPITAL LETTER O WITH MACRON | lv_LV |
+| 174 | 0xAE | U+0150 | <span style="font-size:1.3em">Ő</span> | LATIN CAPITAL LETTER O WITH DOUBLE ACUTE | hu_HU |
+| 175 | 0xAF | U+0152 | <span style="font-size:1.3em">Œ</span> | LATIN CAPITAL LIGATURE OE | fr_FR, fr_CA |
+| 176 | 0xB0 | U+0154 | <span style="font-size:1.3em">Ŕ</span> | LATIN CAPITAL LETTER R WITH ACUTE | sk_SK |
+| 177 | 0xB1 | U+0158 | <span style="font-size:1.3em">Ř</span> | LATIN CAPITAL LETTER R WITH CARON | cs_CZ |
+| 178 | 0xB2 | U+015A | <span style="font-size:1.3em">Ś</span> | LATIN CAPITAL LETTER S WITH ACUTE | pl_PL |
+| 179 | 0xB3 | U+0160 | <span style="font-size:1.3em">Š</span> | LATIN CAPITAL LETTER S WITH CARON | cs_CZ, sk_SK, sl_SI, hr_HR |
+| 180 | 0xB4 | U+0164 | <span style="font-size:1.3em">Ť</span> | LATIN CAPITAL LETTER T WITH CARON | cs_CZ, sk_SK |
+| 181 | 0xB5 | U+016A | <span style="font-size:1.3em">Ū</span> | LATIN CAPITAL LETTER U WITH MACRON | lv_LV, lt_LT |
+| 182 | 0xB6 | U+016E | <span style="font-size:1.3em">Ů</span> | LATIN CAPITAL LETTER U WITH RING ABOVE | cs_CZ |
+| 183 | 0xB7 | U+0170 | <span style="font-size:1.3em">Ű</span> | LATIN CAPITAL LETTER U WITH DOUBLE ACUTE | hu_HU |
+| 184 | 0xB8 | U+0179 | <span style="font-size:1.3em">Ź</span> | LATIN CAPITAL LETTER Z WITH ACUTE | pl_PL |
+| 185 | 0xB9 | U+017B | <span style="font-size:1.3em">Ż</span> | LATIN CAPITAL LETTER Z WITH DOT ABOVE | pl_PL |
+| 186 | 0xBA | U+017D | <span style="font-size:1.3em">Ž</span> | LATIN CAPITAL LETTER Z WITH CARON | cs_CZ, sk_SK, sl_SI, hr_HR |
+| 187 | 0xBB | U+0218 | <span style="font-size:1.3em">Ș</span> | LATIN CAPITAL LETTER S WITH COMMA BELOW | ro_RO |
+| 188 | 0xBC | U+021A | <span style="font-size:1.3em">Ț</span> | LATIN CAPITAL LETTER T WITH COMMA BELOW | ro_RO |
+| 189 | 0xBD | U+038C | <span style="font-size:1.3em">Ό</span> | GREEK CAPITAL LETTER OMICRON WITH TONOS | el_GR |
+| 190 | 0xBE | U+038E | <span style="font-size:1.3em">Ύ</span> | GREEK CAPITAL LETTER UPSILON WITH TONOS | el_GR |
+| 191 | 0xBF | U+038F | <span style="font-size:1.3em">Ώ</span> | GREEK CAPITAL LETTER OMEGA WITH TONOS | el_GR |
+| 192 | 0xC0 | U+0393 | <span style="font-size:1.3em">Γ</span> | GREEK CAPITAL LETTER GAMMA | el_GR |
+| 193 | 0xC1 | U+0396 | <span style="font-size:1.3em">Ζ</span> | GREEK CAPITAL LETTER ZETA | el_GR |
+| 194 | 0xC2 | U+0398 | <span style="font-size:1.3em">Θ</span> | GREEK CAPITAL LETTER THETA | el_GR |
+| 195 | 0xC3 | U+039A | <span style="font-size:1.3em">Κ</span> | LATIN CAPITAL LETTER KAPPA | el_GR |
+| 196 | 0xC4 | U+039B | <span style="font-size:1.3em">Λ</span> | GREEK CAPITAL LETTER LAMDA | el_GR |
+| 197 | 0xC5 | U+039D | <span style="font-size:1.3em">Ν</span> | GREEK CAPITAL LETTER NU | el_GR |
+| 198 | 0xC6 | U+03A1 | <span style="font-size:1.3em">Ρ</span> | GREEK CAPITAL LETTER RHO | el_GR |
+| 199 | 0xC7 | U+03A3 | <span style="font-size:1.3em">Σ</span> | GREEK CAPITAL LETTER SIGMA | el_GR |
+| 200 | 0xC8 | U+03A6 | <span style="font-size:1.3em">Φ</span> | GREEK CAPITAL LETTER PHI | el_GR |

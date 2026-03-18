@@ -1,3 +1,5 @@
+/* Dear Nextion User - I'm sorry.  This has probably broken beyond repair... You can try to fix it and I'd be thankful for it. Open an issue on the Repo and I'll do my best to help. -- Trip5 */
+
 #include "../core/options.h"
 #if DSP_MODEL==DSP_DUMMY
 #define DUMMYDISPLAY
@@ -11,7 +13,7 @@
 #include "../core/netserver.h"
 #include "../core/network.h"
 #include "../core/timekeeper.h"
-#include "tools/l10n.h"
+#include "../core/locale.h"
 
 #ifndef CORE_STACK_SIZE
   #define CORE_STACK_SIZE  1024*3
@@ -376,13 +378,13 @@ void Nextion::audioinfo(const char* info){
 void Nextion::bootString(const char* bs) {
   char buf[50] = { 0 };
   strlcpy(buf, bs, 50);
-  putcmd("boot.bootstring.txt", prepText(buf, false));
+  putcmd("boot.bootstring.txt", utf8ToNextion(buf, false));
 }
 
 void Nextion::newNameset(const char* meta){
   char newnameset[59] = { 0 };
   strlcpy(newnameset, meta, 59);
-  putcmd("player.meta.txt", prepText(newnameset, true));
+  putcmd("player.meta.txt", utf8ToNextion(newnameset, true));
 }
 
 void Nextion::setVol(uint8_t vol, bool dialog){
@@ -410,8 +412,8 @@ void Nextion::newTitle(const char* title){
       strlcpy(ttl, title, 50);
       sng[0] = '\0';
     }
-    putcmd("player.title1.txt", prepText(ttl, true));
-    putcmd("player.title2.txt", prepText(sng, true));
+    putcmd("player.title1.txt", utf8ToNextion(ttl, true));
+    putcmd("player.title2.txt", utf8ToNextion(sng, true));
   }
 }
 
@@ -421,7 +423,7 @@ void Nextion::printClock(struct tm timeinfo){
   putcmd(timeStringBuff);
   putcmdf("player.secText.txt=\"%02d\"", timeinfo.tm_sec);
   snprintf(timeStringBuff, sizeof(timeStringBuff), "player.dateText.txt=\"%s, %d %s %d\"", LANG::dowf[timeinfo.tm_wday], timeinfo.tm_mday, LANG::mnths[timeinfo.tm_mon], timeinfo.tm_year+1900);
-  putcmd(prepText(timeStringBuff, false));
+  putcmd(utf8ToNextion(timeStringBuff, false));
   if(mode==TIMEZONE) localTime(network.timeinfo);
   if(mode==INFO)     rssi();
 }
@@ -434,7 +436,7 @@ void Nextion::localTime(struct tm timeinfo){
 
 void Nextion::printPLitem(uint8_t pos, const char* item){
   char cmd[60]={0};
-  snprintf(cmd, sizeof(cmd) - 1, "t%d.txt=\"%s\"", pos, prepText(item, true));
+  snprintf(cmd, sizeof(cmd) - 1, "t%d.txt=\"%s\"", pos, utf8ToNextion((char*)item, true));
   putcmd(cmd);
 }
 
@@ -490,7 +492,7 @@ void Nextion::drawPlaylist(uint16_t currentPlItem){
 }
 
 void Nextion::drawNextStationNum(uint16_t num) {//dialog
-  putcmd("dialog.title.txt", prepText(config.stationByNum(num), true));
+  putcmd("dialog.title.txt", utf8ToNextion(config.stationByNum(num), true));
   putcmd("dialog.text.txt", num, true);
   _volDelay = millis();
 }
@@ -541,225 +543,54 @@ void Nextion::sleep(void) {
 void Nextion::wake(void) { 
   putcmd("sleep=0");
 }
-
-char* Nextion::prepText(const char* str, bool uppercase) {
-#ifdef PRINT_FIX
-  return printFix(str, uppercase);
-#elif defined(UTF8_RUS)
-  return utf8Rus((char*)str, uppercase);
-#else
-  static char buf[BUFLEN];
-  int i = 0;
-  for (; i < BUFLEN - 1 && str[i]; i++) {
-    buf[i] = uppercase ? toupper(str[i]) : str[i];
-  }
-  buf[i] = 0;
-  return buf;
-#endif
-}
-
-char* Nextion::printFix(const char* src, bool uppercase) {
-  static char buf[BUFLEN];
-
-    int outIdx = 0;
-    const char* p = src;
-    while (*p && outIdx < BUFLEN - 1) {
-      if ((uint8_t)*p < 0x80) {
-        buf[outIdx++] = uppercase ? toupper(*p) : *p;
-        p++;
-        continue;
-      }
-      
-      uint8_t first = (uint8_t)*p;
-      uint8_t second = (uint8_t)*(p + 1);
-
-      // Handle 3-byte UTF-8 sequences
-      if (first >= 0xE0 && first <= 0xEF) {
-        uint8_t third = (uint8_t)*(p + 2);
-        bool processed = false;
-        // Ellipsis
-        if (first == 0xE2 && second == 0x80 && third == 0xA6) {
-          buf[outIdx++] = '.';
-          buf[outIdx++] = '.';
-          buf[outIdx++] = '.';
-          processed = true;
-        }
-        // Trademark
-        if (first == 0xE2 && second == 0x84 && third == 0xA2) {
-          buf[outIdx++] = 'T';
-          buf[outIdx++] = 'M';
-          processed = true;
-        }
-        
-        if(processed) {
-          p += 3;
-        } else {
-          buf[outIdx++] = ' '; // Replace with space if unknown
-          p += 3;
-        }
-        continue;
-      }
-
-      // Handle 2-byte UTF-8 sequences
-      if (first >= 0xC2 && first <= 0xDF) {
-        bool processed = false;
-        if (first == 0xC3) {
-          processed = true;
-          switch (second) {
-            case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: buf[outIdx++] = 'A'; break; // ÀÁÂÃÄÅ
-            case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: buf[outIdx++] = 'a'; break; // àáâãäå
-            case 0x86: buf[outIdx++] = 'A'; buf[outIdx++] = 'E'; break; // Æ
-            case 0xA6: buf[outIdx++] = 'a'; buf[outIdx++] = 'e'; break; // æ
-            case 0x88: case 0x89: case 0x8A: case 0x8B: buf[outIdx++] = 'E'; break; // ÈÉÊË
-            case 0xA8: case 0xA9: case 0xAA: case 0xAB: buf[outIdx++] = 'e'; break; // èéêë
-            case 0x8C: case 0x8D: case 0x8E: case 0x8F: buf[outIdx++] = 'I'; break; // ÌÍÎÏ
-            case 0xAC: case 0xAD: case 0xAE: case 0xAF: buf[outIdx++] = 'i'; break; // ìíîï
-            case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: case 0x98: buf[outIdx++] = 'O'; break; // ÒÓÔÕÖØ
-            case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB8: buf[outIdx++] = 'o'; break; // òóôõöø
-            case 0x99: case 0x9A: case 0x9B: case 0x9C: buf[outIdx++] = 'U'; break; // ÙÚÛÜ
-            case 0xB9: case 0xBA: case 0xBB: case 0xBC: buf[outIdx++] = 'u'; break; // ùúûü
-            case 0x87: buf[outIdx++] = 'C'; break; // Ç
-            case 0xA7: buf[outIdx++] = 'c'; break; // ç
-            case 0x91: buf[outIdx++] = 'N'; break; // Ñ
-            case 0xB1: buf[outIdx++] = 'n'; break; // ñ
-            case 0x9D: buf[outIdx++] = 'Y'; break; // Ý
-            case 0xBD: case 0xBF: buf[outIdx++] = 'y'; break; // ýÿ
-            case 0x9F: buf[outIdx++] = 's'; buf[outIdx++] = 's'; break; // ß
-            default: processed = false; break;
-          }
-        }
-        if (!processed && (first == 0xD0 || first == 0xD1)) {
-          uint32_t codepoint = 0;
-          codepoint = (first & 0x1f) << 6 | (second & 0x3f);
-          if(codepoint > 0x400){
-            buf[outIdx++]=(uint8_t)(codepoint - 0x360);
-            processed = true;
-          }
-        }
-        if (!processed && first == 0xC5) {
-            processed = true;
-            switch(second) {
-                case 0x92: buf[outIdx++] = 'O'; buf[outIdx++] = 'E'; break; // Œ
-                case 0x93: buf[outIdx++] = 'o'; buf[outIdx++] = 'e'; break; // œ
-                default: processed = false; break;
-            }
-        }
-        if (!processed && first == 0xC2) {
-          processed = true;
-          switch (second) {
-            case 0xAB: buf[outIdx++] = '"'; break; // «
-            case 0xBB: buf[outIdx++] = '"'; break; // »
-            case 0xA9: buf[outIdx++] = '('; buf[outIdx++] = 'c'; buf[outIdx++] = ')'; break; // ©
-            case 0xAE: buf[outIdx++] = '('; buf[outIdx++] = 'R'; buf[outIdx++] = ')'; break; // ®
-            case 0x9D: buf[outIdx++] = '['; break; // [ multiplication sign
-            case 0x9E: buf[outIdx++] = ' '; break; // non-breaking space
-            case 0x9F: buf[outIdx++] = ']'; break; // ] division sign
-            case 0xA0: buf[outIdx++] = '|'; break; // ¦ broken bar
-            case 0xA1: buf[outIdx++] = '!'; break; // ¡ inverted exclamation mark
-            case 0xA2: buf[outIdx++] = 'c'; break; // ¢ cent sign
-            case 0xA3: buf[outIdx++] = '#'; break; // £ pound sign
-            case 0x96: buf[outIdx++] = '-'; break; // – en dash
-            case 0x97: buf[outIdx++] = '-'; break; // — em dash
-            case 0x91: buf[outIdx++] = '\''; break; // ‘ left single quotation mark
-            case 0x92: buf[outIdx++] = '\''; break; // ’ right single quotation mark
-            case 0x93: buf[outIdx++] = '"'; break; // “ left double quotation mark
-            case 0x94: buf[outIdx++] = '"'; break; // ” right double quotation mark
-            case 0xBF: buf[outIdx++] = '?'; break; // ¿ inverted question mark
-            default: processed = false; break;
-          }
-        }
-        
-        if(processed) {
-          p += 2;
-        } else {
-          buf[outIdx++] = ' '; // Replace with space if unknown
-          p += 2;
-        }
-        continue;
-      }
-      
-      // Fallback for other multi-byte characters
-      buf[outIdx++] = ' ';
-      while ((uint8_t)*p >= 0x80) {
-        p++;
-      }
-    }
-    buf[outIdx] = '\0';
-    return buf;
-}
-
 /*
-  По мотивам https://forum.amperka.ru/threads/%D0%94%D0%B8%D1%81%D0%BF%D0%BB%D0%B5%D0%B9-nextion-%D0%B0%D0%B7%D1%8B-arduino-esp8266.9204/page-18#post-173442
+  Nextion displays use their own font encoding (typically Windows-1251 for Cyrillic).
+  This converts UTF-8 to Nextion's expected character codes using offset 0x360.
+  Based on: https://forum.amperka.ru/threads/%D0%94%D0%B8%D1%81%D0%BF%D0%BB%D0%B5%D0%B9-nextion-%D0%B0%D0%B7%D1%8B-arduino-esp8266.9204/page-18#post-173442
 */
-char* Nextion::utf8Rus(char* str, bool uppercase) {
-  int index = 0;
+char* Nextion::utf8ToNextion(const char* str, bool uppercase) {
   static char out[BUFLEN];
-  bool E = false;
   memset(out, 0, sizeof(out));
-  if (uppercase) {
-    bool next = false;
-    for (char *iter = str; *iter != '\0'; ++iter)
-    {
-      if (E) {
-        E = false;
-        continue;
-      }
-      uint8_t rus = (uint8_t) * iter;
-      if (rus == 208 && (uint8_t) * (iter + 1) == 129) {
-        *iter = (char)209;
-        *(iter + 1) = (char)145;
-        E = true;
-        continue;
-      }
-      if (rus == 209 && (uint8_t) * (iter + 1) == 145) {
-        *iter = (char)209;
-        *(iter + 1) = (char)145;
-        E = true;
-        continue;
-      }
-      if (next) {
-        if (rus >= 128 && rus <= 143) *iter = (char)(rus + 32);
-        if (rus >= 176 && rus <= 191) *iter = (char)(rus - 32);
-        next = false;
-      }
-      if (rus == 208) next = true;
-      if (rus == 209) {
-        *iter = (char)208;
-        next = true;
-      }
-      *iter = toupper(*iter);
-    }
-  }
+  
+  // Convert UTF-8 to Nextion encoding
+  int index = 0;
+  int outPos = 0;
   uint32_t codepoint = 0;
-  while (str[index])
-  {
-    uint8_t ch = (uint8_t) (str[index]);
-    if (ch <= 0x7f)
+  
+  while (str[index] && outPos < BUFLEN - 1) {
+    uint8_t ch = (uint8_t)str[index];
+    
+    // Decode UTF-8 to codepoint
+    if (ch <= 0x7f) {
       codepoint = ch;
-    else if (ch <= 0xbf)
+    } else if (ch <= 0xbf) {
       codepoint = (codepoint << 6) | (ch & 0x3f);
-    else if (ch <= 0xdf)
+    } else if (ch <= 0xdf) {
       codepoint = ch & 0x1f;
-    else if (ch <= 0xef)
+    } else if (ch <= 0xef) {
       codepoint = ch & 0x0f;
-    else
+    } else {
       codepoint = ch & 0x07;
-    ++index;
-    if (((str[index] & 0xc0) != 0x80) && (codepoint <= 0x10ffff))
-    {
-      if (codepoint <= 255)
-      {
-        out[strlen(out)]=(uint8_t)codepoint;
+    }
+    
+    index++;
+    
+    // If sequence is complete, convert to Nextion encoding
+    if (((str[index] & 0xc0) != 0x80) && (codepoint <= 0x10ffff)) {
+      if (codepoint <= 255) {
+        // ASCII / Latin-1: uppercase if requested
+        char c = (uint8_t)codepoint;
+        if (uppercase && c >= 'a' && c <= 'z') c = toupper(c);
+        out[outPos++] = c;
+      } else if (codepoint >= 0x400) {
+        // Cyrillic: apply Nextion offset (Nextion handles uppercase internally)
+        out[outPos++] = (uint8_t)(codepoint - 0x360);
       }
-      else
-      {
-        if(codepoint > 0x400){
-          out[strlen(out)]=(uint8_t)(codepoint - 0x360);
-        }
-      }
+      // Other characters ignored
     }
   }
-  out[strlen(out)+1]=0;
+  
+  out[outPos] = '\0';
   return out;
 }
 

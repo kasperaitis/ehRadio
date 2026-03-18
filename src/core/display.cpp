@@ -12,7 +12,7 @@
 #include "../displays/dspcore.h"
 #include "../displays/widgets/widgets.h"
 #include "../displays/widgets/pages.h"
-#include "../displays/tools/l10n.h"
+#include "locale.h"
 #if defined(BATTERY_PIN) && (BATTERY_PIN!=255)
   #include "battery.h"
 #endif
@@ -234,15 +234,37 @@ void Display::_buildPager() {
   pages[PG_DIALOG]->addWidget(_meta);
   pages[PG_DIALOG]->addWidget(_nums);
   #ifdef UPDATEURL
-    _updLabel = new TextWidget(apNameConf, 30, false, config.theme.title1, config.theme.background);
-    // compute how many bar chars fit in the value widget
+    // configure centred update label and progress bar with appropriate gap
+    WidgetConfig updConf = apNameConf;
+    updConf.left = 0;
+    updConf.align = WA_CENTER;
+    updConf.top = (dsp.height() - (updConf.textsize * CHARHEIGHT)) / 2;
+    updConf.top = max<int16_t>(0, updConf.top - CHARHEIGHT); // lift by one text line
+
+    _updLabel = new TextWidget(updConf, 30, false,
+                               config.theme.title1, config.theme.background);
+    // remember config for later adjustments
+    _updConf = updConf;
+    MoveConfig mvLabel{0, updConf.top, (int16_t)dsp.width()};
+    _updLabel->moveTo(mvLabel);
+
+    // compute bar width once
     {
       uint8_t ts = apPassConf.textsize > 0 ? apPassConf.textsize : 1;
       uint16_t widgetPx = dsp.width() - apPassConf.left;
       int chars = (int)(widgetPx / (CHARWIDTH * ts));
       _updBarWidth = (chars < 2) ? 2 : (chars > 64) ? 64 : chars;
     }
-    _updValue = new TextWidget(apPassConf, (uint16_t)(_updBarWidth + 2), false, config.theme.clock, config.theme.background);
+
+    // place progress widget under the label maintaining original spacing
+    WidgetConfig valConf = apPassConf;
+    int16_t origGap = apPassConf.top - apNameConf.top;
+    if (origGap < 0) origGap = updConf.textsize * CHARHEIGHT + 2; // fallback
+    valConf.top = updConf.top + origGap;
+    _updValue = new TextWidget(valConf, (uint16_t)(_updBarWidth + 2), false,
+                               config.theme.clock, config.theme.background);
+    MoveConfig mvValue{0, valConf.top, (int16_t)dsp.width()};
+    _updValue->moveTo(mvValue);
     pages[PG_DIALOG]->addWidget(_updLabel);
     pages[PG_DIALOG]->addWidget(_updValue);
   #endif
@@ -274,7 +296,7 @@ void Display::_apScreen() {
       #endif
     #endif
     ScrollWidget *bootTitle = (ScrollWidget*) &_boot->addWidget(new ScrollWidget("*", apTitleConf, config.theme.meta, config.theme.metabg));
-    bootTitle->setText("ehRadio AP/Improv Mode");
+    bootTitle->setText("AP/Improv Mode");
     TextWidget *apname = (TextWidget*) &_boot->addWidget(new TextWidget(apNameConf, 30, false, config.theme.title1, config.theme.background));
     apname->setText(LANG::apNameTxt);
     TextWidget *apname2 = (TextWidget*) &_boot->addWidget(new TextWidget(apName2Conf, 30, false, config.theme.clock, config.theme.background));
@@ -318,7 +340,7 @@ void Display::_start() {
   if (_heapbar)  _heapbar->lock(!config.store.audioinfo);
   
   if (_weather)  _weather->lock(!config.store.showweather);
-  if (_weather && config.store.showweather)  _weather->setText(LANG::const_getWeather);
+  if (_weather && config.store.showweather) network.buildWeatherString();
 
   if (_vuwidget) _vuwidget->lock();
   if (_rssi)     _setRSSI(WiFi.RSSI());
@@ -403,7 +425,11 @@ void Display::_swichMode(displayMode_e newmode) {
     _nums->setText(config.store.volume, numtxtFmt);
   }
   if (newmode == LOST)      _showDialog(LANG::const_DlgLost);
-  if (newmode == UPDATING)  { _showDialog(LANG::const_DlgUpdate); _updFirstCall = true; }
+  if (newmode == UPDATING)  { _showDialog(LANG::const_DlgUpdate);
+    #ifdef UPDATEURL
+      _updFirstCall = true;
+    #endif
+  }
   if (newmode == SLEEPING)  _showDialog("SLEEPING");
   if (newmode == SDCHANGE)  _showDialog(LANG::const_waitForSD);
   if (newmode == INFO || newmode == SETTINGS || newmode == TIMEZONE || newmode == WIFI) _showDialog(LANG::const_DlgNextion);
@@ -450,7 +476,32 @@ void Display::updateProgress(const char* label, float progress) {
       _updFirstCall = false;
       delay(50); // allow display task to process NEWMODE/UPDATING queue item before drawing
     }
-    if (_updLabel) _updLabel->setText(label);
+    if (_updLabel) {
+      // adjust textsize so label fits within display width
+      WidgetConfig conf = _updConf;  // use stored copy instead of protected member
+      // start from current size and shrink until it fits or reaches 1
+      for (uint8_t ts = conf.textsize; ts > 1; ts--) {
+        // compute width for this size
+        uint16_t w = 0;
+        uint8_t charW = ts * CHARWIDTH;
+        for (const char *p = label; *p; ++p) {
+          uint8_t b = (unsigned char)*p;
+          if (b == (uint8_t)DSP_PIXEL_SPACER) w += 2;    // 2-px spacer glyph
+          else if ((b & 0xC0) != 0x80) w += charW;       // skip UTF-8 continuation bytes (0x80–0xBF)
+        }
+        if (w <= dsp.width()) {
+          if (ts != conf.textsize) {
+            conf.textsize = ts;
+            _updLabel->init(conf, 30, false, config.theme.title1, config.theme.background);
+            MoveConfig mv2 = {0, conf.top, (int16_t)dsp.width()};
+            _updLabel->moveTo(mv2);
+            _updConf = conf; // update stored config
+          }
+          break;
+        }
+      }
+      _updLabel->setText(label);
+    }
     if (_updValue) {
       int bars = (int)(progress * _updBarWidth + 0.5f);
       if (bars < 0) bars = 0;
@@ -541,11 +592,12 @@ void Display::loop() {
         case SHOWWEATHER: {
           if (_weather) _weather->lock(!config.store.showweather);
           if (!config.store.showweather) {
+            if (_weather) _weather->setText("");
             #ifndef HIDE_IP
               if (_volip) _volip->setText(config.ipToStr(WiFi.localIP()), iptxtFmt);
             #endif
           } else {
-            if (_weather) _weather->setText(LANG::const_getWeather);
+            network.buildWeatherString();
           }
           break;
         }
@@ -688,11 +740,6 @@ void Display::_setRSSI(int rssi) {
 void Display::_station() {
   _meta->setAlign(metaConf.widget.align);
   _meta->setText(config.station.name);
-/*#ifdef USE_NEXTION
-  nextion.newNameset(config.station.name);
-  nextion.bitrate(config.station.bitrate);
-  nextion.bitratePic(ICON_NA);
-#endif*/
 }
 
 char *split(char *str, const char *delim) {

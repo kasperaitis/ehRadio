@@ -11,8 +11,10 @@
 #include "mqtt.h"
 #include "../pluginsManager/pluginsManager.h"
 #include <DNSServer.h>
-#include "../displays/tools/l10n.h"
+#include "locale.h"
 #include <ImprovWiFiLibrary.h>
+#include <ArduinoJson.h>
+#include <ESPFileUpdater.h>
 
 #ifndef WIFI_ATTEMPTS
   #define WIFI_ATTEMPTS  16
@@ -31,9 +33,6 @@ static bool onImprovCustomConnect(const char* ssid, const char* password);
 void ticks() {
   if (!display.ready()) return; //waiting for SD is ready
   pm.on_ticker();
-  static const uint16_t weatherSyncInterval=WEATHER_SYNC_INTERVAL;
-  //static const uint16_t weatherSyncIntervalFail=10;
-  static const uint32_t timeSyncInterval=TIME_SYNC_INTERVAL;
   static uint32_t timeSyncTicks = 0;
   static uint16_t weatherSyncTicks = 0;
   static bool divrssi;
@@ -54,10 +53,14 @@ void ticks() {
         network.forceTimeSync = true;
       }
     }
+    // Time sync interval: config value is in hours, convert to seconds
+    uint32_t timeSyncInterval = (uint32_t)config.store.timesyncinterval * 3600;
     if (timeSyncTicks >= timeSyncInterval) {
       timeSyncTicks=0;
       network.forceTimeSync = true;
     }
+    // Weather sync interval: config value is in minutes, convert to seconds
+    uint16_t weatherSyncInterval = (uint16_t)config.store.weathersyncinterval * 60;
     if (weatherSyncTicks >= weatherSyncInterval) {
       weatherSyncTicks=0;
       network.forceWeather = true;
@@ -180,7 +183,10 @@ void MyNetwork::WiFiLostConnection(WiFiEvent_t event, WiFiEventInfo_t info) {
     } else {
       network.lostPlaying = player.isRunning();
       if (network.lostPlaying) { player.lockOutput = true; player.sendCommand({PR_STOP, 0}); }
-      display.putRequest(NEWMODE, LOST);
+      // when we're in the middle of an update, keep the UPDATING dialog active
+      if (display.mode() != UPDATING) {
+        display.putRequest(NEWMODE, LOST);
+      }
     }
   }
   network.beginReconnect = true;
@@ -394,24 +400,9 @@ void MyNetwork::begin() {
 void MyNetwork::loopImprov() {
   if (!improv) return;
   improv->handleSerial();
-  
-  unsigned long now = millis();
-  if (now - lastImprovBroadcast > 2000) {
-    lastImprovBroadcast = now;
-    // Determine state: 0x02=Authorized/Ready, 0x03=Provisioning/Busy, 0x04=Provisioned/Connected
-    uint8_t state = 0x02;
-    if (WiFi.status() == WL_CONNECTED) {
-      state = 0x04;
-    } else if (status != SOFT_AP && config.ssidsCount > 0) {
-      state = 0x03;
-    }
-    
-    uint8_t heartbeat[] = {'I', 'M', 'P', 'R', 'O', 'V', 0x01, 0x01, 0x01, state, 0x00};
-    uint8_t checksum = 0;
-    for (int i = 0; i < 10; i++) checksum += heartbeat[i];
-    heartbeat[10] = checksum;
-    Serial.write(heartbeat, sizeof(heartbeat));
-  }
+  // Note: periodic IMPROV heartbeat broadcast was removed — the Improv
+  // protocol state is driven by the host-side tool; unsolicited broadcasts
+  // caused false provisioning prompts on some platforms.
 }
 
 static Ticker improvRebootTicker;
@@ -502,7 +493,7 @@ void MyNetwork::raiseSoftAP() {
   dnsServer->start(53, "*", WiFi.softAPIP());
   Serial.println("##[BOOT]#");
   BOOTLOG("************************************************");
-  BOOTLOG("Running in AP mode");
+  BOOTLOG("Running in AP/Improv mode");
   #ifdef AP_PASSWORD
     BOOTLOG("Connect to AP %s with password %s", AP_SSID, AP_PASSWORD);
   #else
@@ -546,177 +537,552 @@ void doSync(void * pvParameters) {
       }
     }
   }
-  if (network.weatherBuf && (strlen(config.store.weatherkey)!=0 && config.store.showweather) && network.forceWeather) {
+  if (network.weatherBuf && config.store.showweather && network.forceWeather) {
+    // Fetch weather without interrupting display (keep showing cached data)
     network.forceWeather = false;
     network.trueWeather=getWeather(network.weatherBuf);
   }
   vTaskDelete(NULL);
 }
 
-bool getWeather(char *wstr) {
+// Helper: Download URL to temporary file using EspFileUpdater (handles chunked encoding)
+bool downloadToTempFile(const char* url) {
+  // Delete old temp file if exists
+  if (SPIFFS.exists(TMP_PATH)) {
+    SPIFFS.remove(TMP_PATH);
+  }
+  
+  ESPFileUpdater* downloader = new ESPFileUpdater(SPIFFS);
+  downloader->setUserAgent(ESPFILEUPDATER_USERAGENT);
+  downloader->setMaxSize(2048);  // Weather JSON responses are small
+  
+  ESPFileUpdater::UpdateStatus result = downloader->checkAndUpdate(
+    TMP_PATH,
+    url,
+    "",
+    ESPFILEUPDATER_VERBOSE
+  );
+  
+  delete downloader;
+  return (result == ESPFileUpdater::UPDATED);
+}
+
+// WMO Weather Code to Description (for Open-Meteo)
+const char* getWMODescription(int code) {
+  switch(code) {
+    case 0:  return LANG::w_clear_sky;
+    case 1: case 2: case 3: return LANG::w_overcast;
+    case 45: case 48: return LANG::w_foggy;
+    case 51: case 53: case 55: return LANG::w_drizzle;
+    case 56: case 57: return LANG::w_freezing_drizzle;
+    case 61: case 63: case 65: return LANG::w_rain;
+    case 66: case 67: return LANG::w_freezing_rain;
+    case 71: case 73: case 75: return LANG::w_snow;
+    case 77: return LANG::w_snow_grains;
+    case 80: case 81: case 82: return LANG::w_rain_showers;
+    case 85: case 86: return LANG::w_snow_showers;
+    case 95: return LANG::w_thunderstorm;
+    case 96: case 99: return LANG::w_thunderstorm_hail;
+    default: return "Unknown";
+  }
+}
+
+// Weather data cache (stores raw metric data from last API fetch)
+namespace WeatherCache {
+  bool valid = false;
+  bool is_openmeteo = false;  // Track API type for icon mapping
+  unsigned long fetch_time = 0;  // Timestamp when data was fetched
+  float temp_c = 0;
+  float feels_like_c = 0;
+  int humidity = 0;
+  float pressure_hpa = 0;
+  float wind_speed_ms = 0;  // Always stored in m/s (meters per second) for both APIs
+  int wind_deg = 0;
+  char description[64] = "";
+  char icon[8] = "";  // For OpenWeather
+  int wmo_code = 0;    // For OpenMeteo
+}
+
+// Build weather display string from cached data (no API refetch)
+bool MyNetwork::buildWeatherString() {
   #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
-    WiFiClient client;
-    const char* host  = "api.openweathermap.org";
+    if (!weatherBuf) return false;
     
-    if (!client.connect(host, 80)) {
-      Serial.println("##WEATHER###: connection  failed");
-      return false;
-    }
-    char httpget[250] = {0};
-    sprintf(httpget, "GET /data/2.5/weather?lat=%s&lon=%s&units=%s&lang=%s&appid=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", config.store.weatherlat, config.store.weatherlon, LANG::weatherUnits, LANG::weatherLang, config.store.weatherkey, host);
-    client.print(httpget);
-    unsigned long timeout = millis();
-    while (client.available() == 0) {
-      if (millis() - timeout > 2000UL) {
-        Serial.println("##WEATHER###: client available timeout !");
-        client.stop();
-        return false;
+    // Check if cached data is stale (older than 2x the sync interval)
+    if (WeatherCache::valid) {
+      unsigned long cache_age = (millis() - WeatherCache::fetch_time) / 1000;  // Age in seconds
+      unsigned long max_age = (unsigned long)config.store.weathersyncinterval * 60 * 2;  // 2x sync interval
+      if (cache_age > max_age) {
+        Serial.printf("Weather: Cache expired (age: %lu sec, max: %lu sec)\n", cache_age, max_age);
+        WeatherCache::valid = false;
       }
     }
-    timeout = millis();
-    String line = "";
-    if (client.connected()) {
-      while (client.available())
-      {
-        line = client.readStringUntil('\n');
-        if (strstr(line.c_str(), "\"temp\"") != NULL) {
-          client.stop();
-          break;
-        }
-        if ((millis() - timeout) > 500)
-        {
-          client.stop();
-          Serial.println("##WEATHER###: client read timeout !");
-          return false;
-        }
-      }
-    }
-    if (strstr(line.c_str(), "\"temp\"") == NULL) {
-      Serial.println("##WEATHER###: weather not found !");
+    
+    // If no cached data or cache expired, show loading message
+    if (!WeatherCache::valid) {
+      strcpy(weatherBuf, LANG::weather_loading);
+      display.putRequest(NEWWEATHER);
       return false;
     }
-    char *tmpe;
-    char *tmps;
-    char *tmpc;
-    const char* cursor = line.c_str();
-    char desc[120], temp[20], hum[20], press[20], icon[5];
-  
-    tmps = strstr(cursor, "\"description\":\"");
-    if (tmps == NULL) { Serial.println("##WEATHER###: description not found !"); return false;}
-    tmps += 15;
-    tmpe = strstr(tmps, "\",\"");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: description not found !"); return false;}
-    strlcpy(desc, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 2;
     
-    // "ясно","icon":"01d"}],
-    tmps = strstr(cursor, "\"icon\":\"");
-    if (tmps == NULL) { Serial.println("##WEATHER###: icon not found !"); return false;}
-    tmps += 8;
-    tmpe = strstr(tmps, "\"}");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: icon not found !"); return false;}
-    strlcpy(icon, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 2;
+    Serial.println("Weather: Rebuilding display string from cached data");
     
-    tmps = strstr(cursor, "\"temp\":");
-    if (tmps == NULL) { Serial.println("##WEATHER###: temp not found !"); return false;}
-    tmps += 7;
-    tmpe = strstr(tmps, ",\"");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: temp not found !"); return false;}
-    strlcpy(temp, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 1;
-    float tempf = atof(temp);
-  
-    tmps = strstr(cursor, "\"feels_like\":");
-    if (tmps == NULL) { Serial.println("##WEATHER###: feels_like not found !"); return false;}
-    tmps += 13;
-    tmpe = strstr(tmps, ",\"");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: feels_like not found !"); return false;}
-    strlcpy(temp, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 2;
-    float tempfl = atof(temp); (void)tempfl;
-  
-    tmps = strstr(cursor, "\"pressure\":");
-    if (tmps == NULL) { Serial.println("##WEATHER###: pressure not found !"); return false;}
-    tmps += 11;
-    tmpe = strstr(tmps, ",\"");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: pressure not found !"); return false;}
-    strlcpy(press, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 2;
-    int pressi = (float)atoi(press) / 1.333;
+    // Convert temperature based on user preference
+    float temp_display = config.store.weathertempimp ? (WeatherCache::temp_c * 9.0 / 5.0 + 32.0) : WeatherCache::temp_c;
+    float feels_display = config.store.weathertempimp ? (WeatherCache::feels_like_c * 9.0 / 5.0 + 32.0) : WeatherCache::feels_like_c;
+    const char *tempUnit = config.store.weathertempimp ? "\011F" : "\011C";
     
-    tmps = strstr(cursor, "humidity\":");
-    if (tmps == NULL) { Serial.println("##WEATHER###: humidity not found !"); return false;}
-    tmps += 10;
-    tmpe = strstr(tmps, ",\"");
-    tmpc = strstr(tmps, "}");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: humidity not found !"); return false;}
-    strlcpy(hum, tmps, tmpe - tmps + (tmpc>tmpe?1:0));
+    // Convert pressure based on user preference
+    float press_display = config.store.weatherpressimp ? (WeatherCache::pressure_hpa * 0.750062) : WeatherCache::pressure_hpa;
+    const char *pressUnit = config.store.weatherpressimp ? "mmHg" : "hPa";
     
-    tmps = strstr(cursor, "\"grnd_level\":");
-    bool grnd_level_pr = (tmps != NULL);
-    if (grnd_level_pr) {
-      tmps += 13;
-      tmpe = strstr(tmps, ",\"");
-      if (tmpe == NULL) { Serial.println("##WEATHER###: grnd_level not found !"); return false;}
-      strlcpy(press, tmps, tmpe - tmps + 1);
-      cursor = tmpe + 2;
-      pressi = (float)atoi(press) / 1.333;
+    // Convert wind speed from cached m/s to user's preferred display unit
+    float wind_display;
+    const char *windUnit;
+    
+    if (strcmp(config.store.weatherwindspeed, "kmh") == 0) {
+      wind_display = WeatherCache::wind_speed_ms * 3.6;
+      windUnit = "km/h";
+    } else if (strcmp(config.store.weatherwindspeed, "mph") == 0) {
+      wind_display = WeatherCache::wind_speed_ms * 2.23694;
+      windUnit = "mph";
+    } else if (strcmp(config.store.weatherwindspeed, "kn") == 0) {
+      wind_display = WeatherCache::wind_speed_ms * 1.94384;
+      windUnit = "kn";
+    } else {  // ms
+      wind_display = WeatherCache::wind_speed_ms;
+      windUnit = "m/s";
     }
     
-    tmps = strstr(cursor, "\"speed\":");
-    if (tmps == NULL) { Serial.println("##WEATHER###: wind speed not found !"); return false;}
-    tmps += 8;
-    tmpe = strstr(tmps, ",\"");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: wind speed not found !"); return false;}
-    strlcpy(temp, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 1;
-    float wind_speed = atof(temp); (void)wind_speed;
+    int wind_dir_idx = (int)(WeatherCache::wind_deg / 22.5) % 16;
     
-    tmps = strstr(cursor, "\"deg\":");
-    if (tmps == NULL) { Serial.println("##WEATHER###: wind deg not found !"); return false;}
-    tmps += 6;
-    tmpe = strstr(tmps, ",\"");
-    if (tmpe == NULL) { Serial.println("##WEATHER###: wind deg not found !"); return false;}
-    strlcpy(temp, tmps, tmpe - tmps + 1);
-    cursor = tmpe + 1;
-    int wind_deg = atof(temp)/22.5;
-    if (wind_deg<0) wind_deg = 16+wind_deg;
+    // Build weather string dynamically based on enabled fields
+    char *p = weatherBuf;
+    p += sprintf(p, "%s, %.1f%s", WeatherCache::description, temp_display, tempUnit);
     
+    if (config.store.weatherfeels) {
+      p += sprintf(p, " \007 %s %.1f%s", LANG::weather_feelslike, feels_display, tempUnit);
+    }
+    if (config.store.weatherpressure) {
+      p += sprintf(p, " \007 %s %.0f %s", LANG::weather_pressure, press_display, pressUnit);
+    }
+    if (config.store.weatherhumidity) {
+      p += sprintf(p, " \007 %s %d%%", LANG::weather_humidity, WeatherCache::humidity);
+    }
+    if (config.store.weatherwind) {
+      p += sprintf(p, " \007 %s %.1f %s [%s]", LANG::weather_wind, wind_display, windUnit, LANG::wind[wind_dir_idx]);
+    }
+    
+    Serial.printf("Weather: %s\n", weatherBuf);
+    display.putRequest(NEWWEATHER);
+    return true;
+  #endif
+  return false;
+}
+
+// Get weather from Open-Meteo API (free, no API key)
+bool getWeather_OpenMeteo(char *wstr) {
+  #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
+    Serial.println("Weather: Calling Open-Meteo v1 API for current weather...");
+    
+    // Build URL - always request metric (Celsius, m/s, hPa) for consistent processing
+    // Wind speed: always request in m/s so we can cache and convert to any display unit
+    char url[512];
+    sprintf(url, "http://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&models=best_match&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,surface_pressure,wind_direction_10m,wind_speed_10m&forecast_days=1&wind_speed_unit=ms",
+            config.store.weatherlat, config.store.weatherlon);
+    
+    // Download JSON response to temp file (EspFileUpdater handles chunked encoding)
+    if (!downloadToTempFile(url)) {
+      Serial.println("Weather: Failed to download Open-Meteo data");
+      return false;
+    }
+    
+    // Read the downloaded JSON file
+    File file = SPIFFS.open(TMP_PATH, "r");
+    if (!file) {
+      Serial.println("Weather: Failed to open temp file");
+      return false;
+    }
+    
+    String response = file.readString();
+    file.close();
+    SPIFFS.remove(TMP_PATH);
+    
+    // Parse JSON with ArduinoJson
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, response);
+    if (error) {
+      Serial.printf("Weather: Open-Meteo JSON parse error: %s\n", error.c_str());
+      return false;
+    }
+    
+    // Cache elevation if available and not already cached
+    if (doc["elevation"].is<float>() && config.store.weatherelevation == 0) {
+      float elevation = doc["elevation"];
+      config.store.weatherelevation = (int16_t)elevation;
+      config.saveValue(&config.store.weatherelevation, config.store.weatherelevation);
+      Serial.printf("Weather: Elevation retrieved from Open-Meteo: %d meters\n", config.store.weatherelevation);
+    }
+    
+    JsonObject current = doc["current"];
+    if (current.isNull()) {
+      Serial.println("Weather: No current data in Open-Meteo response");
+      return false;
+    }
+    
+    // Get raw data from API (always in Celsius from Open-Meteo)
+    float temp_c = current["temperature_2m"];
+    float feels_like_c = current["apparent_temperature"];
+    int humidity = current["relative_humidity_2m"];
+    int wmo_code = current["weather_code"];
+    float pressure_hpa = current["surface_pressure"];  // hPa
+    float wind_speed_ms = current["wind_speed_10m"];  // Now always in m/s
+    int wind_deg = current["wind_direction_10m"];
+    
+    const char* description = getWMODescription(wmo_code);
+    
+    // Cache raw weather data for later string rebuilding
+    WeatherCache::valid = true;
+    WeatherCache::is_openmeteo = false;  // Now uses same conversion logic as OpenWeather
+    WeatherCache::fetch_time = millis();  // Record fetch timestamp
+    WeatherCache::temp_c = temp_c;
+    WeatherCache::feels_like_c = feels_like_c;
+    WeatherCache::humidity = humidity;
+    WeatherCache::pressure_hpa = pressure_hpa;
+    WeatherCache::wind_speed_ms = wind_speed_ms;  // Stored in consistent m/s
+    WeatherCache::wind_deg = wind_deg;
+    WeatherCache::wmo_code = wmo_code;
+    strncpy(WeatherCache::description, description, sizeof(WeatherCache::description) - 1);
+    WeatherCache::description[sizeof(WeatherCache::description) - 1] = '\0';
     
     #ifdef USE_NEXTION
-      nextion.putcmdf("press_txt.txt=\"%dmm\"", pressi);
-      nextion.putcmdf("hum_txt.txt=\"%d%%\"", atoi(hum));
-      char cmd[30];
-      snprintf(cmd, sizeof(cmd)-1,"temp_txt.txt=\"%.1f\"", tempf);
-      nextion.putcmd(cmd);
-      int iconofset;
-      if (strstr(icon,"01")!=NULL)      iconofset = 0;
-      else if (strstr(icon,"02")!=NULL) iconofset = 1;
-      else if (strstr(icon,"03")!=NULL) iconofset = 2;
-      else if (strstr(icon,"04")!=NULL) iconofset = 3;
-      else if (strstr(icon,"09")!=NULL) iconofset = 4;
-      else if (strstr(icon,"10")!=NULL) iconofset = 5;
-      else if (strstr(icon,"11")!=NULL) iconofset = 6;
-      else if (strstr(icon,"13")!=NULL) iconofset = 7;
-      else if (strstr(icon,"50")!=NULL) iconofset = 8;
-      else                             iconofset = 9;
-      nextion.putcmd("cond_img.pic", 50+iconofset);
+      // For Nextion, need to compute display values
+      float temp_display = config.store.weathertempimp ? (temp_c * 9.0 / 5.0 + 32.0) : temp_c;
+      float press_display = config.store.weatherpressimp ? (pressure_hpa * 0.750062) : pressure_hpa;
+      const char *pressUnit = config.store.weatherpressimp ? "mmHg" : "hPa";
+      
+      nextion.putcmdf("press_txt.txt=\"%.0f%s\"", press_display, pressUnit);
+      nextion.putcmdf("hum_txt.txt=\"%d%%\"", humidity);
+      nextion.putcmdf("temp_txt.txt=\"%.1f\"", temp_display);
+      // WMO codes don't map 1:1 to OpenWeather icons, use generic mapping
+      int iconoffset = (wmo_code == 0) ? 0 : (wmo_code <= 3) ? 1 : (wmo_code < 50) ? 2 : 
+                       (wmo_code < 60) ? 4 : (wmo_code < 70) ? 5 : (wmo_code < 80) ? 7 : 4;
+      nextion.putcmd("cond_img.pic", 50 + iconoffset);
       nextion.weatherVisible(1);
-    #endif //#ifdef USE_NEXTION
-    
-    Serial.printf("##WEATHER###: description: %s, temp:%.1f C, pressure:%dmmHg, humidity:%s%%\n", desc, tempf, pressi, hum);
-    #ifdef WEATHER_FMT_SHORT
-      sprintf(wstr, LANG::weatherFmt, tempf, pressi, hum);
-    #else
-      #if EXT_WEATHER
-        sprintf(wstr, LANG::weatherFmt, desc, tempf, tempfl, pressi, hum, wind_speed, LANG::wind[wind_deg]);
-      #else
-        sprintf(wstr, LANG::weatherFmt, desc, tempf, pressi, hum);
-      #endif
     #endif
+    
+    // Build display string from cached data
     network.requestWeatherSync();
-    return true;
-  #endif // if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
+    return network.buildWeatherString();
+  #endif
+  return false;
+}
+
+// Helper: Get icon offset from OpenWeather icon code
+int getWeatherIconOffset(const char* icon) {
+  if (strstr(icon,"01")!=NULL)      return 0;
+  else if (strstr(icon,"02")!=NULL) return 1;
+  else if (strstr(icon,"03")!=NULL) return 2;
+  else if (strstr(icon,"04")!=NULL) return 3;
+  else if (strstr(icon,"09")!=NULL) return 4;
+  else if (strstr(icon,"10")!=NULL) return 5;
+  else if (strstr(icon,"11")!=NULL) return 6;
+  else if (strstr(icon,"13")!=NULL) return 7;
+  else if (strstr(icon,"50")!=NULL) return 8;
+  else                             return 9;
+}
+
+// Get weather from OpenWeather API 2.5 (legacy)
+bool getWeather_OpenWeather25(char *wstr) {
+  #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
+    Serial.println("Weather: Calling OpenWeather API 2.5 for current weather...");
+    
+    // Check for API key
+    if (strlen(config.store.weatherkey) == 0) {
+      Serial.println("Weather: OpenWeather requires API key");
+      return false;
+    }
+    
+    // Build URL - always request metric for consistent processing
+    char url[512];
+    sprintf(url, "http://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&units=metric&lang=%s&appid=%s",
+            config.store.weatherlat, config.store.weatherlon,
+            config.store.weatherlang, config.store.weatherkey);
+    
+    // Download JSON response to temp file (EspFileUpdater handles chunked encoding)
+    if (!downloadToTempFile(url)) {
+      Serial.println("Weather: Failed to download OpenWeather 2.5 data");
+      return false;
+    }
+    
+    // Read the downloaded JSON file
+    File file = SPIFFS.open(TMP_PATH, "r");
+    if (!file) {
+      Serial.println("Weather: Failed to open temp file");
+      return false;
+    }
+    
+    String response = file.readString();
+    file.close();
+    SPIFFS.remove(TMP_PATH);
+    
+    // Parse JSON with ArduinoJson
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, response);
+    if (error) {
+      Serial.printf("Weather: OpenWeather 2.5 JSON parse error: %s\n", error.c_str());
+      return false;
+    }
+    
+    // Extract data (metric: Celsius, m/s, hPa)
+    const char* description = doc["weather"][0]["description"];
+    const char* icon = doc["weather"][0]["icon"];
+    float temp_c = doc["main"]["temp"];
+    float feels_like_c = doc["main"]["feels_like"];
+    
+    // Use grnd_level if available, otherwise sea_level pressure
+    float pressure_hpa;
+    if (doc["main"]["grnd_level"].is<float>()) {
+      pressure_hpa = doc["main"]["grnd_level"];
+    } else if (doc["main"]["pressure"].is<float>()) {
+      pressure_hpa = doc["main"]["pressure"];
+    } else {
+      Serial.println("Weather: No pressure data in OpenWeather 2.5 response");
+      return false;
+    }
+    
+    int humidity = doc["main"]["humidity"];
+    float wind_speed_ms = doc["wind"]["speed"];  // m/s from metric API
+    int wind_deg = doc["wind"]["deg"];
+    
+    // Cache raw weather data for later string rebuilding
+    WeatherCache::valid = true;
+    WeatherCache::is_openmeteo = false;
+    WeatherCache::fetch_time = millis();  // Record fetch timestamp
+    WeatherCache::temp_c = temp_c;
+    WeatherCache::feels_like_c = feels_like_c;
+    WeatherCache::humidity = humidity;
+    WeatherCache::pressure_hpa = pressure_hpa;
+    WeatherCache::wind_speed_ms = wind_speed_ms;  // Stored in m/s for OpenWeather
+    WeatherCache::wind_deg = wind_deg;
+    strncpy(WeatherCache::description, description, sizeof(WeatherCache::description) - 1);
+    WeatherCache::description[sizeof(WeatherCache::description) - 1] = '\0';
+    strncpy(WeatherCache::icon, icon, sizeof(WeatherCache::icon) - 1);
+    WeatherCache::icon[sizeof(WeatherCache::icon) - 1] = '\0';
+    
+    #ifdef USE_NEXTION
+      // For Nextion, need to compute display values
+      float temp_display = config.store.weathertempimp ? (temp_c * 9.0 / 5.0 + 32.0) : temp_c;
+      float press_display = config.store.weatherpressimp ? (pressure_hpa * 0.750062) : pressure_hpa;
+      const char *pressUnit = config.store.weatherpressimp ? "mmHg" : "hPa";
+      
+      nextion.putcmdf("press_txt.txt=\"%.0f%s\"", press_display, pressUnit);
+      nextion.putcmdf("hum_txt.txt=\"%d%%\"", humidity);
+      nextion.putcmdf("temp_txt.txt=\"%.1f\"", temp_display);
+      int iconoffset = getWeatherIconOffset(icon);
+      nextion.putcmd("cond_img.pic", 50 + iconoffset);
+      nextion.weatherVisible(1);
+    #endif
+    
+    // Build display string from cached data
+    network.requestWeatherSync();
+    return network.buildWeatherString();
+  #endif
+  return false;
+}
+
+// Helper: Fetch elevation from open-elevation.com API (fallback for OW 3.0)
+// Helper: Fetch and cache elevation from APIs (Open-Elevation with Open-Meteo fallback)
+void fetchAndCacheElevation() {
+  float lat = atof(config.store.weatherlat);
+  float lon = atof(config.store.weatherlon);
+  float elevation = 0.0;
+  bool success = false;
+  
+  // Try Open-Elevation API first
+  Serial.println("Weather: Getting elevation from Open-Elevation...");
+  char url[256];
+  sprintf(url, "http://api.open-elevation.com/api/v1/lookup?locations=%.4f,%.4f", lat, lon);
+  
+  if (downloadToTempFile(url)) {
+    File file = SPIFFS.open(TMP_PATH, "r");
+    if (file) {
+      String response = file.readString();
+      file.close();
+      
+      JsonDocument doc;
+      if (deserializeJson(doc, response) == DeserializationError::Ok) {
+        if (doc["results"][0]["elevation"].is<float>()) {
+          elevation = doc["results"][0]["elevation"];
+          success = true;
+        }
+      }
+    }
+  }
+  
+  // Fall back to Open-Meteo if Open-Elevation failed
+  if (!success) {
+    Serial.println("Weather: Getting elevation from Open-Meteo...");
+    sprintf(url, "https://api.open-meteo.com/v1/elevation?latitude=%.4f&longitude=%.4f", lat, lon);
+    
+    if (downloadToTempFile(url)) {
+      File file = SPIFFS.open(TMP_PATH, "r");
+      if (file) {
+        String response = file.readString();
+        file.close();
+        
+        JsonDocument doc;
+        if (deserializeJson(doc, response) == DeserializationError::Ok) {
+          if (doc["elevation"].is<float>()) {
+            elevation = doc["elevation"];
+            success = true;
+          }
+        }
+      }
+    }
+  }
+  
+  // Clean up temp file
+  SPIFFS.remove(TMP_PATH);
+  
+  // Cache elevation if successfully retrieved
+  if (success && elevation > 0.0) {
+    config.store.weatherelevation = (int16_t)elevation;
+    config.saveValue(&config.store.weatherelevation, config.store.weatherelevation);
+    Serial.printf("Weather: Caching elevation: %d meters\n", config.store.weatherelevation);
+  } else {
+    Serial.println("Weather: Failed to retrieve elevation from all sources");
+  }
+}
+
+// Helper: Calculate ground-level pressure from sea-level pressure using elevation
+float calculateGroundPressure(float seaLevelPressure, float elevationMeters) {
+  // Barometric formula: P_ground = P_sea * (1 - elevation / 44330)^5.255
+  if (elevationMeters == 0.0) return seaLevelPressure;
+  return seaLevelPressure * pow((1.0 - elevationMeters / 44330.0), 5.255);
+}
+
+// Get weather from OpenWeather API 3.0 (current)
+bool getWeather_OpenWeather30(char *wstr) {
+  #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
+    Serial.println("Weather: Calling OpenWeather API 3.0 for current weather...");
+    
+    // Check for API key
+    if (strlen(config.store.weatherkey) == 0) {
+      Serial.println("Weather: OpenWeather requires API key");
+      return false;
+    }
+    
+    // Build URL - always request metric for consistent processing
+    char url[512];
+    sprintf(url, "http://api.openweathermap.org/data/3.0/onecall?exclude=minutely,hourly,daily&lat=%s&lon=%s&units=metric&lang=%s&appid=%s",
+            config.store.weatherlat, config.store.weatherlon,
+            config.store.weatherlang, config.store.weatherkey);
+    
+    // Download JSON response to temp file (EspFileUpdater handles chunked encoding)
+    if (!downloadToTempFile(url)) {
+      Serial.println("Weather: Failed to download OpenWeather 3.0 data");
+      return false;
+    }
+    
+    // Read the downloaded JSON file
+    File file = SPIFFS.open(TMP_PATH, "r");
+    if (!file) {
+      Serial.println("Weather: Failed to open temp file");
+      return false;
+    }
+    
+    String response = file.readString();
+    file.close();
+    SPIFFS.remove(TMP_PATH);
+    
+    // Parse JSON with ArduinoJson
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, response);
+    if (error) {
+      Serial.printf("Weather: OpenWeather 3.0 JSON parse error: %s\n", error.c_str());
+      return false;
+    }
+    
+    JsonObject current = doc["current"];
+    if (current.isNull()) {
+      Serial.println("Weather: No current data in OpenWeather 3.0 response");
+      return false;
+    }
+    
+    // Extract data (metric: Celsius, m/s, hPa)
+    const char* description = current["weather"][0]["description"];
+    const char* icon = current["weather"][0]["icon"];
+    float temp_c = current["temp"];
+    float feels_like_c = current["feels_like"];
+    float pressure_sea_hpa = current["pressure"];  // Sea-level pressure
+    int humidity = current["humidity"];
+    float wind_speed_ms = current["wind_speed"];  // m/s from metric API
+    int wind_deg = current["wind_deg"];
+    int wind_dir_idx = (int)(wind_deg / 22.5) % 16;
+    
+    // Get or fetch elevation for barometric adjustment
+    float elevation = 0.0;
+    if (config.store.weatherelevation != 0) {
+      elevation = (float)config.store.weatherelevation;
+      Serial.printf("Weather: Using cached elevation: %d meters\n", config.store.weatherelevation);
+    } else {
+      // Fetch and cache elevation
+      fetchAndCacheElevation();
+      elevation = (float)config.store.weatherelevation;
+    }
+    
+    // Calculate ground-level pressure from sea-level pressure
+    float pressure_hpa = calculateGroundPressure(pressure_sea_hpa, elevation);
+    Serial.printf("Weather: Adjusted pressure from %.0f hPa (sea) to %.0f hPa (ground) using %.0f m elevation\n",
+                  pressure_sea_hpa, pressure_hpa, elevation);
+    
+    // Cache raw weather data for later string rebuilding
+    WeatherCache::valid = true;
+    WeatherCache::is_openmeteo = false;
+    WeatherCache::fetch_time = millis();  // Record fetch timestamp
+    WeatherCache::temp_c = temp_c;
+    WeatherCache::feels_like_c = feels_like_c;
+    WeatherCache::humidity = humidity;
+    WeatherCache::pressure_hpa = pressure_hpa;  // Ground-level adjusted
+    WeatherCache::wind_speed_ms = wind_speed_ms;  // Stored in m/s for OpenWeather
+    WeatherCache::wind_deg = wind_deg;
+    strncpy(WeatherCache::description, description, sizeof(WeatherCache::description) - 1);
+    WeatherCache::description[sizeof(WeatherCache::description) - 1] = '\0';
+    strncpy(WeatherCache::icon, icon, sizeof(WeatherCache::icon) - 1);
+    WeatherCache::icon[sizeof(WeatherCache::icon) - 1] = '\0';
+    
+    #ifdef USE_NEXTION
+      // For Nextion, need to compute display values
+      float temp_display = config.store.weathertempimp ? (temp_c * 9.0 / 5.0 + 32.0) : temp_c;
+      float press_display = config.store.weatherpressimp ? (pressure_hpa * 0.750062) : pressure_hpa;
+      const char *pressUnit = config.store.weatherpressimp ? "mmHg" : "hPa";
+      
+      nextion.putcmdf("press_txt.txt=\"%.0f%s\"", press_display, pressUnit);
+      nextion.putcmdf("hum_txt.txt=\"%d%%\"", humidity);
+      nextion.putcmdf("temp_txt.txt=\"%.1f\"", temp_display);
+      int iconoffset = getWeatherIconOffset(icon);
+      nextion.putcmd("cond_img.pic", 50 + iconoffset);
+      nextion.weatherVisible(1);
+    #endif
+    
+    // Build display string from cached data
+    network.requestWeatherSync();
+    return network.buildWeatherString();
+  #endif
+  return false;
+}
+
+bool getWeather(char *wstr) {
+  #if (DSP_MODEL!=DSP_DUMMY || defined(USE_NEXTION)) && !defined(HIDE_WEATHER)
+    // Provider dispatcher - route to appropriate weather API
+    if (strcmp(config.store.weatherapi, "OW30") == 0) {
+      return getWeather_OpenWeather30(wstr);
+    } else if (strcmp(config.store.weatherapi, "OW25") == 0) {
+      return getWeather_OpenWeather25(wstr);
+    } else {  // Default: "OM1" or any other value
+      return getWeather_OpenMeteo(wstr);
+    }
+  #endif
   return false;
 }

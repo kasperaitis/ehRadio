@@ -8,7 +8,7 @@
 #include "controls.h"
 #include "telnet.h"
 #include "rtcsupport.h"
-#include "../displays/tools/l10n.h"
+#include "../displays/tools/utf8_common.h"
 #ifdef USE_SD
   #include "sdmanager.h"
 #endif
@@ -24,10 +24,10 @@
 
 
 // List of required web asset files
-static const char* wwwFiles[] = {"curated.js", "dragpl.js", "ir.js", "options.js", "playstation.js", "script.js", "search.js", "updform.js",
-                                 "logo.svg", "icon.png", "rb_srvrs.json", "timezones.json", "style.css", "theme.css",
+static const char* wwwFiles[] = {"curated.js", "dragpl.js", "ir.js", "locale.js", "options.js", "playstation.js", "script.js", "search.js", "updform.js",
+                                 "logo.svg", "icon.png", "locales.json", "rb_srvrs.json", "timezones.json", "style.css", "theme.css",
                                  "curated.html", "irrecord.html", "options.html", "search.html", "updform.html",
-                                 "player.html"}; // keep main page at end (deleted when upgraded, so user sees emptyfs_html)
+                                 "player.html"}; // keep main page at end (deleted when upgraded, last to be downloaded, so user sees emptyfs_html with wait message)
 static const size_t wwwFilesCount = sizeof(wwwFiles) / sizeof(wwwFiles[0]);
 
 // List of optional data files
@@ -106,7 +106,7 @@ void Config::init() {
     wwwFilesExist = _wwwFilesExist();
   } else {
     BOOTLOG("Version mismatch detected (stored: %s, current: %s)", storedVersion.c_str(), RADIOVERSION);
-    wwwFilesExist =  false;
+    wwwFilesExist = false;
   }
   // if version is incorrect or version file doesn't exist, need to clean SPIFFS and make the version file
   if (!wwwFilesExist || !SPIFFS.exists(versionPath)) {
@@ -126,6 +126,7 @@ void Config::init() {
       BOOTLOG("SPIFFS is missing files.  Will attempt to get files from online...");
     #endif
   }
+  // Note: Locale file mismatch will be handled async in startupServices() after WiFi connects
 
   #ifdef USE_SD
     _SDplaylistFS = getMode()==PM_SDCARD?&sdman:(true?&SPIFFS:_SDplaylistFS);
@@ -391,7 +392,7 @@ void Config::setScreensaverPlayingEnabled(bool val) {
 }
 void Config::setScreensaverPlayingTimeout(uint16_t val) {
   val=constrain(val,1,1080);
-  config.saveValue(&config.store.screensaverPlayingTimeout, val);
+  saveValue(&config.store.screensaverPlayingTimeout, val);
   #ifndef DSP_LCD
     display.putRequest(NEWMODE, PLAYER);
   #endif
@@ -404,7 +405,7 @@ void Config::setScreensaverPlayingBlank(bool val) {
 }
 
 void Config::setShowweather(bool val) {
-  config.saveValue(&config.store.showweather, val);
+  saveValue(&config.store.showweather, val);
   network.trueWeather=false;
   network.forceWeather = true;
   display.putRequest(SHOWWEATHER);
@@ -473,22 +474,35 @@ void Config::resetSystem(const char *val, uint8_t clientId) {
     netserver.requestOnChange(GETSCREEN, clientId);
     return;
   }
-  if (strcmp(val, "timezone") == 0) {
+  if (strcmp(val, "locale") == 0) {
+    saveValue(store.locale_webui, WEBUI_LOCALE, sizeof(store.locale_webui), false);
     saveValue(store.tz_name, TIMEZONE_NAME, sizeof(store.tz_name), false);
     saveValue(store.tzposix, TIMEZONE_POSIX, sizeof(store.tzposix), false);
     saveValue(store.sntp1, SNTP_1, sizeof(store.sntp1), false);
-    saveValue(store.sntp2, SNTP_2, sizeof(store.sntp2));
+    saveValue(store.sntp2, SNTP_2, sizeof(store.sntp2), false);
+    saveValue(&store.timesyncinterval, (uint8_t)TIME_SYNC_INTERVAL);
     network.forceTimeSync = true;
     network.requestTimeSync(true);
     network.forceTimeSync = true;
-    netserver.requestOnChange(GETTIMEZONE, clientId);
+    netserver.requestOnChange(GETLOCALE, clientId);
     return;
   }
   if (strcmp(val, "weather") == 0) {
     saveValue(&store.showweather, false, false);
+    saveValue(&store.weathersyncinterval, (uint8_t)WEATHER_SYNC_INTERVAL, false);
+    saveValue(&store.weathertempimp, WEATHER_TEMPERATURE_F);
+    saveValue(&store.weatherpressimp, WEATHER_PRESSURE_MMHG);
+    saveValue(store.weatherwindspeed, WEATHER_WIND_SPEED_UNITS, sizeof(store.weatherwindspeed), false);
+    saveValue(&store.weatherfeels, false);
+    saveValue(&store.weatherhumidity, false);
+    saveValue(&store.weatherpressure, false);
+    saveValue(&store.weatherwind, false);
+    saveValue(store.weatherlang, WEATHER_LANG, sizeof(store.weatherlang), false);
     saveValue(store.weatherlat, WEATHER_LAT, sizeof(store.weatherlat), false);
     saveValue(store.weatherlon, WEATHER_LON, sizeof(store.weatherlon), false);
-    saveValue(store.weatherkey, "", WEATHERKEY_LENGTH);
+    saveValue(store.weatherapi, WEATHER_API, sizeof(store.weatherapi), false);
+    saveValue(&store.weatherelevation, static_cast<int16_t>(0), false);
+    //saveValue(store.weatherkey, "", WEATHERKEY_LENGTH); // don't reset API key
     network.trueWeather=false;
     display.putRequest(NEWMODE, CLEAR); display.putRequest(NEWMODE, PLAYER);
     netserver.requestOnChange(GETWEATHER, clientId);
@@ -586,11 +600,27 @@ uint8_t Config::setLastSSID(uint8_t val) {
   return store.lastSSID;
 }
 
+// Helper: remove trailing CR/LF and trim leading/trailing whitespace from a C string
+static void strip_whitespace(char *s) {
+  if (!s) return;
+  // Trim trailing CR/LF and any trailing whitespace
+  size_t len = strlen(s);
+  while (len > 0 && (s[len-1] == '\r' || s[len-1] == '\n' || isspace((unsigned char)s[len-1]))) {
+    s[--len] = '\0';
+  }
+  // Trim leading whitespace
+  char *start = s;
+  while (*start && isspace((unsigned char)*start)) start++;
+  if (start != s) memmove(s, start, strlen(start) + 1);
+}
+
 void Config::setTitle(const char* title) {
   vuThreshold = 0;
+  // Keep native UTF-8 title (single source of truth for WebUI/CLI)
   memset(config.station.title, 0, BUFLEN);
   strlcpy(config.station.title, title, BUFLEN);
   u8fix(config.station.title);
+  strip_whitespace(config.station.title);
   netserver.requestOnChange(TITLE, 0);
   netserver.loop();
   display.putRequest(NEWTITLE);
@@ -599,8 +629,9 @@ void Config::setTitle(const char* title) {
 void Config::setStation(const char* station) {
   memset(config.station.name, 0, BUFLEN);
   strlcpy(config.station.name, station, BUFLEN);
-  u8fix(config.station.title);
-}
+  u8fix(config.station.name);
+  strip_whitespace(config.station.name);
+}  
 
 void Config::indexPlaylist() {
   File playlist = SPIFFS.open(PLAYLIST_PATH, "r");
@@ -901,7 +932,6 @@ void Config::purgeUnwantedFiles() {
   BOOTLOG("Scanning SPIFFS for unwanted files...");
   File root = SPIFFS.open("/");
   if (!root || !root.isDirectory()) return;
-
   File file = root.openNextFile();
   while (file) {
     if (file.isDirectory()) {
@@ -912,10 +942,33 @@ void Config::purgeUnwantedFiles() {
     bool keep = false;
     if (path.startsWith("/www/")) {
       String name = path.substring(5);
-      for (size_t i = 0; i < wwwFilesCount; i++) {
-        if (name == String(wwwFiles[i]) || name == String(wwwFiles[i]) + ".gz") {
-          keep = true;
-          break;
+      // Keep the current locale file (which depends...)
+      char currentLocaleGz[64], currentLocale[64];
+      #ifdef UPDATEURL
+        snprintf(currentLocaleGz, sizeof(currentLocaleGz), "%s.json.gz", config.store.locale_webui);
+        snprintf(currentLocale, sizeof(currentLocale), "%s.json", config.store.locale_webui);
+      #else
+        snprintf(currentLocaleGz, sizeof(currentLocaleGz), "%s.json.gz", WEBUI_LOCALE);
+        snprintf(currentLocale, sizeof(currentLocale), "%s.json", WEBUI_LOCALE);
+      #endif
+      if (name == currentLocaleGz || name == currentLocale) {
+        keep = true;
+      } else {
+        for (size_t i = 0; i < wwwFilesCount; i++) {
+          if (name == String(wwwFiles[i]) || name == String(wwwFiles[i]) + ".gz") {
+            keep = true;
+            break;
+          }
+        }
+      }
+      // If we're keeping this file but it's uncompressed, check if .gz exists
+      if (keep && !name.endsWith(".gz")) {
+        String gzPath = "/www/" + name + ".gz";
+        if (SPIFFS.exists(gzPath)) {
+          SPIFFS.remove(path);
+          BOOTLOG("Removed duplicate (compressed version exists): %s", path.c_str());
+          file = root.openNextFile();
+          continue;
         }
       }
     } else if (path.startsWith("/data/")) {
@@ -940,15 +993,13 @@ void Config::deleteMainwwwFile() {
   if (wwwFilesCount > 0) {
     const char* lastFile = wwwFiles[wwwFilesCount - 1];
     char mainfile[64];
-    snprintf(mainfile, sizeof(mainfile), "/www/%s", lastFile);
-    if (SPIFFS.exists(mainfile)) {
-      SPIFFS.remove(mainfile);
-      Serial.printf("[Config] Deleted main www file: %s\n", mainfile);
-    }
-    snprintf(mainfile, sizeof(mainfile), "/www/%s.gz", lastFile);
-    if (SPIFFS.exists(mainfile)) {
-      SPIFFS.remove(mainfile);
-      Serial.printf("[Config] Deleted main www file: %s\n", mainfile);
+    // Try both uncompressed and compressed versions
+    for (const char* suffix : {"", ".gz"}) {
+      snprintf(mainfile, sizeof(mainfile), "/www/%s%s", lastFile, suffix);
+      if (SPIFFS.exists(mainfile)) {
+        SPIFFS.remove(mainfile);
+        Serial.printf("[Config] Deleted main www file: %s\n", mainfile);
+      }
     }
   }
 }
@@ -990,9 +1041,12 @@ void fixPlaylistFileEnding() {
   playlistfile.close();
 }
 
-void getRequiredFiles(void* param) {
+void getRequiredFiles() {
   #ifdef UPDATEURL
     player.sendCommand({PR_STOP, 0});
+    ESPFileUpdater* getRequiredFile = new ESPFileUpdater(SPIFFS);
+    getRequiredFile->setMaxSize(1024);
+    getRequiredFile->setUserAgent(ESPFILEUPDATER_USERAGENT);
     char localFileGz[64];
     char localFile[64];
     char tryFile[64];
@@ -1005,6 +1059,7 @@ void getRequiredFiles(void* param) {
       snprintf(localFile, sizeof(localFile), "/www/%s", fname);
       if (SPIFFS.exists(localFileGz)) SPIFFS.remove(localFileGz);
       if (SPIFFS.exists(localFile)) SPIFFS.remove(localFile);
+      bool success = false;
       for (size_t j = 0; j < 2; j++) {
         if (j == 0) { // Try compressed first
           snprintf(tryFile, sizeof(tryFile), "%s", localFileGz);
@@ -1014,8 +1069,7 @@ void getRequiredFiles(void* param) {
           snprintf(tryUrl, sizeof(tryUrl), "%s%s", FILESURL, fname);
         }
         Serial.printf("[ESPFileUpdater: %s] Updating required file.\n", tryFile);
-        ESPFileUpdater* getfile = (ESPFileUpdater*)param;
-        ESPFileUpdater::UpdateStatus result = getfile->checkAndUpdate(
+        ESPFileUpdater::UpdateStatus result = getRequiredFile->checkAndUpdate(
             tryFile,
             tryUrl,
             "",
@@ -1023,43 +1077,25 @@ void getRequiredFiles(void* param) {
        );
         if (result == ESPFileUpdater::UPDATED) {
           Serial.printf("[ESPFileUpdater: %s] Download completed.\n", tryFile);
-          break; // Exit inner loop on success
+          success = true;
+          break;
         } else {
           if (j == 0) Serial.printf("[ESPFileUpdater: %s] Download failed. Will retry for uncompressed file.\n", tryFile);
           if (j == 1) Serial.printf("[ESPFileUpdater: %s] Download failed. No online file available. Are you running a custom version?\n", tryFile);
         }
       }
-    }
-    // Delete any files in /www that are not in the wwwFiles list
-    File root = SPIFFS.open("/www");
-    if (root && root.isDirectory()) {
-      File file = root.openNextFile();
-      while (file) {
-        const char* path = file.name();
-        // Extract filename from full path
-        const char* name = path;
-        const char* slash = strrchr(path, '/');
-        if (slash) name = slash + 1;
-        bool found = false;
-        for (size_t j = 0; j < wwwFilesCount; j++) {
-          // Check against both compressed and uncompressed names
-          char requiredNameGz[64];
-          snprintf(requiredNameGz, sizeof(requiredNameGz), "%s.gz", wwwFiles[j]);
-          if (strcmp(name, wwwFiles[j]) == 0 || strcmp(name, requiredNameGz) == 0) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          Serial.printf("[File: /www/%s] Deleting - not in required file list.\n", path);
-          SPIFFS.remove(path);
-        }
-        file = root.openNextFile();
+      if (!success) {
+        // give up and show update‑failed message briefly before returning to lost dialog
+        display.updateProgress(LANG::updFailed, 0.0f);
+        delay(3000);
+        display.putRequest(NEWMODE, LOST);
+        return;
       }
     }
+    delete getRequiredFile;
+    config.purgeUnwantedFiles();
     delay(200);
     ESP.restart();
-    vTaskDelete(NULL);
   #endif //#ifdef UPDATEURL
 }
 
@@ -1111,8 +1147,154 @@ void Config::updateFile(void* param, const char* localFile, const char* onlineFi
   }
 }
 
-void startAsyncServices(void* param) {
+// Struct to pass parameters to async locale update task
+struct LocaleUpdateParams {
+  ESPFileUpdater* updater;
+  uint8_t clientId;
+  char localeCode[16];
+};
+
+bool updateLocaleFileCore(ESPFileUpdater* updater, const char* localeCode) {
+  // called by updateLocaleFileAsync or updateLocaleFile
+  // Returns true on success, false on failure
   #ifdef UPDATEURL
+    // Special case: hardcoded locale uses default, no file needed
+    if (strcmp(localeCode, HARDCODED_WEBUI_LOCALE) == 0) {
+      Serial.printf("[Updating Locale: %s] No need to download, hardcoded locale uses default.\n", HARDCODED_WEBUI_LOCALE);
+      return true;
+    }
+    char tryFile[64] = "/www/locale.new";
+    char finalFile[64];
+    char tryUrl[128];
+    bool success = false;
+    Serial.printf("[Updating Locale: %s] Downloading file...\n", localeCode);
+    for (size_t j = 0; j < 2; j++) {
+      SPIFFS.remove(tryFile);
+      if (j == 0) {
+        snprintf(finalFile, sizeof(finalFile), "/www/%s.json.gz", localeCode);
+        snprintf(tryUrl, sizeof(tryUrl), "%s%s.json.gz", FILESURL, localeCode);
+      } else {
+        snprintf(finalFile, sizeof(finalFile), "/www/%s.json", localeCode);
+        snprintf(tryUrl, sizeof(tryUrl), "%s%s.json", FILESURL, localeCode);
+      }
+      ESPFileUpdater::UpdateStatus result = updater->checkAndUpdate(
+          tryFile,
+          tryUrl,
+          "",
+          ESPFILEUPDATER_VERBOSE
+      );
+      if (result == ESPFileUpdater::UPDATED) {
+        Serial.printf("[Updating Locale: %s] Download successful, saving as %s\n", localeCode, finalFile);
+        SPIFFS.remove(finalFile);
+        if (SPIFFS.rename(tryFile, finalFile)) {
+          success = true;
+          break;
+        }
+      }
+    }
+    if (!success) {
+      Serial.println("[Updating Locale] Failed to fetch file from either .gz or uncompressed URL");
+    }
+    return success;
+  #else
+    return false;
+  #endif //#ifdef UPDATEURL
+}
+
+void updateLocaleFileAsyncWrapper(void* param) {
+  LocaleUpdateParams* params = (LocaleUpdateParams*)param;
+  // Attempt to download and install the locale file
+  bool success = updateLocaleFileCore(params->updater, params->localeCode);
+  if (success) {
+    // Remove old locale files before updating config
+    char oldLocaleGz[64], oldLocale[64];
+    snprintf(oldLocaleGz, sizeof(oldLocaleGz), "/www/%s.json.gz", config.store.locale_webui);
+    snprintf(oldLocale, sizeof(oldLocale), "/www/%s.json", config.store.locale_webui);
+    SPIFFS.remove(oldLocaleGz);
+    SPIFFS.remove(oldLocale);
+    // Download successful - commit the locale code to config
+    config.saveValue(config.store.locale_webui, params->localeCode, sizeof(config.store.locale_webui), false);
+    Serial.printf("[Updating Locale: %s] Successfully updated\n", params->localeCode);
+    // Send success message to frontend
+    char msg[64];
+    snprintf(msg, sizeof(msg), "{\"locale_updated\":true,\"locale\":\"%s\"}", params->localeCode);
+    websocket.text(params->clientId, msg);
+  } else {
+    // Download failed - don't modify config, send error message
+    Serial.printf("[Updating Locale: %s] Failed to update\n", params->localeCode);
+    websocket.text(params->clientId, "{\"locale_update_failed\":true}");
+  }
+  delete params->updater;
+  delete params;
+  vTaskDelete(NULL);
+}
+
+void Config::updateLocaleFile() {
+  #ifdef UPDATEURL
+    ESPFileUpdater* updater = new ESPFileUpdater(SPIFFS);
+    updater->setMaxSize(1024);
+    updater->setUserAgent(ESPFILEUPDATER_USERAGENT);
+    bool success = updateLocaleFileCore(updater, config.store.locale_webui);
+    if (success) {
+      Serial.printf("[Locale Update] Successfully updated to %s\n", config.store.locale_webui);
+    } else {
+      Serial.printf("[Locale Update] Failed to update to %s\n", config.store.locale_webui);
+    }
+    delete updater;
+  #endif
+}
+
+bool Config::updateLocaleFileAsync(const char* localeCode, uint8_t clientId) {
+  if (WiFi.status() != WL_CONNECTED) return false;
+  #ifdef UPDATEURL
+    // If switching WebUI Locales, need to download a file
+    LocaleUpdateParams* params = new LocaleUpdateParams();
+    params->updater = new ESPFileUpdater(SPIFFS);
+    params->updater->setMaxSize(1024);
+    params->updater->setUserAgent(ESPFILEUPDATER_USERAGENT);
+    params->clientId = clientId;
+    strlcpy(params->localeCode, localeCode, sizeof(params->localeCode));
+    xTaskCreate(updateLocaleFileAsyncWrapper, "updateLocaleFileAsyncWrapper", 8192, params, 2, NULL);
+    return true; // Task created successfully (NOT download result)
+  #else
+    // If not, then just need to switch
+    config.saveValue(config.store.locale_webui, localeCode, sizeof(config.store.locale_webui), false);
+    Serial.printf("[Locale Switch] Changed to %s\n", localeCode);
+    char msg[64];
+    snprintf(msg, sizeof(msg), "{\"locale_updated\":true,\"locale\":\"%s\"}", localeCode);
+    websocket.text(clientId, msg);
+    return true;
+  #endif
+}
+
+bool checkLocaleFile() {
+  // Special case: hardcoded locale uses default, no file needed
+  if (strcmp(config.store.locale_webui, HARDCODED_WEBUI_LOCALE) == 0) {
+    Serial.printf("[Locale Check] %s uses hardcoded default, no file needed\n", HARDCODED_WEBUI_LOCALE);
+    return true;
+  }
+  char localeFileGz[64], localeFile[64];
+  snprintf(localeFileGz, sizeof(localeFileGz), "/www/%s.json.gz", config.store.locale_webui);
+  snprintf(localeFile, sizeof(localeFile), "/www/%s.json", config.store.locale_webui);
+  if (SPIFFS.exists(localeFileGz)) {
+    Serial.printf("[Locale Check] Found %s.json.gz\n", config.store.locale_webui);
+    return true;
+  }
+  if (SPIFFS.exists(localeFile)) {
+    Serial.printf("[Locale Check] Found %s.json\n", config.store.locale_webui);
+    return true;
+  }
+  Serial.printf("[Locale Check] Locale file not found for %s\n", config.store.locale_webui);
+  return false;
+}
+
+void startupServicesAsync(void* param) {
+  fixPlaylistFileEnding(); // playlist.csv MUST have a line-feed at end (can happen easily by uploading a file)
+  #ifdef UPDATEURL
+    if (!checkLocaleFile()) {
+      Serial.printf("[Locale Check] Locale file verification failed, updating to %s...\n", config.store.locale_webui);
+      config.updateLocaleFile();
+    }
     config.updateFile(param, "/data/new_ver.txt", CHECKUPDATEURL, CHECKUPDATEURL_TIME, "New version number");
     checkNewVersionFile();
     if (config.store.autoupdate && netserver.newVersionAvailable) {
@@ -1126,26 +1308,25 @@ void startAsyncServices(void* param) {
       if (SPIFFS.exists("/data/playlist.csv")) netserver.requestOnChange(PLAYLISTSAVED, 0);
     }
   #endif
-  fixPlaylistFileEnding(); // playlist.csv MUST have a line-feed at end (can happen easily by uploading a file)
   config.updateFile(param, "/www/timezones.json.gz", TIMEZONES_JSON_URL, TIMEZONES_JSON_CHECKTIME, "Timezones database file");
   config.updateFile(param, "/www/rb_srvrs.json", RADIO_BROWSER_SERVERS_URL, RB_SERVERS_CHECKTIME, "Radio Browser servers list");
   cleanStaleSearchResults();
   vTaskDelete(NULL);
 }
 
-void Config::startAsyncServicesButWait() {
+void Config::startupServices() {
   if (WiFi.status() != WL_CONNECTED) return;
-  ESPFileUpdater* updater = nullptr;
-  updater = new ESPFileUpdater(SPIFFS);
-  updater->setMaxSize(1024);
-  updater->setUserAgent(ESPFILEUPDATER_USERAGENT);
-  if (!wwwFilesExist) {
-    #ifdef UPDATEURL
-      xTaskCreate(getRequiredFiles, "getRequiredFiles", 8192, updater, 2, NULL);
-    #endif
-  } else {
-    xTaskCreate(startAsyncServices, "startAsyncServices", 8192, updater, 2, NULL);
-  }
+  #ifdef UPDATEURL
+    ESPFileUpdater* updater = nullptr;
+    updater = new ESPFileUpdater(SPIFFS);
+    updater->setMaxSize(1024);
+    updater->setUserAgent(ESPFILEUPDATER_USERAGENT);
+    if (!wwwFilesExist) {
+      getRequiredFiles();
+    } else {
+      xTaskCreate(startupServicesAsync, "startupServicesAsync", 8192, updater, 2, NULL);
+    }
+  #endif
 }
 
 void Config::bootInfo() {
@@ -1167,6 +1348,8 @@ void Config::bootInfo() {
   } else {
     BOOTLOG("audio:\t\t%s (%d, %d, %d, %d, %s)", "VS1053", VS1053_CS, VS1053_DCS, VS1053_DREQ, VS1053_RST, VS_HSPI?"true":"false");
   }
+  BOOTLOG("display locale :\t%s", DSP_LOCALE);
+  BOOTLOG("webui locale :\t%s", store.locale_webui);
   BOOTLOG("audioinfo:\t%s", store.audioinfo?"true":"false");
   BOOTLOG("smartstart:\t%s", store.smartstart ? "true" : "false");
   BOOTLOG("vumeter:\t%s", store.vumeter?"true":"false");
@@ -1236,14 +1419,27 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(encacc, "encacc"),
   CONFIG_KEY_ENTRY(skipPlaylistUpDown, "skipplupdn"),
   CONFIG_KEY_ENTRY(irtlp, "irtlp"),
+  CONFIG_KEY_ENTRY(locale_webui, "localewebui"),
   CONFIG_KEY_ENTRY(tz_name, "tzname"),
   CONFIG_KEY_ENTRY(tzposix, "tzposix"),
   CONFIG_KEY_ENTRY(sntp1, "sntp1"),
   CONFIG_KEY_ENTRY(sntp2, "sntp2"),
+  CONFIG_KEY_ENTRY(timesyncinterval, "timesync"),
   CONFIG_KEY_ENTRY(showweather, "showwthr"),
+  CONFIG_KEY_ENTRY(weatherapi, "weatherapi"),
+  CONFIG_KEY_ENTRY(weathersyncinterval, "weathersync"),
   CONFIG_KEY_ENTRY(weatherlat, "weatherlat"),
   CONFIG_KEY_ENTRY(weatherlon, "weatherlon"),
+  CONFIG_KEY_ENTRY(weatherlang, "weatherlang"),
   CONFIG_KEY_ENTRY(weatherkey, "weatherkey"),
+  CONFIG_KEY_ENTRY(weatherelevation, "weatherelev"),
+  CONFIG_KEY_ENTRY(weathertempimp, "weathertempi"),
+  CONFIG_KEY_ENTRY(weatherpressimp, "weatherpressi"),
+  CONFIG_KEY_ENTRY(weatherwindspeed, "weatherwindsp"),
+  CONFIG_KEY_ENTRY(weatherfeels, "weatherfeels"),
+  CONFIG_KEY_ENTRY(weatherhumidity, "weatherhumid"),
+  CONFIG_KEY_ENTRY(weatherpressure, "weatherpress"),
+  CONFIG_KEY_ENTRY(weatherwind, "weatherwind"),
   CONFIG_KEY_ENTRY(mqttenable, "mqttenable"),
   CONFIG_KEY_ENTRY(mqtthost, "mqtthost"),
   CONFIG_KEY_ENTRY(mqttport, "mqttport"),

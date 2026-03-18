@@ -93,13 +93,13 @@ void setup() {
   if (config.getMode()==PM_SDCARD) player.initHeaders(config.station.url);
   player.lockOutput=false;
   if (config.store.smartstart) {  // If smart start is enabled
-    //delay(99);
+    delay(1000);  // Allow DNS/TCP/SSL stack to stabilize after WiFi connect (esp. after soft restart)
     uint16_t stn = config.lastStation();
     if (stn > 0) {  // Only play if there's a valid station
       player.sendCommand({PR_PLAY, stn});
     }
   }
-  config.startAsyncServicesButWait();
+  config.startupServices();
   pm.on_end_setup();
 }
 
@@ -199,12 +199,15 @@ void loop() {
 void battery_dim_loop() {
   BatteryStatus bat = battery_get_status();
 
+  /* Decide charging based on explicit detection or the existing inference logic only. */
+  bool is_charging_present = bat.charging || bat.charging_inferred;
+
   /* Critical battery: stop playback, blank display and go to deep sleep (once)
      If a charger (TP4054) is present and the battery is charging, skip deep sleep
      while charging and notify once. Deep-sleep will occur once charging stops.
-     Grace period: wait 30 seconds after boot before allowing deep sleep. */
-  if (bat.critical_battery && !battery_critical_handled && millis() > 30000) {
-    if (bat.charging) {
+     Grace period: wait ~5 minutes after boot before allowing deep sleep. */
+  if (bat.critical_battery && !battery_critical_handled && millis() > 300000) {
+    if (is_charging_present) {
       if (!battery_critical_skipped) {
         battery_critical_skipped = true;
         Serial.printf("##[BATTERY]#: CRITICAL battery (%d%%) but charging - skipping deep sleep\r\n", bat.percentage);
@@ -232,29 +235,36 @@ void battery_dim_loop() {
     }
   }
 
-  // Low battery: force fixed brightness percentage
+  // Low battery: force fixed brightness percentage (skip dimming while charging)
   if (bat.low_battery && !battery_low_handled) {
-    battery_low_handled = true;
-    if (!battery_saved_valid) { battery_saved_brightness = config.store.brightness; battery_saved_valid = true; }
-    uint8_t target_pct = (uint8_t)BATTERY_DIM_BRIGHTNESS;
-    if (target_pct > 100) target_pct = 100;
-    Serial.printf("##[BATTERY]#: LOW battery (%d%%) - forcing brightness to %d%%\r\n", bat.percentage, target_pct);
-    config.store.brightness = target_pct;
-    #if defined(DOWN_LEVEL) || defined(DOWN_INTERVAL)
-      brightnessOn();
-    #else
-      config.setBrightness(false);
-    #endif
+    if (is_charging_present) {
+      /* When charging (or charging trend detected), do not force a low-battery brightness — avoid flicker. */
+      #ifdef BATTERY_DEBUG
+        Serial.printf("##[BATTERY]#: LOW battery (%d%%) but charging/trend detected - skipping forced brightness\r\n", bat.percentage);
+      #endif
+    } else {
+      battery_low_handled = true;
+      if (!battery_saved_valid) { battery_saved_brightness = config.store.brightness; battery_saved_valid = true; }
+      uint8_t target_pct = (uint8_t)BATTERY_DIM_BRIGHTNESS;
+      if (target_pct > 100) target_pct = 100;
+      Serial.printf("##[BATTERY]#: LOW battery (%d%%) - forcing brightness to %d%%\r\n", bat.percentage, target_pct);
+      config.store.brightness = target_pct;
+      #if defined(DOWN_LEVEL) || defined(DOWN_INTERVAL)
+        brightnessOn();
+      #else
+        config.setBrightness(false);
+      #endif
+    }
   }
 
-  // Restore when battery OK (with hysteresis) or charging
+  // Restore when battery OK (with hysteresis) or charging/trend detected
   {
     int recover = (int)BATTERY_LOW_THRESHOLD + (int)BATTERY_RECOVER_HYSTERESIS_PCT;
     if (recover > 100) recover = 100;
     uint8_t recover_pct = (uint8_t)recover;
     bool recovered_by_pct = (bat.percentage >= recover_pct) && !bat.critical_battery;
 
-    if ((battery_low_handled && recovered_by_pct) || (battery_critical_handled && !bat.critical_battery) || bat.charging) {
+    if ((battery_low_handled && recovered_by_pct) || (battery_critical_handled && !bat.critical_battery) || is_charging_present) {
       if (battery_low_handled) {
         battery_low_handled = false;
         if (battery_saved_valid) {
