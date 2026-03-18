@@ -22,7 +22,7 @@ Documentation will be improved at some point... Until then, check this page and 
 
 ## ehRadio Version history
 
-### 2026.03.13
+### 2026.03.18
 
   - Thanks to [kasperaitis](https://github.com/kasperaitis) for [PR 50](https://github.com/trip5/ehRadio/pull/50)
     - Ignore placeholder stream titles
@@ -34,8 +34,8 @@ Documentation will be improved at some point... Until then, check this page and 
   - Configure the display language with something like `#define DSP_LANGUAGE_de_DE` in `myoptions.h`
     - see the available options by checking `displayL10n_*.h` files in `locale` folder 
   - WebUI locale now dynamically configurable
-    - if online update capable, can switch between many
-    - if not, then can switch between hardcoded HTML (en_US) and another
+    - if online update capable, can switch between any that are available in the release
+    - if not, then can switch between hardcoded HTML (en_US) and another (if English is not the default)
     - translations may not be good... report issues or open a PR!
     - Configure the default webUI language with `#define WEBUI_LANGUAGE_STRING "de_DE"` in `myoptions.h`
     - if not specified, will use the same as the display language
@@ -63,7 +63,7 @@ Documentation will be improved at some point... Until then, check this page and 
   - Time sync interval can be configured in WebUI
     - default in `myoptions.h` set with `#define TIME_SYNC_INTERVAL 1` (time in hours: 1 to 24)
   - Weather API sync interval can be configured in WebUI
-    - default in `myoptions.h` set with `#define WEATHER_SYNC_INTERVAL 10` (time in minutes: 10 to 60)
+    - default in `myoptions.h` set with `#define WEATHER_SYNC_INTERVAL 30` (time in minutes: 10 to 60)
 
 ### 2026.02.18
   - WebUI greatly improved for mobile and tablet devices

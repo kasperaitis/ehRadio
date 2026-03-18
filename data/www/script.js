@@ -1220,6 +1220,7 @@ function continueLoading(mode){
   }
   document.body.addEventListener('click', (event) => {
     let target = event.target.closest('div, span, li');
+    if (!target) return; // Exit early if no matching element found
     if(target.classList.contains("knob")) target = target.parentElement;
     //if(target.classList.contains("snfknob")) target = target.parentElement;
     if(target.parentElement.classList.contains("play")){ playItem(target.parentElement); return; }

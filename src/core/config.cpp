@@ -392,7 +392,7 @@ void Config::setScreensaverPlayingEnabled(bool val) {
 }
 void Config::setScreensaverPlayingTimeout(uint16_t val) {
   val=constrain(val,1,1080);
-  config.saveValue(&config.store.screensaverPlayingTimeout, val);
+  saveValue(&config.store.screensaverPlayingTimeout, val);
   #ifndef DSP_LCD
     display.putRequest(NEWMODE, PLAYER);
   #endif
@@ -405,7 +405,7 @@ void Config::setScreensaverPlayingBlank(bool val) {
 }
 
 void Config::setShowweather(bool val) {
-  config.saveValue(&config.store.showweather, val);
+  saveValue(&config.store.showweather, val);
   network.trueWeather=false;
   network.forceWeather = true;
   display.putRequest(SHOWWEATHER);
