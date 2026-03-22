@@ -20,42 +20,52 @@
   #undef FIRMWARE
   #define FIRMWARE "board_esp32.bin"
   #define ARDUINO_ESP32_DEV
+  #define FIRMWARE_NAME "ESP32"
   //#undef UPDATEURL /* if an ESP does not have the memory to do online updates from https sources (this will disable it) */
 #elif defined(BOARD_ESP32_S3_N16R8)
-  #undef FIRMWARE
-  #define FIRMWARE "board_esp32_s3_n16r8.bin"
+  #undef FIRMWARE                             // This information feeds the Github workflow to assist creating releases.md and firmware.txt (which is used to build the Github Page, if even one field is missing, it will not appear in any list)
+  #define FIRMWARE "board_esp32_s3_n16r8.bin" // "board_for_bootloader", "chip-family (ESP32, ESP32-S3, ESP32-C3)", "contributer"
+  #define FIRMWARE_NAME "ESP32S3"             // "link to board config or specifications or store page"
   #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_TRIP5_SH1106_PCM_REMOTE)
   #undef FIRMWARE
-  #define FIRMWARE "esp32_s3_trip5_sh1106_pcm_remote.bin"
+  #define FIRMWARE "esp32_s3_trip5_sh1106_pcm_remote.bin" // "board_esp32_s3_n16r8", "ESP32-S3", "Trip5"
+  #define FIRMWARE_NAME "OLED with Remote" // "https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,7,15,43,49,51,52,53,54,75,66&i=5,6,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47,40&v=42,41,12,11,10,7,18,15,17,16,255,40,39,38,47,21,13,14,8"
   #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_TRIP5_SH1106_PCM_1BUTTON)
   #undef FIRMWARE
-  #define FIRMWARE "esp32_s3_trip5_sh1106_pcm_1button.bin"
+  #define FIRMWARE "esp32_s3_trip5_sh1106_pcm_1button.bin" // "board_esp32_s3_n16r8", "ESP32-S3", "Trip5"
+  #define FIRMWARE_NAME "OLED with 1-Button" // "https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,15,43,49,51,52,53,54,75&i=5,6,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=42,41,12,11,10,255,255,255,255,17,255,7,15,16,47,21,13,14"
   #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_TRIP5_SSD1306X32_PCM_1BUTTON)
   #undef FIRMWARE
-  #define FIRMWARE "esp32_s3_trip5_ssd1306x32_pcm_1button.bin"
+  #define FIRMWARE "esp32_s3_trip5_ssd1306x32_pcm_1button.bin" // "board_esp32_s3_n16r8", "ESP32-S3", "Trip5"
+  #define FIRMWARE_NAME "Tiny OLED with 1-Button" // "https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,17,43,49,51,52,53,54,75&i=5,6,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=42,41,12,11,10,255,255,255,255,17,255,7,15,16,47,21,13,14"
   #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS)
   #undef FIRMWARE
-  #define FIRMWARE "esp32_s3_trip5_sh1106_vs1053_3buttons.bin"
+  #define FIRMWARE "esp32_s3_trip5_sh1106_vs1053_3buttons.bin" // "board_esp32_s3_n16r8", "ESP32-S3", "Trip5"
+  #define FIRMWARE_NAME "OLED with 3-Buttons" // "https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,15,44,48,49,51,52,53,54,75&i=5,6,18,19,20,21,22,23,24,25,26,27,28,29,30,39,45,46,47&v=42,41,9,14,10,-1,255,255,255,17,18,16,40,39,38,47,21,2,1"
   #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_TRIP5_ST7735_PCM_1BUTTON)
   #undef FIRMWARE
-  #define FIRMWARE "esp32_s3_trip5_st7735_pcm_1button.bin"
+  #define FIRMWARE "esp32_s3_trip5_st7735_pcm_1button.bin" // "board_esp32_s3_n16r8", "ESP32-S3", "Trip5"
+  #define FIRMWARE_NAME "Color Screen with 1-Button", "https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,11,36,43,49,51,52,53,54,75&i=1,2,3,4,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=10,9,-1,4,15,7,6,255,255,255,255,42,255,40,39,38,47,21,13,14"
   #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON)
   #undef FIRMWARE
-  #define FIRMWARE "esp32_s3_trip5_ili9488_pcm_1button.bin"
+  #define FIRMWARE "esp32_s3_trip5_ili9488_pcm_1button.bin" // "board_esp32_s3_n16r8", "ESP32-S3", "Trip5"
+  #define FIRMWARE_NAME "Big Color Screen with 1-Button" // "https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,31,43,49,51,52,53,54,75&i=1,2,3,4,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=10,9,-1,4,15,7,6,255,255,255,255,42,255,40,39,38,47,21,2,1"
   #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_TRIP5_ES3C28P)
   #undef FIRMWARE
-  #define FIRMWARE "esp32_s3_trip5_es3c28p.bin"
+  #define FIRMWARE "esp32_s3_trip5_es3c28p.bin" // "board_esp32_s3_n16r8", "ESP32-S3", "Trip5"
+  #define FIRMWARE_NAME "ES3C28P" // "https://www.lcdwiki.com/2.8inch_ESP32-S3_Display"
   #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #undef FIRMWARE
-  #define FIRMWARE "esp32_s3_kasperaitis_es3c28p.bin"
+  #define FIRMWARE "esp32_s3_kasperaitis_es3c28p.bin" // "board_esp32_s3_n16r8", "ESP32-S3", "Kasperaitis"
+  #define FIRMWARE_NAME "ES3C28P" // "https://www.lcdwiki.com/2.8inch_ESP32-S3_Display"
   #define ARDUINO_ESP32S3_DEV
 #endif
 

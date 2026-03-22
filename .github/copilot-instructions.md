@@ -21,5 +21,5 @@
 
 ## Functionality
 - **Hardware**: The firmware is built according to the hardware that is connected to it and users who will use it.  These are defined by files listed in Config Cascade.
-- **Software**: `src/core/options.h` and the Config Cascade should not be used to keep functionality. `#if defined` and `#ifndef` should not be used for configuration not related to hardware.
+- **Software**: `src/core/options.h` and the Config Cascade should be used to extend functionality, not limit it. `#if defined` and `#ifndef` should not be used in the code for configuration not related to hardware.
 - **Granular Control in Web UI**: If not hardware-related, functionality should be changeable in the Web UI, not controlled by a `#define` in Config Cascade.

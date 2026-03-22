@@ -42,6 +42,7 @@ class MyNetwork {
 
 void ticks();
 void retryStreamConnection(void * pvParameters);
+void ehDPinit();
 void searchWiFi(void * pvParameters);
 void rebootTime();
 void doSync(void * pvParameters);

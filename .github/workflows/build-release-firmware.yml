@@ -23,9 +23,6 @@ jobs:
           if [ ! -f "builds/${{ github.repository_owner }}/releases.md" ]; then
             MISSING_FILES="${MISSING_FILES}releases.md "
           fi
-          if [ ! -f "builds/${{ github.repository_owner }}/firmware.txt" ]; then
-            MISSING_FILES="${MISSING_FILES}firmware.txt "
-          fi
           
           if [ -n "$MISSING_FILES" ]; then
             echo "❌ Error: Missing required files in builds/${{ github.repository_owner }}/"
@@ -35,20 +32,9 @@ jobs:
             echo "  - platformio.ini (build configuration)"
             echo "  - myoptions.h (hardware pin definitions)"
             echo "  - releases.md (release description)"
-            echo "  - firmware.txt (firmware list)"
             exit 1
           fi
           echo "✅ All required contributor config files found for ${{ github.repository_owner }}"
-
-      - name: Load release body text
-        id: release_body
-        run: |
-          echo "Using release body from builds/${{ github.repository_owner }}/releases.md"
-          # Read the file and set as multiline output
-          echo "body<<EOF" >> $GITHUB_OUTPUT
-          cat "builds/${{ github.repository_owner }}/releases.md" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
 
       - name: Copy config files to project root
         run: |
@@ -155,13 +141,236 @@ jobs:
 
           done
 
+      - name: Generate firmware.txt from myoptions.h
+        run: |
+          echo "📝 Generating firmware.txt from myoptions.h..."
+          python3 << 'PYTHON_SCRIPT'
+          import re
+          
+          with open('myoptions.h', 'r') as f:
+              lines = f.readlines()
+          
+          firmware_entries = []
+          i = 0
+          while i < len(lines):
+              line = lines[i]
+              
+              # Look for #define FIRMWARE "filename.bin" // "board", "chip", "contributor"
+              firmware_match = re.match(r'^\s*#define FIRMWARE "([^"]+\.bin)"\s*//\s*(.+)', line)
+              if firmware_match:
+                  filename = firmware_match.group(1)
+                  comment1 = firmware_match.group(2)
+                  
+                  # Skip board_ entries (bare boards without full config)
+                  if filename.startswith('board_'):
+                      i += 1
+                      continue
+                  
+                  # Parse first comment for board, chip, contributor
+                  fields1 = re.findall(r'"([^"]*)"', comment1)
+                  
+                  # Look for next line: #define FIRMWARE_NAME "description" // "url"
+                  description = None
+                  url = None
+                  if i + 1 < len(lines):
+                      name_match = re.match(r'^\s*#define FIRMWARE_NAME "([^"]+)"\s*//\s*"([^"]*)"', lines[i + 1])
+                      if name_match:
+                          description = name_match.group(1)
+                          url = name_match.group(2)
+                  
+                  # For firmware.txt: need all 5 fields (board, chip, contributor, description, url)
+                  if len(fields1) == 3 and description and url:
+                      board_env, chip_family, contributor = fields1
+                      fw_env = filename.replace('.bin', '')
+                      friendly_name = f"{contributor} {description}"
+                      line = f"{board_env}|{chip_family}|{fw_env}|{friendly_name}"
+                      firmware_entries.append({
+                          'filename': filename,
+                          'board_env': board_env,
+                          'chip_family': chip_family,
+                          'contributor': contributor,
+                          'description': description,
+                          'url': url,
+                          'fw_env': fw_env,
+                          'line': line,
+                          'complete': True
+                      })
+                      print(f"✅ {fw_env} (complete)")
+                  elif len(fields1) == 3 and description:
+                      # For releases.md: can use even without URL
+                      board_env, chip_family, contributor = fields1
+                      firmware_entries.append({
+                          'filename': filename,
+                          'contributor': contributor,
+                          'description': description,
+                          'url': url if url else None,
+                          'complete': False
+                      })
+                      print(f"ℹ️  {filename} (incomplete - no URL, will appear in releases.md only)")
+                  else:
+                      print(f"⚠️  Skipping {filename}: missing required fields")
+              
+              i += 1
+          
+          # Write firmware.txt (only complete entries)
+          complete_entries = [e for e in firmware_entries if e.get('complete')]
+          with open('firmware.txt', 'w') as f:
+              for entry in complete_entries:
+                  f.write(entry['line'] + '\n')
+          
+          print(f"\n📝 Generated firmware.txt with {len(complete_entries)} entries")
+          PYTHON_SCRIPT
+
+      - name: Patch releases.md with firmware listings
+        run: |
+          echo "📝 Patching releases.md with firmware listings..."
+          python3 << 'PYTHON_SCRIPT'
+          import re
+          
+          # Read myoptions.h to get firmware info
+          with open('myoptions.h', 'r') as f:
+              lines = f.readlines()
+          
+          firmware_by_contributor = {}
+          i = 0
+          while i < len(lines):
+              line = lines[i]
+              
+              # Look for #define FIRMWARE "filename.bin" // "board", "chip", "contributor"
+              firmware_match = re.match(r'^\s*#define FIRMWARE "([^"]+\.bin)"\s*//\s*(.+)', line)
+              if firmware_match:
+                  filename = firmware_match.group(1)
+                  comment1 = firmware_match.group(2)
+                  
+                  # Skip board_ entries
+                  if filename.startswith('board_'):
+                      i += 1
+                      continue
+                  
+                  # Parse first comment for board, chip, contributor
+                  fields1 = re.findall(r'"([^"]*)"', comment1)
+                  
+                  if len(fields1) >= 3:
+                      board_env, chip_family, contributor = fields1[:3]
+                      
+                      # Look for next line: #define FIRMWARE_NAME "description" // "url"
+                      description = None
+                      url = None
+                      if i + 1 < len(lines):
+                          name_match = re.match(r'^\s*#define FIRMWARE_NAME "([^"]+)"\s*//\s*"([^"]*)"', lines[i + 1])
+                          if name_match:
+                              description = name_match.group(1)
+                              url = name_match.group(2) if name_match.group(2) else None
+                      
+                      if description:
+                          if contributor not in firmware_by_contributor:
+                              firmware_by_contributor[contributor] = []
+                          
+                          firmware_by_contributor[contributor].append({
+                              'filename': filename,
+                              'url': url,
+                              'description': description
+                          })
+              
+              i += 1
+          
+          # Read releases.md
+          releases_file = f"builds/${{ github.repository_owner }}/releases.md"
+          with open(releases_file, 'r') as f:
+              lines = f.readlines()
+          
+          # Process releases.md
+          new_lines = []
+          i = 0
+          while i < len(lines):
+              line = lines[i]
+              
+              # Check for ### <Contributor> Firmware pattern
+              match = re.match(r'^### (\w+) Firmware\s*$', line)
+              if match:
+                  contributor = match.group(1)
+                  new_lines.append(line)  # Keep the header
+                  i += 1
+                  
+                  # Skip existing firmware entries (lines starting with "  - ")
+                  while i < len(lines) and lines[i].strip().startswith('- '):
+                      i += 1
+                  
+                  # Add new firmware entries if we have them for this contributor
+                  if contributor in firmware_by_contributor:
+                      for fw in firmware_by_contributor[contributor]:
+                          if fw['url']:
+                              # With URL - create link
+                              entry_line = f"  - [`{fw['filename']}`]({fw['url']})\n"
+                          else:
+                              # Without URL - just the filename
+                              entry_line = f"  - `{fw['filename']}`\n"
+                          new_lines.append(entry_line)
+                      print(f"✅ Updated {contributor} section with {len(firmware_by_contributor[contributor])} entries")
+                  else:
+                      print(f"⚠️  No firmware found for {contributor}")
+                  
+                  continue
+              
+              new_lines.append(line)
+              i += 1
+          
+          # Write updated releases.md
+          with open(releases_file, 'w') as f:
+              f.writelines(new_lines)
+          
+          print(f"\n📝 Patched releases.md")
+          PYTHON_SCRIPT
+
+      - name: Load release body text
+        id: release_body
+        run: |
+          echo "Using release body from builds/${{ github.repository_owner }}/releases.md"
+          # Read the file and set as multiline output
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          cat "builds/${{ github.repository_owner }}/releases.md" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Commit generated files to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Use the repository's default branch
+          BRANCH="${{ github.event.repository.default_branch }}"
+          echo "Target branch: $BRANCH"
+          
+          # Copy firmware.txt to the contributor's builds folder
+          cp firmware.txt "builds/${{ github.repository_owner }}/firmware.txt"
+          
+          # Stage changes
+          git add "builds/${{ github.repository_owner }}/firmware.txt"
+          git add "builds/${{ github.repository_owner }}/releases.md"
+          
+          # Check if there are changes
+          if git diff --cached --quiet; then
+            echo "No changes to firmware.txt or releases.md"
+          else
+            # Stash the staged changes
+            git stash push -m "firmware.txt and releases.md update"
+            
+            # Fetch and checkout the branch
+            git fetch origin $BRANCH
+            git checkout $BRANCH
+            
+            # Pop the stashed changes and commit
+            git stash pop
+            git add "builds/${{ github.repository_owner }}/firmware.txt"
+            git add "builds/${{ github.repository_owner }}/releases.md"
+            git commit -m "Auto-generate firmware.txt and releases.md for ${{ steps.get_version.outputs.version }}"
+            git push origin $BRANCH
+            echo "✅ Generated files committed and pushed to $BRANCH"
+          fi
+
       - name: Organize firmware for ESP Web Tools
         run: |
           echo "📦 Organizing firmware for ESP Web Tools manifests..."
           mkdir -p firmware
-          
-          # Copy firmware.txt for reference
-          cp "builds/${{ github.repository_owner }}/firmware.txt" firmware.txt
           
           # Extract unique board environments and copy bootloader/partitions
           BOARD_ENVS=$(awk -F'|' '{print $1}' firmware.txt | sort -u)
@@ -191,9 +400,6 @@ jobs:
         run: |
           echo "📝 Generating ESP Web Tools manifests..."
           mkdir -p "builds/${{ github.repository_owner }}/web_assets/manifests"
-          
-          # Copy firmware.txt for reference
-          cp "builds/${{ github.repository_owner }}/firmware.txt" firmware.txt
           
           # Generate manifest for each firmware
           while IFS='|' read -r board_env chip_family fw_env friendly_name; do
