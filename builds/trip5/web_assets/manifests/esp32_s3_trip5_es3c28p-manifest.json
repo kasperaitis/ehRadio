@@ -1,5 +1,5 @@
 {
-  "name": "ehRadio - Kasperaitis ES3C28P",
+  "name": "ehRadio - Trip5 ES3C28P",
   "version": "2026.03.18",
   "funding_url": "https://github.com/sponsors/trip5",
   "builds": [
@@ -15,7 +15,7 @@
           "offset": 32768
         },
         {
-          "path": "../firmware/esp32_s3_kasperaitis_es3c28p.bin",
+          "path": "../firmware/esp32_s3_trip5_es3c28p.bin",
           "offset": 65536
         }
       ]

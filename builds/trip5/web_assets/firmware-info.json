@@ -1,7 +1,7 @@
 {
   "project": "ehRadio",
-  "version": "2026.02.18",
-  "build_date": "2026-02-19 03:53:10 UTC",
+  "version": "2026.03.18",
+  "build_date": "2026-03-18 08:10:39 UTC",
   "variants": [
   {
     "name": "Trip5 OLED with Remote",
@@ -37,6 +37,12 @@
     "name": "Trip5 Big Color Screen with 1-Button",
     "manifest": "manifests/esp32_s3_trip5_ili9488_pcm_1button-manifest.json",
     "description": "ehRadio - esp32_s3_trip5_ili9488_pcm_1button"
+  }
+  ,
+  {
+    "name": "Trip5 ES3C28P",
+    "manifest": "manifests/esp32_s3_trip5_es3c28p-manifest.json",
+    "description": "ehRadio - esp32_s3_trip5_es3c28p"
   }
   ,
   {
