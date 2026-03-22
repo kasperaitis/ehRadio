@@ -19,8 +19,8 @@
 #if defined(BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
   #undef FIRMWARE
   #define FIRMWARE "board_esp32.bin"
-  #define ARDUINO_ESP32_DEV
   #define FIRMWARE_NAME "ESP32"
+  #define ARDUINO_ESP32_DEV
   //#undef UPDATEURL /* if an ESP does not have the memory to do online updates from https sources (this will disable it) */
 #elif defined(BOARD_ESP32_S3_N16R8)
   #undef FIRMWARE                             // This information feeds the Github workflow to assist creating releases.md and firmware.txt (which is used to build the Github Page, if even one field is missing, it will not appear in any list)
