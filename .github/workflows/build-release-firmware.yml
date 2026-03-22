@@ -69,6 +69,7 @@ jobs:
           
           # Copy necessary files to temp
           cp "builds/${{ github.repository_owner }}/myoptions.h" "temp_verify/builds/${{ github.repository_owner }}/"
+          cp "builds/${{ github.repository_owner }}/releases.md" "temp_verify/builds/${{ github.repository_owner }}/"
           cp "builds/${{ github.repository_owner }}/fix_web_assets_and_releases.md.py" "temp_verify/builds/${{ github.repository_owner }}/"
           
           # Copy src/core/options.h for version extraction
