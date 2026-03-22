@@ -50,7 +50,7 @@
 #elif defined(ESP32_S3_TRIP5_ST7735_PCM_1BUTTON)
   #undef FIRMWARE
   #define FIRMWARE "esp32_s3_trip5_st7735_pcm_1button.bin" // "board_esp32_s3_n16r8", "ESP32-S3", "Trip5"
-  #define FIRMWARE_NAME "Color Screen with 1-Button", "https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,11,36,43,49,51,52,53,54,75&i=1,2,3,4,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=10,9,-1,4,15,7,6,255,255,255,255,42,255,40,39,38,47,21,13,14"
+  #define FIRMWARE_NAME "Color Screen with 1-Button" // "https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,11,36,43,49,51,52,53,54,75&i=1,2,3,4,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=10,9,-1,4,15,7,6,255,255,255,255,42,255,40,39,38,47,21,13,14"
   #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON)
   #undef FIRMWARE
