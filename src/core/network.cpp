@@ -332,11 +332,15 @@ bool MyNetwork::wifiBegin(bool silent) {
 }
 
 void ehDPinit() {
-  ehdp.setName(FIRMWARE_NAME);
+  #ifdef FIRMWARE_NAME
+    ehdp.setName(FIRMWARE_NAME);
+  #endif
   ehdp.setProject("ehRadio");
-  String fw = FIRMWARE;
-  if (fw.endsWith(".bin")) fw.remove(fw.length() - 4);
-  ehdp.setFirmware(fw.c_str());
+  #ifdef FIRMWARE
+    String fw = FIRMWARE;
+    if (fw.endsWith(".bin")) fw.remove(fw.length() - 4);
+    ehdp.setFirmware(fw.c_str());
+  #endif
   ehdp.setVersion(RADIOVERSION);
   ehdp.setUIPort(80);
   ehdp.setMaterialSymbol("0xe03e");

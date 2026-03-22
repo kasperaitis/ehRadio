@@ -19,8 +19,8 @@
 #if defined(BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
   #undef FIRMWARE
   #define FIRMWARE "board_esp32.bin"
-  #define ARDUINO_ESP32_DEV
   #define FIRMWARE_NAME "ESP32"
+  #define ARDUINO_ESP32_DEV
   //#undef UPDATEURL /* if an ESP does not have the memory to do online updates from https sources (this will disable it) */
 #elif defined(BOARD_ESP32_S3_N16R8)
   #undef FIRMWARE                             // This information feeds the Github workflow to assist creating releases.md and firmware.txt (which is used to build the Github Page, if even one field is missing, it will not appear in any list)
@@ -50,7 +50,7 @@
 #elif defined(ESP32_S3_TRIP5_ST7735_PCM_1BUTTON)
   #undef FIRMWARE
   #define FIRMWARE "esp32_s3_trip5_st7735_pcm_1button.bin" // "board_esp32_s3_n16r8", "ESP32-S3", "Trip5"
-  #define FIRMWARE_NAME "Color Screen with 1-Button", "https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,11,36,43,49,51,52,53,54,75&i=1,2,3,4,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=10,9,-1,4,15,7,6,255,255,255,255,42,255,40,39,38,47,21,13,14"
+  #define FIRMWARE_NAME "Color Screen with 1-Button" // "https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,11,36,43,49,51,52,53,54,75&i=1,2,3,4,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=10,9,-1,4,15,7,6,255,255,255,255,42,255,40,39,38,47,21,13,14"
   #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON)
   #undef FIRMWARE

@@ -615,9 +615,6 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef GITHUBURL
   #define GITHUBURL "https://github.com/trip5/ehradio" // used by the ESPFileUpdater in BrowserClient (and in URLs below)
 #endif
-#ifdef DISABLE_UPDATER // if this is defined, disables online updates
-  #undef FIRMWARE
-#endif
 #ifdef FIRMWARE
   #ifndef FILESURL
     #define FILESURL GITHUBURL "/releases/download/" RADIOVERSION "/" // + FILE for SPIFFS files (this version)
@@ -635,7 +632,13 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
     #define CHECKUPDATEURL_TIME "1 day"
   #endif
 #else
-  #undef FIRMWARE
+  #undef FILESURL
+  #undef UPDATEURL
+  #undef CHECKUPDATEURL
+  #undef VERSIONSTRING
+  #undef CHECKUPDATEURL_TIME
+#endif
+#ifdef DISABLE_UPDATER // if this is defined, disables online updates
   #undef FILESURL
   #undef UPDATEURL
   #undef CHECKUPDATEURL
