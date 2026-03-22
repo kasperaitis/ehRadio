@@ -5,6 +5,9 @@ on:
     tags:
       - '*'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -336,10 +339,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Use the repository's default branch
-          BRANCH="${{ github.event.repository.default_branch }}"
-          echo "Target branch: $BRANCH"
-          
           # Copy firmware.txt to the contributor's builds folder
           cp firmware.txt "builds/${{ github.repository_owner }}/firmware.txt"
           
@@ -351,20 +350,37 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to firmware.txt or releases.md"
           else
+            COMMIT_MSG="Auto-generate firmware.txt and releases.md for ${{ steps.get_version.outputs.version }}"
+            
             # Stash the staged changes
             git stash push -m "firmware.txt and releases.md update"
             
-            # Fetch and checkout the branch
-            git fetch origin $BRANCH
-            git checkout $BRANCH
-            
-            # Pop the stashed changes and commit
+            # Commit to dev branch
+            echo "📝 Committing to dev branch..."
+            git fetch origin dev
+            git checkout dev
             git stash pop
             git add "builds/${{ github.repository_owner }}/firmware.txt"
             git add "builds/${{ github.repository_owner }}/releases.md"
-            git commit -m "Auto-generate firmware.txt and releases.md for ${{ steps.get_version.outputs.version }}"
-            git push origin $BRANCH
-            echo "✅ Generated files committed and pushed to $BRANCH"
+            git commit -m "$COMMIT_MSG"
+            git push origin dev
+            echo "✅ Committed to dev"
+            
+            # Commit to main branch
+            echo "📝 Committing to main branch..."
+            git fetch origin main
+            git checkout main
+            # Cherry-pick the commit we just made
+            COMMIT_SHA=$(git rev-parse dev)
+            git cherry-pick $COMMIT_SHA || {
+              # If cherry-pick fails (e.g., already applied), copy files directly
+              git checkout dev -- "builds/${{ github.repository_owner }}/firmware.txt" "builds/${{ github.repository_owner }}/releases.md"
+              git add "builds/${{ github.repository_owner }}/firmware.txt"
+              git add "builds/${{ github.repository_owner }}/releases.md"
+              git commit -m "$COMMIT_MSG" || echo "No changes needed on main"
+            }
+            git push origin main
+            echo "✅ Committed to main"
           fi
 
       - name: Organize firmware for ESP Web Tools
@@ -481,10 +497,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Use the repository's default branch
-          BRANCH="${{ github.event.repository.default_branch }}"
-          echo "Target branch: $BRANCH"
-          
           # Stage changes first
           git add "builds/${{ github.repository_owner }}/web_assets/"
           
@@ -492,19 +504,35 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to web assets"
           else
+            COMMIT_MSG="Update web assets for ${{ steps.get_version.outputs.version }}"
+            
             # Stash the staged changes
             git stash push -m "web assets update"
             
-            # Fetch and checkout the branch
-            git fetch origin $BRANCH
-            git checkout $BRANCH
-            
-            # Pop the stashed changes and commit
+            # Commit to dev branch
+            echo "📝 Committing to dev branch..."
+            git fetch origin dev
+            git checkout dev
             git stash pop
             git add "builds/${{ github.repository_owner }}/web_assets/"
-            git commit -m "Update web assets for ${{ steps.get_version.outputs.version }}"
-            git push origin $BRANCH
-            echo "✅ Web assets committed and pushed to $BRANCH"
+            git commit -m "$COMMIT_MSG"
+            git push origin dev
+            echo "✅ Committed to dev"
+            
+            # Commit to main branch
+            echo "📝 Committing to main branch..."
+            git fetch origin main
+            git checkout main
+            # Cherry-pick the commit we just made
+            COMMIT_SHA=$(git rev-parse dev)
+            git cherry-pick $COMMIT_SHA || {
+              # If cherry-pick fails (e.g., already applied), copy files directly
+              git checkout dev -- "builds/${{ github.repository_owner }}/web_assets/"
+              git add "builds/${{ github.repository_owner }}/web_assets/"
+              git commit -m "$COMMIT_MSG" || echo "No changes needed on main"
+            }
+            git push origin main
+            echo "✅ Committed to main"
           fi
 
       - name: Upload firmware artifacts
