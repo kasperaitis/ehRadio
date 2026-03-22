@@ -15,6 +15,7 @@
 #include <ImprovWiFiLibrary.h>
 #include <ArduinoJson.h>
 #include <ESPFileUpdater.h>
+#include <ehDP.h>
 
 #ifndef WIFI_ATTEMPTS
   #define WIFI_ATTEMPTS  16
@@ -30,6 +31,8 @@ void doSync(void * pvParameters);
 void retryStreamConnection(void * pvParameters);
 static bool onImprovCustomConnect(const char* ssid, const char* password);
 
+EhDP ehdp;
+
 void ticks() {
   if (!display.ready()) return; //waiting for SD is ready
   pm.on_ticker();
@@ -40,6 +43,7 @@ void ticks() {
   weatherSyncTicks++;
   divrssi = !divrssi;
   if (network.status == CONNECTED) {
+    ehdp.loop();
     if (network.forceTimeSync || network.forceWeather) {
       xTaskCreatePinnedToCore(doSync, "doSync", 1024 * 4, NULL, 0, &syncTaskHandle, 0);
     }
@@ -300,7 +304,7 @@ bool MyNetwork::wifiBegin(bool silent) {
       Serial.print("##[BOOT]#\t");
       display.putRequest(BOOTSTRING, ls);
     }
-        WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
+    WiFi.begin(config.ssids[ls].ssid, config.ssids[ls].password);
     
     while (WiFi.status() != WL_CONNECTED) {
       if (!silent) Serial.print(".");
@@ -325,6 +329,23 @@ bool MyNetwork::wifiBegin(bool silent) {
     }
   }
   return false;
+}
+
+void ehDPinit() {
+  ehdp.setName(FIRMWARE_NAME);
+  ehdp.setProject("ehRadio");
+  String fw = FIRMWARE;
+  if (fw.endsWith(".bin")) fw.remove(fw.length() - 4);
+  ehdp.setFirmware(fw.c_str());
+  ehdp.setVersion(RADIOVERSION);
+  ehdp.setUIPort(80);
+  ehdp.setMaterialSymbol("0xe03e");
+  if (strlen(config.store.mdnsname) > 0) ehdp.setMdns(config.store.mdnsname);
+  if (ehdp.begin()) {
+    BOOTLOG("ehDP listening");
+  } else {
+    BOOTLOG("ehDP failed to start");
+  }
 }
 
 void searchWiFi(void * pvParameters) {
@@ -383,6 +404,7 @@ void MyNetwork::begin() {
   }
   
   Serial.println("##[BOOT]#\tdone");
+  ehDPinit();
   if (REAL_LEDBUILTIN!=255) digitalWrite(REAL_LEDBUILTIN, LOW);
   
   #if RTCSUPPORTED

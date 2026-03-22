@@ -1,4 +1,4 @@
-<img src="images/logo-color.svg" width="250">
+<img src="images/logo-color.svg" width="50%">
 
 # ehRadio
 
@@ -21,6 +21,10 @@ Documentation will be improved at some point... Until then, check this page and 
 
 
 ## ehRadio Version history
+
+### 2026.03.22
+  - [ehDP Library](https://github.com/trip5/ehDP) added
+    - Device can be found using [eh Device Scanner](https://github.com/trip5/eh-Device-Scanner)
 
 ### 2026.03.18
 

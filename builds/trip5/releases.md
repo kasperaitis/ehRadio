@@ -19,7 +19,7 @@
 ### Board Shared Binaries (Bootloader/Partitions)
   - `board_esp32_bootloader.bin` / `board_esp32_partitions.bin` / `board_esp32_spiffs.bin`
   - `board_esp32_s3_n16r8_bootloader.bin` / `board_esp32_s3_n16r8_partitions.bin` / `board_esp32_s3_n16r8_spiffs.bin`
-### Trip5 Firmwares (all ESP32-S3-N16R8 builds - click for board config)
+### Trip5 Firmware
   - [`esp32_s3_trip5_sh1106_pcm_remote.bin`](https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,7,15,43,49,51,52,53,54,75,66&i=5,6,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47,40&v=42,41,12,11,10,7,18,15,17,16,255,40,39,38,47,21,13,14,8)
   - [`esp32_s3_trip5_sh1106_pcm_1button.bin`](https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,15,43,49,51,52,53,54,75&i=5,6,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=42,41,12,11,10,255,255,255,255,17,255,7,15,16,47,21,13,14)
   - [`esp32_s3_trip5_ssd1306x32_pcm_1button.bin`](https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,17,43,49,51,52,53,54,75&i=5,6,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=42,41,12,11,10,255,255,255,255,17,255,7,15,16,47,21,13,14)
