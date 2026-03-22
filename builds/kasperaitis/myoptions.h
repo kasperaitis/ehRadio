@@ -14,12 +14,14 @@
   #define FIRMWARE "board_esp32.bin"
   //#undef UPDATEURL /* if an ESP does not have the memory to do online updates from https sources (this will disable it) */
 #elif defined(BOARD_ESP32_S3_N16R8)
-  #undef FIRMWARE
-  #define FIRMWARE "board_esp32_s3_n16r8.bin"
+  #undef FIRMWARE                             // This information feeds the Github workflow to assist creating releases.md and firmware.txt (which is used to build the Github Page, if even one field is missing, it will not appear in any list)
+  #define FIRMWARE "board_esp32_s3_n16r8.bin" // "board_for_bootloader", "chip-family (ESP32, ESP32-S3, ESP32-C3)", "contributer"
+  #define FIRMWARE_NAME "ESP32S3"             // "link to board config or specifications or store page"
   #define ARDUINO_ESP32S3_DEV
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #undef FIRMWARE
-  #define FIRMWARE "esp32_s3_kasperaitis_esc3c28p.bin"
+  #define FIRMWARE "esp32_s3_kasperaitis_es3c28p.bin" // "board_esp32_s3_n16r8", "ESP32-S3", "Kasperaitis"
+  #define FIRMWARE_NAME "ES3C28P" // "https://www.lcdwiki.com/2.8inch_ESP32-S3_Display"
   #define ARDUINO_ESP32S3_DEV
 #endif
 
@@ -95,8 +97,7 @@
   #ifndef ES8311_MAX_I2S
     #define ES8311_MAX_I2S 180
   #endif
-  /* force mono audio for this board */
-  #define PLAYER_FORCE_MONO true
+  #define PLAYER_FORCE_MONO true  /* force mono audio for this board */
   #define VS1053_CS       255     /* set to 255 to disable VS1053 */
 #endif
 
@@ -188,6 +189,7 @@
   #define WEATHER_LAT     "55.7512"       /* latitude */
   #define WEATHER_LON     "37.6184"       /* longitude */
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
+  #define DSP_LANGUAGE_lt_LT
   #define SMART_START true
   #define SHOW_AUDIO_INFO true
   #define SS_PLAYING true

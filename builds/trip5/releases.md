@@ -26,8 +26,9 @@
   - [`esp32_s3_trip5_sh1106_vs1053_3buttons.bin`](https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,15,44,48,49,51,52,53,54,75&i=5,6,18,19,20,21,22,23,24,25,26,27,28,29,30,39,45,46,47&v=42,41,9,14,10,-1,255,255,255,17,18,16,40,39,38,47,21,2,1)
   - [`esp32_s3_trip5_st7735_pcm_1button.bin`](https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,11,36,43,49,51,52,53,54,75&i=1,2,3,4,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=10,9,-1,4,15,7,6,255,255,255,255,42,255,40,39,38,47,21,13,14)
   - [`esp32_s3_trip5_ili9488_pcm_1button.bin`](https://trip5.github.io/ehRadio_myoptions/generator.html?b=ESP32-S3-DevKitC-1_44Pin&r=72,2,3,4,6,31,43,49,51,52,53,54,75&i=1,2,3,4,15,16,17,22,23,24,25,26,27,28,29,30,39,45,46,47&v=10,9,-1,4,15,7,6,255,255,255,255,42,255,40,39,38,47,21,2,1)
+  - [`esp32_s3_trip5_es3c28p.bin`](https://www.lcdwiki.com/2.8inch_ESP32-S3_Display)
 ### Kasperaitis Firmware
-  - [`esp32_s3_kasperaitis_es3c28p.bin`](https://www.lcdwiki.com/2.8inch_ESP32-S3_Display) (ES3C28P is a ESP32-S3-N16R8 with 2.8inch Display)
+  - [`esp32_s3_kasperaitis_es3c28p.bin`](https://www.lcdwiki.com/2.8inch_ESP32-S3_Display)
 ### Add Yours
   - you can either fork my `ehradio` repo and edit these files or request a build be added
     - use [the generator](https://trip5.github.io/ehRadio_myoptions/generator.html) and copy the link and include it in your request

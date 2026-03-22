@@ -1213,6 +1213,7 @@ function continueLoading(mode){
           case "format": websocket.send("format=1"); rebootSystem(t('msg_format_reboot', 'Format SPIFFS. Rebooting...')); break;
           case "reset":  websocket.send("reset=1");  rebootSystem(t('msg_reset_reboot', 'Reset settings. Rebooting...')); break;
           case "shuffle": toggleShuffle(); break;
+          case "ehdpsave": websocket.send(`ehdpname=${getId('ehdpname').value}`); break;
           case "rebootmdns": websocket.send(`mdnsname=${getId('mdns').value}`); websocket.send("rebootmdns=1"); break;
           case "savebattref": websocket.send(`battref=${getId('battref').value}`); break;
           default: break;

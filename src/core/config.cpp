@@ -444,6 +444,8 @@ void Config::resetSystem(const char *val, uint8_t clientId) {
     saveValue(&store.audioinfo, SHOW_AUDIO_INFO, false);
     saveValue(&store.vumeter, SHOW_VU_METER, false);
     saveValue(&store.wifiscanbest, WIFI_SCAN_BEST_RSSI, false);
+    saveValue(&store.ehdp, EHDP, false);
+    snprintf(store.ehdpname, EHDPNAME_LENGTH, "");
     saveValue(&store.softapdelay, (uint8_t)SOFTAP_REBOOT_DELAY, false);
     snprintf(store.mdnsname, MDNS_LENGTH, "ehradio-%x", getChipId());
     saveValue(store.mdnsname, store.mdnsname, MDNS_LENGTH, true, true);
@@ -1396,6 +1398,8 @@ const configKeyMap Config::keyMap[] = {
   CONFIG_KEY_ENTRY(audioinfo, "audioinfo"),
   CONFIG_KEY_ENTRY(vumeter, "vumeter"),
   CONFIG_KEY_ENTRY(wifiscanbest, "wifiscan"),
+  CONFIG_KEY_ENTRY(ehdp, "ehdp"),
+  CONFIG_KEY_ENTRY(ehdpname, "ehdpname"),
   CONFIG_KEY_ENTRY(softapdelay, "softapdelay"),
   CONFIG_KEY_ENTRY(mdnsname, "mdnsname"),
   CONFIG_KEY_ENTRY(flipscreen, "flipscr"),

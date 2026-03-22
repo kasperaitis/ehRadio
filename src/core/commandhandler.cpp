@@ -132,6 +132,8 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "audioinfo")) { config.saveValue(&config.store.audioinfo, static_cast<bool>(atoi(value))); display.putRequest(AUDIOINFO); return true; }
   if (strEquals(command, "vumeter"))   { config.saveValue(&config.store.vumeter, static_cast<bool>(atoi(value))); display.putRequest(SHOWVUMETER); return true; }
   if (strEquals(command, "wifiscan"))  { config.saveValue(&config.store.wifiscanbest, static_cast<bool>(atoi(value))); return true; }
+  if (strEquals(command, "ehdp"))      { config.saveValue(&config.store.ehdp, static_cast<bool>(atoi(value))); return true; }
+  if (strEquals(command, "ehdpname"))  { config.saveValue(config.store.ehdpname, value, EHDPNAME_LENGTH); return true; }
   if (strEquals(command, "softap"))    { config.saveValue(&config.store.softapdelay, static_cast<uint8_t>(atoi(value))); return true; }
   if (strEquals(command, "mdnsname"))  { config.saveValue(config.store.mdnsname, value, MDNS_LENGTH); return true; }
   if (strEquals(command, "rebootmdns")) {

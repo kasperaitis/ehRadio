@@ -160,6 +160,7 @@
     <div class="container">
         <div class="header">
             <a href="https://github.com/trip5/ehRadio" target="_blank"><img src="./images/logo-color.png" alt="ehRadio" style="height: 160px;"></a>
+            <p id="release-version">Release: Loading...</p>
             <p>ESP Web Tool</p>
         </div>
 
@@ -259,6 +260,12 @@
         // Populate the firmware selector dropdown
         function populateFirmwareSelector() {
             firmwareSelect.innerHTML = '<option value="">-- Select your firmware --</option>';
+            
+            // Update release version
+            const releaseVersion = document.getElementById('release-version');
+            if (firmwareData.version) {
+                releaseVersion.textContent = `Release: ${firmwareData.version}`;
+            }
             
             firmwareData.variants.forEach((variant) => {
                 const option = document.createElement('option');

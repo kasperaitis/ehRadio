@@ -28,6 +28,7 @@
 #define MAX_PLAY_MODE   1
 #define WEATHERKEY_LENGTH 58
 #define MDNS_LENGTH 24
+#define EHDPNAME_LENGTH 24
 
 #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
   #define ESP_ARDUINO_3 1
@@ -91,8 +92,10 @@ struct config_t // specify defaults here (and macros in options.h) (defaults are
   bool      audioinfo = SHOW_AUDIO_INFO;
   bool      vumeter = SHOW_VU_METER;
   bool      wifiscanbest = WIFI_SCAN_BEST_RSSI;
+  bool      ehdp = EHDP;
+  char      ehdpname[EHDPNAME_LENGTH] = "";
   uint8_t   softapdelay = SOFTAP_REBOOT_DELAY;
-  char      mdnsname[24] = "";
+  char      mdnsname[MDNS_LENGTH] = "";
   bool      flipscreen = SCREEN_FLIP;
   bool      invertdisplay = SCREEN_INVERT;
   bool      dspon = true;

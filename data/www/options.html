@@ -41,6 +41,21 @@
               <div class="checkbox" id="autoupdate" data-command="autoupdate"><div class="knob"></div></div>
             </div>
           </div>
+
+          <div class="flex-row">
+            <div class="inputwrap center">
+              <span class="inputtitle" data-i18n="lbl_eh_discovery">eh Discovery Protocol</span>
+              <div class="checkbox" id="ehdp" data-command="ehdp"><div class="knob"></div></div>
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="inputwrap pad">
+              <span class="inputtitle" data-i18n="lbl_ehdp_name">ehDP Name</span>
+              <input type="text" id="ehdpname" class="text" name="ehdpname" value="" maxlength="24" />
+            </div>
+            <div class="fb hl local" data-command="ehdpsave" style=" margin-top: 24px; height: 37px;" data-i18n="btn_save">Save</div>
+          </div>
+
           <div class="flex-row">
             <div class="inputwrap pad">
               <span class="inputtitle" data-i18n="lbl_softap_delay">Soft AP Reboot Delay (min)</span>
@@ -50,7 +65,7 @@
           </div>
           <div class="flex-row" id="mdnsnamerow">
             <div class="inputwrap pad">
-              <span class="inputtitle" data-i18n="lbl_mdns_name">mDNS Name</span>
+              <span class="inputtitle" data-i18n="lbl_mdns_name_no_local">mDNS Name (do not add '.local')</span>
               <input type="text" id="mdns" class="text" name="mdnsname" value="" maxlength="24" />
             </div>
             <div class="fb hl local" data-command="rebootmdns" style=" margin-top: 24px; height: 37px;" data-i18n="btn_save">Save</div>

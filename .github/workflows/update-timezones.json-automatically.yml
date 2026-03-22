@@ -1,4 +1,4 @@
-name: Update timezones.json Automatically
+name: Update timezones.json Automatically (to 'dev' Branch)
 
 on:
   push:
