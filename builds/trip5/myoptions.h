@@ -199,7 +199,7 @@
   #ifndef ES8311_MAX_I2S
     #define ES8311_MAX_I2S 180
   #endif
-  #define PLAYER_FORCE_MONO true
+  #define PLAYER_FORCE_MONO true  /* force mono audio for this board */
   #define VS1053_CS       255     /* set to 255 to disable VS1053 */
 #endif
 
@@ -364,7 +364,6 @@
   #define SCREEN_FLIP     true
   #define SHOW_VU_METER   true
   #define VOLUME_STEPS    5
-  #define DISABLE_UPDATER
 #endif
 
 

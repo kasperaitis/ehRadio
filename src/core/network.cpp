@@ -43,7 +43,7 @@ void ticks() {
   weatherSyncTicks++;
   divrssi = !divrssi;
   if (network.status == CONNECTED) {
-    ehdp.loop();
+    if (config.store.ehdp) ehdp.loop();
     if (network.forceTimeSync || network.forceWeather) {
       xTaskCreatePinnedToCore(doSync, "doSync", 1024 * 4, NULL, 0, &syncTaskHandle, 0);
     }
@@ -332,15 +332,26 @@ bool MyNetwork::wifiBegin(bool silent) {
 }
 
 void ehDPinit() {
-  #ifdef FIRMWARE_NAME
-    ehdp.setName(FIRMWARE_NAME);
-  #endif
+  if (strlen(config.store.ehdpname) > 0) {
+    ehdp.setName(config.store.ehdpname);
+    #ifdef FIRMWARE_NAME
+      ehdp.setFirmware(FIRMWARE_NAME);
+    #elif defined(FIRMWARE)
+      String fw = FIRMWARE;
+      if (fw.endsWith(".bin")) fw.remove(fw.length() - 4);
+      ehdp.setFirmware(fw.c_str());
+    #endif
+  } else {
+    #ifdef FIRMWARE_NAME
+      ehdp.setName(FIRMWARE_NAME);
+    #endif
+    #ifdef FIRMWARE
+      String fw = FIRMWARE;
+      if (fw.endsWith(".bin")) fw.remove(fw.length() - 4);
+      ehdp.setFirmware(fw.c_str());
+    #endif
+  }
   ehdp.setProject("ehRadio");
-  #ifdef FIRMWARE
-    String fw = FIRMWARE;
-    if (fw.endsWith(".bin")) fw.remove(fw.length() - 4);
-    ehdp.setFirmware(fw.c_str());
-  #endif
   ehdp.setVersion(RADIOVERSION);
   ehdp.setUIPort(80);
   ehdp.setMaterialSymbol("0xe03e");

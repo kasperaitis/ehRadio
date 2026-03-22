@@ -743,6 +743,9 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #ifndef WIFI_SCAN_BEST_RSSI
   #define WIFI_SCAN_BEST_RSSI false
 #endif
+#ifndef EHDP
+  #define EHDP true
+#endif
 #ifndef AUDIO_PREVIEW_IN_BROWSER
   #define AUDIO_PREVIEW_IN_BROWSER false
 #endif

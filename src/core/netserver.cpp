@@ -428,12 +428,14 @@ void NetServer::processQueue() {
           return; 
           break;
         }
-      case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"wifiscan\":%d,\"softr\":%d,\"vut\":%d,\"autoupdate\":%d,\"mdns\":\"%s\"}", 
+      case GETSYSTEM:     sprintf (wsbuf, "{\"sst\":%d,\"aif\":%d,\"vu\":%d,\"wifiscan\":%d,\"softr\":%d,\"ehdp\":%d,\"ehdpname\":\"%s\",\"vut\":%d,\"autoupdate\":%d,\"mdns\":\"%s\"}", 
                                   config.store.smartstart,
                                   config.store.audioinfo,
                                   config.store.vumeter,
                                   config.store.wifiscanbest,
                                   config.store.softapdelay,
+                                  config.store.ehdp,
+                                  config.store.ehdpname,
                                   config.vuThreshold,
                                   config.store.autoupdate,
                                   config.store.mdnsname);
