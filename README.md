@@ -25,6 +25,7 @@ Documentation will be improved at some point... Until then, check this page and 
 ### 2026.03.22
   - [ehDP Library](https://github.com/trip5/ehDP) added
     - Device can be found using [eh Device Scanner](https://github.com/trip5/eh-Device-Scanner)
+  - Grabbable aand hovered items fixed in playlist editor for mobile devices
   - Some major changes to the workflows that handle Releases and firmware generation
 
 ### 2026.03.18

@@ -143,9 +143,19 @@ document.addEventListener("dragend", (e) => {
 	dragged = null;
 });
 
+// Prevent browser context menu on long press
+document.addEventListener("contextmenu", (e) => {
+	if (e.target.classList.contains('grabbable') || getLi(e.target)) {
+		e.preventDefault();
+		return false;
+	}
+});
+
 // Mobile/Touch Support
 document.addEventListener("touchstart", (e) => {
 	if (e.target.classList.contains('grabbable')) {
+		// Prevent text selection and context menu
+		e.preventDefault();
 		const touch = e.touches[0];
 		startX = touch.clientX;
 		startY = touch.clientY;
