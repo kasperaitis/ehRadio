@@ -71,7 +71,7 @@
   #define TFT_SCLK        12
   #define TFT_MISO        13
   #define BRIGHTNESS_PIN  TFT_BL
-  #define DSP_LANGUAGE    lt_LT
+  #define DSP_LANGUAGE_lt_LT
 #endif
 
 
