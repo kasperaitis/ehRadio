@@ -540,7 +540,7 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
   #endif
 #endif
 #ifndef BUFLEN
-  #define BUFLEN 170 // seems safe... a lot of multipliers exist in the code...
+  #define BUFLEN 170 // 170 seems safe... a lot of multipliers exist in the code...
 #endif
 
 /* This bit will actually do something but needs to be handled a different way (configurable would be better!) */
@@ -745,9 +745,6 @@ Use this tool to setup connections: https://trip5.github.io/ehRadio_myoptions/ge
 #endif
 #ifndef EHDP
   #define EHDP true
-#endif
-#ifndef AUDIO_PREVIEW_IN_BROWSER
-  #define AUDIO_PREVIEW_IN_BROWSER false
 #endif
 #ifndef SOFTAP_REBOOT_DELAY
   #define SOFTAP_REBOOT_DELAY 0
