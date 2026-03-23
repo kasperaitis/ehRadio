@@ -138,7 +138,22 @@
   #define BRIGHTNESS_PIN  4       /* Red Smaller TFT doesn't have brightness control so leave commented? use unused pin? or 255? */
   #define TFT_RST         -1      /* set to -1 if connected to ESP EN pin */
 #endif
-#if defined(ESP32_S3_KASPERAITIS_ES3C28P) || defined(ESP32_S3_TRIP5_ES3C28P)
+#if defined(ESP32_S3_TRIP5_ES3C28P)
+  #define DSP_MODEL       DSP_ILI9341
+  #define SCREEN_INVERT   true
+  #define TFT_CS          10
+  #define TFT_DC          46
+  #define TFT_RST         -1
+  #define TFT_BL          45
+  //#define GFX_BL          45
+  /* SPI pins for the TFT module (ES3C28P) */
+  #define TFT_MOSI        11
+  #define TFT_SCLK        12
+  #define TFT_MISO        13
+  #define BRIGHTNESS_PIN  TFT_BL
+
+#if defined(ESP32_S3_KASPERAITIS_ES3C28P)
+  #define DSP_LANGUAGE_lt_LT
   #define DSP_MODEL       DSP_ILI9341
   #define SCREEN_INVERT   true
   #define TFT_CS          10
@@ -199,7 +214,7 @@
   #ifndef ES8311_MAX_I2S
     #define ES8311_MAX_I2S 180
   #endif
-  #define PLAYER_FORCE_MONO true  /* force mono audio for this board */
+  #define PLAYER_FORCE_MONO true
   #define VS1053_CS       255     /* set to 255 to disable VS1053 */
 #endif
 
@@ -350,7 +365,6 @@
   #define MQTT_ENABLE
   #define PLAYLIST_DEFAULT_URL "https://github.com/trip5/webstations/releases/latest/download/trip5-radio-playlist.csv" /* can be CSV or JSON */
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
-  #define DSP_LANGUAGE_lt_LT
   #define SMART_START true
   #define SHOW_AUDIO_INFO true
   #define SS_PLAYING true
@@ -364,6 +378,7 @@
   #define SCREEN_FLIP     true
   #define SHOW_VU_METER   true
   #define VOLUME_STEPS    5
+  #define DISABLE_UPDATER
 #endif
 
 
