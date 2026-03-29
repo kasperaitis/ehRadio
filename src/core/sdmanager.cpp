@@ -18,10 +18,6 @@
   #define SDREALSPI SPI
 #endif
 
-#ifndef SDSPISPEED
-  #define SDSPISPEED 20000000
-#endif
-
 SDManager sdman(FSImplPtr(new VFSImpl()));
 
 bool SDManager::start() {

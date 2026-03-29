@@ -75,7 +75,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "screensaverplayingenabled")) { config.setScreensaverPlayingEnabled(static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "screensaverplayingtimeout")) { config.setScreensaverPlayingTimeout(static_cast<uint16_t>(atoi(value))); return true; }
   if (strEquals(command, "screensaverplayingblank"))   { config.setScreensaverPlayingBlank(static_cast<bool>(atoi(value))); return true; }
-  
+  /* Options: Locale */
   if (strEquals(command, "locale_webui")) { config.updateLocaleFileAsync(value, cid); return true; }
   if (strEquals(command, "tz_name"))      { config.saveValue(config.store.tz_name, value, sizeof(config.store.tz_name), false); return true; }
   if (strEquals(command, "tzposix"))      { config.saveValue(config.store.tzposix, value, sizeof(config.store.tzposix), false); network.forceTimeSync = true; network.requestTimeSync(true); return true; }
@@ -87,6 +87,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "encacc"))            { setEncAcceleration(static_cast<uint16_t>(atoi(value))); return true; }
   if (strEquals(command, "irtlp"))             { setIRTolerance(static_cast<uint8_t>(atoi(value))); return true; }
   if (strEquals(command, "oneclickswitching")) { config.saveValue(&config.store.skipPlaylistUpDown, static_cast<bool>(atoi(value))); return true; }
+  /* Options: Weather */
   if (strEquals(command, "wenable"))           { config.setShowweather(static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "wapi"))              { config.saveValue(config.store.weatherapi, value, sizeof(config.store.weatherapi), false); network.forceWeather = true; return true; }
   if (strEquals(command, "winterval"))         { config.saveValue(&config.store.weathersyncinterval, static_cast<uint8_t>(atoi(value))); return true; }
@@ -133,7 +134,7 @@ bool CommandHandler::exec(const char *command, const char *value, uint8_t cid) {
   if (strEquals(command, "vumeter"))   { config.saveValue(&config.store.vumeter, static_cast<bool>(atoi(value))); display.putRequest(SHOWVUMETER); return true; }
   if (strEquals(command, "wifiscan"))  { config.saveValue(&config.store.wifiscanbest, static_cast<bool>(atoi(value))); return true; }
   if (strEquals(command, "ehdp"))      { config.saveValue(&config.store.ehdp, static_cast<bool>(atoi(value))); return true; }
-  if (strEquals(command, "ehdpname"))  { config.saveValue(config.store.ehdpname, value, EHDPNAME_LENGTH); return true; }
+  if (strEquals(command, "ehdpname"))  { config.saveValue(config.store.ehdpname, value, EHDPNAME_LENGTH); network.ehDPinit(); return true; }
   if (strEquals(command, "softap"))    { config.saveValue(&config.store.softapdelay, static_cast<uint8_t>(atoi(value))); return true; }
   if (strEquals(command, "mdnsname"))  { config.saveValue(config.store.mdnsname, value, MDNS_LENGTH); return true; }
   if (strEquals(command, "rebootmdns")) {

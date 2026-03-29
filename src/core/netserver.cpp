@@ -69,8 +69,6 @@ TaskHandle_t g_searchTaskHandle = NULL;
 TaskHandle_t g_curatedTaskHandle = NULL;
 #define FS_REQUIRED_FREE_SPACE 150 // in KB - must be minimum x1.5 of the limit_per_page in search.js (100)
 
-//#define CORS_DEBUG //Enable CORS policy: 'Access-Control-Allow-Origin' (for testing)
-
 NetServer netserver;
 
 AsyncWebServer webserver(80);

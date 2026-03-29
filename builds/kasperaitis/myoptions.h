@@ -1,6 +1,11 @@
 #ifndef myoptions_h
 #define myoptions_h
 
+/*        ************************************************************************      */
+/*        *        This file must be in the root folder of the sketch !!!        *      */
+/*        ************************************************************************      */
+/*        . . .  CHECK options.h for full options, examples, and over-rides  . . .      */
+
 /* - - - = = = - - - Choose the Radio (defined by platformio.ini env) - - - = = = - - - */
 /* automatic builds define the board - - - be sure to comment all lines after debugging */
 
@@ -29,49 +34,31 @@
 /* --- LED --- */
 
 #if defined(BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
-  #define USE_BUILTIN_LED     true
-#else
-  #define USE_BUILTIN_LED     false    /* usually...! Unless you actually want to use the builtin as defined by the board's .h file */
-#endif
-
-#if defined(ESP32_S3_KASPERAITIS_ES3C28P)
-  #define USE_RGB_LED     true         /* Enable single-pin RGB LED (WS2812 style) on ES3C28P boards */
-  #ifndef RGB_LED_PIN
-    #define RGB_LED_PIN   42
-  #endif
-  #ifndef RGB_LED_ORDER
-    #define RGB_LED_ORDER NEO_GRB
-  #endif
+  #define USE_BUILTIN_LED     true     /* Usually you want this false unless you want to use the onboard LED */
+#elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
+  #define USE_BUILTIN_LED     false
+  #define RGB_LED_PIN         42       /* for Adafruit NeoPixel */
 #elif defined(BOARD_ESP32_S3_N16R8)
-  //#define LED_BUILTIN         48          /* S3 RGB LED probably default in board def 48 */
+  #define USE_BUILTIN_LED     true     /* This uses the board definition so the S3's RGB is white ON and that's it */
 #else
-  /* LED config for all others - keep it off */
+  /* LED config for all others - keep LEDs off */
+  #define USE_BUILTIN_LED     false
   #define LED_BUILTIN_S3      255
 #endif
 
 
 /* --- DISPLAY --- */
 
-/* Display config for I2C displays */
-
-
-
 /* Display config for SPI displays */
 /* When using SPI Displays, trying to use same SPI MOSI, SCK, MISO as VS1053 doesn't work */
 #if defined(ESP32_S3_KASPERAITIS_ES3C28P)
+  #define DSP_LANGUAGE_lt_LT
   #define DSP_MODEL       DSP_ILI9341
   #define SCREEN_INVERT true
   #define TFT_CS          10
   #define TFT_DC          46
   #define TFT_RST         -1
-  #define TFT_BL          45
-  //#define GFX_BL          45
-  /* SPI pins for the TFT module (ES3C28P) */
-  #define TFT_MOSI        11
-  #define TFT_SCLK        12
-  #define TFT_MISO        13
-  #define BRIGHTNESS_PIN  TFT_BL
-  #define DSP_LANGUAGE_lt_LT
+  #define BRIGHTNESS_PIN  45
 #endif
 
 
@@ -121,38 +108,13 @@
   #define BTN_DOWN        0       /* BOOT button - Next, Move Down */
 #endif
 
-/* Extras: unused in all */
-//#define BTN_INTERNALPULLUP          false   /* Enable the weak pull up resistors */
-//#define BTN_LONGPRESS_LOOP_DELAY    200     /* Delay between calling DuringLongPress event */
-//#define BTN_CLICK_TICKS             300     /* Event Timing https://github.com/mathertel/OneButton#event-timing */
-//#define BTN_PRESS_TICKS             500     /* Event Timing https://github.com/mathertel/OneButton#event-timing */
-
-
-/* --- ROTARY ENCODER(S) --- */
-
-/* Extras: unused in all */
-//#define ENC_INTERNALPULLUP  true
-//#define ENC_HALFQUARD       false
-
-/* 2nd Rotary Encoder: ?? None yet */
-//#define ENC2_BTNR       40
-//#define ENC2_BTNL       39
-//#define ENC2_BTNB       38
-/* Extras: unused */
-//#define ENC2_INTERNALPULLUP     true
-//#define ENC2_HALFQUARD          false
-
 
 /* --- SD CARD --- */
 
 #if defined(ESP32_S3_KASPERAITIS_ES3C28P)
   #define SD_SPIPINS      38, 39, 40     /* SCK, MISO, MOSI */
   #define SDC_CS          47
-  #define SDSPISPEED      40000000       /* Default speed 20000000 */
 #endif
-
-/* Extras: unused in all */
-//#define SD_HSPI     /* false (not needed when using custom pins) */
 
 
 /* --- Battery --- */
@@ -219,12 +181,5 @@
   /* Disable automatic runtime downloads from GitHub (ESPFileUpdater) for this board only. */
   //#define DISABLE_ESPFILEUPDATER
 #endif
-
-/* --- URL SOURCE OVERRIDE --- */
-/* Only use this if you've decided to use your own Github as the source of files */
-/* ...or your firmware is not available from Trip5's Github... sorry! */
-/* Read the notes in the ./builds folder for more detailed information */
-
-//#define GITHUBURL "https://github.com/kasperaitis/ehradio" // used by the radio to update firmware and files...
 
 #endif // myoptions_h

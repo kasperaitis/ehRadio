@@ -1,14 +1,14 @@
 #ifndef _my_theme_h
 #define _my_theme_h
 
-/*
-    Theming of color displays
-    DSP_ST7735, DSP_ST7789, DSP_ILI9341, DSP_GC9106, DSP_ILI9225, DSP_ST7789_240
-    ***********************************************************************
-    *    !!! This file must be in the root directory of the sketch !!!    *
-    ***********************************************************************
-    Uncomment (remove double slash //) from desired line to apply color
-*/
+/*        ************************************************************************      */
+/*        *        This file must be in the root folder of the sketch !!!        *      */
+/*        ************************************************************************      */
+
+/* Theming of color displays:                                                           */
+/*         DSP_ST7735, DSP_ST7789, DSP_ILI9341, DSP_GC9106, DSP_ILI9225, DSP_ST7789_240 */
+/* Uncomment (remove double slash //) from desired line to apply color                  */
+
 #define ENABLE_THEME
 #ifdef  ENABLE_THEME
 

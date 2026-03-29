@@ -22,6 +22,14 @@ Documentation will be improved at some point... Until then, check this page and 
 
 ## ehRadio Version history
 
+### 2026.03.29 - in the process of cleaning files... see `.github/code-issues.md` for more info
+  - not really a re-factor but major changes in certain blocks may be underway
+  - please do not make major PRs until this is finished - it may take some time.
+  - minor fix to how ehDP is handled in options (updates immediately)
+  - files update after OTA update handled more gracefully...?
+  - general cleanup of various files: removing dead code, fixing unsafe code, more...
+  - internal documentation (`options.h`) is improving... this `README.md` is still a mess.
+
 ### 2026.03.22
   - [ehDP Library](https://github.com/trip5/ehDP) added
     - Device can be found using [eh Device Scanner](https://github.com/trip5/eh-Device-Scanner)

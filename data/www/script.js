@@ -103,7 +103,7 @@ function onMessage(event) {
         if(status) status.textContent = t('msg_ota_progress', 'OTA Update: {0}% downloaded | please wait...', data.onlineupdateprogress);
         if (data.onlineupdateprogress >= 100) {
           getId("uploadstatus").textContent = t('msg_ota_complete', 'OTA Update Complete. Radio will reboot, update files, and reboot again. This will take 3 minutes.');
-          rebootingProgress(60);
+          rebootingProgress(180);
         }
       }
     }
@@ -1317,6 +1317,10 @@ function rebootingProgress(waitSeconds) {
       rebootTimer = setTimeout(update, 200);
     } else {
       window.location.replace(`http://${hostname}/`);
+    }
+    if (waitSeconds > 30 && elapsed > 3000) {
+      // check websocket response to "updatingnow"
+      // if true then force elapsed = waitSeconds * 1000 + 1
     }
   };
   update();
