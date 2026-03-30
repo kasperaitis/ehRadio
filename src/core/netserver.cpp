@@ -141,6 +141,30 @@ void handleSearch(AsyncWebServerRequest *request) {
   }
 }
 
+void handleReady(AsyncWebServerRequest *request) {
+  #if defined(HTTP_USER) && defined(HTTP_PASS)
+    if (network.status == CONNECTED) {
+      if (!request->authenticate(HTTP_USER, HTTP_PASS)) {
+        return request->requestAuthentication();
+      }
+    }
+  #endif
+
+  const bool networkReady =
+    (network.status == CONNECTED && WiFi.status() == WL_CONNECTED) ||
+    (network.status == SDREADY);
+  const bool ready = netserver.isBootReady() && config.wwwFilesExist && networkReady;
+  AsyncWebServerResponse *response = request->beginResponse(
+    200,
+    "application/json",
+    ready ? "{\"ready\":true}" : "{\"ready\":false}"
+  );
+  response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  response->addHeader("Pragma", "no-cache");
+  response->addHeader("Expires", "0");
+  request->send(response);
+}
+
 void handleSearchPost(AsyncWebServerRequest *request) {
   // handle preview or add to playlist
   bool addtoplaylist = false;
@@ -227,6 +251,7 @@ bool NetServer::begin(bool quiet) {
   while(nsQueue==NULL) {;}
 
   webserver.on("/", HTTP_ANY, handleIndex);
+  webserver.on("/ready", HTTP_GET, handleReady);
   webserver.on("/locale.json", HTTP_GET, handleDynamicLocale);
   webserver.on("/search", HTTP_GET, handleSearch);
   webserver.on("/search", HTTP_POST, handleSearchPost);

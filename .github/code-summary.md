@@ -136,6 +136,7 @@ This codebase is strongly compile-time modular. Runtime behavior can differ sign
      - optional smart-start playback
      - `config.startupServices()`
      - plugin end-setup hook
+    - `netserver.setBootReady(true)` only after setup work is actually complete
 - `loop()`:
   - AP mode: Improv + captive DNS
   - normal: telnet loop
@@ -249,7 +250,7 @@ This codebase is strongly compile-time modular. Runtime behavior can differ sign
 - HTTP + WebSocket + upload/update + search/curated orchestration.
 - Main responsibilities:
   - static file serving from SPIFFS `/www`
-  - route handlers (`/`, `/search`, `/update`, `/locale.json`, etc.)
+  - route handlers (`/`, `/search`, `/update`, `/locale.json`, `/ready`, etc.)
   - websocket command parsing and outbound updates
   - state request queue processing (`GETSYSTEM`, `GETSCREEN`, `GETLOCALE`, etc.)
   - online update check/start tasks
@@ -258,6 +259,8 @@ This codebase is strongly compile-time modular. Runtime behavior can differ sign
 - Coupling:
   - uses `cmd.exec(...)` from commandhandler
   - emits JSON consumed by `data/www/script.js`
+- Readiness detail:
+  - `/ready` returns `{"ready":true}` only when `netserver.bootReady` is true, required web files exist, and network state is stable (`CONNECTED` + `WL_CONNECTED`, or `SDREADY`).
 
 ## `src/core/commandhandler.h` / `commandhandler.cpp`
 - `commandhandler.h` declares command execution API for command strings.
@@ -359,9 +362,18 @@ Notes:
   - websocket connect/reconnect
   - parse inbound JSON payloads
   - dynamic page loading (`player`, `settings`, `update`, `ir`)
+  - shared page bootstrap helpers for logo/version/i18n application
+  - safe lazy fallback for script2-exposed functions (`ensureFunctionLoaded`)
   - control dispatch from DOM (`data-command`)
   - playlist editor/import/export logic and curated integration
   - online update UI progress handling
+  - shared ready-aware redirect helper (`redirectWhenReady`) used by update and reboot flows
+- Reboot/update redirect nuance:
+  - `redirectWhenReady(...)` only redirects after it has observed at least one not-ready state, preventing a false-positive redirect against the still-running pre-reboot instance.
+  - `/ready` probes now use a short client-side fetch timeout so reboot/reset flows do not stall waiting on a dead device connection during restart.
+  - reboot and update redirect calls now explicitly apply a 1-second post-ready grace in JavaScript before navigation.
+  - manual upload completion now uses a 60 second fallback, while OTA still uses 180 seconds; both can redirect early as soon as `/ready` reports true.
+  - mDNS rename (`rebootmdns`) now reuses the same reboot status screen as a normal reboot, then uses browser-side ready polling against the new `.local` host; backend no longer sends WebSocket redirect JSON before reboot.
 
 ## `data/www/options.js`
 - Settings page behavior.
@@ -370,6 +382,9 @@ Notes:
   - locale list loading and locale switch logic
   - weather provider field visibility logic
   - apply handlers for locale/weather/mqtt/wifi
+  - reboot/reset/format status screen with per-action behavior:
+    - reboot/reset use ready-aware return-to-root with shorter fallback (15s)
+    - format SPIFFS shows reboot status but skips automatic reload
 
 ## `data/www/locale.js`
 - i18n runtime helper (`t(...)`) and translation application (`applyI18n`).
@@ -397,20 +412,18 @@ Notes:
 ## `data/www/dragpl.js`
 - Playlist drag-and-drop reorder behavior.
 
-## `data/www/playstation.js`
-- Station play/preview helper behaviors.
+## `data/www/script2.js`
+- Consolidated helper script loaded by main shell and standalone search/curated pages.
+- Contains logic previously in `ir.js`, `updform.js`, and `playstation.js`:
+  - station preview/play helper (`sendStationAction`)
+  - online update check/start UI helpers
+  - IR setup/learn interactions (`initControls`, `checkSelect`, `irClear`, `backRecord`)
 
 ## `data/www/search.js`
 - Search page API calls, pagination, result actions, and import hooks.
 
 ## `data/www/curated.js`
 - Curated list fetch/load/import page logic.
-
-## `data/www/updform.js`
-- Manual update upload and online update helper behavior.
-
-## `data/www/ir.js`
-- IR setup/learn logic and assignment interactions.
 
 ## `data/www/style.css`
 - Primary stylesheet.

@@ -98,7 +98,7 @@ const char index_html[] PROGMEM = R"(
     var v = '?v=' + radioVersion;
     document.getElementById('themeCSS').href = 'theme.css' + v;
     document.getElementById('styleCSS').href = 'style.css' + v;
-    ['locale.js', 'script.js', 'dragpl.js', 'playstation.js'].forEach(function(src) {
+    ['locale.js', 'script.js', 'dragpl.js', 'script2.js'].forEach(function(src) {
       var script = document.createElement('script');
       script.type = 'text/javascript';
       script.src = src + v;
@@ -129,6 +129,7 @@ void mqttplaylistSend();
 char* updateError();
 void handleSearch(AsyncWebServerRequest *request);
 void handleSearchPost(AsyncWebServerRequest *request);
+void handleReady(AsyncWebServerRequest *request);
 const char *getFormat(BitrateFormat _format);
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
@@ -162,6 +163,8 @@ class NetServer {
     void onWsMessage(void *arg, uint8_t *data, size_t len, uint8_t clientId);
     void requestOnChange(requestType_e request, uint8_t clientId);
     void resetQueue();
+    void setBootReady(bool val) { bootReady = val; }
+    bool isBootReady() const { return bootReady; }
 
     void setRSSI(int val) { rssi = val; };
     int  getRSSI()        { return rssi; };
@@ -169,6 +172,7 @@ class NetServer {
     requestType_e request = PLAYLIST;
     QueueHandle_t nsQueue;
     int rssi = 0;
+    bool bootReady = false;
 
     static size_t chunkedHtmlPageCallback(uint8_t* buffer, size_t maxLen, size_t index);
     void processQueue();

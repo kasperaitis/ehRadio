@@ -72,6 +72,7 @@ void setup() {
     initControls();
     display.putRequest(DSP_START);
     while(!display.ready()) delay(10);
+    netserver.setBootReady(true);
     return;
   }
   if (SDC_CS!=255) {
@@ -101,6 +102,7 @@ void setup() {
   }
   config.startupServices();
   pm.on_end_setup();
+  netserver.setBootReady(true);
 }
 
 void loop() {

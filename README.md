@@ -22,13 +22,16 @@ Documentation will be improved at some point... Until then, check this page and 
 
 ## ehRadio Version history
 
-### 2026.03.29 - in the process of cleaning files... see `.github/code-issues.md` for more info
-  - not really a re-factor but major changes in certain blocks may be underway
-  - please do not make major PRs until this is finished - it may take some time.
+### 2026.03.30 - Feature Freeze ON
+  - not really a re-factor but the codebase is in serious need of repair
+    - see `.github/code-issues.md` for more info
+    - please hold off on any PRs until this is finished (it could take some time)
+    - the `ehRadio` branch will not be updated until finished
+    - the `dev` branch will be updated periodically
   - minor fix to how ehDP is handled in options (updates immediately)
-  - files update after OTA update handled more gracefully...?
-  - general cleanup of various files: removing dead code, fixing unsafe code, more...
+  - redirect browser after OTA update and reboots are now handled gracefully with redirects
   - internal documentation (`options.h`) is improving... this `README.md` is still a mess.
+  - 3 javascript files combined to 1 (`script2.js`) to improve OTA file updating speed
 
 ### 2026.03.22
   - [ehDP Library](https://github.com/trip5/ehDP) added

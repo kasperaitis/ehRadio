@@ -27,6 +27,10 @@ function updateBitinfo(){
 
 function loadCSS(href){ const link = document.createElement("link"); link.rel = "stylesheet"; link.href = href; document.head.appendChild(link); }
 function loadJS(src, callback){ const script = document.createElement("script"); script.src = src; script.type = "text/javascript"; script.async = true; script.onload = callback; document.head.appendChild(script); }
+function ensureFunctionLoaded(functionName, src, callback){
+  if(typeof window[functionName] === 'function') { callback(); return; }
+  loadJS(src, callback);
+}
 
 function initWebSocket() {
   clearTimeout(wstimeout);
@@ -102,7 +106,7 @@ function onMessage(event) {
         const status = getId('uploadstatus');
         if(status) status.textContent = t('msg_ota_progress', 'OTA Update: {0}% downloaded | please wait...', data.onlineupdateprogress);
         if (data.onlineupdateprogress >= 100) {
-          getId("uploadstatus").textContent = t('msg_ota_complete', 'OTA Update Complete. Radio will reboot, update files, and reboot again. This will take 3 minutes.');
+          getId("uploadstatus").textContent = t('msg_ota_complete_wait', 'OTA Update Complete. Radio will reboot, update files, and reboot again. This may take up to 3 minutes.');
           rebootingProgress(180);
         }
       }
@@ -1047,6 +1051,16 @@ function hideSpinner(){
   getId("progress").classList.add("hidden");
   getId("content").classList.remove("hidden");
 }
+function loadLogoThen(callback){
+  fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => {
+    getId('logo').innerHTML = svg;
+    if (typeof callback === 'function') callback();
+  });
+}
+function applyCommonPageMeta(){
+  getId("version").innerText=`${radioVersion}`;
+  localePromise.then(function(){ applyI18n(); });
+}
 function changeMode(el){
   const cmd = el.dataset.command;
   el.classList.add('hidden');
@@ -1077,15 +1091,13 @@ function continueLoading(mode){
       fetch(`player.html?${radioVersion}`).then(response => response.text()).then(player => { 
         getId('content').classList.add('idx');
         getId('content').innerHTML = player; 
-        fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => { 
-          getId('logo').innerHTML = svg;
+        loadLogoThen(function(){
           hideSpinner();
         });
-        getId("version").innerText=`${radioVersion}`;
+        applyCommonPageMeta();
         if (newVerAvailable) getId('update_available').classList.remove('hidden');
         document.querySelectorAll('input[type="range"]').forEach(sl => { fillSlider(sl); });
         websocket.send('getindex=1');
-        localePromise.then(function(){ applyI18n(); });
         // Check if we need to load curated playlist for review
         if (sessionStorage.getItem('pl_import_review') === 'true') {
           const mode = sessionStorage.getItem('pl_import_mode') || 'replace';
@@ -1100,12 +1112,11 @@ function continueLoading(mode){
       fetch(`options.html?${radioVersion}`).then(response => response.text()).then(options => {
         getId('content').innerHTML = options;
         loadJS(`options.js?${radioVersion}`, () => {
-          fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => { 
-            getId('logo').innerHTML = svg;
+          loadLogoThen(function(){
             hideSpinner();
             if (onlineUpdCapable) getId('webboard').classList.add('hidden');
           });
-          getId("version").innerText=`${radioVersion}`;
+          applyCommonPageMeta();
           if (newVerAvailable) getId('update_available').classList.remove('hidden');
           document.querySelectorAll('input[type="range"]').forEach(sl => { fillSlider(sl); });
           if (timezoneData) {
@@ -1122,7 +1133,6 @@ function continueLoading(mode){
           websocket.send('getbattery=1');
           classEach("reset", function(el){ el.innerHTML='<svg viewBox="0 0 16 16" class="fill"><path d="M8 3v5a36.973 36.973 0 0 1-2.324-1.166A44.09 44.09 0 0 1 3.417 5.5a52.149 52.149 0 0 1 2.26-1.32A43.18 43.18 0 0 1 8 3z"/><path d="M7 5v1h4.5C12.894 6 14 7.106 14 8.5S12.894 11 11.5 11H1v1h10.5c1.93 0 3.5-1.57 3.5-3.5S13.43 5 11.5 5h-4z"/></svg>'; });
           initDangerZone();
-          localePromise.then(function(){ applyI18n(); });
         });
       });
     }
@@ -1131,44 +1141,34 @@ function continueLoading(mode){
       fetch(`updform.html?${radioVersion}`).then(response => response.text()).then(updform => {
         getId('content').classList.add('upd');
         getId('content').innerHTML = updform;
-        loadJS(`updform.js?${radioVersion}`, () => {
-          fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => {
-            getId('logo').innerHTML = svg;
-            hideSpinner();
-            initOnlineUpdateChecker();
-          });
+        loadLogoThen(function(){
+          hideSpinner();
+          ensureFunctionLoaded('initOnlineUpdateChecker', `script2.js?${radioVersion}`, function(){ initOnlineUpdateChecker(); });
         });
-        getId("version").innerText=`${radioVersion}`;
-        localePromise.then(function(){ applyI18n(); });
+        applyCommonPageMeta();
       });
     }
     if(pathname=='/ir.html'){
       document.title = `${Title} - IR Recorder`;
       fetch(`irrecord.html?${radioVersion}`).then(response => response.text()).then(ircontent => {
         getId('content').innerHTML = ircontent;
-        loadJS(`ir.js?${radioVersion}`, () => {
-          fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => {
-            getId('logo').innerHTML = svg;
-            initControls();
-            hideSpinner();
-          });
+        loadLogoThen(function(){
+          ensureFunctionLoaded('initControls', `script2.js?${radioVersion}`, function(){ initControls(); });
+          hideSpinner();
         });
-        getId("version").innerText=`${radioVersion}`;
-        localePromise.then(function(){ applyI18n(); });
+        applyCommonPageMeta();
       });
     }
   }else{ // AP mode
     fetch(`options.html?${radioVersion}`).then(response => response.text()).then(options => {
       getId('content').innerHTML = options;
       loadJS(`options.js?${radioVersion}`, () => {
-        fetch(`logo.svg?v=${radioVersion}`).then(response => response.text()).then(svg => {
-          getId('logo').innerHTML = svg;
+        loadLogoThen(function(){
           hideSpinner();
         });
-        getId("version").innerText=`${radioVersion}`;
+        applyCommonPageMeta();
         getWiFi(`http://${hostname}/data/wifi.csv`+"?"+new Date().getTime());
         websocket.send('getactive=1');
-        localePromise.then(function(){ applyI18n(); });
       });
     });
   }
@@ -1209,12 +1209,27 @@ function continueLoading(mode){
           case "confirm-reboot": showDangerConfirm('dz_reboot'); break;
           case "confirm-format": showDangerConfirm('dz_format'); break;
           case "confirm-reset": showDangerConfirm('dz_reset'); break;
-          case "reboot": websocket.send("reboot=1"); rebootSystem(t('msg_rebooting', 'Rebooting...')); break;
-          case "format": websocket.send("format=1"); rebootSystem(t('msg_format_reboot', 'Format SPIFFS. Rebooting...')); break;
-          case "reset":  websocket.send("reset=1");  rebootSystem(t('msg_reset_reboot', 'Reset settings. Rebooting...')); break;
+          case "reboot": websocket.send("reboot=1"); rebootSystem(t('msg_rebooting', 'Rebooting...'), 15, true); break;
+          case "format": websocket.send("format=1"); rebootSystem(t('msg_format_reboot', 'Format SPIFFS. Rebooting...'), 0, false); break;
+          case "reset":  websocket.send("reset=1"); rebootSystem(t('msg_reset_reboot', 'Reset settings. Rebooting...'), 15, true); break;
           case "shuffle": toggleShuffle(); break;
           case "ehdpsave": websocket.send(`ehdpname=${getId('ehdpname').value}`); break;
-          case "rebootmdns": websocket.send(`mdnsname=${getId('mdns').value}`); websocket.send("rebootmdns=1"); break;
+          case "rebootmdns": {
+            const mdnsValue = (getId('mdns').value || '').trim();
+            websocket.send(`mdnsname=${mdnsValue}`);
+            websocket.send("rebootmdns=1");
+            rebootSystem(t('msg_rebooting', 'Rebooting...'), 0, false);
+            if (typeof redirectWhenReady === 'function') {
+              const mdnsHost = mdnsValue ? `${mdnsValue}.local` : hostname;
+              redirectWhenReady({
+                waitSeconds: 20,
+                readyHost: mdnsHost,
+                redirectUrl: `http://${mdnsHost}/settings.html`,
+                afterReadyDelayMs: 1000
+              });
+            }
+            break;
+          }
           case "savebattref": websocket.send(`battref=${getId('battref').value}`); break;
           default: break;
         }
@@ -1266,6 +1281,95 @@ function continueLoading(mode){
 
 /** UPDATE **/
 var uploadWithError = false;
+var rebootTimer;
+var readyPollTimer;
+var readyRedirectDelayTimer;
+var readyRedirectToken = 0;
+
+function clearReadyRedirectTimers(){
+  clearTimeout(rebootTimer);
+  clearTimeout(readyPollTimer);
+  clearTimeout(readyRedirectDelayTimer);
+}
+
+function redirectWhenReady(options){
+  const settings = options || {};
+  const waitSeconds = Math.max(1, settings.waitSeconds || 5);
+  const pollMs = Math.max(250, settings.pollMs || 1000);
+  const afterReadyDelayMs = Math.max(0, settings.afterReadyDelayMs || 1000);
+  const fetchTimeoutMs = Math.max(250, settings.fetchTimeoutMs || 750);
+  const redirectUrl = settings.redirectUrl || `http://${hostname}/`;
+  const readyHost = settings.readyHost || hostname;
+  const onTick = typeof settings.onTick === 'function' ? settings.onTick : null;
+  const onReady = typeof settings.onReady === 'function' ? settings.onReady : null;
+  const start = Date.now();
+  let sawNotReady = false;
+  const token = ++readyRedirectToken;
+
+  clearReadyRedirectTimers();
+
+  const finishRedirect = () => {
+    if (token !== readyRedirectToken) return;
+    clearReadyRedirectTimers();
+    window.location.replace(redirectUrl);
+  };
+
+  const scheduleNext = (delayMs) => {
+    if (token !== readyRedirectToken) return;
+    readyPollTimer = setTimeout(pollReady, delayMs);
+  };
+
+  const updateProgress = () => {
+    if (!onTick) return;
+    const elapsedMs = Date.now() - start;
+    const progress = Math.min(100, Math.round((elapsedMs / (waitSeconds * 1000)) * 100));
+    onTick({ elapsedMs, waitSeconds, progress, sawNotReady });
+  };
+
+  const pollReady = () => {
+    if (token !== readyRedirectToken) return;
+
+    updateProgress();
+
+    if (Date.now() - start >= waitSeconds * 1000) {
+      finishRedirect();
+      return;
+    }
+
+    const controller = new AbortController();
+    const fetchTimeout = setTimeout(() => controller.abort(), fetchTimeoutMs);
+
+    fetch(`http://${readyHost}/ready?ts=${Date.now()}`, {
+      cache: 'no-store',
+      signal: controller.signal
+    })
+      .then((response) => response.ok ? response.json() : { ready: false })
+      .then((data) => {
+        clearTimeout(fetchTimeout);
+        if (token !== readyRedirectToken) return;
+        if (data.ready === true) {
+          if (!sawNotReady) {
+            scheduleNext(pollMs);
+            return;
+          }
+          if (onReady) onReady();
+          readyRedirectDelayTimer = setTimeout(finishRedirect, afterReadyDelayMs);
+          return;
+        }
+        sawNotReady = true;
+        scheduleNext(pollMs);
+      })
+      .catch(() => {
+        clearTimeout(fetchTimeout);
+        if (token !== readyRedirectToken) return;
+        sawNotReady = true;
+        scheduleNext(pollMs);
+      });
+  };
+
+  pollReady();
+}
+
 function doUpdate(el) {
   let binfile = getId('binfile').files[0];
   if(binfile){
@@ -1305,30 +1409,26 @@ function progressHandler(event) {
     getId("uploadstatus").textContent = t('msg_upload_writing', 'Please wait, writing file to filesystem');
   }
 }
-var rebootTimer;
 function rebootingProgress(waitSeconds) {
-  clearTimeout(rebootTimer);
-  const start = Date.now();
-  const update = () => {
-    const elapsed = Date.now() - start;
-    const pct = Math.min(100, Math.round(elapsed / (waitSeconds * 10)));
-    getId("updateprogress").value = pct;
-    if (elapsed < waitSeconds * 1000) {
-      rebootTimer = setTimeout(update, 200);
-    } else {
-      window.location.replace(`http://${hostname}/`);
+  redirectWhenReady({
+    waitSeconds: waitSeconds,
+    afterReadyDelayMs: 1000,
+    onTick: function(state){
+      const progress = getId("updateprogress");
+      if(progress) progress.value = state.progress;
+    },
+    onReady: function(){
+      const progress = getId("updateprogress");
+      const status = getId("uploadstatus");
+      if(progress) progress.value = 100;
+      if(status) status.textContent = t('msg_system_ready', 'System ready, reloading...');
     }
-    if (waitSeconds > 30 && elapsed > 3000) {
-      // check websocket response to "updatingnow"
-      // if true then force elapsed = waitSeconds * 1000 + 1
-    }
-  };
-  update();
+  });
 }
 function completeHandler(event) {
   if(uploadWithError) return;
   getId("uploadstatus").textContent = t('msg_upload_complete', 'Upload Complete, rebooting...');
-  rebootingProgress(7);
+  rebootingProgress(60);
 }
 function errorHandler(event) {
   getId('updateform').classList.remove('hidden');

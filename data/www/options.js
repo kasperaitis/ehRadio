@@ -354,11 +354,19 @@ function submitWiFi(){
 }
 
 /** SYSTEM **/
-function rebootSystem(info){
+function rebootSystem(info, waitSeconds = 15, autoReload = true){
   getId("settingscontent").innerHTML=`<h2>${info}</h2>`;
   getId("settingsdone").classList.add("hidden");
   getId("navigation").classList.add("hidden");
-  setTimeout(function(){ window.location.href=`http://${hostname}/`; }, 5000);
+  if (!autoReload) return;
+  if (typeof redirectWhenReady === 'function') {
+    redirectWhenReady({
+      waitSeconds: waitSeconds,
+      afterReadyDelayMs: 1000
+    });
+  } else {
+    setTimeout(function(){ window.location.href=`http://${hostname}/`; }, Math.max(1, waitSeconds) * 1000);
+  }
 }
 
 /** TOOLS AKA DANGER ZONE **/

@@ -231,7 +231,6 @@ class Config {
     void saveVolume();
     uint8_t setVolume(uint8_t val);
     void setTone(int8_t bass, int8_t middle, int8_t treble);
-    void setSmartStart(bool ss);
     void setBalance(int8_t balance);
     uint8_t setLastStation(uint16_t val);
     uint8_t setCountStation(uint16_t val);

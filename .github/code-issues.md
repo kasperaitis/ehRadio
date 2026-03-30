@@ -2,7 +2,7 @@
 
 Working document for audit findings. Does **not** replace `code-summary.md` (the permanent operational bible).
 Delete this file once all items are resolved or explicitly accepted.
-Add `(FIXED)` to title after issue is resolved.
+Add `(ALL FIXED)` to title/section after issues are resolved.
 
 **Severity**: `[HIGH]` = silent data corruption or crash risk | `[MEDIUM]` = incorrect behavior or user-facing bug | `[LOW]` = code quality / inconsistency | `[TRIVIAL]` = naming / doc only
 
@@ -71,23 +71,13 @@ These macros are consumed in `src/` via `#ifdef`/`#if defined` guards (so they a
 - **Analysis**: `getWeather()` returns a `bool` indicating whether real weather data was received. The caller stores this in `trueWeather`, but no code path ever checks `trueWeather`. The variable appears intended to track "we have real data vs. placeholder" but the consuming logic was never written (or was removed). The indicator is silently discarded every time.
 - **Action**: Either add consuming logic that uses `trueWeather` (e.g., suppress stale display when false), or remove the variable and ignore the return value explicitly at the call sites.
 
-- Trip5 note: This is supposed to track if weathher info held in cache is valid.  Is it seriously not being checked anywhere?  It's supposed to be refreshed according to config.store... weather interval?
+- Trip5 note: This is supposed to track if weather info held in cache is valid.  Is it seriously not being checked anywhere?  It's supposed to be refreshed according to config.store... weather interval?
 
 ---
 
 ## [ ] 5. Dead / Unreachable Code
 
-### [ ] 5.1 Duplicate `balance` handler in `commandhandler.cpp` `[MEDIUM]`
-
-- **Line ~30**: `if (strEquals(command, "balance")) { config.setBalance(atoi(value)); return true; }`
-- **Line ~118**: `if (strEquals(command, "balance")) { config.setBalance(static_cast<uint8_t>(atoi(value))); return true; }`
-- **Analysis**: The handler at line ~30 runs first and always returns `true`. The handler at line ~118 (inside the `//<-----TODO` block) is **unreachable dead code**. It will never execute.
-- **Side effect of the dead code**: The cast at line ~118 is also wrong — it casts to `uint8_t` before passing to `int8_t`, which corrupts negative balance values (e.g., -10 → `uint8_t` 246 → `int8_t` -10 by accident in twos-complement, but values like -100 → `uint8_t` 156 → `int8_t` -100, so actually they happen to be equivalent for most values due to twos-complement... BUT the intent is wrong and a future reader would see a bogus cast).
-- **The live handler (line ~30)** has its own problem: it passes raw `int` from `atoi()` directly with no cast and no range clamp (see Section 6.1 below).
-- **TODO block context**: The `//<-----TODO` marker separates two groups of handlers. Commands BELOW the marker (`volume`, `sdpos`, `shuffle`, `reboot`, `format`, `submitplaylist`, `irbtn`, `chkid`, `irclr`, etc.) are **not duplicates** — they are the only handlers for those commands. Only `balance` is accidentally duplicated. This indicates an **incomplete refactoring**: some commands were being migrated or reworked, but the work stopped partway. The entire EQ missing-handler situation (`treble`, `bass`, `middle`) is a direct result of this same incomplete state — see Section 8.1.
-- **Action**: Remove the dead handler at line ~118. Fix the live handler at line ~30 (see Section 6.1).
-
-### [ ] 5.2 `|| true` dead branch in `player.cpp` `[LOW]`
+### [ ] 5.1 `|| true` dead branch in `player.cpp` `[LOW]`
 
 - **Line 132**: `if (strlen(file)==0 || true) return; //TODO Read TAGs`
 - **Analysis**: `|| true` permanently short-circuits to `true`. Any code below this `return` is unreachable. This appears to be an acknowledged TODO — someone commented out the tag-reading functionality with `|| true` as a temporary measure that became permanent.
@@ -95,11 +85,53 @@ These macros are consumed in `src/` via `#ifdef`/`#if defined` guards (so they a
 
 ---
 
-## [ ] 6. Incorrect Casts / Type Safety Issues
+## [ ] 6. Commandhandler Issues
 
-- [ ] Extra: sort and comment all commands in `commandhandler.cpp` according to their order in WebUI
+### [ ] 6.1 Command handlers in `config.cpp` that can be moved to `commandhandler.cpp` `[MEDIUM]`
 
-### [ ] 6.1 `balance` command — no range clamp, implicit narrowing `[MEDIUM]`
+The refactor pattern (as completed for `setSmartStart()`) is: inline the wrapper body into `commandhandler.cpp` and remove the wrapper from `config.cpp`/`config.h`. Functions that are also called from other places (`mqtt.cpp`, etc.) cannot be fully removed from `config.cpp` — those are noted separately at the bottom.
+
+- [X] **`setSmartStart()`** — inlined; commandhandler now calls `config.saveValue` directly.
+- [ ] **`setShuffle(bool)`** — 2 lines: `saveValue` + `player.next()`. Easy.
+- [ ] **`setBalance(int8_t)`** — 3 lines: `saveValue` + `player.setBalance` + `requestOnChange`. Fix the dup + cast bugs from §6.4 and §6.5 at the same time.
+- [ ] **`enableScreensaver(bool)`** — `saveValue` + `#ifndef DSP_LCD display.putRequest(NEWMODE, PLAYER)`. Carry the `#ifndef DSP_LCD` guard into commandhandler.
+- [ ] **`setScreensaverTimeout(uint16_t)`** — `constrain(val,5,65520)` + `saveValue` + same `#ifndef DSP_LCD` guard. Note: brings its own input clamp.
+- [ ] **`setScreensaverBlank(bool)`** — same pattern as `enableScreensaver`.
+- [ ] **`setScreensaverPlayingEnabled(bool)`** — same pattern.
+- [ ] **`setScreensaverPlayingTimeout(uint16_t)`** — `constrain(val,1,1080)` + `saveValue` + `#ifndef DSP_LCD` guard.
+- [ ] **`setScreensaverPlayingBlank(bool)`** — same pattern as `enableScreensaver`.
+- [ ] **`setShowweather(bool)`** — 4 lines: `saveValue` + `network.trueWeather=false` + `network.forceWeather=true` + `display.putRequest(SHOWWEATHER)`.
+- [ ] **`setWeatherKey(const char*)`** — 4 lines: `saveValue` + `network.trueWeather=false` + two `display.putRequest` calls.
+- [ ] **`setIrBtn(int)`** — body is entirely inside `#if IR_PIN!=255`; the commandhandler caller is already inside that same guard, so the inline is clean.
+- [ ] **`setSDpos(uint32_t)`** — multi-branch (checks `PM_SDCARD`, calls `player.setResumeFilePos` / `player.setFilePos`). Candidate but less trivial than the above.
+- [ ] **`updateLocaleFileAsync(const char*, uint8_t)`** — async file download + NVS save. Borderline; may be cleaner staying in `config.cpp`.
+- [ ] **`resetSystem(const char*, uint8_t)`** — large multi-branch function (handles `"system"`, `"screen"`, `"locale"`, `"weather"`, `"mqtt"`, `"controls"`, `"1"`). Too large to inline cleanly; consider only a rename / file move rather than inlining.
+
+**Cannot be fully removed from `config.cpp`** (also called from `mqtt.cpp` or other non-commandhandler callers):
+- [ ] **`setDspOn(bool, bool)`** — called directly from `mqtt.cpp` (`turnoff`/`turnon` handlers). Commandhandler calls are already clean; no action needed here unless mqtt.cpp is also refactored.
+- [ ] **`setBrightness(bool)`** — called from internal boot/IR paths in addition to commandhandler. Same note as `setDspOn`.
+
+### [ ] 6.2 Sort all commands in `commandhandler.cpp` according to their order in WebUI (mostly-ish) `[LOW]`
+
+Just sort them a bit into categories for future maintenance.
+
+### [ ] 6.3 config.SaveValue - booleans ignored for compatibility `[LOW]`
+
+Originally kept for compatibility with existing yoRadio functions, booleans are ignored and thus can be removed everywhere in the codebase.
+
+### [ ] 6.4 Duplicate `balance` handler in `commandhandler.cpp` `[MEDIUM]`
+
+- **Line ~30**: `if (strEquals(command, "balance")) { config.setBalance(atoi(value)); return true; }`
+- **Line ~118**: `if (strEquals(command, "balance")) { config.setBalance(static_cast<uint8_t>(atoi(value))); return true; }`
+- **Analysis**: The handler at line ~30 runs first and always returns `true`. The handler at line ~118 (inside the `//<-----TODO` block) is **unreachable dead code**. It will never execute.
+- **Side effect of the dead code**: The cast at line ~118 is also wrong — it casts to `uint8_t` before passing to `int8_t`, which corrupts negative balance values (e.g., -10 → `uint8_t` 246 → `int8_t` -10 by accident in twos-complement, but values like -100 → `uint8_t` 156 → `int8_t` -100, so actually they happen to be equivalent for most values due to twos-complement... BUT the intent is wrong and a future reader would see a bogus cast).
+- **The live handler (line ~30)** has its own problem: it passes raw `int` from `atoi()` directly with no cast and no range clamp (see Section 6.1 below).
+- **TODO block context**: The `//<-----TODO` marker separates two groups of handlers. Commands BELOW the marker (`volume`, `sdpos`, `shuffle`, `reboot`, `format`, `submitplaylist`, `irbtn`, `chkid`, `irclr`, etc.) are **not duplicates** — they are the only handlers for those commands. Only `balance` is accidentally duplicated. This indicates an **incomplete refactoring**: some commands were being migrated or reworked, but the work stopped partway. The entire EQ missing-handler situation (`treble`, `bass`, `middle`) is a direct result of this same incomplete state — see Section 7.1.
+- **Action**: Remove the dead handler at line ~118. Fix the live handler at line ~30 (see Section 6.1).
+
+### [ ] 6.5 Incorrect Casts / Type Safety Issues
+
+#### [ ] 6.5.1 `balance` command — no range clamp, implicit narrowing `[MEDIUM]`
 
 - **File**: `src/core/commandhandler.cpp` line ~30
 - **Code**: `config.setBalance(atoi(value))`
@@ -107,103 +139,21 @@ These macros are consumed in `src/` via `#ifdef`/`#if defined` guards (so they a
 - **Problem**: `atoi()` returns `int`. Passing it to `int8_t` is an implicit narrowing conversion. Values outside −128..127 silently truncate. No input validation. Compare how `dim` command clamps before cast (e.g., `val < 0 ? 0 : val > 100 ? 100 : val`).
 - **Action**: Add `int b = atoi(value); b = (b < -16) ? -16 : (b > 16 ? 16 : b); config.setBalance(static_cast<int8_t>(b));` at the live handler. The correct range is **-16..16**, matching: (1) the HTML slider (`min="-16" max="16"`), (2) the `options.h` compile-time `SOUND_BALANCE` validation guard (`#elif (SOUND_BALANCE < -16) || (SOUND_BALANCE > 16)`). The prior suggestion of -100..100 in this document was incorrect.
 
-### [ ] 6.2 `brightness` command — no range clamp before `uint8_t` cast `[MEDIUM]`
+#### [ ] 6.5.1 `brightness` command — no range clamp before `uint8_t` cast `[MEDIUM]`
 
 - **File**: `src/core/commandhandler.cpp` line ~69
 - **Code**: `config.store.brightness = static_cast<uint8_t>(atoi(value));`
 - **Problem**: `atoi()` on a negative or very large string silently wraps into a garbage `uint8_t`. The nearby `dim` command at line ~46 properly clamps with a ternary to 0..100.
 - **Action**: Clamp `atoi(value)` to **0..100** before the cast (matching the HTML slider `min="0" max="100"` and the `dim` handler which also clamps to 0..100). Not 0..255.
 
-### [ ] 6.3 `contrast` command — same pattern as `brightness` `[LOW]`
+#### [ ] 6.5.2 `contrast` command — same pattern as `brightness` `[LOW]`
 
 - **File**: `src/core/commandhandler.cpp` — the `contrast` command
 - **Code**: `config.saveValue(&config.store.contrast, static_cast<uint8_t>(atoi(value)))`
 - **Problem**: Same unclamped `uint8_t` cast. Input from the WebUI is expected to be 0..100 (HTML slider `min="0" max="100"`) but no firmware guard enforces this.
 - **Action**: Clamp to **0..100** before cast, consistent with the HTML slider range.
 
----
-
-## [ ] 7. Logic / Correctness Bugs (from `code-summary.md` Known Issues)
-
-### [ ] 7.1 `display.cpp` — `while(!_bootStep==0)` precedence bug `[MEDIUM]`
-
-- **Line 113**: `while(!_bootStep==0) { delay(10); }`
-- Due to C++ operator precedence, this evaluates as `(!_bootStep) == 0`. When `_bootStep = 0` (initial state), `!0 = 1`, `1 == 0 = false` → loop exits immediately without waiting. When `_bootStep = 1` or `2`, `!x = 0`, `0 == 0 = true` → loop runs indefinitely.
-- Likely intent was `while(_bootStep == 0)` (wait for boot to start) or `while(_bootStep < 2)` (wait for boot to complete).
-- `_bootStep` is `uint8_t` in `display.h` line ~83.
-
-### [ ] 7.2 `netserver.cpp` — upload cleanup deletes wrong file `[HIGH]`
-
-- Upload cleanup block: `if (SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(PLAYLIST_PATH)` — should call `SPIFFS.remove(INDEX_PATH)`. The index file is never cleaned up; the playlist may be deleted instead.
-
-### [x] 7.3 `optionschecker.h` — weather interval guard mismatch `[LOW]` (FIXED)
-
-- Guard message says "10 to 60" but the enforced condition is "1 to 24". Message and bounds are mismatched.
-- FIXED
-
-### [ ] 7.4 `netserver.cpp` — `selectRadioBrowserServer()` `size_t` underflow `[HIGH]`
-
-- `for (size_t i = count - 1; i > 0; --i)` runs even when `count == 0`. `size_t` is unsigned, so `0 - 1` wraps to a very large value and the loop indexes out of bounds.
-- `rb_servers[count] = RADIO_BROWSER_SERVER` also writes past the array end when `count == arr_size`.
-
----
-
-## [ ] 8. Unhandled or Mis-handled Web UI Commands
-
-### [ ] 8.1 `treble`, `middle`, `bass` bypass `commandhandler` — split routing `[MEDIUM]`
-
-- **Context**: All four EQ sliders in `player.html` have `data-command` values matching their names (`balance`, `treble`, `middle`, `bass`), all with `min="-16" max="16"`. Moving a slider sends `command=value` via WebSocket.
-- **`balance`**: Handled in `commandhandler.cpp` at line ~30 (above the `//-----TODO` marker).
-- **`treble`, `middle`, `bass`**: **Not present in `commandhandler.cpp` at all.** They are intercepted in `netserver.cpp` directly (lines ~614–627), *before* `cmd.exec()` is called, in the raw WebSocket message handler.
-- **Split routing impact**: Commands handled in `netserver.cpp` before `cmd.exec()` cannot be triggered via MQTT (`mqtt.cpp` calls `cmd.exec()`), telnet (also routes through `cmd.exec()`), or any future command source added to `commandhandler`. Concretely: `balance` works via MQTT and telnet; `treble`/`middle`/`bass` do not.
-- **Root cause**: `treble`/`middle`/`bass` were added directly to `netserver.cpp` as a shortcut while `balance` was added to `commandhandler` as part of the incomplete TODO-block refactoring (see Section 5.1). The intent was clearly for all four to be in `commandhandler`, but the work was never finished.
-- **Action**: Move the `treble`, `middle`, `bass` handlers from `netserver.cpp` into `commandhandler.cpp` alongside `balance`. Use `config.setTone()` the same way those handlers already do. Add appropriate clamping (see Section 8.2).
-
-### [ ] 8.2 All four EQ commands lack server-side range clamping `[MEDIUM]`
-
-- **`treble`, `middle`, `bass`** handlers in `netserver.cpp`: `int8_t valb = atoi(val)` is an implicit narrowing cast with no range validation.
-- **`balance`** handler in `commandhandler.cpp`: passes raw `atoi(value)` directly to `int8_t` param (see Section 6.1 for the live handler; section 6.1 recommended clamp has been corrected to -16..16 in this update).
-- The valid range **-16..16** is enforced consistently in three places: (1) HTML sliders with `min="-16" max="16"`, (2) `options.h` `SOUND_BALANCE` guard `#elif (SOUND_BALANCE < -16) || (SOUND_BALANCE > 16)`, and (3) `options.h` `EQ_TREBLE`/`EQ_MIDDLE`/`EQ_BASS` guards with the same -16..16 bounds. The firmware runtime handlers are the only place that does not enforce this.
-- **Action**: Each EQ command handler should clamp: `int v = atoi(val); v = (v < -16) ? -16 : (v > 16 ? 16 : v); config.setXxx((int8_t)v);`
-
-### [ ] 8.3 `volume` command (WebUI slider) vs `vol` command — inconsistent behavior `[MEDIUM]`
-
-- **HTML sends `volume=N`**: The volume slider uses `data-command="volume"`, so `sliderInput()` sends `volume=N` to the backend.
-- **Handler for `volume=N`** (commandhandler.cpp TODO block, line ~119): `player.setVol(static_cast<uint8_t>(atoi(value)))` — queues `PR_VOL` asynchronously; `config.store.volume` is only updated when the queue processes (via `config.setVolume()` inside `PR_VOL` handler in `player.cpp`).
-- **Handler for `vol=N`** (commandhandler.cpp line ~40, above TODO): Clamps value to 0..254, **synchronously** updates `config.store.volume = clamped_v`, then queues `player.setVol(v)`. This is the robust path used by MQTT, telnet, and IR.
-- **Behavioral differences**:
-  1. `volume` handler: no clamp before `uint8_t` cast (negative values or values > 255 silently wrap).
-  2. `volume` handler: `config.store.volume` lags until `PR_VOL` processes. If `VOLUME` is broadcast between receiving the command and the queue processing, the old value is reported.
-  3. `vol` handler: proper clamp, immediate synchronous config update.
-- **Action**: Either consolidate both commands into one handler using the `vol` pattern (clamp + synchronous update), or fix the `volume` handler to match: clamp to 0..254 and synchronously set `config.store.volume` before calling `player.setVol()`.
-
-### [ ] 8.4 `submitplaylistdone` intercepted in `netserver.cpp` before `cmd.exec()` `[LOW]`
-
-- **Location**: `netserver.cpp` `onWsMessage()`, lines ~630–645 — handled **before** `cmd.exec()` is called.
-- **Sent by**: `script.js` sends `websocket.send('submitplaylistdone=1')` after the server has confirmed the playlist file was saved. This triggers MQTT republish and playlist-length validation in the firmware.
-- **Routing impact**: Same as 8.1 — any MQTT or telnet path that sends `submitplaylistdone` falls through `cmd.exec()` unhandled (returns `false`). Currently this only matters for testing or automation, since it's an internal JS signal.
-- **Action**: Low priority. Consider moving to `commandhandler.cpp` for consistency.
-
-### [ ] 8.5 `sleep` / `after` — HTTP GET only, no WebSocket path `[MEDIUM]`
-
-- **Location**: `netserver.cpp` `handleIndex()` — the catch-all HTTP GET handler for `/`.
-- **Code**: `if (request->hasArg("sleep")) { ... config.sleepForAfter(sford, safterd); ... }`
-- **What it does**: Schedules the device to sleep for `sleep` minutes, starting `after` minutes from now. A sleep timer feature.
-- **Access**: HTTP GET URL parameters only — e.g., `http://device/?sleep=30&after=5`. There is **no WebSocket equivalent** (`sleep` is absent from `commandhandler.cpp`), so MQTT, telnet, and the WebUI cannot trigger it.
-- **No HTML entry point**: No HTML element in any `.html` file exposes this feature. It exists as an undocumented HTTP-only API.
-- **Action**: Either add a `sleep` command to `commandhandler.cpp` (and expose it via the WebUI settings page), or document it as intentionally HTTP-only. Its absence from the WebUI means most users are unaware it exists.
-
-### [ ] 8.6 HTTP GET `treble`+`middle`+`bass` multi-param route `[LOW]`
-
-- **Location**: `netserver.cpp` `handleIndex()` — checked after the single-param `cmd.exec()` branch.
-- **Code**: `if (request->hasArg("treble") && request->hasArg("middle") && request->hasArg("bass")) { config.setTone(...) }`
-- **Analysis**: A legacy URL-parameter API that sets all three EQ bands at once: `http://device/?treble=3&middle=0&bass=-2`. Not used by any current JS code. No clamping is applied to the integer values before passing to `config.setTone(int8_t, int8_t, int8_t)`.
-- **Relation to 8.1**: The WebSocket path for individual `treble`/`middle`/`bass` is in `netserver.cpp` onWsMessage. The HTTP path for all three together is here. Neither path goes through `commandhandler`.
-- **Action**: Remove or consolidate. If kept, add -16..16 clamping to match the HTML slider range.
-
----
-
-## [ ] 9. Commands with No HTML Entry Point
+## [ ] 6.6. Commands with No HTML Entry Point
 
 These commands exist in `commandhandler.cpp` (or elsewhere in firmware) but **cannot be triggered from any `.html` file** in the WebUI. They are reachable only via MQTT, telnet, HTTP GET URL params, or are effectively inaccessible to most users.
 
@@ -214,7 +164,7 @@ These commands exist in `commandhandler.cpp` (or elsewhere in firmware) but **ca
 | [ ] | `dspon` | `commandhandler.cpp` | MQTT, telnet, HTTP `/?dspon=N` | Identical to `screenon`. Both remain in commandhandler but their HTML element is **commented out** in `options.html` line 120 with note: *"Left from yoRadio but seems to have no purpose"*. |
 | [ ] | `screenon` | `commandhandler.cpp` | MQTT, telnet | Same as `dspon`. HTML element commented out. |
 | [ ] | `clearspiffs` | `commandhandler.cpp` | MQTT, telnet, HTTP `/?clearspiffs=1` | Clears SPIFFS and resets play mode. No HTML button. Useful for factory cleanup but not exposed to users. |
-| [ ] | `sleep` | `netserver.cpp` `handleIndex()` | HTTP `/?sleep=N&after=N` **only** | Schedules sleep timer. No WebSocket handler. No HTML. See Section 8.5. |
+| [ ] | `sleep` | `netserver.cpp` `handleIndex()` | HTTP `/?sleep=N&after=N` **only** | Schedules sleep timer. No WebSocket handler. No HTML. See Section 7.5. |
 | [ ] | `playstation` | `commandhandler.cpp` (alias for `play`) | MQTT, telnet | The HTML uses `play=N` (via `websocket.send(\`play=${item}\`)`). `playstation` is a legacy alias; both spellings work. |
 
 **Notes**:
@@ -226,7 +176,159 @@ These commands exist in `commandhandler.cpp` (or elsewhere in firmware) but **ca
 - `sleep`: Expose via a WebUI sleep-timer control (options page) or remove from firmware if the feature is not intended for production use.
 - Document all MQTT/telnet-accessible commands in one place (currently they must be inferred by reading `commandhandler.cpp` and `telnet.cpp` separately).
 
+## [ ] 7. Unhandled or Mis-handled Web UI Commands
+
+### [ ] 7.1 `treble`, `middle`, `bass` bypass `commandhandler` — split routing `[MEDIUM]`
+
+- **Context**: All four EQ sliders in `player.html` have `data-command` values matching their names (`balance`, `treble`, `middle`, `bass`), all with `min="-16" max="16"`. Moving a slider sends `command=value` via WebSocket.
+- **`balance`**: Handled in `commandhandler.cpp` at line ~30 (above the `//-----TODO` marker).
+- **`treble`, `middle`, `bass`**: **Not present in `commandhandler.cpp` at all.** They are intercepted in `netserver.cpp` directly (lines ~614–627), *before* `cmd.exec()` is called, in the raw WebSocket message handler.
+- **Split routing impact**: Commands handled in `netserver.cpp` before `cmd.exec()` are invisible to any command source that doesn't go through `netserver.cpp`. **Neither MQTT nor telnet routes through `cmd.exec()` today** — both have their own separate hardcoded dispatch loops (`mqtt.cpp` `onMqttMessage()` and `telnet.cpp` `on_input()`). Concretely: none of `balance`, `treble`, `middle`, or `bass` are reachable via MQTT or telnet in any form — `balance` happens to be in `commandhandler.cpp` but that file isn't called from either subsystem.
+- **Root cause**: `treble`/`middle`/`bass` were added directly to `netserver.cpp` as a shortcut while `balance` was added to `commandhandler` as part of the incomplete TODO-block refactoring (see Section 5.1). The intent was clearly for all four to be in `commandhandler`, but the work was never finished.
+- **Action**: Move the `treble`, `middle`, `bass` handlers from `netserver.cpp` into `commandhandler.cpp` alongside `balance`. Use `config.setTone()` the same way those handlers already do. Add appropriate clamping (see Section 7.2).
+
+### [ ] 7.2 All four EQ commands lack server-side range clamping `[MEDIUM]`
+
+- **`treble`, `middle`, `bass`** handlers in `netserver.cpp`: `int8_t valb = atoi(val)` is an implicit narrowing cast with no range validation.
+- **`balance`** handler in `commandhandler.cpp`: passes raw `atoi(value)` directly to `int8_t` param (see Section 6.1 for the live handler; section 6.1 recommended clamp has been corrected to -16..16 in this update).
+- The valid range **-16..16** is enforced consistently in three places: (1) HTML sliders with `min="-16" max="16"`, (2) `options.h` `SOUND_BALANCE` guard `#elif (SOUND_BALANCE < -16) || (SOUND_BALANCE > 16)`, and (3) `options.h` `EQ_TREBLE`/`EQ_MIDDLE`/`EQ_BASS` guards with the same -16..16 bounds. The firmware runtime handlers are the only place that does not enforce this.
+- **Action**: Each EQ command handler should clamp: `int v = atoi(val); v = (v < -16) ? -16 : (v > 16 ? 16 : v); config.setXxx((int8_t)v);`
+
+### [ ] 7.3 `volume` command (WebUI slider) vs `vol` command — inconsistent behavior `[MEDIUM]`
+
+- **HTML sends `volume=N`**: The volume slider uses `data-command="volume"`, so `sliderInput()` sends `volume=N` to the backend.
+- **Handler for `volume=N`** (commandhandler.cpp TODO block, line ~119): `player.setVol(static_cast<uint8_t>(atoi(value)))` — queues `PR_VOL` asynchronously; `config.store.volume` is only updated when the queue processes (via `config.setVolume()` inside `PR_VOL` handler in `player.cpp`).
+- **Handler for `vol=N`** (commandhandler.cpp line ~40, above TODO): Clamps value to 0..254, **synchronously** updates `config.store.volume = clamped_v`, then queues `player.setVol(v)`. This is the robust path used by MQTT, telnet, and IR.
+- **Behavioral differences**:
+  1. `volume` handler: no clamp before `uint8_t` cast (negative values or values > 255 silently wrap).
+  2. `volume` handler: `config.store.volume` lags until `PR_VOL` processes. If `VOLUME` is broadcast between receiving the command and the queue processing, the old value is reported.
+  3. `vol` handler: proper clamp, immediate synchronous config update.
+- **Action**: Either consolidate both commands into one handler using the `vol` pattern (clamp + synchronous update), or fix the `volume` handler to match: clamp to 0..254 and synchronously set `config.store.volume` before calling `player.setVol()`.
+
+### [ ] 7.4 `submitplaylistdone` intercepted in `netserver.cpp` before `cmd.exec()` `[LOW]`
+
+- **Location**: `netserver.cpp` `onWsMessage()`, lines ~630–645 — handled **before** `cmd.exec()` is called.
+- **Sent by**: `script.js` sends `websocket.send('submitplaylistdone=1')` after the server has confirmed the playlist file was saved. This triggers MQTT republish and playlist-length validation in the firmware.
+- **Routing impact**: Same as 8.1 — any MQTT or telnet path that sends `submitplaylistdone` falls through `cmd.exec()` unhandled (returns `false`). Currently this only matters for testing or automation, since it's an internal JS signal.
+- **Action**: Low priority. Consider moving to `commandhandler.cpp` for consistency.
+
+### [ ] 7.5 `sleep` / `after` — HTTP GET only, no WebSocket path `[MEDIUM]`
+
+- **Location**: `netserver.cpp` `handleIndex()` — the catch-all HTTP GET handler for `/`.
+- **Code**: `if (request->hasArg("sleep")) { ... config.sleepForAfter(sford, safterd); ... }`
+- **What it does**: Schedules the device to sleep for `sleep` minutes, starting `after` minutes from now. A sleep timer feature.
+- **Access**: HTTP GET URL parameters only — e.g., `http://device/?sleep=30&after=5`. There is **no WebSocket equivalent** (`sleep` is absent from `commandhandler.cpp`), so MQTT, telnet, and the WebUI cannot trigger it.
+- **No HTML entry point**: No HTML element in any `.html` file exposes this feature. It exists as an undocumented HTTP-only API.
+- **Action**: Either add a `sleep` command to `commandhandler.cpp` (and expose it via the WebUI settings page), or document it as intentionally HTTP-only. Its absence from the WebUI means most users are unaware it exists.
+
+### [ ] 7.6 HTTP GET `treble`+`middle`+`bass` multi-param route `[LOW]`
+
+- **Location**: `netserver.cpp` `handleIndex()` — checked after the single-param `cmd.exec()` branch.
+- **Code**: `if (request->hasArg("treble") && request->hasArg("middle") && request->hasArg("bass")) { config.setTone(...) }`
+- **Analysis**: A legacy URL-parameter API that sets all three EQ bands at once: `http://device/?treble=3&middle=0&bass=-2`. Not used by any current JS code. No clamping is applied to the integer values before passing to `config.setTone(int8_t, int8_t, int8_t)`.
+- **Relation to 7.1**: The WebSocket path for individual `treble`/`middle`/`bass` is in `netserver.cpp` onWsMessage. The HTTP path for all three together is here. Neither path goes through `commandhandler`.
+- **Action**: Remove or consolidate. If kept, add -16..16 clamping to match the HTML slider range.
+
 ---
+
+## [ ] 8. Unified Command Dispatch — Route MQTT and Telnet Through `commandhandler.cpp` `[MEDIUM]`
+
+Today there are **three separate, independent command dispatch tables** that must all be updated when a command changes:
+
+- **WebSocket** (from WebUI): `netserver.cpp` `onWsMessage()` → `cmd.exec()` in `commandhandler.cpp`
+- **MQTT**: `mqtt.cpp` `onMqttMessage()` — own hardcoded handler, ~10 commands only
+- **Telnet / Serial**: `telnet.cpp` `on_input()` — own hardcoded handler, a different ~15-command set
+
+Adding or fixing a command currently means updating up to three files. The refactor goal is to make `commandhandler.cpp` the **single source of truth** for all command logic, with MQTT and Telnet routing through it via thin parser shims. This is also the prerequisite for §6.1 (moving `config.cpp` wrappers into `commandhandler`) to have full system-wide effect.
+
+### [ ] 8.1 Route MQTT Through `commandhandler` `[MEDIUM]`
+
+**Current state**: `onMqttMessage()` in `mqtt.cpp` manually handles: `prev`, `next`, `toggle`, `stop`, `start`/`play`, `boot`/`reboot`, `volm`, `volp`, `turnoff`, `turnon`, `vol N`, `play N`, and raw URL strings (`burl`). All other `commandhandler.cpp` commands are unreachable via MQTT.
+
+**Strategy**:
+1. Add a `burl` command to `commandhandler.cpp` that loads a URL directly into `player.burl` and sends `PR_BURL` — currently only reachable via raw MQTT long-payload path.
+2. Keep `turnoff` / `turnon` as thin wrappers in `onMqttMessage()` (they combine `setDspOn` + `smartstart` logic that has no single commandhandler equivalent), or add them to commandhandler.
+3. For short payloads (`len < 20`), parse `"key value"` or `"key=value"` format, split into `cmd`/`val`, and call `cmd.exec(cmd, val, 0)`.
+4. Replace the remaining manual handlers with the `cmd.exec()` call once all equivalents are confirmed present in `commandhandler`.
+
+**Commands to block from MQTT dispatch** (do not forward to `cmd.exec()`):
+
+| Command | Reason to block |
+|---|---|
+| `get*` family (`getsystem`, `getscreen`, `getlocale`, `getcontrols`, `getweather`, `getmqtt`, `getactive`, `getbattery`, `getindex`) | These trigger `netserver.requestOnChange()` which broadcasts JSON over WebSocket to a web client. Via MQTT the response is silently lost — wasted work always. |
+| `rebootmdns` | Restarts after a short delay and no longer calls `websocket.text(cid, ...)` (the old cid misrouting issue is fixed). |
+| `newmode` | Sets `config.newConfigMode` and triggers `requestOnChange(CHANGEMODE)` — an interactive WebUI display-flow command with no meaning over MQTT. |
+
+**Commands that need care but are otherwise safe**:
+
+| Command | Note |
+|---|---|
+| `reboot`, `format`, `clearspiffs` | Destructive. Consider gating behind `#ifdef MQTT_ALLOW_DANGEROUS_COMMANDS` (opt-in at build time). Currently `reboot` is already handled inline in `onMqttMessage()`. |
+| `battref` | Calibration; calls `netserver.requestOnChange(GETBATTERY, cid)` with `cid=0` — sends WebSocket feedback to client 0. The calibration save still works; only the WebSocket confirmation is misdirected. |
+| `curated_import`, `loadindex`, `loadplaylist` | Send `websocket.text(cid, ...)` inline responses. Via MQTT `cid=0` — file operations succeed but feedback is misdirected to a WebSocket client. |
+
+### [ ] 8.2 Route Telnet Through `commandhandler` `[MEDIUM]`
+
+**Current state**: `telnet.on_input()` has its own ~15-command hardcoded handler covering `prev`, `next`, `toggle`, `stop`, `start`, `vol`, `vol±`, battery commands, `date`, `audioinfo`, `smartstart`, `list`, `info`, and a few others. Commands added to `commandhandler.cpp` are not automatically accessible from telnet. This is the "duplicated command form list vs. `commandhandler.cpp`" problem noted in §13 (Stability Risks).
+
+**Strategy**: Telnet-native commands stay in `on_input()` because they produce telnet-specific formatted output (e.g., `cli.list` prints a numbered station list, `cli.info` prints status lines, `calbatt` has interactive multi-line calibration output). For everything else, fall through to `cmd.exec()` at the bottom of `on_input()` before the `show_prompt` label:
+
+```cpp
+// At end of on_input(), before show_prompt:
+char tcmd[64] = {0}, tval[BUFLEN] = {0};
+if (config.parseWsCommand(str, tcmd, tval, sizeof(tcmd))) {
+    if (cmd.exec(tcmd, tval, clientId)) goto show_prompt;
+}
+```
+
+`parseWsCommand()` already splits `"key=value"` format used by WebSocket messages. Telnet also uses `"key value"` and `"key(value)"` forms — either extend the parser or add a simple space-split before the fallthrough.
+
+**Commands to block from telnet dispatch** (handle in `on_input()` with a CLI response instead):
+
+| Command | Reason |
+|---|---|
+| `get*` family | Triggers `requestOnChange()` → JSON broadcast over WebSocket. These could eventually be rerouted to print on the telnet stream, but that requires a netserver refactor. For now: block and print `##CLI.UNSUPPORTED#`. |
+| `rebootmdns` | Restarts after a short delay and no longer calls `websocket.text(cid, ...)`, so telnet/WebSocket client-id namespace confusion is removed for this command. |
+| `curated_import`, `loadindex`, `loadplaylist` | Same `websocket.text(cid, ...)` namespace mismatch. Block or add telnet-specific response. |
+
+- [x] `rebootmdns` websocket redirect/cid-misdirection bug fixed by removing backend redirect payloads and handling redirect timing entirely in browser-side ready polling.
+
+**⚠️ Client ID namespace collision — important hazard**:
+
+Telnet client IDs are `0`–`(MAX_TLN_CLIENTS-1)` (typically 0–4), assigned by telnet slot number. WebSocket client IDs are assigned by `AsyncWebSocket`, also starting from 0. Any place in `commandhandler.cpp` that calls `websocket.text(cid, ...)` with the `cid` argument will accidentally target a real WebSocket client when the caller is telnet. **Audit every `websocket.text(cid, ...)` call in `commandhandler.cpp` before routing telnet through it.** Proposed mitigation: define `#define CID_NO_WEBSOCKET 255` and pass that from the telnet shim — handlers can then check `if (cid != CID_NO_WEBSOCKET) websocket.text(cid, ...)`.
+
+**Commands immediately available once routed through `cmd.exec()`** (none of these call `websocket.text(cid,...)`):
+`balance`, `volume`, `shuffle`, `screensaver*`, `wenable`, `wapi`, `wlat`/`wlon`, `locale_webui`, `tz_name`, `tzposix`, and all other settings commands. Also `treble`/`middle`/`bass` once moved from `netserver.cpp` per §7.1.
+
+**Payoff**: Every future command added to `commandhandler.cpp` automatically becomes available from the telnet CLI with zero additional code.
+
+---
+
+
+## [ ] 9. Logic / Correctness Bugs
+
+### [ ] 9.1 `display.cpp` — `while(!_bootStep==0)` precedence bug `[MEDIUM]`
+
+- **Line 113**: `while(!_bootStep==0) { delay(10); }`
+- Due to C++ operator precedence, this evaluates as `(!_bootStep) == 0`. When `_bootStep = 0` (initial state), `!0 = 1`, `1 == 0 = false` → loop exits immediately without waiting. When `_bootStep = 1` or `2`, `!x = 0`, `0 == 0 = true` → loop runs indefinitely.
+- Likely intent was `while(_bootStep == 0)` (wait for boot to start) or `while(_bootStep < 2)` (wait for boot to complete).
+- `_bootStep` is `uint8_t` in `display.h` line ~83.
+
+### [ ] 9.2 `netserver.cpp` — upload cleanup deletes wrong file `[HIGH]`
+
+- Upload cleanup block: `if (SPIFFS.exists(INDEX_PATH)) SPIFFS.remove(PLAYLIST_PATH)` — should call `SPIFFS.remove(INDEX_PATH)`. The index file is never cleaned up; the playlist may be deleted instead.
+
+### [x] 9.3 `optionschecker.h` — weather interval guard mismatch `[LOW]` (FIXED)
+
+- Guard message says "10 to 60" but the enforced condition is "1 to 24". Message and bounds are mismatched.
+
+### [ ] 9.4 `netserver.cpp` — `selectRadioBrowserServer()` `size_t` underflow `[HIGH]`
+
+- `for (size_t i = count - 1; i > 0; --i)` runs even when `count == 0`. `size_t` is unsigned, so `0 - 1` wraps to a very large value and the loop indexes out of bounds.
+- `rb_servers[count] = RADIO_BROWSER_SERVER` also writes past the array end when `count == arr_size`.
+
+---
+
 
 ## [ ] 10. `BUFLEN` — Multi-Purpose Magic Number
 
@@ -329,8 +431,6 @@ Each call site below should be investigated and given either a purpose-specific 
 
 ## [ ] 13. Stability / Architecture Risks
 
-Items below are **already documented in `code-summary.md`** Known Issues section. Listed here for consolidated tracking.
-
 - `nextion.cpp`: file starts with explicit warning comment that implementation may be broken; treat as unstable until revalidated.
 - `telnet.cpp`: duplicated command form list vs. `commandhandler.cpp`; new settings added to one path are easily missed in the other.
 - `touchscreen.h`: enum member naming inconsistency `TDS_REQUEST` vs. `TSD_*` pattern.
@@ -376,4 +476,6 @@ Notable verified-live functions that looked suspicious: `spiffsCleanup`, `delete
 
 ## 99. Stuff I found
 
-  netserver.loop(); is twice in player.cpp line 241
+Just some ootes to make while going through code...
+
+  [ ] netserver.loop(); is twice in player.cpp line 241
