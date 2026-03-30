@@ -114,11 +114,24 @@ jobs:
             rm -rf temp_verify
             exit 1
           fi
+
+          # Compare generated web_assets (manifests + firmware-info.json)
+          echo "Comparing web_assets..."
+          if ! diff -qr "builds/${{ github.repository_owner }}/web_assets" "temp_verify/builds/${{ github.repository_owner }}/web_assets" > /tmp/web_assets_diff.txt; then
+            echo ""
+            echo "❌ ERROR: web_assets is out of date!"
+            echo ""
+            cat /tmp/web_assets_diff.txt
+            echo ""
+            echo "Please run fix_web_assets_and_releases.md.py locally and commit updated web_assets/"
+            rm -rf temp_verify
+            exit 1
+          fi
           
           # Clean up temp directory
           rm -rf temp_verify
           
-          echo "✅ firmware.txt and releases.md are up-to-date"
+          echo "✅ firmware.txt, releases.md, and web_assets are up-to-date"
 
       - name: Load release body text
         id: release_body
