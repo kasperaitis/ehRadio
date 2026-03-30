@@ -17,7 +17,7 @@ jobs:
         run: |
           TARGET_FILE="data/www/timezones.json"
           TMP_FILE="${TARGET_FILE}.tmp"
-          URL="https://github.com/trip5/timezones.json/raw/refs/heads/master/timezones.json"
+          URL="https://raw.githubusercontent.com/trip5/timezones.json/master/timezones.json"
           mkdir -p data/www
           curl -L -s -o "$TMP_FILE" "$URL"
           if [ ! -f "$TARGET_FILE" ] || ! cmp -s "$TARGET_FILE" "$TMP_FILE"; then

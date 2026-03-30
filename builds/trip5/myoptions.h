@@ -1,6 +1,11 @@
 #ifndef myoptions_h
 #define myoptions_h
 
+/*        ************************************************************************      */
+/*        *        This file must be in the root folder of the sketch !!!        *      */
+/*        ************************************************************************      */
+/*        . . .  CHECK options.h for full options, examples, and over-rides  . . .      */
+
 /* - - - = = = - - - Choose the Radio (defined by platformio.ini env) - - - = = = - - - */
 /* automatic builds define the board - - - be sure to comment all lines after debugging */
 
@@ -73,26 +78,19 @@
 /* --- LED --- */
 
 #if defined(BOARD_ESP32) & not defined(DEBUG_MYOPTIONS)
-  #define USE_BUILTIN_LED     true
-#else
-  #define USE_BUILTIN_LED     false    /* usually...! Unless you actually want to use the builtin as defined by the board's .h file */
-#endif
-
-#if defined(ESP32_S3_TRIP5_SH1106_PCM_REMOTE)
+  #define USE_BUILTIN_LED     true     /* Usually you want this false unless you want to use the onboard LED */
+#elif defined(ESP32_S3_TRIP5_SH1106_PCM_REMOTE)
+  #define USE_BUILTIN_LED     false
   #define LED_BUILTIN_S3      8
   #define LED_INVERT          true
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P) || defined(ESP32_S3_TRIP5_ES3C28P)
-  #define USE_RGB_LED     true         /* Enable single-pin RGB LED (WS2812 style) on ES3C28P boards */
-  #ifndef RGB_LED_PIN
-    #define RGB_LED_PIN   42
-  #endif
-  #ifndef RGB_LED_ORDER
-    #define RGB_LED_ORDER NEO_GRB
-  #endif
+  #define USE_BUILTIN_LED     false
+  #define RGB_LED_PIN         42       /* for Adafruit NeoPixel */
 #elif defined(BOARD_ESP32_S3_N16R8)
-  //#define LED_BUILTIN         48          /* S3 RGB LED probably default in board def 48 */
+  #define USE_BUILTIN_LED     true     /* This uses the board definition so the S3's RGB is white ON and that's it */
 #else
-  /* LED config for all others - keep it off */
+  /* LED config for all others - keep LEDs off */
+  #define USE_BUILTIN_LED     false
   #define LED_BUILTIN_S3      255
 #endif
 
@@ -138,19 +136,23 @@
   #define BRIGHTNESS_PIN  4       /* Red Smaller TFT doesn't have brightness control so leave commented? use unused pin? or 255? */
   #define TFT_RST         -1      /* set to -1 if connected to ESP EN pin */
 #endif
-#if defined(ESP32_S3_KASPERAITIS_ES3C28P) || defined(ESP32_S3_TRIP5_ES3C28P)
+#if defined(ESP32_S3_TRIP5_ES3C28P)
   #define DSP_MODEL       DSP_ILI9341
   #define SCREEN_INVERT   true
   #define TFT_CS          10
   #define TFT_DC          46
   #define TFT_RST         -1
-  #define TFT_BL          45
-  //#define GFX_BL          45
-  /* SPI pins for the TFT module (ES3C28P) */
-  #define TFT_MOSI        11
-  #define TFT_SCLK        12
-  #define TFT_MISO        13
-  #define BRIGHTNESS_PIN  TFT_BL
+  #define BRIGHTNESS_PIN  45
+#endif
+
+#if defined(ESP32_S3_KASPERAITIS_ES3C28P)
+  #define DSP_LANGUAGE_lt_LT
+  #define DSP_MODEL       DSP_ILI9341
+  #define SCREEN_INVERT   true
+  #define TFT_CS          10
+  #define TFT_DC          46
+  #define TFT_RST         -1
+  #define BRIGHTNESS_PIN  45
 #endif
 
 
@@ -199,7 +201,7 @@
   #ifndef ES8311_MAX_I2S
     #define ES8311_MAX_I2S 180
   #endif
-  #define PLAYER_FORCE_MONO true  /* force mono audio for this board */
+  #define PLAYER_FORCE_MONO true
   #define VS1053_CS       255     /* set to 255 to disable VS1053 */
 #endif
 
@@ -270,7 +272,7 @@
 
 /* Extras: unused in all */
 //#define ENC_INTERNALPULLUP  true
-//#define ENC_HALFQUARD       false
+//#define ENC_HALFQUARD       falsedisplayILI9488
 
 /* 2nd Rotary Encoder: ?? None yet */
 //#define ENC2_BTNR       40
@@ -287,15 +289,12 @@
     defined(ESP32_S3_TRIP5_SH1106_PCM_1BUTTON) || defined(ESP32_S3_TRIP5_SSD1306X32_PCM_1BUTTON)
   #define SD_SPIPINS      21, 13, 14      /* SCK, MISO, MOSI */
   #define SDC_CS          47
-  #define SDSPISPEED      40000000       /* Default speed 20000000 */
 #elif defined(ESP32_S3_TRIP5_SH1106_VS1053_3BUTTONS ) || defined(ESP32_S3_TRIP5_ILI9488_PCM_1BUTTON)
   #define SD_SPIPINS      21, 2, 1        /* SCK, MISO, MOSI */
   #define SDC_CS          47
-  #define SDSPISPEED      40000000       /* Default speed 20000000 */
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P) || defined(ESP32_S3_TRIP5_ES3C28P)
   #define SD_SPIPINS      38, 39, 40     /* SCK, MISO, MOSI */
   #define SDC_CS          47
-  #define SDSPISPEED      40000000       /* Default speed 20000000 */
 #endif
 
 /* Extras: unused in all */
@@ -350,7 +349,6 @@
   #define MQTT_ENABLE
   #define PLAYLIST_DEFAULT_URL "https://github.com/trip5/webstations/releases/latest/download/trip5-radio-playlist.csv" /* can be CSV or JSON */
 #elif defined(ESP32_S3_KASPERAITIS_ES3C28P)
-  #define DSP_LANGUAGE_lt_LT
   #define SMART_START true
   #define SHOW_AUDIO_INFO true
   #define SS_PLAYING true
@@ -364,6 +362,7 @@
   #define SCREEN_FLIP     true
   #define SHOW_VU_METER   true
   #define VOLUME_STEPS    5
+  #define DISABLE_UPDATER
 #endif
 
 
@@ -394,7 +393,11 @@
 //#define CURATED_LISTS false
 
 /* --- Want your weather in freedom units? --- */
-//#define WEATHER_IMPERIAL true
+//#define WEATHER_METRIC false
+/* --- Can also default specifics */
+//#define WEATHER_TEMPERATURE_F true
+//#define WEATHER_PRESSURE_MMHG true
+//#define WEATHER_WIND_SPEED_UNITS "kmh" // valid: "kmh" or "mph" or "kn" or "m/s"
 
 /* Only use this if you've decided to use your own Github as the source of files */
 /* ...or your firmware is not available from Trip5's Github... sorry! */
@@ -408,23 +411,6 @@
 /* --- MORE, UNUSED, UNKNOWN, NOTES --- */
 
 //#define DSP_LANGUAGE_de_DE // sets the display language - see the available options by checking `displayL10n_*.h` files in `locale` folder 
-//#define WEBUI_LANGUAGE_STRING "de_DE" // can set a default WebUI locale different than the display - check locale/webui folder .json files (user-configurable)
-
-//Below works for now but will be integrated as a user-config option later...
-//#define HTTP_USER "michael"
-//#define HTTP_PASS "cc159226!"
-
-//#define ESPFILEUPDATER_DEBUG
-
-//#define IR_PIN                1
-//#define IR_TIMEOUT            80              /*  see kTimeout description in IRremoteESP8266 example https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/IRrecvDumpV2/IRrecvDumpV2.ino */
-
-//#define ROTATE_90 /* rotates 90 degrees? */
-
-/* Extras: unused in all */
-//#define IR_PIN 4
-
-/* Does this get carried to SD Lib and allow Exfat? */
-//#define FF_FS_EXFAT 1
+//#define WEBUI_LOCALE "de_DE" // can set a default WebUI locale different than the display - check locale/webui folder .json files (user-configurable)
 
 #endif // myoptions_h

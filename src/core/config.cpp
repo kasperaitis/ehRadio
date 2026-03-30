@@ -24,7 +24,7 @@
 
 
 // List of required web asset files
-static const char* wwwFiles[] = {"curated.js", "dragpl.js", "ir.js", "locale.js", "options.js", "playstation.js", "script.js", "search.js", "updform.js",
+static const char* wwwFiles[] = {"curated.js", "dragpl.js", "locale.js", "options.js", "script.js", "script2.js", "search.js",
                                  "logo.svg", "icon.png", "locales.json", "rb_srvrs.json", "timezones.json", "style.css", "theme.css",
                                  "curated.html", "irrecord.html", "options.html", "search.html", "updform.html",
                                  "player.html"}; // keep main page at end (deleted when upgraded, last to be downloaded, so user sees emptyfs_html with wait message)
@@ -539,7 +539,7 @@ void Config::resetSystem(const char *val, uint8_t clientId) {
 
 
 void Config::setDefaults() {
-  // defaults set byt struct, except one
+  // defaults set by struct, except one
   Serial.println("[setDefaults] called");
   snprintf(store.mdnsname, MDNS_LENGTH, "ehradio-%x", getChipId());
 }
@@ -575,10 +575,6 @@ void Config::setTone(int8_t bass, int8_t middle, int8_t treble) {
   saveValue(&store.treble, treble);
   player.setTone(store.bass, store.middle, store.treble);
   netserver.requestOnChange(EQUALIZER, 0);
-}
-
-void Config::setSmartStart(bool ss) {
-  saveValue(&store.smartstart, ss);
 }
 
 void Config::setBalance(int8_t balance) {

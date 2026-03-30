@@ -25,10 +25,18 @@
 #  error TIME_SYNC_INTERVAL must be a number from 1 to 24
 #endif
 
-#if defined(WEATHER_SYNC_INTERVAL) && (WEATHER_SYNC_INTERVAL < 1 || WEATHER_SYNC_INTERVAL > 24)
+#if defined(WEATHER_SYNC_INTERVAL) && (WEATHER_SYNC_INTERVAL < 10 || WEATHER_SYNC_INTERVAL > 60)
 #  error WEATHER_SYNC_INTERVAL must be a number from 10 to 60
 #endif
 
+#ifdef WEATHER_WIND_SPEED_UNITS
+static_assert(
+  __builtin_strcmp(WEATHER_WIND_SPEED_UNITS, "kmh") == 0 ||
+  __builtin_strcmp(WEATHER_WIND_SPEED_UNITS, "mph") == 0 ||
+  __builtin_strcmp(WEATHER_WIND_SPEED_UNITS, "kn")  == 0 ||
+  __builtin_strcmp(WEATHER_WIND_SPEED_UNITS, "m/s") == 0,
+  "WEATHER_WIND_SPEED_UNITS must be \"kmh\", \"mph\", \"kn\", or \"m/s\""
+);
 #endif
 
-
+#endif // #ifndef optionschecker_h

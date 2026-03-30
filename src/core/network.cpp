@@ -331,7 +331,7 @@ bool MyNetwork::wifiBegin(bool silent) {
   return false;
 }
 
-void ehDPinit() {
+void MyNetwork::ehDPinit() {
   if (strlen(config.store.ehdpname) > 0) {
     ehdp.setName(config.store.ehdpname);
     #ifdef FIRMWARE_NAME

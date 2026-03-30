@@ -1,7 +1,5 @@
 .pio
 .vscode
-.gitignore
 /platformio.ini
 /*.h
 /Notes.txt
-/.github/copilot-instructions.md

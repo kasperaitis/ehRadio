@@ -34,6 +34,7 @@ class MyNetwork {
     void raiseSoftAP();
     void requestWeatherSync();
     bool buildWeatherString();
+    void ehDPinit();
   private:
     Ticker rtimer;
     static void WiFiReconnected(WiFiEvent_t event, WiFiEventInfo_t info);
@@ -42,7 +43,6 @@ class MyNetwork {
 
 void ticks();
 void retryStreamConnection(void * pvParameters);
-void ehDPinit();
 void searchWiFi(void * pvParameters);
 void rebootTime();
 void doSync(void * pvParameters);
